@@ -86,7 +86,7 @@ public class Fight {
 	public final static int FLAG_PERFECT = 2;
 
 	// Summon limit
-	public final static int SUMMON_LIMIT = 6;
+	public final static int SUMMON_LIMIT = 8;
 
 	public final static int MAX_LOG_COUNT = 5000;
 
