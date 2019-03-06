@@ -33,7 +33,6 @@ import com.leekwars.game.maps.Cell;
 import com.leekwars.game.maps.Pathfinding;
 
 import leekscript.runner.AI;
-import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.LeekValueManager;
@@ -426,11 +425,11 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue getType(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity instanceof Leek ? FightConstants.ENTITY_LEEK : FightConstants.ENTITY_BULB);
+			return LeekValueManager.getLeekIntValue(mEntity instanceof Leek ? FightConstants.ENTITY_LEEK.getIntValue() : FightConstants.ENTITY_BULB.getIntValue());
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l instanceof Leek ? FightConstants.ENTITY_LEEK : FightConstants.ENTITY_BULB);
+				return LeekValueManager.getLeekIntValue(l instanceof Leek ? FightConstants.ENTITY_LEEK.getIntValue() : FightConstants.ENTITY_BULB.getIntValue());
 		}
 		return LeekValueManager.NULL;
 	}
@@ -2328,22 +2327,6 @@ public class EntityAI extends AI {
 		return values;
 	}
 
-	public int typeOf(AbstractLeekValue value) {
-		if (value.getType() == AbstractLeekValue.ARRAY)
-			return LeekConstants.TYPE_ARRAY;
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekConstants.TYPE_NULL;
-		if (value.getType() == AbstractLeekValue.STRING)
-			return LeekConstants.TYPE_STRING;
-		if (value.getType() == AbstractLeekValue.NUMBER)
-			return LeekConstants.TYPE_NUMBER;
-		if (value.getType() == AbstractLeekValue.BOOLEAN)
-			return LeekConstants.TYPE_BOOLEAN;
-		if (value.getType() == AbstractLeekValue.FUNCTION)
-			return LeekConstants.TYPE_FUNCTION;
-		return 0;
-	}
-
 	public boolean isWeapon(int id) {
 		ItemTemplate item = Items.getItemTemplate(id);
 		if (item == null)
@@ -2715,13 +2698,13 @@ public class EntityAI extends AI {
 
 		Entity l = fight.getEntity(entity.getInt(this));
 		if (l == null || !l.isDead()) {
-			return LeekValueManager.getLeekIntValue(FightConstants.USE_RESURRECT_INVALID_ENTIITY);
+			return LeekValueManager.getLeekIntValue(FightConstants.USE_RESURRECT_INVALID_ENTIITY.getIntValue());
 		}
 
-		ChipTemplate template = mEntity.getChip(FightConstants.CHIP_RESURRECTION);
+		ChipTemplate template = mEntity.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
 		if (template == null) {
 
-			ChipTemplate ct = Chips.getChipTemplateByItem(FightConstants.CHIP_RESURRECTION);
+			ChipTemplate ct = Chips.getChipTemplateByItem(FightConstants.CHIP_RESURRECTION.getIntValue());
 
 			addOperations(ERROR_LOG_COST);
 			if (ct == null)

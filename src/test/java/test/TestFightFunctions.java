@@ -275,13 +275,13 @@ public class TestFightFunctions {
 
 		// Test getCellContent
 		codes.add("getCellContent(getCell())");
-		values.add(LeekConstants.CELL_PLAYER);
+		values.add(LeekConstants.CELL_PLAYER.getIntValue());
 		codes.add("getCellContent(getCell(" + mLeek2.getFId() + "))");
-		values.add(LeekConstants.CELL_PLAYER);
+		values.add(LeekConstants.CELL_PLAYER.getIntValue());
 		codes.add("getCellContent(" + emptycell.getId() + ")");
-		values.add(LeekConstants.CELL_EMPTY);
+		values.add(LeekConstants.CELL_EMPTY.getIntValue());
 		codes.add("getCellContent(" + obstaclecell.getId() + ")");
-		values.add(LeekConstants.CELL_OBSTACLE);
+		values.add(LeekConstants.CELL_OBSTACLE.getIntValue());
 		codes.add("getCellContent(-1)");
 		values.add(-1);
 
@@ -420,9 +420,9 @@ public class TestFightFunctions {
 
 		// Test getType
 		codes.add("getType()");
-		values.add(FightConstants.ENTITY_LEEK);
+		values.add(FightConstants.ENTITY_LEEK.getIntValue());
 		codes.add("getType(" + mLeek2.getFId() + ")");
-		values.add(FightConstants.ENTITY_LEEK);
+		values.add(FightConstants.ENTITY_LEEK.getIntValue());
 		codes.add("getType(-1)");
 		values.add(null);
 
@@ -461,7 +461,7 @@ public class TestFightFunctions {
 
 		// Test nombre
 		codes.add("typeOf(getObstacles())");
-		values.add(LeekConstants.TYPE_ARRAY);
+		values.add(LeekConstants.TYPE_ARRAY.getIntValue());
 
 		// Test AI
 		Assert.assertTrue(testAI(mLeek1, codes, values));
@@ -473,7 +473,7 @@ public class TestFightFunctions {
 		ArrayList<Object> values = new ArrayList<Object>();
 
 		codes.add("typeOf(getLeek)");
-		values.add(LeekConstants.TYPE_FUNCTION);
+		values.add(LeekConstants.TYPE_FUNCTION.getIntValue());
 
 		// Test AI
 		Assert.assertTrue(testAI(mLeek1, codes, values));

@@ -611,7 +611,7 @@ public class Fight {
 		}
 
 		// Si c'est une téléportation on ajoute une petite vérification
-		if (template.getTemplate().getId() == FightConstants.CHIP_TELEPORTATION) {
+		if (template.getTemplate().getId() == FightConstants.CHIP_TELEPORTATION.getIntValue()) {
 			if (!target.available()) {
 				return Attack.USE_INVALID_TARGET;
 			}
