@@ -1,0 +1,9 @@
+include("subfolder/library.leek");
+
+var enemy = getNearestEnemy();
+
+say(getName(enemy));
+
+moveToward(enemy);
+
+debug("debug");
