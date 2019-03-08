@@ -2326,17 +2326,11 @@ public class EntityAI extends AI {
 	}
 
 	public boolean isWeapon(int id) {
-		ItemTemplate item = Items.getItemTemplate(id);
-		if (item == null)
-			return false;
-		return (item.getType() == 1);
+		return Items.getType(id) == Items.TYPE_WEAPON;
 	}
 
 	public boolean isChip(int id) {
-		ItemTemplate item = Items.getItemTemplate(id);
-		if (item == null)
-			return false;
-		return (item.getType() == 2);
+		return Items.getType(id) == Items.TYPE_CHIP;
 	}
 
 	public AbstractLeekValue getWeaponLaunchType(AbstractLeekValue weapon_id) throws LeekRunException {
