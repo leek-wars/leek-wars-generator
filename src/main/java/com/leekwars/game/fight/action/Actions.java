@@ -89,7 +89,7 @@ public class Actions {
 		
 		JSONArray weapons = new JSONArray();
 		for (Weapon w : entity.getWeapons()) {
-			weapons.add(w.getWeaponTemplate().getTemplate());
+			weapons.add(w.getTemplate());
 		}
 		object.put("weapons", weapons);
 		

@@ -16,7 +16,6 @@ import com.leekwars.game.attack.chips.ChipTemplate;
 import com.leekwars.game.attack.chips.Chips;
 import com.leekwars.game.attack.effect.Effect;
 import com.leekwars.game.attack.weapons.Weapon;
-import com.leekwars.game.attack.weapons.WeaponTemplate;
 import com.leekwars.game.attack.weapons.Weapons;
 import com.leekwars.game.fight.Fight;
 import com.leekwars.game.fight.action.ActionAIError;
@@ -296,7 +295,7 @@ public class EntityAI extends AI {
 		if (mEntity.getTP() > 0) {
 			Weapon w = null;
 			for (Weapon w1 : mEntity.getWeapons()) {
-				if (w1.getWeaponTemplate().getTemplate() == weapon_id)
+				if (w1.getTemplate() == weapon_id)
 					w = w1;
 			}
 			if (w != null) {
@@ -598,12 +597,12 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getWeapon(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL) {
 			if (mEntity.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getWeaponTemplate().getTemplate());
+				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getTemplate());
 		}
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null && l.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(l.getWeapon().getWeaponTemplate().getTemplate());
+				return LeekValueManager.getLeekIntValue(l.getWeapon().getTemplate());
 		}
 		return LeekValueManager.NULL;
 	}
@@ -673,7 +672,7 @@ public class EntityAI extends AI {
 		List<Weapon> weapons = l.getWeapons();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (short i = 0; i < weapons.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getWeaponTemplate().getTemplate()));
+			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getTemplate()));
 		}
 		return retour;
 	}
@@ -723,7 +722,7 @@ public class EntityAI extends AI {
 
 	public boolean canUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2) throws Exception {
 		Entity target = null;
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getEntity(value1.getInt(this));
 		} else {
@@ -740,7 +739,7 @@ public class EntityAI extends AI {
 
 	public boolean canUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2) throws Exception {
 		Cell target = null;
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
 		} else {
@@ -756,7 +755,7 @@ public class EntityAI extends AI {
 	}
 
 	public int getWeaponMinRange(int id) {
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null)
 			return -1;
 		return template.getAttack().getMinRange();
@@ -768,35 +767,35 @@ public class EntityAI extends AI {
 	}
 
 	public int getWeaponMaxRange(int id) {
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null)
 			return -1;
 		return template.getAttack().getMaxRange();
 	}
 
 	public int getWeaponCost(int id) {
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null)
 			return -1;
 		return template.getCost();
 	}
 
 	public boolean isInlineWeapon(int id) {
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null)
 			return false;
 		return template.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
 	public String getWeaponName(int id) {
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null)
 			return "";
 		return template.getName();
 	}
 
 	public AbstractLeekValue getWeaponEffects(int id) throws Exception {
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null)
 			return LeekValueManager.NULL;
 		ArrayLeekValue retour = new ArrayLeekValue();
@@ -1338,7 +1337,7 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getWeaponTargets(AbstractLeekValue value1, AbstractLeekValue value2) throws Exception {
 
 		Cell target = null;
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
@@ -1375,7 +1374,7 @@ public class EntityAI extends AI {
 	 */
 	public AbstractLeekValue getWeaponArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
 		Cell target = null;
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
@@ -1411,7 +1410,7 @@ public class EntityAI extends AI {
 	}
 
 	public int getCellToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
 		if (value2.getType() == AbstractLeekValue.NULL) {
@@ -1450,7 +1449,7 @@ public class EntityAI extends AI {
 	public int getCellToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
 
 		Cell target = null;
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
@@ -1935,7 +1934,7 @@ public class EntityAI extends AI {
 	 * @throws Exception
 	 */
 	public AbstractLeekValue getCellsToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
 		if (value2.getType() == AbstractLeekValue.NULL) {
@@ -1977,7 +1976,7 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getCellsToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
 
 		Cell target = null;
-		WeaponTemplate weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon().getWeaponTemplate();
+		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
@@ -2342,9 +2341,9 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getWeaponLaunchType(AbstractLeekValue weapon_id) throws LeekRunException {
-		WeaponTemplate template = null;
+		Weapon template = null;
 		if (weapon_id.getType() == AbstractLeekValue.NULL) {
-			template = mEntity.getWeapon().getWeaponTemplate();
+			template = mEntity.getWeapon();
 		} else {
 			template = Weapons.getWeaponTemplateByItem(weapon_id.getInt(this));
 		}
@@ -2429,7 +2428,7 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue getWeaponArea(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NUMBER) {
-			WeaponTemplate weapon = Weapons.getWeaponTemplateByItem(value.getInt(this));
+			Weapon weapon = Weapons.getWeaponTemplateByItem(value.getInt(this));
 			if (weapon != null) {
 				return LeekValueManager.getLeekIntValue(weapon.getAttack().getArea());
 			}
@@ -2728,7 +2727,7 @@ public class EntityAI extends AI {
 
 	public boolean weaponNeedLos(int id) {
 
-		WeaponTemplate template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon().getWeaponTemplate()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
 		if (template == null) {
 			return false;
 		}
@@ -2782,49 +2781,41 @@ public class EntityAI extends AI {
 
 	@Override
 	protected String getErrorString() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected String getAItring() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public AbstractLeekValue runIA() throws Exception {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int userFunctionCount(int id) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public boolean[] userFunctionReference(int id) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws Exception {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int anonymousFunctionCount(int id) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public boolean[] anonymousFunctionReference(int id) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

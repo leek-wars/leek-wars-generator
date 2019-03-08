@@ -19,7 +19,7 @@ public class ActionUseWeapon implements Action {
 
 		this.caster = caster.getFId();
 		this.cell = cell.getId();
-		this.weapon = weapon.getWeaponTemplate().getId();
+		this.weapon = weapon.getId();
 		this.success = success;
 		this.leeks = new int[0];
 	}

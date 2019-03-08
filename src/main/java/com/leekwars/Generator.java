@@ -15,7 +15,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.game.Util;
 import com.leekwars.game.attack.weapons.Weapon;
-import com.leekwars.game.attack.weapons.WeaponTemplate;
 import com.leekwars.game.attack.weapons.Weapons;
 import com.leekwars.game.fight.Fight;
 import com.leekwars.game.fight.entity.Entity;
@@ -78,7 +77,7 @@ public class Generator {
 				if (weapons != null) {
 					for (Object w : weapons) {
 						Integer weapon = (Integer) w;
-						entity.addWeapon(new Weapon(1212, Weapons.getWeaponTemplate(weapon)));
+						entity.addWeapon(Weapons.getWeaponTemplate(weapon));
 					}
 				}
 				try {
@@ -121,7 +120,7 @@ public class Generator {
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeaponTemplate(new WeaponTemplate(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
+				Weapons.addWeaponTemplate(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
 						weapon.getInteger("max_range"), weapon.getString("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}

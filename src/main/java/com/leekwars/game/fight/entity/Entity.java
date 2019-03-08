@@ -325,17 +325,9 @@ public abstract class Entity {
 		return weapon;
 	}
 
-	public Weapon getWeapon(int id) {
-		for (Weapon w : mWeapons) {
-			if (w.getId() == id)
-				return w;
-		}
-		return null;
-	}
-
 	public boolean hasWeapon(int id_tmp) {
 		for (Weapon w : mWeapons) {
-			if (w.getWeaponTemplate().getId() == id_tmp)
+			if (w.getId() == id_tmp)
 				return true;
 		}
 		return false;

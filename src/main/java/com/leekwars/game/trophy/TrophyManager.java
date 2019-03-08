@@ -9,7 +9,7 @@ import com.leekwars.game.Util;
 import com.leekwars.game.attack.Attack;
 import com.leekwars.game.attack.chips.ChipTemplate;
 import com.leekwars.game.attack.effect.Effect;
-import com.leekwars.game.attack.weapons.WeaponTemplate;
+import com.leekwars.game.attack.weapons.Weapon;
 import com.leekwars.game.fight.Fight;
 import com.leekwars.game.fight.action.ActionLama;
 import com.leekwars.game.fight.entity.Entity;
@@ -216,7 +216,7 @@ public class TrophyManager {
 		}
 	}
 
-	public void weaponUsed(Entity caster, WeaponTemplate weapon, List<Entity> targets) {
+	public void weaponUsed(Entity caster, Weapon weapon, List<Entity> targets) {
 
 		mFight.statistics.addBullets(1);
 		if (mFight.getFightContext() == Fight.CONTEXT_TEST || mFight.getFightContext() == Fight.CONTEXT_CHALLENGE)

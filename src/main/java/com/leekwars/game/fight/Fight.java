@@ -566,11 +566,11 @@ public class Fight {
 		}
 
 		Weapon weapon = launcher.getWeapon();
-		if (weapon.getWeaponTemplate().getCost() > launcher.getTP()) {
+		if (weapon.getCost() > launcher.getTP()) {
 			return Attack.USE_NOT_ENOUGH_TP;
 		}
 
-		if (!Pathfinding.canUseAttack(launcher.getCell(), target, weapon.getWeaponTemplate().getAttack())) {
+		if (!Pathfinding.canUseAttack(launcher.getCell(), target, weapon.getAttack())) {
 			return Attack.USE_INVALID_POSITION;
 		}
 
@@ -579,12 +579,12 @@ public class Fight {
 
 		ActionUseWeapon log_use = new ActionUseWeapon(launcher, target, weapon, result);
 		logs.log(log_use);
-		List<Entity> target_leeks = weapon.getWeaponTemplate().getAttack().applyOnCell(this, launcher, target, critical);
-		trophyManager.weaponUsed(launcher, weapon.getWeaponTemplate(), target_leeks);
+		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
+		trophyManager.weaponUsed(launcher, weapon, target_leeks);
 		log_use.setEntities(target_leeks);
 
-		launcher.useTP(weapon.getWeaponTemplate().getCost());
-		logs.log(new ActionLoseTP(launcher, weapon.getWeaponTemplate().getCost()));
+		launcher.useTP(weapon.getCost());
+		logs.log(new ActionLoseTP(launcher, weapon.getCost()));
 		if (critical) {
 			statistics.addCriticalHits(1);
 		}
