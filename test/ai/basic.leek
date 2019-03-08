@@ -2,8 +2,12 @@ include("subfolder/library.leek");
 
 var enemy = getNearestEnemy();
 
-say(getName(enemy));
+say("ARMES " + getWeapons());
+
+if (count(getWeapons())) {
+	setWeapon(getWeapons()[0]);
+}
 
 moveToward(enemy);
 
-debug("debug");
+useWeapon(enemy);

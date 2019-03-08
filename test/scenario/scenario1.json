@@ -5,14 +5,11 @@
 				"level": 301,
 				"life": 5000,
 				"strength": 500,
-				"tp": 12,
+				"tp": 20,
 				"mp": 6,
 				"cell": 123,
 				"weapons": [
-					"m_laser"
-				],
-				"chips": [
-					"protein"
+					37, 47
 				]
 			},
 			{	"ai": "test/ai/basic.leek",
@@ -22,7 +19,10 @@
 				"strength": 200,
 				"tp": 10,
 				"mp": 8,
-				"cell": 566
+				"cell": 566,
+				"weapons": [
+					47
+				]
 			}
 		],
 		[
@@ -35,10 +35,10 @@
 				"mp": 6,
 				"cell": 301,
 				"weapons": [
-					"laser", "m_laser", "magnum"
+					
 				],
 				"chips": [
-					"stalactite", "fortress", "liberation"
+					
 				]
 			},
 			{	"ai": "test/ai/basic.leek",
@@ -54,19 +54,6 @@
 				"magic": 200,
 				"frequency": 100,
 				"cell": 566
-			},
-			{	"ai": "test/ai/basic.leek",
-				"name": "Donald",
-				"level": 200,
-				"life": 3000,
-				"tp": 10,
-				"mp": 8,
-				"weapons": [
-					"laser", "m_laser", "magnum"
-				],
-				"chips": [
-					"stalactite", "fortress", "liberation"
-				]
 			}
 		]
 	],
