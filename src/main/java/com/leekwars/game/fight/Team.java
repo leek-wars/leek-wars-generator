@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.Summon;
 
@@ -79,9 +79,9 @@ public class Team {
 	}
 
 	// Add a team cooldown (for example for summons chips)
-	public void addCooldown(ChipTemplate chip, int cooldown) {
+	public void addCooldown(Chip chip, int cooldown) {
 
-		cooldowns.put(chip.getTemplate().getId(), cooldown == -1 ? Fight.MAX_TURNS + 2 : cooldown);
+		cooldowns.put(chip.getId(), cooldown == -1 ? Fight.MAX_TURNS + 2 : cooldown);
 	}
 
 	// Team has cooldown for this chip?

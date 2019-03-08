@@ -13,7 +13,7 @@ import com.leekwars.game.FightConstants;
 import com.leekwars.game.Util;
 import com.leekwars.game.attack.Attack;
 import com.leekwars.game.attack.EffectParameters;
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.attack.chips.Chips;
 import com.leekwars.game.attack.effect.Effect;
 import com.leekwars.game.attack.weapons.Weapon;
@@ -453,8 +453,8 @@ public class Fight {
 		logs.addMap(map);
 
 		// Cooldowns initiaux
-		for (Entry<Integer, ChipTemplate> entry : Chips.getTemplates().entrySet()) {
-			ChipTemplate chip = entry.getValue();
+		for (Entry<Integer, Chip> entry : Chips.getTemplates().entrySet()) {
+			Chip chip = entry.getValue();
 			if (chip.getInitialCooldown() > 0) {
 				for (Team t : teams) {
 					for (Entity entity : t.getEntities()) {
@@ -592,7 +592,7 @@ public class Fight {
 		return result;
 	}
 
-	public int useChip(Entity caster, Cell target, ChipTemplate template) {
+	public int useChip(Entity caster, Cell target, Chip template) {
 
 		if (order.current() != caster) {
 			return Attack.USE_INVALID_TARGET;
@@ -611,7 +611,7 @@ public class Fight {
 		}
 
 		// Si c'est une téléportation on ajoute une petite vérification
-		if (template.getTemplate().getId() == FightConstants.CHIP_TELEPORTATION.getIntValue()) {
+		if (template.getId() == FightConstants.CHIP_TELEPORTATION.getIntValue()) {
 			if (!target.available()) {
 				return Attack.USE_INVALID_TARGET;
 			}
@@ -661,7 +661,7 @@ public class Fight {
 		return path.size();
 	}
 
-	public int summonEntity(Entity caster, Cell target, ChipTemplate template, FunctionLeekValue value) {
+	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value) {
 
 		if (order.current() != caster) {
 			return -1;
@@ -689,7 +689,7 @@ public class Fight {
 		logs.log(log);
 
 		// On invoque
-		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getTemplate().getLevel());
+		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel());
 		trophyManager.summon(caster, summon);
 		statistics.addSummons(1);
 
@@ -704,7 +704,7 @@ public class Fight {
 		return result;
 	}
 
-	public int resurrectEntity(Entity caster, Cell target, ChipTemplate template, Entity target_entity) {
+	public int resurrectEntity(Entity caster, Cell target, Chip template, Entity target_entity) {
 
 		if (order.current() != caster) {
 			return Attack.USE_INVALID_TARGET;
@@ -864,11 +864,11 @@ public class Fight {
 	}
 
 	// Add a cooldown for a chip
-	public void addCooldown(Entity entity, ChipTemplate chip) {
+	public void addCooldown(Entity entity, Chip chip) {
 		addCooldown(entity, chip, chip.getCooldown());
 	}
 
-	public void addCooldown(Entity entity, ChipTemplate chip, int cooldown) {
+	public void addCooldown(Entity entity, Chip chip, int cooldown) {
 		if (chip == null) {
 			return;
 		}
@@ -880,26 +880,26 @@ public class Fight {
 	}
 
 	// Chip has cooldown?
-	public boolean hasCooldown(Entity entity, ChipTemplate chip) {
+	public boolean hasCooldown(Entity entity, Chip chip) {
 		if (chip == null) {
 			return false;
 		}
 		if (chip.isTeamCooldown()) {
-			return teams.get(entity.getTeam()).hasCooldown(chip.getTemplate().getId());
+			return teams.get(entity.getTeam()).hasCooldown(chip.getId());
 		} else {
-			return entity.hasCooldown(chip.getTemplate().getId());
+			return entity.hasCooldown(chip.getId());
 		}
 	}
 
 	// Get current cooldown of a chip
-	public int getCooldown(Entity entity, ChipTemplate chip) {
+	public int getCooldown(Entity entity, Chip chip) {
 		if (chip == null) {
 			return 0;
 		}
 		if (chip.isTeamCooldown()) {
-			return teams.get(entity.getTeam()).getCooldown(chip.getTemplate().getId());
+			return teams.get(entity.getTeam()).getCooldown(chip.getId());
 		} else {
-			return entity.getCooldown(chip.getTemplate().getId());
+			return entity.getCooldown(chip.getId());
 		}
 	}
 

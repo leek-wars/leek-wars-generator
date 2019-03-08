@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.attack.effect.Effect;
 import com.leekwars.game.attack.effect.EffectPoison;
 import com.leekwars.game.attack.weapons.Weapon;
@@ -68,7 +68,7 @@ public abstract class Entity {
 	protected Fight fight;
 	protected EntityAI mEntityAI;
 
-	private final TreeMap<Integer, ChipTemplate> mChips = new TreeMap<Integer, ChipTemplate>();
+	private final TreeMap<Integer, Chip> mChips = new TreeMap<Integer, Chip>();
 
 	private List<Weapon> mWeapons = null;
 	private Weapon weapon = null;
@@ -545,15 +545,15 @@ public abstract class Entity {
 		}
 	}
 
-	public void addChip(ChipTemplate chip) {
+	public void addChip(Chip chip) {
 		if (chip != null)
-			mChips.put(chip.getTemplate().getId(), chip);
+			mChips.put(chip.getId(), chip);
 	}
 
 	// Chip has just been used, we must store the cooldown (entity cooldown)
-	public void addCooldown(ChipTemplate chip, int cooldown) {
+	public void addCooldown(Chip chip, int cooldown) {
 
-		mCooldown.put(chip.getTemplate().getId(), cooldown == -1 ? Fight.MAX_TURNS + 2 : cooldown);
+		mCooldown.put(chip.getId(), cooldown == -1 ? Fight.MAX_TURNS + 2 : cooldown);
 	}
 
 	// Entity has cooldown for this chip?
@@ -572,12 +572,12 @@ public abstract class Entity {
 		return mFarmer;
 	}
 
-	public ChipTemplate getChip(int id) {
+	public Chip getChip(int id) {
 		return mChips.get(id);
 	}
 
-	public List<ChipTemplate> getChips() {
-		return new ArrayList<ChipTemplate>(mChips.values());
+	public List<Chip> getChips() {
+		return new ArrayList<Chip>(mChips.values());
 	}
 
 	public boolean hasValidAI(int fight_type) {

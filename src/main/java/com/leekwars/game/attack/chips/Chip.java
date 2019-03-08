@@ -1,10 +1,8 @@
 package com.leekwars.game.attack.chips;
 
 import com.leekwars.game.attack.Attack;
-import com.leekwars.game.items.ItemTemplate;
-import com.leekwars.game.items.Items;
 
-public class ChipTemplate {
+public class Chip {
 
 	private final int id;
 	private final int cost;
@@ -12,22 +10,24 @@ public class ChipTemplate {
 	private final int cooldown;
 	private final boolean teamCooldown;
 	private final int initialCooldown;
-	private final ItemTemplate template;
+	private final int template;
 	private final String name;
+	private final int level;
 
-	public ChipTemplate(int id, int cost, int minRange, int maxRange, String effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown) {
+	public Chip(int id, int cost, int minRange, int maxRange, String effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name) {
 
 		this.id = id;
 		this.cost = cost;
 		this.cooldown = cooldown;
 		this.teamCooldown = teamCooldown;
 		this.initialCooldown = initialCooldown;
-		template = Items.getChipItemTemplate(id);
-		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, template.getId());
-		name = template.getName().substring(5);
+		this.template = template;
+		this.name = name;
+		this.level = level;
+		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, template);
 	}
 
-	public ItemTemplate getTemplate() {
+	public int getTemplate() {
 		return template;
 	}
 
@@ -57,5 +57,9 @@ public class ChipTemplate {
 
 	public String getName() {
 		return name;
+	}
+
+	public int getLevel() {
+		return level;
 	}
 }

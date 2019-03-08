@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import leekscript.runner.values.FunctionLeekValue;
 
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.attack.chips.Chips;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.Summon;
@@ -16,7 +16,7 @@ public class SummonTemplate {
 
 	private final String mName;
 
-	private final ArrayList<ChipTemplate> mChips;
+	private final ArrayList<Chip> mChips;
 
 	private final int mMinLife;
 	private final int mMaxLife;
@@ -79,11 +79,11 @@ public class SummonTemplate {
 		mMinMp = c.getJSONArray("mp").getIntValue(0);
 		mMaxMp = c.getJSONArray("mp").getIntValue(1);
 
-		mChips = new ArrayList<ChipTemplate>();
+		mChips = new ArrayList<Chip>();
 		if (chips != null) {
 			for (Integer i : chips) {
 				if (i != null) {
-					ChipTemplate template = Chips.getChipTemplateByItem(i);
+					Chip template = Chips.getChipTemplateByItem(i);
 					mChips.add(template);
 				}
 			}
@@ -116,7 +116,7 @@ public class SummonTemplate {
 				base(mMinMp, mMaxMp, c),
 				mId, 0);
 
-		for (ChipTemplate chip : mChips) {
+		for (Chip chip : mChips) {
 			inv.addChip(chip);
 		}
 

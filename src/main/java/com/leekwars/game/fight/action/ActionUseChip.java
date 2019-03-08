@@ -3,7 +3,7 @@ package com.leekwars.game.fight.action;
 import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.maps.Cell;
 
@@ -15,7 +15,7 @@ public class ActionUseChip implements Action {
 	private final int success;
 	private int[] leeks;
 
-	public ActionUseChip(Entity caster, Cell cell, ChipTemplate chip, int success) {
+	public ActionUseChip(Entity caster, Cell cell, Chip chip, int success) {
 		this.caster = caster.getFId();
 		this.cell = cell.getId();
 		this.chip = chip.getId();

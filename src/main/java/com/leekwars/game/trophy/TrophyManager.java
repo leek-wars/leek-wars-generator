@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 import com.leekwars.game.Util;
 import com.leekwars.game.attack.Attack;
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.attack.effect.Effect;
 import com.leekwars.game.attack.weapons.Weapon;
 import com.leekwars.game.fight.Fight;
@@ -191,7 +191,7 @@ public class TrophyManager {
 
 	}
 
-	public void chipUsed(Entity caster, ChipTemplate chip, List<Entity> targets) {
+	public void chipUsed(Entity caster, Chip chip, List<Entity> targets) {
 
 		mFight.statistics.addUsedChips(1);
 

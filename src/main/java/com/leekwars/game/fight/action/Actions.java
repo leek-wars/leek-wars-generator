@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.attack.chips.ChipTemplate;
+import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.attack.weapons.Weapon;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.Summon;
@@ -94,8 +94,8 @@ public class Actions {
 		object.put("weapons", weapons);
 		
 		JSONArray chips = new JSONArray();
-		for (ChipTemplate c : entity.getChips()) {
-			chips.add(c.getTemplate().getId());
+		for (Chip c : entity.getChips()) {
+			chips.add(c.getId());
 		}
 		object.put("chips", chips);
 
