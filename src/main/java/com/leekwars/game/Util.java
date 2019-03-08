@@ -4,7 +4,11 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.Random;
@@ -91,5 +95,15 @@ public class Util {
 			return sb.toString();
 		} catch (Exception e) {}
 		return "";
+	}
+	
+	public static String readFile(String filepath) {
+		Path file = new File(filepath).toPath();
+		try {
+			return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return "";
+		}
 	}
 }

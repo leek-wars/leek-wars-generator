@@ -10,8 +10,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.game.Util;
+import com.leekwars.game.attack.weapons.Weapon;
+import com.leekwars.game.attack.weapons.WeaponTemplate;
+import com.leekwars.game.attack.weapons.Weapons;
 import com.leekwars.game.fight.Fight;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.EntityAI;
@@ -27,12 +32,6 @@ import leekscript.runner.LeekFunctions;
 
 public class Generator {
 
-	static {
-		new File("ai/").mkdir();
-		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
-		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
-	}
-
 	public static void main(String[] args) {
 		System.out.println("Generator v1");
 		if (args.length < 1) {
@@ -40,6 +39,12 @@ public class Generator {
 			return;
 		}
 		System.out.println("Scenario : " + args[0]);
+		
+		new File("ai/").mkdir();
+		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
+		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
+		loadWeaponTemplates();
+		
 		runScenario(args[0]);
 	}
 
@@ -69,6 +74,13 @@ public class Generator {
 					1212, // team id
 					"team",	1212, // ai id
 					"ai", "farmer", "France", 0 /* hat */);
+				JSONArray weapons = e.getJSONArray("weapons");
+				if (weapons != null) {
+					for (Object w : weapons) {
+						Integer weapon = (Integer) w;
+						entity.addWeapon(new Weapon(1212, Weapons.getWeaponTemplate(weapon)));
+					}
+				}
 				try {
 					String aiFile = e.getString("ai");
 					System.out.println("Compile AI " + aiFile + "...");
@@ -98,6 +110,22 @@ public class Generator {
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
 			   writer.write(report);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void loadWeaponTemplates() {
+		try {
+			System.out.println("Chargement des armes...");
+			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
+			for (String id : weapons.keySet()) {
+				JSONObject weapon = weapons.getJSONObject(id);
+				Weapons.addWeaponTemplate(new WeaponTemplate(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
+						weapon.getInteger("max_range"), weapon.getString("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
+						weapon.getInteger("template"), weapon.getString("name")));
+			}
+			System.out.println(weapons.size() + " armes chargees");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

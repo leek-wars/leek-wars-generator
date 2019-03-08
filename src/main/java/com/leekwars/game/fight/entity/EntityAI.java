@@ -296,7 +296,7 @@ public class EntityAI extends AI {
 		if (mEntity.getTP() > 0) {
 			Weapon w = null;
 			for (Weapon w1 : mEntity.getWeapons()) {
-				if (w1.getWeaponTemplate().getTemplate().getId() == weapon_id)
+				if (w1.getWeaponTemplate().getTemplate() == weapon_id)
 					w = w1;
 			}
 			if (w != null) {
@@ -598,12 +598,12 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getWeapon(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL) {
 			if (mEntity.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getWeaponTemplate().getTemplate().getId());
+				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getWeaponTemplate().getTemplate());
 		}
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null && l.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(l.getWeapon().getWeaponTemplate().getTemplate().getId());
+				return LeekValueManager.getLeekIntValue(l.getWeapon().getWeaponTemplate().getTemplate());
 		}
 		return LeekValueManager.NULL;
 	}
@@ -673,7 +673,7 @@ public class EntityAI extends AI {
 		List<Weapon> weapons = l.getWeapons();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (short i = 0; i < weapons.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getWeaponTemplate().getTemplate().getId()));
+			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getWeaponTemplate().getTemplate()));
 		}
 		return retour;
 	}

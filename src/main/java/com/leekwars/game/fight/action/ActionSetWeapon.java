@@ -11,7 +11,7 @@ public class ActionSetWeapon implements Action {
 
 	public ActionSetWeapon(Entity leek, Weapon weapon) {
 		this.leek = leek.getFId();
-		this.weapon = weapon.getWeaponTemplate().getId();
+		this.weapon = weapon.getWeaponTemplate().getTemplate();
 	}
 
 	@Override

@@ -1,8 +1,6 @@
 package com.leekwars.game.attack.weapons;
 
 import com.leekwars.game.attack.Attack;
-import com.leekwars.game.items.ItemTemplate;
-import com.leekwars.game.items.Items;
 
 public class WeaponTemplate {
 
@@ -11,24 +9,24 @@ public class WeaponTemplate {
 	private final int cost;
 	private final Attack attack;
 	private final String name;
-	private final ItemTemplate template;
+	private final int template;
 
-	public WeaponTemplate(int id, byte type, int cost, int minRange, int maxRange, String effects, byte launchType, byte area, boolean los) {
+	public WeaponTemplate(int id, byte type, int cost, int minRange, int maxRange, String effects, byte launchType, byte area, boolean los, int template, String name) {
 
 		this.id = id;
 		this.type = type;
 		this.cost = cost;
-		template = Items.getWeaponItemTemplate(id);
+		this.name = name;
+		this.template = template;
 
-		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, template.getId());
-		name = template.getName().substring(7);
+		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, template);
 	}
 
 	public int getId() {
 		return id;
 	}
 
-	public ItemTemplate getTemplate() {
+	public int getTemplate() {
 		return template;
 	}
 
