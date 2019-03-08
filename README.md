@@ -10,4 +10,4 @@ Leek Wars fight generator first version
 ![Fight generation task](https://github.com/leek-wars/leek-wars-generator-v1/blob/master/doc/fight_task.svg)
 
 ## Credits
-Developed by Dawyde © 2012-2019
+Developed by Dawyde & Pilow © 2012-2019
