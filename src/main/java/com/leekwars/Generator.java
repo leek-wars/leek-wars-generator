@@ -70,7 +70,9 @@ public class Generator {
 					"team",	1212, // ai id
 					"ai", "farmer", "France", 0 /* hat */);
 				try {
-					EntityAI ai = (EntityAI) LeekScript.compileFile(e.getString("ai"), "com.leekwars.game.fight.entity.EntityAI");
+					String aiFile = e.getString("ai");
+					System.out.println("Compile AI " + aiFile + "...");
+					EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI");
 					entity.setAI(ai);
 					ai.setEntity(entity);
 					ai.setLogs(new LeekLog());
@@ -82,15 +84,18 @@ public class Generator {
 			t++;
 		}
 		fight.getTrophyManager().addFarmer(new TrophyVariables(1212));
+		
+		System.out.println(fight.getTeamEntities(0));
+		System.out.println(fight.getTeamEntities(1));
 
 		try {
-			fight.initFight();
+			System.out.println("Start fight...");
 			fight.startFight();
 			fight.finishFight();
 			String report = fight.getJSON();
 			System.out.println("Result:");
 			System.out.println(report);
-			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("report.json"), "utf-8"))) {
+			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
 			   writer.write(report);
 			}
 		} catch (Exception e) {
