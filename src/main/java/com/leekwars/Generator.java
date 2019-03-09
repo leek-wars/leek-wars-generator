@@ -39,7 +39,7 @@ public class Generator {
 			System.out.println("No scenario file passed!");
 			return;
 		}
-		System.out.println("Scenario : " + args[0]);
+		System.out.println("- Scenario : " + args[0]);
 		
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
@@ -126,7 +126,7 @@ public class Generator {
 	
 	public static void loadWeapons() {
 		try {
-			System.out.println("Loading weapons...");
+			System.out.print("- Loading weapons... ");
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
@@ -134,7 +134,7 @@ public class Generator {
 						weapon.getInteger("max_range"), weapon.getString("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
-			System.out.println(weapons.size() + " weapons loaded");
+			System.out.println(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -142,17 +142,16 @@ public class Generator {
 	
 	public static void loadChips() {
 		try {
-			System.out.println("Loading chips...");
+			System.out.print("- Loading chips... ");
 			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
-				System.out.println("Add chip " + id + " " + chip.getString("name"));
 				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"), 
 						chip.getInteger("max_range"), chip.getString("effects"), chip.getByte("launch_type"), chip.getByte("area"), chip.getBoolean("los"),
 						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"), 
 						chip.getInteger("template"), chip.getString("name")));
 			}
-			System.out.println(chips.size() + " chips loaded");
+			System.out.println(chips.size() + " chips loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
