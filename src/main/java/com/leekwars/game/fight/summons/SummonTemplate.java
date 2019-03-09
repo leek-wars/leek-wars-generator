@@ -83,7 +83,7 @@ public class SummonTemplate {
 		if (chips != null) {
 			for (Integer i : chips) {
 				if (i != null) {
-					Chip template = Chips.getChipTemplateByItem(i);
+					Chip template = Chips.getChip(i);
 					mChips.add(template);
 				}
 			}

@@ -1,5 +1,9 @@
 include("subfolder/library.leek");
 
+say(CHIP_FORTRESS + " " + getChips());
+
+useChip(CHIP_FORTRESS, getLeek());
+
 var enemy = getNearestEnemy();
 
 say("ARMES " + getWeapons());

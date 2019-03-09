@@ -3,27 +3,22 @@ package com.leekwars.game.attack.chips;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.leekwars.game.items.Items;
+
 public class Chips {
 
-	private static Map<Integer, Chip> templates = new TreeMap<Integer, Chip>();
-	private static Map<Integer, Chip> templatesByItem = new TreeMap<Integer, Chip>();
+	private static Map<Integer, Chip> chips = new TreeMap<Integer, Chip>();
 
-	public static void addChipTemplate(Chip template) {
-		templates.put(template.getId(), template);
-		templatesByItem.put(template.getId(), template);
+	public static void addChip(Chip chip) {
+		chips.put(chip.getId(), chip);
+		Items.addChip(chip.getId());
 	}
 
-	public static Chip getChipTemplateByItem(int id) {
-		if (!templatesByItem.containsKey(id))
-			return null;
-		return templatesByItem.get(id);
-	}
-
-	public static Chip getChipTemplate(int id) {
-		return templates.get(id);
+	public static Chip getChip(int id) {
+		return chips.get(id);
 	}
 
 	public static Map<Integer, Chip> getTemplates() {
-		return templates;
+		return chips;
 	}
 }

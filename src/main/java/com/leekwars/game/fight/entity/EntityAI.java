@@ -726,7 +726,7 @@ public class EntityAI extends AI {
 			target = fight.getEntity(value1.getInt(this));
 		} else {
 			target = fight.getEntity(value2.getInt(this));
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 		}
 		if (weapon == null)
 			return false;
@@ -743,7 +743,7 @@ public class EntityAI extends AI {
 			target = fight.getMap().getCell(value1.getInt(this));
 		} else {
 			target = fight.getMap().getCell(value2.getInt(this));
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 		}
 		if (weapon == null)
 			return false;
@@ -754,7 +754,7 @@ public class EntityAI extends AI {
 	}
 
 	public int getWeaponMinRange(int id) {
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return -1;
 		return template.getAttack().getMinRange();
@@ -766,35 +766,35 @@ public class EntityAI extends AI {
 	}
 
 	public int getWeaponMaxRange(int id) {
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return -1;
 		return template.getAttack().getMaxRange();
 	}
 
 	public int getWeaponCost(int id) {
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return -1;
 		return template.getCost();
 	}
 
 	public boolean isInlineWeapon(int id) {
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return false;
 		return template.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
 	public String getWeaponName(int id) {
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return "";
 		return template.getName();
 	}
 
 	public AbstractLeekValue getWeaponEffects(int id) throws Exception {
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return LeekValueManager.NULL;
 		ArrayLeekValue retour = new ArrayLeekValue();
@@ -817,10 +817,10 @@ public class EntityAI extends AI {
 
 		int success = -1;
 		Entity target = fight.getEntity(leek_id);
-		Chip template = mEntity.getChip(chip_id);
+		Chip chip = mEntity.getChip(chip_id);
 
-		if (template == null) {
-			Chip ct = Chips.getChipTemplateByItem(chip_id);
+		if (chip == null) {
+			Chip ct = Chips.getChip(chip_id);
 
 			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null) {
@@ -829,8 +829,8 @@ public class EntityAI extends AI {
 				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
-		if (target != null && template != null && !target.isDead()) {
-			success = fight.useChip(mEntity, target.getCell(), template);
+		if (target != null && chip != null && !target.isDead()) {
+			success = fight.useChip(mEntity, target.getCell(), chip);
 		}
 		return success;
 	}
@@ -842,7 +842,7 @@ public class EntityAI extends AI {
 		Chip template = mEntity.getChip(chip_id);
 
 		if (template == null) {
-			Chip ct = Chips.getChipTemplateByItem(chip_id);
+			Chip ct = Chips.getChip(chip_id);
 
 			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null) {
@@ -893,13 +893,13 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getCurrentCooldown(AbstractLeekValue chip_id, AbstractLeekValue v) throws LeekRunException {
 
 		if (v.getType() == AbstractLeekValue.NULL) {
-			Chip chipTemplate = Chips.getChipTemplateByItem(chip_id.getInt(this));
+			Chip chipTemplate = Chips.getChip(chip_id.getInt(this));
 			return LeekValueManager.getLeekIntValue(fight.getCooldown(mEntity, chipTemplate));
 		}
 		if (v.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(v.getInt(this));
 			if (l != null) {
-				Chip chipTemplate = Chips.getChipTemplateByItem(chip_id.getInt(this));
+				Chip chipTemplate = Chips.getChip(chip_id.getInt(this));
 				return LeekValueManager.getLeekIntValue(fight.getCooldown(l, chipTemplate));
 			}
 		}
@@ -907,21 +907,21 @@ public class EntityAI extends AI {
 	}
 
 	public String getChipName(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null)
 			return "";
 		return chip.getName();
 	}
 
 	public int getChipCooldown(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null)
 			return 0;
 		return chip.getCooldown();
 	}
 
 	public AbstractLeekValue getChipMinRange(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null) {
 			return LeekValueManager.NULL;
 		}
@@ -929,7 +929,7 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getChipMaxRange(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null) {
 			return LeekValueManager.NULL;
 		}
@@ -942,7 +942,7 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getChipCost(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null) {
 			return LeekValueManager.NULL;
 		}
@@ -950,7 +950,7 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getC(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null) {
 			return LeekValueManager.NULL;
 		}
@@ -958,14 +958,14 @@ public class EntityAI extends AI {
 	}
 
 	public boolean isInlineChip(int id) {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null)
 			return false;
 		return chip.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
 	public AbstractLeekValue getChipEffects(int id) throws Exception {
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null)
 			return LeekValueManager.NULL;
 		ArrayLeekValue retour = new ArrayLeekValue();
@@ -1341,7 +1341,7 @@ public class EntityAI extends AI {
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
 		} else {
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 			target = fight.getMap().getCell(value2.getInt(this));
 		}
 
@@ -1378,7 +1378,7 @@ public class EntityAI extends AI {
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
 		} else {
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 			target = fight.getMap().getCell(value2.getInt(this));
 		}
 
@@ -1415,7 +1415,7 @@ public class EntityAI extends AI {
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getEntity(value1.getInt(this));
 		} else {
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 			target = fight.getEntity(value2.getInt(this));
 		}
 		int cell = -1;
@@ -1453,7 +1453,7 @@ public class EntityAI extends AI {
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
 		} else {
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 			target = fight.getMap().getCell(value2.getInt(this));
 		}
 		int retour = -1;
@@ -1490,7 +1490,7 @@ public class EntityAI extends AI {
 		int cell = -1;
 		if (target == null)
 			return cell;
-		Chip template = Chips.getChipTemplateByItem(chip.getInt(this));
+		Chip template = Chips.getChip(chip.getInt(this));
 		if (template == null)
 			return cell;
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
@@ -1521,7 +1521,7 @@ public class EntityAI extends AI {
 		Cell target = fight.getMap().getCell(cell.getInt(this));
 		if (target == null)
 			return cell.getInt(this);
-		Chip template = Chips.getChipTemplateByItem(chip.getInt(this));
+		Chip template = Chips.getChip(chip.getInt(this));
 		if (template == null)
 			return cell.getInt(this);
 
@@ -1904,7 +1904,7 @@ public class EntityAI extends AI {
 		if (c == null || mEntity.getCell() == null)
 			return LeekValueManager.NULL;
 		// On récupère le sort
-		Chip template = Chips.getChipTemplateByItem(value1.getInt(this));
+		Chip template = Chips.getChip(value1.getInt(this));
 
 		if (template == null)
 			return LeekValueManager.NULL;
@@ -1939,7 +1939,7 @@ public class EntityAI extends AI {
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getEntity(value1.getInt(this));
 		} else {
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 			target = fight.getEntity(value2.getInt(this));
 		}
 
@@ -1980,7 +1980,7 @@ public class EntityAI extends AI {
 		if (value2.getType() == AbstractLeekValue.NULL) {
 			target = fight.getMap().getCell(value1.getInt(this));
 		} else {
-			weapon = Weapons.getWeaponTemplateByItem(value1.getInt(this));
+			weapon = Weapons.getWeapon(value1.getInt(this));
 			target = fight.getMap().getCell(value2.getInt(this));
 		}
 
@@ -2019,7 +2019,7 @@ public class EntityAI extends AI {
 
 		Entity target = fight.getEntity(target_leek_id.getInt(this));
 		// On récupère le sort
-		Chip template = Chips.getChipTemplateByItem(chip_id.getInt(this));
+		Chip template = Chips.getChip(chip_id.getInt(this));
 		if (target == null || target.getCell() == null || template == null || mEntity.getCell() == null)
 			return LeekValueManager.NULL;
 
@@ -2055,7 +2055,7 @@ public class EntityAI extends AI {
 
 		Cell target = fight.getMap().getCell(target_cell_id.getInt(this));
 		// On récupère le sort
-		Chip template = Chips.getChipTemplateByItem(chip_id.getInt(this));
+		Chip template = Chips.getChip(chip_id.getInt(this));
 		if (target == null || template == null || mEntity.getCell() == null)
 			return LeekValueManager.NULL;
 
@@ -2338,7 +2338,7 @@ public class EntityAI extends AI {
 		if (weapon_id.getType() == AbstractLeekValue.NULL) {
 			template = mEntity.getWeapon();
 		} else {
-			template = Weapons.getWeaponTemplateByItem(weapon_id.getInt(this));
+			template = Weapons.getWeapon(weapon_id.getInt(this));
 		}
 		if (template == null)
 			return LeekValueManager.NULL;
@@ -2346,7 +2346,7 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getChipLaunchType(AbstractLeekValue chip_id) throws LeekRunException {
-		Chip template = Chips.getChipTemplateByItem(chip_id.getInt(this));
+		Chip template = Chips.getChip(chip_id.getInt(this));
 		if (template == null)
 			return LeekValueManager.NULL;
 		return LeekValueManager.getLeekIntValue(template.getAttack().getLaunchType());
@@ -2421,7 +2421,7 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue getWeaponArea(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Weapon weapon = Weapons.getWeaponTemplateByItem(value.getInt(this));
+			Weapon weapon = Weapons.getWeapon(value.getInt(this));
 			if (weapon != null) {
 				return LeekValueManager.getLeekIntValue(weapon.getAttack().getArea());
 			}
@@ -2431,7 +2431,7 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue getChipArea(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Chip template = Chips.getChipTemplateByItem(value.getInt(this));
+			Chip template = Chips.getChip(value.getInt(this));
 			if (template != null) {
 				return LeekValueManager.getLeekIntValue(template.getAttack().getArea());
 			}
@@ -2651,7 +2651,7 @@ public class EntityAI extends AI {
 
 		Chip template = mEntity.getChip(chip.getInt(this));
 		if (template == null) {
-			Chip ct = Chips.getChipTemplateByItem(chip.getInt(this));
+			Chip ct = Chips.getChip(chip.getInt(this));
 
 			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null)
@@ -2696,7 +2696,7 @@ public class EntityAI extends AI {
 		Chip template = mEntity.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
 		if (template == null) {
 
-			Chip ct = Chips.getChipTemplateByItem(FightConstants.CHIP_RESURRECTION.getIntValue());
+			Chip ct = Chips.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
 
 			addOperations(ERROR_LOG_COST);
 			if (ct == null)
@@ -2720,7 +2720,7 @@ public class EntityAI extends AI {
 
 	public boolean weaponNeedLos(int id) {
 
-		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeaponTemplateByItem(id);
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null) {
 			return false;
 		}
@@ -2729,7 +2729,7 @@ public class EntityAI extends AI {
 
 	public boolean chipNeedLos(int id) {
 
-		Chip chip = Chips.getChipTemplateByItem(id);
+		Chip chip = Chips.getChip(id);
 		if (chip == null) {
 			return false;
 		}

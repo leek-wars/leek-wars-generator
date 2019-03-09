@@ -8,9 +8,8 @@
 				"tp": 20,
 				"mp": 6,
 				"cell": 123,
-				"weapons": [
-					37, 47
-				]
+				"weapons": [37, 47],
+				"chips": [29]
 			},
 			{	"ai": "test/ai/basic.leek",
 				"name": "Yolo",

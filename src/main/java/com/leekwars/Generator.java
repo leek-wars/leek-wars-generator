@@ -14,6 +14,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.game.Util;
+import com.leekwars.game.attack.chips.Chip;
+import com.leekwars.game.attack.chips.Chips;
 import com.leekwars.game.attack.weapons.Weapon;
 import com.leekwars.game.attack.weapons.Weapons;
 import com.leekwars.game.fight.Fight;
@@ -42,7 +44,8 @@ public class Generator {
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
 		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
-		loadWeaponTemplates();
+		loadWeapons();
+		loadChips();
 		
 		runScenario(args[0]);
 	}
@@ -77,7 +80,14 @@ public class Generator {
 				if (weapons != null) {
 					for (Object w : weapons) {
 						Integer weapon = (Integer) w;
-						entity.addWeapon(Weapons.getWeaponTemplate(weapon));
+						entity.addWeapon(Weapons.getWeapon(weapon));
+					}
+				}
+				JSONArray chips = e.getJSONArray("chips");
+				if (chips != null) {
+					for (Object c : chips) {
+						Integer chip = (Integer) c;
+						entity.addChip(Chips.getChip(chip));
 					}
 				}
 				try {
@@ -114,17 +124,35 @@ public class Generator {
 		}
 	}
 	
-	public static void loadWeaponTemplates() {
+	public static void loadWeapons() {
 		try {
-			System.out.println("Chargement des armes...");
+			System.out.println("Loading weapons...");
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeaponTemplate(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
+				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
 						weapon.getInteger("max_range"), weapon.getString("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
-			System.out.println(weapons.size() + " armes chargees");
+			System.out.println(weapons.size() + " weapons loaded");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void loadChips() {
+		try {
+			System.out.println("Loading chips...");
+			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
+			for (String id : chips.keySet()) {
+				JSONObject chip = chips.getJSONObject(id);
+				System.out.println("Add chip " + id + " " + chip.getString("name"));
+				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"), 
+						chip.getInteger("max_range"), chip.getString("effects"), chip.getByte("launch_type"), chip.getByte("area"), chip.getBoolean("los"),
+						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"), 
+						chip.getInteger("template"), chip.getString("name")));
+			}
+			System.out.println(chips.size() + " chips loaded");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

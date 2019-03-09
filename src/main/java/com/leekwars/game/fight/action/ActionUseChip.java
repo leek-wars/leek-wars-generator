@@ -18,7 +18,7 @@ public class ActionUseChip implements Action {
 	public ActionUseChip(Entity caster, Cell cell, Chip chip, int success) {
 		this.caster = caster.getFId();
 		this.cell = cell.getId();
-		this.chip = chip.getId();
+		this.chip = chip.getTemplate();
 		this.success = success;
 		this.leeks = new int[0];
 	}
