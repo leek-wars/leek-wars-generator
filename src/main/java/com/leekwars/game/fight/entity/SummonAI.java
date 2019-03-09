@@ -8,7 +8,7 @@ public class SummonAI extends EntityAI {
 	private FunctionLeekValue mAIFunction;
 
 	public SummonAI(Entity entity, EntityAI owner_ai, FunctionLeekValue ai) {
-		super(entity, owner_ai.log);
+		super(entity, owner_ai.logs);
 		mAIFunction = ai;
 		setFight(owner_ai.fight);
 		mBirthTurn = fight.getTurn();

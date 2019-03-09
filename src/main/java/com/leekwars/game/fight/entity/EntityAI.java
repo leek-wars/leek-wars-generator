@@ -74,7 +74,7 @@ public class EntityAI extends AI {
 	protected int ai_id = -1;
 	protected String ai_name = "";
 	protected int mInstructions;
-	protected LeekLog log;
+	protected LeekLog logs;
 
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
 	protected final List<String> mSays = new ArrayList<String>();
@@ -84,7 +84,7 @@ public class EntityAI extends AI {
 	
 	public EntityAI() {}
 
-	public EntityAI(Entity entity, LeekLog log) {
+	public EntityAI(Entity entity, LeekLog logs) {
 		this.mEntity = entity;
 //		if (ai == null || ai.getValid() == 0) {
 //			mIsValid = false;
@@ -134,7 +134,7 @@ public class EntityAI extends AI {
 	}
 
 	public void setLogs(LeekLog leekLog) {
-		log = leekLog;
+		logs = leekLog;
 	}
 
 	public void setEntity(Entity entity) {
@@ -159,7 +159,7 @@ public class EntityAI extends AI {
 			type = LeekLog.SSTANDARD;
 
 		if (this != null) {
-			log.addSystemLog(mEntity, type, this.getErrorMessage(elements), key, parameters);
+			logs.addSystemLog(mEntity, type, this.getErrorMessage(elements), key, parameters);
 		}
 	}
 
@@ -192,8 +192,8 @@ public class EntityAI extends AI {
 		return mIsValid;
 	}
 
-	public LeekLog getLeekLog() {
-		return log;
+	public LeekLog getLogs() {
+		return logs;
 	}
 
 	public void addMessage(LeekMessage message) {
@@ -209,7 +209,7 @@ public class EntityAI extends AI {
 
 	public void setFight(Fight fight) {
 		this.fight = fight;
-		log.setLogs(fight.getLogs());
+		logs.setLogs(fight.getActions());
 	}
 
 	public void runTurn() {
@@ -1046,7 +1046,7 @@ public class EntityAI extends AI {
 				ignore.add(l);
 			}
 		} else if (leeks_to_ignore.getType() == AbstractLeekValue.NUMBER) {
-			log.addLog(mEntity, LeekLog.WARNING,
+			logs.addLog(mEntity, LeekLog.WARNING,
 					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désorthiss utiliser un tableau de cellules à ignorer.");
 			Entity l = fight.getEntity(leeks_to_ignore.getInt(this));
 			if (l != null && l.getCell() != null) {
@@ -2273,13 +2273,13 @@ public class EntityAI extends AI {
 		if (duration.getType() == AbstractLeekValue.NUMBER)
 			d = duration.getInt(this);
 
-		log.addCell(mEntity, cel, col, d);
+		logs.addCell(mEntity, cel, col, d);
 
 		return LeekValueManager.getLeekBooleanValue(true);
 	}
 
 	public void pause() {
-		log.addPause(mEntity);
+		logs.addPause(mEntity);
 	}
 
 	public AbstractLeekValue show(AbstractLeekValue cell, AbstractLeekValue color) throws LeekRunException {
@@ -2746,7 +2746,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) {
 
-			getLeekLog().addLog(leek(), LeekLog.ERROR, "Cannot encode object \"" + object.toString() + "\"");
+			getLogs().addLog(leek(), LeekLog.ERROR, "Cannot encode object \"" + object.toString() + "\"");
 			try {
 				addOperations(100);
 			} catch (Exception e1) {}
@@ -2764,7 +2764,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) {
 
-			getLeekLog().addLog(leek(), LeekLog.ERROR, "Cannot parse json \"" + json + "\"");
+			getLogs().addLog(leek(), LeekLog.ERROR, "Cannot parse json \"" + json + "\"");
 			try {
 				addOperations(100);
 			} catch (Exception e1) {}
