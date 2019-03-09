@@ -139,7 +139,7 @@ public abstract class Effect {
 		if (turns == 0) {
 			return;
 		}
-		logID = ActionAddEffect.createEffect(fight.getLogs(), attackType, attackID, caster, target, id, value, turns);
+		logID = ActionAddEffect.createEffect(fight.getActions(), attackType, attackID, caster, target, id, value, turns);
 	}
 
 	public Stats getStats() {

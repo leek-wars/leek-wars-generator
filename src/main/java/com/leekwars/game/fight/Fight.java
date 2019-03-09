@@ -108,7 +108,7 @@ public class Fight {
 	private int mStartFarmer = -1;
 
 	private Map map;
-	private final Actions logs;
+	private final Actions actions;
 
 	private String mLeekDatas = "";
 
@@ -132,7 +132,7 @@ public class Fight {
 
 		trophyManager = new TrophyManager(this);
 
-		logs = new Actions();
+		actions = new Actions();
 
 		mEntitiesById = new TreeMap<Integer, Entity>();
 		mEntities = new TreeMap<Integer, Entity>();
@@ -222,7 +222,7 @@ public class Fight {
 	}
 
 	public void log(Action log) {
-		logs.log(log);
+		actions.log(log);
 	}
 
 	public Map getMap() {
@@ -442,7 +442,7 @@ public class Fight {
 		try {
 			for (Entity e : bootorder.compute()) {
 				this.order.addEntity(e);
-				logs.addEntity(e, e.hasValidAI(fullType));
+				actions.addEntity(e, e.hasValidAI(fullType));
 				initialOrder.add(e);
 			}
 		} catch (Exception e) {
@@ -450,7 +450,7 @@ public class Fight {
 		}
 
 		// On ajoute la map
-		logs.addMap(map);
+		actions.addMap(map);
 
 		// Cooldowns initiaux
 		for (Entry<Integer, Chip> entry : Chips.getTemplates().entrySet()) {
@@ -465,7 +465,7 @@ public class Fight {
 		}
 
 		// Puis on ajoute le startfight
-		logs.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
+		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
 	}
 
 	public void finishFight() {
@@ -474,7 +474,7 @@ public class Fight {
 	}
 
 	public String getJSON() {
-		return logs.getJSONString();
+		return actions.getJSONString();
 	}
 
 	public void startTurn() {
@@ -485,7 +485,7 @@ public class Fight {
 		}
 
 		ActionEntityTurn lt;
-		logs.log(lt = new ActionEntityTurn(current));
+		actions.log(lt = new ActionEntityTurn(current));
 
 		current.applyCoolDown();
 		current.startTurn();
@@ -517,7 +517,7 @@ public class Fight {
 		}
 		entity.setCell(null);
 
-		logs.log(new ActionEntityDie(entity, killer));
+		actions.log(new ActionEntityDie(entity, killer));
 	}
 
 	/*
@@ -543,12 +543,12 @@ public class Fight {
 			mState = Fight.STATE_FINISHED;
 		} else {
 
-			logs.log(new ActionEndTurn(order.current()));
+			actions.log(new ActionEndTurn(order.current()));
 
 			if (order.next()) {
 
 				if (order.getTurn() <= Fight.MAX_TURNS) {
-					logs.log(new ActionNewTurn(order.getTurn()));
+					actions.log(new ActionNewTurn(order.getTurn()));
 				}
 
 				for (Team t : teams) {
@@ -578,13 +578,13 @@ public class Fight {
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
 		ActionUseWeapon log_use = new ActionUseWeapon(launcher, target, weapon, result);
-		logs.log(log_use);
+		actions.log(log_use);
 		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
 		trophyManager.weaponUsed(launcher, weapon, target_leeks);
 		log_use.setEntities(target_leeks);
 
 		launcher.useTP(weapon.getCost());
-		logs.log(new ActionLoseTP(launcher, weapon.getCost()));
+		actions.log(new ActionLoseTP(launcher, weapon.getCost()));
 		if (critical) {
 			statistics.addCriticalHits(1);
 		}
@@ -621,7 +621,7 @@ public class Fight {
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
-		logs.log(log);
+		actions.log(log);
 		List<Entity> target_leeks = template.getAttack().applyOnCell(this, caster, target, critical);
 		log.setEntities(target_leeks);
 		trophyManager.chipUsed(caster, template, target_leeks);
@@ -631,7 +631,7 @@ public class Fight {
 		}
 
 		caster.useTP(template.getCost());
-		logs.log(new ActionLoseTP(caster, template.getCost()));
+		actions.log(new ActionLoseTP(caster, template.getCost()));
 		if (critical) {
 			statistics.addCriticalHits(1);
 		}
@@ -648,8 +648,8 @@ public class Fight {
 		if (size > entity.getMP()) {
 			return 0;
 		}
-		logs.log(new ActionMove(entity, path));
-		logs.log(new ActionLoseMP(entity, size));
+		actions.log(new ActionMove(entity, path));
+		actions.log(new ActionLoseMP(entity, size));
 
 		trophyManager.deplacement(entity.getFarmer(), path);
 		entity.useMP(size);
@@ -686,7 +686,7 @@ public class Fight {
 		int result = Attack.USE_SUCCESS;
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
-		logs.log(log);
+		actions.log(log);
 
 		// On invoque
 		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel());
@@ -699,7 +699,7 @@ public class Fight {
 
 		caster.useTP(template.getCost());
 		trophyManager.chipUsed(caster, template, new ArrayList<Entity>());
-		logs.log(new ActionLoseTP(caster, template.getCost()));
+		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;
 	}
@@ -733,7 +733,7 @@ public class Fight {
 		int result = Attack.USE_SUCCESS;
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
-		logs.log(log);
+		actions.log(log);
 
 		// Resurrect
 		resurrect(caster, target_entity, target);
@@ -745,7 +745,7 @@ public class Fight {
 
 		caster.useTP(template.getCost());
 		trophyManager.chipUsed(caster, template, new ArrayList<Entity>());
-		logs.log(new ActionLoseTP(caster, template.getCost()));
+		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;
 	}
@@ -776,10 +776,10 @@ public class Fight {
 		target.setPlayer(invoc);
 
 		// On l'ajoute dans les infos du combat
-		logs.addEntity(invoc, true);
+		actions.addEntity(invoc, true);
 
 		// On balance l'action
-		logs.log(new ActionInvocation(invoc));
+		actions.log(new ActionInvocation(invoc));
 
 		return invoc;
 	}
@@ -824,7 +824,7 @@ public class Fight {
 		cell.setPlayer(entity);
 
 		// On balance l'action
-		logs.log(new ActionResurrect(owner, entity));
+		actions.log(new ActionResurrect(owner, entity));
 	}
 
 	public int getTurn() {
@@ -835,8 +835,8 @@ public class Fight {
 		return order;
 	}
 
-	public Actions getLogs() {
-		return logs;
+	public Actions getActions() {
+		return actions;
 	}
 
 	public int getFullType() {
