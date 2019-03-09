@@ -131,7 +131,7 @@ public class Generator {
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
 				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
-						weapon.getInteger("max_range"), weapon.getString("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
+						weapon.getInteger("max_range"), weapon.getJSONArray("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
 			System.out.println(weapons.size() + " weapons loaded.");
@@ -147,7 +147,7 @@ public class Generator {
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
 				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"), 
-						chip.getInteger("max_range"), chip.getString("effects"), chip.getByte("launch_type"), chip.getByte("area"), chip.getBoolean("los"),
+						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"), chip.getByte("area"), chip.getBoolean("los"),
 						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"), 
 						chip.getInteger("template"), chip.getString("name")));
 			}

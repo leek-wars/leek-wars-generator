@@ -1,5 +1,6 @@
 package com.leekwars.game.attack.chips;
 
+import com.alibaba.fastjson.JSONArray;
 import com.leekwars.game.attack.Attack;
 
 public class Chip {
@@ -14,7 +15,7 @@ public class Chip {
 	private final String name;
 	private final int level;
 
-	public Chip(int id, int cost, int minRange, int maxRange, String effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name) {
+	public Chip(int id, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name) {
 
 		this.id = id;
 		this.cost = cost;

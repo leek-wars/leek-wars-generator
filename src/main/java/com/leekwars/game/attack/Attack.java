@@ -3,6 +3,8 @@ package com.leekwars.game.attack;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.leekwars.game.attack.area.Area;
 import com.leekwars.game.attack.effect.Effect;
 import com.leekwars.game.fight.Fight;
@@ -46,7 +48,7 @@ public class Attack {
 	private final int areaID;
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 
-	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, String effects, int attackType, int attackID) {
+	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, JSONArray effects, int attackType, int attackID) {
 
 		this.minRange = minRange;
 		this.maxRange = maxRange;
@@ -59,24 +61,20 @@ public class Attack {
 		this.area = Area.getArea(this, area);
 
 		// On charge ensuite la liste des effets
-		if (!effects.isEmpty()) {
-			for (String effect : effects.split(";")) {
-				if (effect.isEmpty()) {
-					continue;
-				}
-				String[] parameters = effect.split(",");
-				if (parameters.length != 5) {
-					continue;
-				}
-				int type = Integer.parseInt(parameters[0]);
-				if (type == Effect.TYPE_HEAL) {
-					healAttack |= Integer.parseInt(parameters[4]);
-				}
-				if (type == Effect.TYPE_DAMAGE) {
-					dammageAttack |= Integer.parseInt(parameters[4]);
-				}
-				this.effects.add(new EffectParameters(type, Double.parseDouble(parameters[1]), Double.parseDouble(parameters[2]), Integer.parseInt(parameters[3]), Integer.parseInt(parameters[4])));
+		for (Object e : effects) {
+			JSONObject effect = (JSONObject) e;
+			int type = effect.getIntValue("id");
+			double value1 = effect.getDoubleValue("value1");
+			double value2 = effect.getDoubleValue("value2");
+			int turns = effect.getIntValue("turns");
+			int targets = effect.getIntValue("targets");
+			if (type == Effect.TYPE_HEAL) {
+				healAttack |= targets;
 			}
+			if (type == Effect.TYPE_DAMAGE) {
+				dammageAttack |= targets;
+			}
+			this.effects.add(new EffectParameters(type, value1, value2, turns, targets));
 		}
 	}
 

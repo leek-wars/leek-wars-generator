@@ -1,5 +1,6 @@
 package com.leekwars.game.attack.weapons;
 
+import com.alibaba.fastjson.JSONArray;
 import com.leekwars.game.attack.Attack;
 
 public class Weapon {
@@ -11,7 +12,7 @@ public class Weapon {
 	private final String name;
 	private final int template;
 
-	public Weapon(int id, byte type, int cost, int minRange, int maxRange, String effects, byte launchType, byte area, boolean los, int template, String name) {
+	public Weapon(int id, byte type, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int template, String name) {
 
 		this.id = id;
 		this.type = type;
