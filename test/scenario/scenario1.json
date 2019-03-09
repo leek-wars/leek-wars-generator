@@ -42,7 +42,7 @@
 			},
 			{	"ai": "test/ai/basic.leek",
 				"name": "Bob",
-				"level": 200,
+				"level": 100,
 				"life": 3000,
 				"strength": 200,
 				"agility": 150,
