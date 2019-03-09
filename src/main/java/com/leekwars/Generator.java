@@ -116,6 +116,10 @@ public class Generator {
 			String report = fight.getJSON();
 			System.out.println("Result:");
 			System.out.println(report);
+			for (Integer eid : fight.getEntities().keySet()) {
+				Entity entity = fight.getEntity(eid);
+				System.out.println("Logs of " + entity.getName() + " : " + entity.getAI().getLogs().getJSON());
+			}
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
 			   writer.write(report);
 			}

@@ -657,4 +657,8 @@ public abstract class Entity {
 	public boolean isAlive() {
 		return !isDead();
 	}
+
+	public EntityAI getAI() {
+		return mEntityAI;
+	}
 }

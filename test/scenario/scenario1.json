@@ -19,9 +19,7 @@
 				"tp": 10,
 				"mp": 8,
 				"cell": 566,
-				"weapons": [
-					47
-				]
+				"weapons": [47]
 			}
 		],
 		[
@@ -33,12 +31,8 @@
 				"tp": 50,
 				"mp": 6,
 				"cell": 301,
-				"weapons": [
-					
-				],
-				"chips": [
-					
-				]
+				"weapons": [37],
+				"chips": []
 			},
 			{	"ai": "test/ai/basic.leek",
 				"name": "Bob",
@@ -52,7 +46,9 @@
 				"science": 300,
 				"magic": 200,
 				"frequency": 100,
-				"cell": 566
+				"cell": 566,
+				"weapons": [37],
+				"chips": []
 			}
 		]
 	],
