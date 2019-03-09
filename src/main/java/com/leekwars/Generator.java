@@ -72,10 +72,10 @@ public class Generator {
 					e.getString("name"),
 					1212, // farmer
 					e.getIntValue("level"), e.getIntValue("life"), e.getIntValue("tp"), e.getIntValue("mp"), e.getIntValue("strength"), e.getIntValue("agility"), e.getIntValue("frequency"),
-					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	e.getIntValue("skin"),
+					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	10,
 					1212, // team id
 					"team",	1212, // ai id
-					"ai", "farmer", "France", 0 /* hat */);
+					"ai", "farmer", "France", 6 /* hat */);
 				JSONArray weapons = e.getJSONArray("weapons");
 				if (weapons != null) {
 					for (Object w : weapons) {
