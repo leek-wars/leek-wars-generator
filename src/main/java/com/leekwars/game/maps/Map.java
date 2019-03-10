@@ -7,14 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import javax.imageio.ImageIO;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.Generator;
 import com.leekwars.game.ErrorManager;
-import com.leekwars.game.Util;
 import com.leekwars.game.fight.Team;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.EntityAI;
@@ -42,7 +41,7 @@ public class Map {
 		if (custom_map != null) {
 			
 			map = new Map(width, height);
-			map.setType(Util.getRandom(0, 4));
+			map.setType(Generator.getRandom().getInt(0, 4));
 			
 			JSONObject data = custom_map.getJSONObject("data");
 			if (data != null) {
@@ -94,14 +93,13 @@ public class Map {
 			while (!valid && nb < 63) {
 	
 				map = new Map(width, height);
-				Random random = new Random();
-				map.setType(Util.getRandom(0, 4));
+				map.setType(Generator.getRandom().getInt(0, 4));
 	
 				for (int i = 0; i < obstacles_count; i++) {
-					Cell c = map.getCell(random.nextInt(map.getNbCell()));
+					Cell c = map.getCell(Generator.getRandom().getInt(0, map.getNbCell()));
 					if (c != null && c.available()) {
-						int size = Util.getRandom(1, 2);
-						int type = Util.getRandom(0, 2);
+						int size = Generator.getRandom().getInt(1, 2);
+						int type = Generator.getRandom().getInt(0, 2);
 						if (size == 2) {
 							Cell c2 = Pathfinding.getCellByDir(c, Pathfinding.EAST);
 							Cell c3 = Pathfinding.getCellByDir(c, Pathfinding.SOUTH);
@@ -245,19 +243,17 @@ public class Map {
 
 	public Cell getRandomCell() {
 		Cell retour = null;
-		Random r = new Random();
 		while (retour == null || !retour.available()) {
-			retour = getCell(r.nextInt(nb_cells));
+			retour = getCell(Generator.getRandom().getInt(0, nb_cells));
 		}
 		return retour;
 	}
 
 	public Cell getRandomCell(int part) {
 		Cell retour = null;
-		Random r = new Random();
 		while (retour == null || !retour.available()) {
-			int y = r.nextInt(height - 1);
-			int x = r.nextInt(width / 4);
+			int y = Generator.getRandom().getInt(0, height - 1);
+			int x = Generator.getRandom().getInt(0, width / 4);
 			int cellid = y * (width * 2 - 1);
 			cellid += (part - 1) * width / 4 + x;
 			retour = getCell(cellid);

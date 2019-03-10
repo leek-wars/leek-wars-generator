@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSON;
@@ -29,11 +30,29 @@ import com.leekwars.game.trophy.TrophyVariables;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
+import leekscript.compiler.RandomGenerator;
 import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 
 public class Generator {
+	
+	static RandomGenerator randomGenerator = new RandomGenerator() {
+		private Random random = new Random();
+		public void seed(long seed) {
+			random.setSeed(seed);
+		}
+		@Override
+		public int getInt(int min, int max) {
+			if (max - min + 1 <= 0)
+				return 0;
+			return min + random.nextInt(max - min + 1);
+		}
+		@Override
+		public double getDouble() {
+			return random.nextDouble();
+		}
+	};
 
 	public static void main(String[] args) {
 		System.out.println("Generator v1");
@@ -46,6 +65,7 @@ public class Generator {
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
 		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
+		LeekScript.setRandomGenerator(randomGenerator);
 		loadWeapons();
 		loadChips();
 		
@@ -173,5 +193,9 @@ public class Generator {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static RandomGenerator getRandom() {
+		return randomGenerator;
 	}
 }

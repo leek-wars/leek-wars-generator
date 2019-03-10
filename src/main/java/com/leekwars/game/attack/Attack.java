@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.Generator;
 import com.leekwars.game.attack.area.Area;
 import com.leekwars.game.attack.effect.Effect;
 import com.leekwars.game.fight.Fight;
@@ -179,7 +180,7 @@ public class Attack {
 		}
 
 		// On défini le jet
-		double jet = Math.random();
+		double jet = Generator.getRandom().getDouble();
 
 		// Apply effects
 		for (EffectParameters parameters : effects) {

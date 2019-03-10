@@ -11,21 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HashSet;
-import java.util.Random;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 
 public class Util {
 
-	private static Random random = new Random();
 	private static HashSet<Integer> primes = null;
-
-	public static int getRandom(int min, int max) {
-		if (max - min + 1 <= 0)
-			return 0;
-		return min + random.nextInt(max - min + 1);
-	}
 
 	public static boolean isPrime(int value) {
 		if (primes == null) {

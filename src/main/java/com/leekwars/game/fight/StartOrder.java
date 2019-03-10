@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.leekwars.Generator;
 import com.leekwars.game.fight.entity.Entity;
 
 /*
@@ -76,7 +77,7 @@ public class StartOrder {
 
 		for (int t = 0; t < teams.size(); ++t) {
 
-			double v = Math.random();
+			double v = Generator.getRandom().getDouble();
 			// Logger.log("Remaining : " +
 			// Arrays.toString(remaining.toArray()));
 			// Logger.log("Probabilities : " +

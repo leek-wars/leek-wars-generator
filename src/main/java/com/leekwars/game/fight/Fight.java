@@ -8,9 +8,9 @@ import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.Generator;
 import com.leekwars.game.ErrorManager;
 import com.leekwars.game.FightConstants;
-import com.leekwars.game.Util;
 import com.leekwars.game.attack.Attack;
 import com.leekwars.game.attack.EffectParameters;
 import com.leekwars.game.attack.chips.Chip;
@@ -419,7 +419,7 @@ public class Fight {
 		}
 		mLeekDatas = list.toJSONString();
 
-		int obstacle_count = Util.getRandom(40, 60);
+		int obstacle_count = Generator.getRandom().getInt(40, 60);
 
 		this.map = Map.generateMap(18, 18, obstacle_count, teams, custom_map);
 
@@ -747,7 +747,7 @@ public class Fight {
 	}
 
 	public boolean generateCritical(Entity caster) {
-		return Math.random() < ((double) caster.getAgility() / 1000);
+		return Generator.getRandom().getDouble() < ((double) caster.getAgility() / 1000);
 	}
 
 	public Summon createSummon(Entity owner, int type, Cell target, FunctionLeekValue ai, int level) {
