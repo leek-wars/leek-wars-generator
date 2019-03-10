@@ -113,9 +113,6 @@ public class Generator {
 			t++;
 		}
 		fight.getTrophyManager().addFarmer(new TrophyVariables(1212));
-		
-		System.out.println(fight.getTeamEntities(0));
-		System.out.println(fight.getTeamEntities(1));
 
 		try {
 			System.out.println("Start fight...");
@@ -133,6 +130,8 @@ public class Generator {
 			
 			System.out.println("Result:");
 			System.out.println(report);
+			
+			System.out.println("SHA-1: " + Util.sha1(report.toString()));
 			
 			// Write to file
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {

@@ -84,12 +84,12 @@ public class Util {
 		return null;
 	}
 
-	public static String getMD5(String data) {
+	public static String sha1(String data) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA1");
-			byte[] md5_data = md.digest(data.getBytes("UTF-8"));
-			StringBuilder sb = new StringBuilder(2 * md5_data.length);
-			for (byte b : md5_data) {
+			byte[] sha1_data = md.digest(data.getBytes("UTF-8"));
+			StringBuilder sb = new StringBuilder(2 * sha1_data.length);
+			for (byte b : sha1_data) {
 				sb.append(String.format("%02x", b & 0xff));
 			}
 			return sb.toString();
