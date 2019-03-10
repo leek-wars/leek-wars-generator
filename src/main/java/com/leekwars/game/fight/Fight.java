@@ -473,10 +473,6 @@ public class Fight {
 		mWinteam = -1;
 	}
 
-	public String getJSON() {
-		return actions.getJSONString();
-	}
-
 	public void startTurn() {
 
 		Entity current = order.current();

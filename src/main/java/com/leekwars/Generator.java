@@ -9,6 +9,8 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -60,6 +62,8 @@ public class Generator {
 			e.printStackTrace();
 			return;
 		}
+		
+		Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
 
 		Fight fight = new Fight();
 		JSONArray teams = json.getJSONArray("teams");
@@ -96,7 +100,11 @@ public class Generator {
 					EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI");
 					entity.setAI(ai);
 					ai.setEntity(entity);
-					ai.setLogs(new LeekLog());
+					int farmer = e.getIntValue("farmer");
+					if (!logs.containsKey(farmer)) {
+						logs.put(farmer, new LeekLog());
+					}
+					ai.setLogs(logs.get(farmer));
 				} catch (LeekScriptException | LeekCompilerException e1) {
 					e1.printStackTrace();
 				}
@@ -113,15 +121,22 @@ public class Generator {
 			System.out.println("Start fight...");
 			fight.startFight();
 			fight.finishFight();
-			String report = fight.getJSON();
+			
+			JSONObject report = new JSONObject();
+			report.put("fight", fight.getActions().toJSON());
+			
+			JSONObject logsJSON = new JSONObject();
+			for (Integer farmer : logs.keySet()) {
+				logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
+			}
+			report.put("logs", logsJSON);
+			
 			System.out.println("Result:");
 			System.out.println(report);
-			for (Integer eid : fight.getEntities().keySet()) {
-				Entity entity = fight.getEntity(eid);
-				System.out.println("Logs of " + entity.getName() + " : " + entity.getAI().getLogs().getJSON());
-			}
+			
+			// Write to file
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
-			   writer.write(report);
+			   writer.write(report.toString());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

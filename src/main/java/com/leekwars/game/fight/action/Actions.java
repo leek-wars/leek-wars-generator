@@ -39,7 +39,7 @@ public class Actions {
 		return actions.size();
 	}
 
-	public String getJSONString() {
+	public JSONObject toJSON() {
 
 		JSONArray json = new JSONArray();
 
@@ -53,7 +53,7 @@ public class Actions {
 		retour.put("map", map);
 		retour.put("actions", json);
 
-		return retour.toJSONString();
+		return retour;
 	}
 
 	public void addEntity(Entity entity, boolean validAI) {

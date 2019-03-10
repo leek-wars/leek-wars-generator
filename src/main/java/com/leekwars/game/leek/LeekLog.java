@@ -13,15 +13,6 @@ import leekscript.AILog;
 
 public class LeekLog extends AILog {
 
-	public final static int STANDARD = 1;
-	public final static int WARNING = 2;
-	public final static int ERROR = 3;
-	public final static int MARK = 4;
-	public final static int PAUSE = 5;
-	public final static int SSTANDARD = 6;
-	public final static int SWARNING = 7;
-	public final static int SERROR = 8;
-
 	private final JSONObject mObject;
 	private Actions mLogs;
 	private int mAction = -1;
@@ -47,9 +38,23 @@ public class LeekLog extends AILog {
 	public static final String CODE_TOO_LARGE = "code_too_large";
 	public static final String CODE_TOO_LARGE_FUNCTION = "code_too_large_function";
 	public static final String NUMBER_OF_OPERATIONS = "number_of_operations";
-
+	
 	public LeekLog() {
+		super();
 		mObject = new JSONObject();
+		stream = new AILog.Stream() {
+			@Override
+			public void write(JSONArray array) {
+				int id = mLogs == null ? 0 : mLogs.getNextId();
+				if (mAction < id) {
+					mCurArray = new JSONArray();
+					mObject.put(String.valueOf(id), mCurArray);
+					mAction = id;
+				}
+				mNb++;
+				mCurArray.add(array);
+			}
+		};
 	}
 
 	public void setLogs(Actions logs) {
@@ -57,14 +62,7 @@ public class LeekLog extends AILog {
 	}
 
 	private void addAction(JSONArray action) {
-		int id = mLogs == null ? 0 : mLogs.getNextId();
-		if (mAction < id) {
-			mCurArray = new JSONArray();
-			mObject.put(String.valueOf(id), mCurArray);
-			mAction = id;
-		}
-		mNb++;
-		mCurArray.add(action);
+		
 	}
 
 	public void addSystemLog(Entity leek, int type, String trace, String key, String[] parameters) {
@@ -140,8 +138,8 @@ public class LeekLog extends AILog {
 		return mNb;
 	}
 
-	public String getJSON() {
-		return mObject.toJSONString();
+	public JSONObject toJSON() {
+		return mObject;
 	}
 
 	public void addPause(Entity leek) {

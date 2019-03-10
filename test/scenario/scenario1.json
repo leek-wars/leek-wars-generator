@@ -2,6 +2,7 @@
 		[
 			{	"ai": "test/ai/basic.leek",
 				"name": "Patrick",
+				"farmer": 1,
 				"level": 301,
 				"life": 5000,
 				"strength": 500,
@@ -13,6 +14,7 @@
 			},
 			{	"ai": "test/ai/basic.leek",
 				"name": "Yolo",
+				"farmer": 1,
 				"level": 200,
 				"life": 3000,
 				"strength": 200,
@@ -25,6 +27,7 @@
 		[
 			{	"ai": "test/ai/basic.leek",
 				"name": "Boss",
+				"farmer": 2,
 				"level": 1000,
 				"life": 10000,
 				"strength": 2000,
@@ -36,6 +39,7 @@
 			},
 			{	"ai": "test/ai/basic.leek",
 				"name": "Bob",
+				"farmer": 2,
 				"level": 100,
 				"life": 3000,
 				"strength": 200,
