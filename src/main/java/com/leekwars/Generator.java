@@ -83,6 +83,9 @@ public class Generator {
 			return;
 		}
 		
+		long seed = json.getLongValue("random_seed");
+		randomGenerator.seed(seed);
+		
 		Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
 
 		Fight fight = new Fight();
