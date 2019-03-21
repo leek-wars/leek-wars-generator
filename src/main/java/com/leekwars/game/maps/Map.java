@@ -203,6 +203,10 @@ public class Map {
 		return cells.get(id);
 	}
 
+	public List<Cell> getCells() {
+		return cells;
+	}
+
 	public Cell getCell(int x, int y) {
 		try {
 			return coord[x - min_x][y - min_y];
