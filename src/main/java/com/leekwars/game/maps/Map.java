@@ -315,6 +315,38 @@ public class Map {
 		}
 	}
 
+	public void drawPath(List<Cell> path, Cell start, Cell end) {
+		String GREEN = "\033[0;32m";
+		String END_COLOR = "\033[0m";
+
+		System.out.print("Draw path: [");
+		for (Cell c : path) System.out.print(c.getId() + " -> ");
+		System.out.println("] length " + path.size());
+		int sx = (width - 1) * 2 + 1;
+		int sy = (width - 1) * 2 + 1;
+
+		for (int x = 0; x < sx; ++x) {
+			for (int y = 0; y < sy; ++y) {
+				Cell c = coord[y][x];
+				boolean inPath = path.contains(c);
+				if (c == null) {
+					System.out.print("  ");
+				} else if (c == start) {
+					System.out.print("S ");
+				} else if (c == end) {
+					System.out.print("E ");
+				} else if (inPath) {
+					System.out.print(GREEN + "▓▓" + END_COLOR);
+				} else if (c.isWalkable()) {
+					System.out.print("░░");
+				} else {
+					System.out.print("▓▓");
+				}
+			}
+			System.out.println("");
+		}
+	}
+
 	public static class ConnexeMap {
 
 		private final int connexe[][];
