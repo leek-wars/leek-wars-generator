@@ -296,7 +296,7 @@ public class Pathfinding {
 	}
 
 	public static Cell[] getCellsAround(Cell c) {
-		return new Cell[] { getCellByDir(c, NORTH), getCellByDir(c, EAST), getCellByDir(c, SOUTH), getCellByDir(c, WEST) };
+		return new Cell[] { getCellByDir(c, SOUTH), getCellByDir(c, WEST), getCellByDir(c, NORTH), getCellByDir(c, EAST) };
 	}
 
 	public static List<Cell> getPathTowardLine(EntityAI ai, Cell start, Cell linecell1, Cell linecell2) throws Exception {
@@ -455,126 +455,59 @@ public class Pathfinding {
 			return null;
 		if (endCells.contains(c1))
 			return null;
-		TreeSet<NewNode> open = new TreeSet<NewNode>(new NewNodeComparator());
-		ArrayList<NewNode> closed = new ArrayList<NewNode>();
-		TreeMap<Integer, NewNode> nodes = new TreeMap<Integer, NewNode>();
-		open.add(new NewNode(c1, getCaseDistance(c1, endCells)));
-		Cell[] cells;
-		Cell c;
-		NewNode current = null, node;
-		int t = 0;
-		boolean ok = false;
-		while (open.size() > 0 && t < 2048) {
-			t++;
-			current = open.pollFirst();
-			if (endCells.contains(current.getCell())) {
-				ok = true;
-				break;// Trouvé
+
+		for (Cell c : c1.getMap().getCells()) {
+			c.visited = false;
+			c.closed = false;
+			c.cost = Short.MAX_VALUE;
+		}
+
+		TreeSet<Cell> open = new TreeSet<>(new Comparator<Cell>() {
+			@Override
+			public int compare(Cell o1, Cell o2) {
+				return o1.weight > o2.weight ? 1 : -1;
 			}
-			closed.add(current);
-
-			cells = getCellsAround(current.getCell());
-			for (int i = 0; i < 4; i++) {
-				if (cells[i] == null)
-					continue;
-				if (!available(cells[i], cells_to_ignore)) {
-					if (!cells[i].isWalkable() || !endCells.contains(cells[i]))
-						continue;
+		});
+		c1.cost = 0;
+		c1.weight = 0;
+		c1.visited = true;
+		open.add(c1);
+		
+		while (open.size() > 0) {
+			Cell u = open.pollFirst();
+			u.closed = true;
+			
+			if (endCells.contains(u)) {
+				List<Cell> result = new ArrayList<>();
+				int s = u.cost;
+				while (s-- >= 0) {
+					result.add(u);
+					u = u.parent;
 				}
-
-				// if(!available(cells[i], cells_to_ignore)){
-				// if(!endCells.contains(cells[i])) continue;
-				// }
-				c = cells[i];
-				node = nodes.get(c.getId());
-				if (node == null) {
-					node = new NewNode(c, getCaseDistance(c, endCells));
-					node.setParent(current, current.getParcouru() + 1);
-					nodes.put(c.getId(), node);
+				Collections.reverse(result);
+				if (result.get(result.size() - 1).getPlayer() != null) {
+					result.remove(result.size() - 1);
 				}
+				return result;
+			}
 
-				if (!open.contains(node)) {
-					if (!closed.contains(node))
-						open.add(node);
-				} else {
-					int new_p = current.getParcouru() + 1;
-					if (node.getPoid() > node.getDistance() + new_p) {
-						open.remove(node);
-						node.setParent(current, new_p);
-						open.add(node);
+			for (Cell c : getCellsAround(u)) {
+				if (c == null || c.closed || !c.isWalkable()) continue;
+				if (c.getPlayer() != null && (cells_to_ignore == null || !cells_to_ignore.contains(c)) && !endCells.contains(c)) continue;
+
+				if (!c.visited || u.cost + 1 < c.cost) {
+					c.cost = (short) (u.cost + 1);
+					c.weight = c.cost + (float) getDistance(c, endCells.get(0));
+					c.parent = u;
+					if (!c.visited) {
+						open.add(c);
+						c.visited = true;
 					}
 				}
 			}
 		}
-		// System.out.println(t);
-		if (!ok) {
-			if (ai != null) {
-				ai.addOperations(t * 50);
-			}
-			return null;
-		}
-		ArrayList<Cell> retour = new ArrayList<Cell>();
-		if (!available(current.getCell(), cells_to_ignore))
-			current = current.getParent();
-		if (current == null)
-			return null;
-		retour.ensureCapacity(current.getParcouru());
-		while (current.getParent() != null) {
-			retour.add(0, current.getCell());
-			current = current.getParent();
-		}
-		return retour;
-	}
-
-	private static class NewNodeComparator implements Comparator<NewNode> {
-
-		@Override
-		public int compare(NewNode o1, NewNode o2) {
-			if (o1.getPoid() == o2.getPoid()) {
-				if (o1.getCell().getId() == o2.getCell().getId())
-					return 0;
-				return o1.getCell().getId() > o2.getCell().getId() ? 1 : -1;
-			}
-			return o1.getPoid() > o2.getPoid() ? 1 : -1;
-		}
-	}
-
-	private static class NewNode {
-
-		private final Cell cell;
-		private NewNode parent;
-		private int parcouru = 0;
-		private final int distance;
-
-		public NewNode(Cell c, int distance) {
-			cell = c;
-			this.distance = distance;
-		}
-
-		public int getPoid() {
-			return distance + parcouru;
-		}
-
-		public void setParent(NewNode current, int parcouru) {
-			this.parcouru = parcouru;
-			this.parent = current;
-		}
-
-		public Cell getCell() {
-			return cell;
-		}
-
-		public int getParcouru() {
-			return parcouru;
-		}
-
-		public int getDistance() {
-			return distance;
-		}
-
-		public NewNode getParent() {
-			return parent;
-		}
+		System.out.println("No path found!");
+		return new ArrayList<>();
 	}
 
 	public static List<Cell> getOldAStarPath(Cell c1, List<Cell> endCells, List<Cell> cells_to_ignore) {

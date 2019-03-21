@@ -20,6 +20,11 @@ public class Cell {
 
 	int x, y;
 	int composante;
+	boolean visited = false;
+	boolean closed = false;
+	short cost = 0;
+	float weight = 0;
+	Cell parent = null;
 
 	public Cell(Map map, int id) {
 
