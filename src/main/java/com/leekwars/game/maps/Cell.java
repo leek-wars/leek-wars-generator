@@ -142,4 +142,9 @@ public class Cell {
 	public int getComposante() {
 		return composante;
 	}
+
+	@Override
+	public String toString() {
+		return "<Cell " + id + ">";
+	}
 }
