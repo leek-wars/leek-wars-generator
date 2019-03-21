@@ -294,7 +294,7 @@ public class EntityAI extends AI {
 		if (mEntity.getTP() > 0) {
 			Weapon w = null;
 			for (Weapon w1 : mEntity.getWeapons()) {
-				if (w1.getTemplate() == weapon_id)
+				if (w1.getId() == weapon_id)
 					w = w1;
 			}
 			if (w != null) {
