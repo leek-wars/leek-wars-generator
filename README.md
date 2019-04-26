@@ -1,11 +1,19 @@
 # Leek Wars Generator v1
 Leek Wars fight generator first version
 
+## Build
+```
+gradle jar
+```
+
 ## AI Compilation task
 
 ![Fight generation task](https://github.com/leek-wars/leek-wars-generator-v1/blob/master/doc/compilation_task.svg)
 
 ## Fight generation task
+```
+java -jar generator.jar test/scenario/scenario1.json
+```
 
 ![Fight generation task](https://github.com/leek-wars/leek-wars-generator-v1/blob/master/doc/fight_task.svg)
 
