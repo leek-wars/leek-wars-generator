@@ -15,8 +15,6 @@ public class ActionStartFight implements Action {
 	public JSONArray getJSON() {
 		JSONArray retour = new JSONArray();
 		retour.add(Action.START_FIGHT);
-		retour.add(team1);
-		retour.add(team2);
 		return retour;
 	}
 
