@@ -610,35 +610,6 @@ public abstract class Entity {
 		endTurn();
 	}
 
-	public int getAppearance() {
-		return Entity.getAppearence(getLevel());
-	}
-
-	public static int getAppearence(int level) {
-		if (level <= 9)
-			return 1;
-		else if (level <= 19)
-			return 2;
-		else if (level <= 49)
-			return 3;
-		else if (level <= 79)
-			return 4;
-		else if (level <= 99)
-			return 5;
-		else if (level <= 149)
-			return 6;
-		else if (level <= 199)
-			return 7;
-		else if (level <= 249)
-			return 8;
-		else if (level <= 299)
-			return 9;
-		else if (level <= 300)
-			return 10;
-		else
-			return 11;
-	}
-
 	public void useTP(int tp) {
 		fight.statistics.addTPUsed(tp);
 		usedTP += tp;

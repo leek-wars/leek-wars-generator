@@ -62,7 +62,6 @@ public class Actions {
 
 		object.put("id", entity.getFId());
 		object.put("level", entity.getLevel());
-		object.put("appearence", entity.getAppearance());
 		object.put("skin", entity.getSkin());
 		object.put("hat", (entity.getHat() > 0) ? entity.getHat() : null);
 
