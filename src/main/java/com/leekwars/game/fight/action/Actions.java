@@ -85,18 +85,6 @@ public class Actions {
 
 		object.put("summon", entity instanceof Summon);
 		object.put("owner", entity.getOwnerId());
-		
-		JSONArray weapons = new JSONArray();
-		for (Weapon w : entity.getWeapons()) {
-			weapons.add(w.getTemplate());
-		}
-		object.put("weapons", weapons);
-		
-		JSONArray chips = new JSONArray();
-		for (Chip c : entity.getChips()) {
-			chips.add(c.getId());
-		}
-		object.put("chips", chips);
 
 		if (entity.getTeam() == 0) {
 			team1.add(entity.getFId());
