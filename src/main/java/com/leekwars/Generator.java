@@ -158,7 +158,7 @@ public class Generator {
 			
 			// Write to file
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
-			   writer.write(report.toString());
+				writer.write(report.toString());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
