@@ -98,7 +98,7 @@ public class Generator {
 				Entity entity = new Leek(id++, 
 					e.getString("name"), e.getIntValue("farmer"),
 					e.getIntValue("level"), e.getIntValue("life"), e.getIntValue("tp"), e.getIntValue("mp"), e.getIntValue("strength"), e.getIntValue("agility"), e.getIntValue("frequency"),
-					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	10,
+					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	e.getIntValue("skin"),
 					1212, // team id
 					"team",	1212, // ai id
 					"ai", "farmer", "France", 6 /* hat */);
