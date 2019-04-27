@@ -96,8 +96,7 @@ public class Generator {
 			for (Object entityJson : (JSONArray) team) {
 				JSONObject e = (JSONObject) entityJson;
 				Entity entity = new Leek(id++, 
-					e.getString("name"),
-					1212, // farmer
+					e.getString("name"), e.getIntValue("farmer"),
 					e.getIntValue("level"), e.getIntValue("life"), e.getIntValue("tp"), e.getIntValue("mp"), e.getIntValue("strength"), e.getIntValue("agility"), e.getIntValue("frequency"),
 					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	10,
 					1212, // team id
@@ -132,10 +131,11 @@ public class Generator {
 					e1.printStackTrace();
 				}
 				fight.addEntity(t, entity);
+
+				fight.getTrophyManager().addFarmer(new TrophyVariables(entity.getFarmer()));
 			}
 			t++;
 		}
-		fight.getTrophyManager().addFarmer(new TrophyVariables(1212));
 
 		try {
 			System.out.println("Start fight...");
