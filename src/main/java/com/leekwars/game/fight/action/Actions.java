@@ -79,7 +79,6 @@ public class Actions {
 		object.put("team", entity.getTeam() + 1);
 		object.put("name", entity.getName());
 		object.put("cellPos", entity.getCell().getId());
-		object.put("valid_ai", validAI);
 		object.put("farmer", entity.getFarmer());
 		object.put("type", entity.getType());
 
