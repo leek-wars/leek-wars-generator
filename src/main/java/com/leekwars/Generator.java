@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSON;
@@ -38,19 +37,21 @@ import leekscript.runner.LeekFunctions;
 public class Generator {
 	
 	static RandomGenerator randomGenerator = new RandomGenerator() {
-		private Random random = new Random();
+		private long n = 1;
 		public void seed(long seed) {
-			random.setSeed(seed);
+			n = seed;
+		}
+		@Override
+		public double getDouble() {
+			n = n * 1103515245 + 12345;
+			long r = (n / 65536) % 32768 + 32768;
+			return (double) r / 65536;
 		}
 		@Override
 		public int getInt(int min, int max) {
 			if (max - min + 1 <= 0)
 				return 0;
-			return min + random.nextInt(max - min + 1);
-		}
-		@Override
-		public double getDouble() {
-			return random.nextDouble();
+			return min + (int) (getDouble() * (max - min + 1));
 		}
 	};
 
