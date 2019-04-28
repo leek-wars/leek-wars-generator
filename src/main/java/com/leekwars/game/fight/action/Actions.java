@@ -18,8 +18,6 @@ public class Actions {
 
 	private final JSONArray leeks = new JSONArray();
 	private final JSONObject map = new JSONObject();
-	private final JSONArray team1 = new JSONArray();
-	private final JSONArray team2 = new JSONArray();
 
 	private int mNextEffectId = 0;
 
@@ -48,8 +46,6 @@ public class Actions {
 		}
 		JSONObject retour = new JSONObject();
 		retour.put("leeks", leeks);
-		retour.put("team1", team1);
-		retour.put("team2", team2);
 		retour.put("map", map);
 		retour.put("actions", json);
 
@@ -85,11 +81,6 @@ public class Actions {
 		object.put("summon", entity instanceof Summon);
 		object.put("owner", entity.getOwnerId());
 
-		if (entity.getTeam() == 0) {
-			team1.add(entity.getFId());
-		} else {
-			team2.add(entity.getFId());
-		}
 		leeks.add(object);
 	}
 
