@@ -56,12 +56,12 @@ public class Generator {
 	};
 
 	public static void main(String[] args) {
-		System.out.println("Generator v1");
+		// System.out.println("Generator v1");
 		if (args.length < 1) {
 			System.out.println("No scenario file passed!");
 			return;
 		}
-		System.out.println("- Scenario : " + args[0]);
+		// System.out.println("- Scenario : " + args[0]);
 		
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
@@ -78,7 +78,7 @@ public class Generator {
 		try {
 			String data = new String(Files.readAllBytes(Paths.get(scenarioFile)), StandardCharsets.UTF_8);
 			json = (JSONObject) JSONObject.parse(data);
-			System.out.println(json);
+			// System.out.println(json);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
@@ -119,7 +119,7 @@ public class Generator {
 				}
 				try {
 					String aiFile = e.getString("ai");
-					System.out.println("Compile AI " + aiFile + "...");
+					// System.out.println("Compile AI " + aiFile + "...");
 					EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI");
 					entity.setAI(ai);
 					ai.setEntity(entity);
@@ -139,7 +139,7 @@ public class Generator {
 		}
 
 		try {
-			System.out.println("Start fight...");
+			// System.out.println("Start fight...");
 			fight.startFight();
 			fight.finishFight();
 			
@@ -152,10 +152,10 @@ public class Generator {
 			}
 			report.put("logs", logsJSON);
 			
-			System.out.println("Result:");
+			// System.out.println("Result:");
 			System.out.println(report);
 			
-			System.out.println("SHA-1: " + Util.sha1(report.toString()));
+			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
 			
 			// Write to file
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
@@ -168,7 +168,7 @@ public class Generator {
 	
 	public static void loadWeapons() {
 		try {
-			System.out.print("- Loading weapons... ");
+			// System.out.print("- Loading weapons... ");
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
@@ -176,7 +176,7 @@ public class Generator {
 						weapon.getInteger("max_range"), weapon.getJSONArray("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
-			System.out.println(weapons.size() + " weapons loaded.");
+			// System.out.println(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -184,7 +184,7 @@ public class Generator {
 	
 	public static void loadChips() {
 		try {
-			System.out.print("- Loading chips... ");
+			// System.out.print("- Loading chips... ");
 			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
@@ -193,7 +193,7 @@ public class Generator {
 						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"), 
 						chip.getInteger("template"), chip.getString("name")));
 			}
-			System.out.println(chips.size() + " chips loaded.");
+			// System.out.println(chips.size() + " chips loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
