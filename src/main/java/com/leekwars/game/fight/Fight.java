@@ -423,12 +423,6 @@ public class Fight {
 
 		this.map = Map.generateMap(18, 18, obstacle_count, teams, custom_map);
 
-		if (Fight.getFightContext(fullType) == Fight.CONTEXT_TEST) {
-			map.setType(-1); // Nexus map
-		} else if (Fight.getFightContext(fullType) == Fight.CONTEXT_TOURNAMENT) {
-			map.setType(5); // Arena map
-		}
-
 		// Initialize positions and game order
 		StartOrder bootorder = new StartOrder();
 		this.order = new Order();
