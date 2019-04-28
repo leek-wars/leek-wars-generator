@@ -101,7 +101,7 @@ public class Generator {
 					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	e.getIntValue("skin"),
 					1212, // team id
 					"team",	1212, // ai id
-					"ai", "farmer", "France", 6 /* hat */);
+					"ai", "farmer", "France", 0 /* hat */);
 				JSONArray weapons = e.getJSONArray("weapons");
 				if (weapons != null) {
 					for (Object w : weapons) {
