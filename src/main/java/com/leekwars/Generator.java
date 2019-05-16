@@ -119,15 +119,17 @@ public class Generator {
 				}
 				try {
 					String aiFile = e.getString("ai");
-					// System.out.println("Compile AI " + aiFile + "...");
-					EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI");
-					entity.setAI(ai);
-					ai.setEntity(entity);
-					int farmer = e.getIntValue("farmer");
-					if (!logs.containsKey(farmer)) {
-						logs.put(farmer, new LeekLog());
+					if (aiFile != null) {
+						// System.out.println("Compile AI " + aiFile + "...");
+						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI");
+						entity.setAI(ai);
+						ai.setEntity(entity);
+						int farmer = e.getIntValue("farmer");
+						if (!logs.containsKey(farmer)) {
+							logs.put(farmer, new LeekLog());
+						}
+						ai.setLogs(logs.get(farmer));
 					}
-					ai.setLogs(logs.get(farmer));
 				} catch (LeekScriptException | LeekCompilerException e1) {
 					e1.printStackTrace();
 				}
