@@ -92,6 +92,12 @@ public class Generator {
 		Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
 
 		Fight fight = new Fight();
+
+		if (json.containsKey("max_turns")) {
+			int max_turns = json.getIntValue("max_turns");
+			fight.setMaxTurns(max_turns);
+		}
+
 		JSONArray teams = json.getJSONArray("teams");
 		int t = 0;
 		int id = 0;

@@ -106,6 +106,7 @@ public class Fight {
 	private Order order;
 	private final int fullType;
 	private int mStartFarmer = -1;
+	private int max_turns = MAX_TURNS;
 
 	private Map map;
 	private final Actions actions;
@@ -336,7 +337,7 @@ public class Fight {
 		int count_errors = 0;
 
 		// On lance les tours
-		while (order.getTurn() <= Fight.MAX_TURNS && mState == Fight.STATE_RUNNING) {
+		while (order.getTurn() <= max_turns && mState == Fight.STATE_RUNNING) {
 
 			try {
 				startTurn();
@@ -943,6 +944,10 @@ public class Fight {
 
 	public List<Team> getTeams() {
 		return teams;
+	}
+
+	public void setMaxTurns(int max_turns) {
+		this.max_turns = max_turns;
 	}
 
 }
