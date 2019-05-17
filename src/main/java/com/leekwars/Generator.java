@@ -37,7 +37,7 @@ import leekscript.runner.LeekFunctions;
 public class Generator {
 	
 	static RandomGenerator randomGenerator = new RandomGenerator() {
-		private long n = 1;
+		private long n = 0;
 		public void seed(long seed) {
 			n = seed;
 		}
@@ -84,8 +84,10 @@ public class Generator {
 			return;
 		}
 		
-		long seed = json.getLongValue("random_seed");
-		randomGenerator.seed(seed);
+		if (json.containsKey("random_seed")) {
+			long seed = json.getLongValue("random_seed");
+			randomGenerator.seed(seed);
+		}
 		
 		Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
 
