@@ -19,6 +19,7 @@ public class LeekLog extends AILog {
 	private int mNb = 0;
 	private JSONArray mCurArray;
 	private int mSize = 0;
+	private Entity mEntity;
 	private final static int MAX_LENGTH = 500000;
 
 	// Clés
@@ -39,12 +40,14 @@ public class LeekLog extends AILog {
 	public static final String CODE_TOO_LARGE_FUNCTION = "code_too_large_function";
 	public static final String NUMBER_OF_OPERATIONS = "number_of_operations";
 	
-	public LeekLog() {
+	public LeekLog(Entity entity) {
 		super();
 		mObject = new JSONObject();
+		mEntity = entity;
 		stream = new AILog.Stream() {
 			@Override
 			public void write(JSONArray array) {
+				array.set(0, mEntity.getFId());
 				int id = mLogs == null ? 0 : mLogs.getNextId();
 				if (mAction < id) {
 					mCurArray = new JSONArray();

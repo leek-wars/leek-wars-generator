@@ -134,7 +134,7 @@ public class Generator {
 						ai.setEntity(entity);
 						int farmer = e.getIntValue("farmer");
 						if (!logs.containsKey(farmer)) {
-							logs.put(farmer, new LeekLog());
+							logs.put(farmer, new LeekLog(entity));
 						}
 						ai.setLogs(logs.get(farmer));
 					}
