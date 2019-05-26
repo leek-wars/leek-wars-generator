@@ -58,9 +58,14 @@ public class Generator {
 	public static void main(String[] args) {
 		// System.out.println("Generator v1");
 		String scenario = null;
+		boolean nocache = false;
+
 		for (String arg : args) {
-			if (arg.startsWith("--")) continue;
-			scenario = arg;
+			if (arg.startsWith("--")) {
+				if (arg.substring(2).equals("nocache")) nocache = true;
+			} else {
+				scenario = arg;
+			}
 		}
 		if (scenario == null) {
 			System.out.println("No scenario file passed!");
@@ -75,10 +80,10 @@ public class Generator {
 		loadWeapons();
 		loadChips();
 		
-		runScenario(scenario);
+		runScenario(scenario, nocache);
 	}
 
-	private static void runScenario(String scenarioFile) {
+	private static void runScenario(String scenarioFile, boolean nocache) {
 		JSONObject json = null;
 		try {
 			String data = new String(Files.readAllBytes(Paths.get(scenarioFile)), StandardCharsets.UTF_8);
@@ -134,7 +139,7 @@ public class Generator {
 					String aiFile = e.getString("ai");
 					if (aiFile != null) {
 						// System.out.println("Compile AI " + aiFile + "...");
-						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI");
+						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", nocache);
 						entity.setAI(ai);
 						ai.setEntity(entity);
 						int farmer = e.getIntValue("farmer");
