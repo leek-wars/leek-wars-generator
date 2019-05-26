@@ -57,7 +57,12 @@ public class Generator {
 
 	public static void main(String[] args) {
 		// System.out.println("Generator v1");
-		if (args.length < 1) {
+		String scenario = null;
+		for (String arg : args) {
+			if (arg.startsWith("--")) continue;
+			scenario = arg;
+		}
+		if (scenario == null) {
 			System.out.println("No scenario file passed!");
 			return;
 		}
@@ -70,7 +75,7 @@ public class Generator {
 		loadWeapons();
 		loadChips();
 		
-		runScenario(args[0]);
+		runScenario(scenario);
 	}
 
 	private static void runScenario(String scenarioFile) {
