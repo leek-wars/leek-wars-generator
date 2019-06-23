@@ -671,7 +671,7 @@ public class EntityAI extends AI {
 		List<Weapon> weapons = l.getWeapons();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (short i = 0; i < weapons.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getTemplate()));
+			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getId()));
 		}
 		return retour;
 	}
