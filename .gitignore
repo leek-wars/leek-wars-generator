@@ -2,6 +2,7 @@
 /logs/
 /ai/
 leekscript.jar
+generator.jar
 .gradle/
 .classpath
 .project
