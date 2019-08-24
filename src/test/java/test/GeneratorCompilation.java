@@ -22,7 +22,7 @@ public class GeneratorCompilation {
 	}
 
 	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, AbstractLeekValue s) throws Exception {
-		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.game.fight.entity.EntityAI");
+		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.game.fight.entity.EntityAI", "generator.jar");
 		ai.setEntity(entity);
 		ai.setLogs(new LeekLog(entity));
 		ai.setFight(fight);

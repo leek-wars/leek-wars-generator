@@ -139,7 +139,7 @@ public class Generator {
 					String aiFile = e.getString("ai");
 					if (aiFile != null) {
 						// System.out.println("Compile AI " + aiFile + "...");
-						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", nocache);
+						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", "generator.jar", nocache);
 						entity.setAI(ai);
 						ai.setEntity(entity);
 						int farmer = e.getIntValue("farmer");

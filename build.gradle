@@ -15,7 +15,7 @@ test {
 }
 
 jar {
-	baseName = 'leekscript'
+	baseName = 'generator'
 	manifest {
         attributes "Main-Class": "com.leekwars.Generator"
     }
