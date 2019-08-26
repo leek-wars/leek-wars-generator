@@ -506,7 +506,7 @@ public class Pathfinding {
 				}
 			}
 		}
-		System.out.println("No path found!");
+		// System.out.println("No path found!");
 		return new ArrayList<>();
 	}
 
