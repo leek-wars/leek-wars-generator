@@ -5,7 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -101,4 +103,24 @@ public class Util {
 			return "";
 		}
 	}
+
+	public static String inputStreamToString(InputStream is) {
+		ByteArrayOutputStream result = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		int length;
+		try {
+			while ((length = is.read(buffer)) != -1) {
+				result.write(buffer, 0, length);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			return result.toString("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+
 }
