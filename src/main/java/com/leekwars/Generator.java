@@ -56,19 +56,26 @@ public class Generator {
 	};
 
 	public static void main(String[] args) {
-		// System.out.println("Generator v1");
 		String scenario = null;
 		boolean nocache = false;
+		boolean db_resolver = false;
+		boolean verbose = false;
 
 		for (String arg : args) {
 			if (arg.startsWith("--")) {
-				if (arg.substring(2).equals("nocache")) nocache = true;
+				switch (arg.substring(2)) {
+					case "nocache": nocache = true; break;
+					case "dbresolver": db_resolver = true; break;
+					case "verbose": verbose = true; break;
+				}
 			} else {
 				scenario = arg;
 			}
 		}
+		Log.enable(verbose);
+		Log.i(TAG, "Generator v1");
 		if (scenario == null) {
-			System.out.println("No scenario file passed!");
+			Log.i(TAG, "No scenario file passed!");
 			return;
 		}
 		// System.out.println("- Scenario : " + args[0]);
@@ -77,6 +84,9 @@ public class Generator {
 		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
 		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
 		LeekScript.setRandomGenerator(randomGenerator);
+		if (db_resolver) {
+			LeekScript.setResolver(new DbResolver("./resolver.php"));
+		}
 		loadWeapons();
 		loadChips();
 		
