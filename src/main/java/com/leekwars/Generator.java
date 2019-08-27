@@ -94,10 +94,14 @@ public class Generator {
 		loadWeapons();
 		loadChips();
 		
-		runScenario(scenario, nocache);
+		try {
+			runScenario(scenario, nocache);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
-	private static void runScenario(String scenarioFile, boolean nocache) {
+	private static void runScenario(String scenarioFile, boolean nocache) throws Exception {
 		JSONObject json = null;
 		try {
 			String data = new String(Files.readAllBytes(Paths.get(scenarioFile)), StandardCharsets.UTF_8);
@@ -139,8 +143,11 @@ public class Generator {
 				JSONArray weapons = e.getJSONArray("weapons");
 				if (weapons != null) {
 					for (Object w : weapons) {
-						Integer weapon = (Integer) w;
-						entity.addWeapon(Weapons.getWeapon(weapon));
+						Weapon weapon = Weapons.getWeapon((Integer) w);
+						if (weapon == null) {
+							throw new Exception("No such weapon: " + w);
+						}
+						entity.addWeapon(weapon);
 					}
 				}
 				JSONArray chips = e.getJSONArray("chips");
