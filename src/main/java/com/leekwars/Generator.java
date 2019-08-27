@@ -15,6 +15,8 @@ import java.util.TreeMap;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.game.DbResolver;
+import com.leekwars.game.Log;
 import com.leekwars.game.Util;
 import com.leekwars.game.attack.chips.Chip;
 import com.leekwars.game.attack.chips.Chips;
@@ -35,6 +37,8 @@ import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 
 public class Generator {
+
+	private static final String TAG = Generator.class.getSimpleName();
 	
 	static RandomGenerator randomGenerator = new RandomGenerator() {
 		private long n = 0;
@@ -131,6 +135,7 @@ public class Generator {
 					1212, // team id
 					"team",	1212, // ai id
 					"ai", "farmer", "France", 0 /* hat */);
+				Log.i(TAG, "Create entity " + entity.getName());
 				JSONArray weapons = e.getJSONArray("weapons");
 				if (weapons != null) {
 					for (Object w : weapons) {
@@ -169,7 +174,7 @@ public class Generator {
 		}
 
 		try {
-			// System.out.println("Start fight...");
+			Log.i(TAG, "Start fight...");
 			fight.startFight();
 			fight.finishFight();
 			
@@ -198,7 +203,7 @@ public class Generator {
 	
 	public static void loadWeapons() {
 		try {
-			// System.out.print("- Loading weapons... ");
+			Log.start(TAG, "- Loading weapons... ");
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
@@ -206,7 +211,7 @@ public class Generator {
 						weapon.getInteger("max_range"), weapon.getJSONArray("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
-			// System.out.println(weapons.size() + " weapons loaded.");
+			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -214,7 +219,7 @@ public class Generator {
 	
 	public static void loadChips() {
 		try {
-			// System.out.print("- Loading chips... ");
+			Log.start(TAG, "- Loading chips... ");
 			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
@@ -223,7 +228,7 @@ public class Generator {
 						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"), 
 						chip.getInteger("template"), chip.getString("name")));
 			}
-			// System.out.println(chips.size() + " chips loaded.");
+			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
