@@ -1582,7 +1582,7 @@ public class EntityAI extends AI {
 					path = fight.getMap().getPathBeetween(this, mEntity.getCell(), target, null);
 
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.size() > pm ? path.subList(0, pm) : path);
+					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(pm, path.size())));
 				}
 			}
 		}
@@ -1605,7 +1605,7 @@ public class EntityAI extends AI {
 			if (targets.size() != 0) {
 				List<Cell> path = Pathfinding.getAStarPath(this, mEntity.getCell(), targets);
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.size() > pm ? path.subList(0, pm) : path);
+					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(pm, path.size())));
 				}
 			}
 		}
@@ -1628,7 +1628,7 @@ public class EntityAI extends AI {
 			if (targets.size() != 0) {
 				List<Cell> path = Pathfinding.getAStarPath(this, mEntity.getCell(), targets);
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.size() > pm ? path.subList(0, pm) : path);
+					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(pm, path.size())));
 				}
 			}
 		}
