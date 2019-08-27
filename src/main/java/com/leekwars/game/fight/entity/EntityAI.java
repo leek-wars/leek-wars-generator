@@ -269,7 +269,7 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Undefined Error" }, e.getStackTrace());
 			if (fp) {
 				ErrorManager.registerAIError(fight, mEntity, this.getErrorMessage(e), e);
-				System.out.println("Informations sur l'erreur");
+				Log.i(TAG, "Informations sur l'erreur");
 				fp = false;
 			}
 		} catch (Throwable e) {

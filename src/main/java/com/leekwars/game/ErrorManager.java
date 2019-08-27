@@ -5,22 +5,21 @@ import com.leekwars.game.fight.entity.Entity;
 
 public class ErrorManager {
 
-	public static void exception(Throwable e) {
+	private static final String TAG = ErrorManager.class.getSimpleName();
 
-		System.out.println(e);
-		System.out.println(traceToString(e));
+	public static void exception(Throwable e) {
+		Log.i(TAG, e.getMessage());
+		Log.i(TAG, traceToString(e));
 	}
 
 	public static void exception(Throwable e, int ai) {
-
-		System.out.println(e);
-		System.out.println(traceToString(e));
+		Log.i(TAG, e.getMessage());
+		Log.i(TAG, traceToString(e));
 	}
 
 	public static void exceptionFight(Throwable e, int fight) {
-
-		System.out.println(e);
-		System.out.println(traceToString(e));
+		Log.i(TAG, e.getMessage());
+		Log.i(TAG, traceToString(e));
 	}
 
 	public static String traceToString(Throwable throwable) {
