@@ -123,4 +123,18 @@ public class Util {
 		}
 	}
 
+	public static class Worker extends Thread {
+		private final Process process;
+		public Integer exit;
+		public Worker(Process process) {
+			this.process = process;
+		}
+		public void run() {
+			try {
+				exit = process.waitFor();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
