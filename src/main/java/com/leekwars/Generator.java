@@ -158,17 +158,21 @@ public class Generator {
 					}
 				}
 				try {
+					int farmer = e.getIntValue("farmer");
 					String aiFile = e.getString("ai");
 					if (aiFile != null) {
-						// System.out.println("Compile AI " + aiFile + "...");
-						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", "generator.jar", nocache);
-						entity.setAI(ai);
-						ai.setEntity(entity);
-						int farmer = e.getIntValue("farmer");
-						if (!logs.containsKey(farmer)) {
-							logs.put(farmer, new LeekLog(entity));
+						Log.i(TAG, "Compile AI " + aiFile + "...");
+						((DbResolver) LeekScript.getResolver()).setFarmer(farmer);
+						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", "../../generator-v1/generator.jar", nocache);
+						Log.i(TAG, "AI " + aiFile + " compiled!");
+						if (ai != null) {
+							entity.setAI(ai);
+							ai.setEntity(entity);
+							if (!logs.containsKey(farmer)) {
+								logs.put(farmer, new LeekLog(entity));
+							}
+							ai.setLogs(logs.get(farmer));
 						}
-						ai.setLogs(logs.get(farmer));
 					}
 				} catch (LeekScriptException | LeekCompilerException e1) {
 					e1.printStackTrace();
