@@ -29,6 +29,7 @@ import com.leekwars.game.leek.LeekLog;
 import com.leekwars.game.leek.Register;
 import com.leekwars.game.maps.Cell;
 import com.leekwars.game.maps.Pathfinding;
+import com.leekwars.game.Log;
 
 import leekscript.runner.AI;
 import leekscript.runner.LeekOperations;
@@ -46,6 +47,7 @@ import leekscript.runner.values.VariableLeekValue;
 public class EntityAI extends AI {
 
 	public static final int ERROR_LOG_COST = 1000;
+	private static final String TAG = EntityAI.class.getSimpleName();
 
 	protected static class LeekMessage {
 		private final int mAuthor;
@@ -262,8 +264,7 @@ public class EntityAI extends AI {
 			ErrorManager.exception(e, ai_id);
 
 			fight.statistics.addErrors(1);
-			System.out.println("Erreur importante dans l'IA " + ai_id + "  " + e.getMessage());
-//			System.out.println(e);
+			Log.i(TAG, "Erreur importante dans l'IA " + ai_id + "  " + e.getMessage());
 
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Undefined Error" }, e.getStackTrace());
 			if (fp) {
