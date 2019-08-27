@@ -1,11 +1,7 @@
 package com.leekwars;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -204,9 +200,9 @@ public class Generator {
 			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
 			
 			// Write to file
-			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
-				writer.write(report.toString());
-			}
+			// try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
+			// 	writer.write(report.toString());
+			// }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
