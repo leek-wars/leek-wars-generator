@@ -440,7 +440,7 @@ public class Fight {
 		try {
 			for (Entity e : bootorder.compute()) {
 				this.order.addEntity(e);
-				actions.addEntity(e, e.hasValidAI(fullType));
+				actions.addEntity(e);
 				initialOrder.add(e);
 			}
 		} catch (Exception e) {
@@ -770,7 +770,7 @@ public class Fight {
 		target.setPlayer(invoc);
 
 		// On l'ajoute dans les infos du combat
-		actions.addEntity(invoc, true);
+		actions.addEntity(invoc);
 
 		// On balance l'action
 		actions.log(new ActionInvocation(invoc));

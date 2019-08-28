@@ -14,6 +14,7 @@ public class Actions {
 
 	private final List<Action> actions;
 
+	private final List<Entity> entities = new ArrayList<Entity>();
 	private final JSONArray leeks = new JSONArray();
 	private final JSONObject map = new JSONObject();
 
@@ -47,10 +48,18 @@ public class Actions {
 		retour.put("map", map);
 		retour.put("actions", json);
 
+		JSONObject dead = new JSONObject();
+		for (Entity entity : entities) {
+			dead.put(String.valueOf(entity.getId()), entity.isDead());
+		}
+		retour.put("dead", dead);
+
 		return retour;
 	}
 
-	public void addEntity(Entity entity, boolean validAI) {
+	public void addEntity(Entity entity) {
+
+		entities.add(entity);
 
 		JSONObject object = new JSONObject();
 
