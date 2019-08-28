@@ -2,10 +2,13 @@ package com.leekwars.game.fight.entity;
 
 import leekscript.runner.values.FunctionLeekValue;
 
+import com.leekwars.game.Log;
 import com.leekwars.game.fight.summons.SummonTemplate;
 import com.leekwars.game.fight.summons.Summons;
 
 public class Summon extends Entity {
+
+	private static final String TAG = Summon.class.getSimpleName();
 
 	protected Entity mOwner;
 	protected int mType;
@@ -47,7 +50,7 @@ public class Summon extends Entity {
 		if (invocation_template != null) {
 			return invocation_template.createInvocation(owner, ai, id, level);
 		} else {
-			System.out.println("ERREUR : Invocation " + type + " inexistante");
+			Log.e(TAG, "Invocation " + type + " inexistante");
 		}
 		return null;
 	}

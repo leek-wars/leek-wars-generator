@@ -21,6 +21,8 @@ import com.leekwars.game.attack.weapons.Weapons;
 import com.leekwars.game.fight.Fight;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.EntityAI;
+import com.leekwars.game.fight.summons.SummonTemplate;
+import com.leekwars.game.fight.summons.Summons;
 import com.leekwars.game.leek.Leek;
 import com.leekwars.game.leek.LeekLog;
 import com.leekwars.game.trophy.TrophyVariables;
@@ -89,6 +91,7 @@ public class Generator {
 		}
 		loadWeapons();
 		loadChips();
+		loadSummons();
 		
 		try {
 			runScenario(scenario, nocache);
@@ -236,6 +239,20 @@ public class Generator {
 						chip.getInteger("template"), chip.getString("name")));
 			}
 			Log.end(chips.size() + " chips loaded.");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void loadSummons() {
+		try {
+			Log.start(TAG, "- Loading summons... ");
+			JSONObject summons = JSON.parseObject(Util.readFile("data/summons.json"));
+			for (String id : summons.keySet()) {
+				JSONObject summon = summons.getJSONObject(id);
+				Summons.addInvocationTemplate(new SummonTemplate(Integer.parseInt(id), summon.getString("name"), summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
+			}
+			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
