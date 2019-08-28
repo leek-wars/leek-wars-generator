@@ -5,8 +5,6 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.attack.chips.Chip;
-import com.leekwars.game.attack.weapons.Weapon;
 import com.leekwars.game.fight.entity.Entity;
 import com.leekwars.game.fight.entity.Summon;
 import com.leekwars.game.maps.Cell;
