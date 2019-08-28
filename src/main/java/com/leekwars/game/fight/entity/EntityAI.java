@@ -88,6 +88,7 @@ public class EntityAI extends AI {
 
 	public EntityAI(Entity entity, LeekLog logs) {
 		this.mEntity = entity;
+		this.logs = logs;
 //		if (ai == null || ai.getValid() == 0) {
 //			mIsValid = false;
 //			log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
