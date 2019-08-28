@@ -11,6 +11,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.leekwars.Generator;
 import com.leekwars.game.ErrorManager;
 import com.leekwars.game.FightConstants;
+import com.leekwars.game.Log;
 import com.leekwars.game.attack.Attack;
 import com.leekwars.game.attack.EffectParameters;
 import com.leekwars.game.attack.chips.Chip;
@@ -44,6 +45,8 @@ import com.leekwars.game.trophy.TrophyManager;
 import leekscript.runner.values.FunctionLeekValue;
 
 public class Fight {
+
+	public final static String TAG = Fight.class.getSimpleName();
 
 	// Maximum number of turns
 	public final static int MAX_TURNS = 64;
@@ -477,6 +480,7 @@ public class Fight {
 
 		ActionEntityTurn lt;
 		actions.log(lt = new ActionEntityTurn(current));
+		Log.i(TAG, "Start turn of " + current.getName() + " " + current.getAI());
 
 		current.applyCoolDown();
 		current.startTurn();
