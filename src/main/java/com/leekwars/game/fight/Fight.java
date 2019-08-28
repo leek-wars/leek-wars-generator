@@ -468,7 +468,6 @@ public class Fight {
 
 	public void finishFight() {
 		mState = Fight.STATE_FINISHED;
-		mWinteam = -1;
 	}
 
 	public void startTurn() {

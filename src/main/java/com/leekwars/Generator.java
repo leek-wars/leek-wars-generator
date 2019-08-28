@@ -190,6 +190,7 @@ public class Generator {
 			
 			JSONObject report = new JSONObject();
 			report.put("fight", fight.getActions().toJSON());
+			report.put("winner", fight.getWinner());
 			
 			JSONObject logsJSON = new JSONObject();
 			for (Integer farmer : logs.keySet()) {
