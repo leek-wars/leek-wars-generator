@@ -191,14 +191,12 @@ public class Generator {
 			JSONObject report = new JSONObject();
 			report.put("fight", fight.getActions().toJSON());
 			report.put("winner", fight.getWinner());
-			
 			JSONObject logsJSON = new JSONObject();
 			for (Integer farmer : logs.keySet()) {
 				logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
 			}
 			report.put("logs", logsJSON);
 			
-			// System.out.println("Result:");
 			System.out.println(report);
 			
 			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
