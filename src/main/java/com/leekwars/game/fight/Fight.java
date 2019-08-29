@@ -479,7 +479,7 @@ public class Fight {
 
 		ActionEntityTurn lt;
 		actions.log(lt = new ActionEntityTurn(current));
-		Log.i(TAG, "Start turn of " + current.getName() + " " + current.getAI());
+		Log.i(TAG, "Start turn of " + current.getName());
 
 		current.applyCoolDown();
 		current.startTurn();
