@@ -58,10 +58,11 @@ public class Generator {
 	};
 
 	public static void main(String[] args) {
-		String scenario = null;
+		String file = null;
 		boolean nocache = false;
 		boolean db_resolver = false;
 		boolean verbose = false;
+		boolean compile = false;
 
 		for (String arg : args) {
 			if (arg.startsWith("--")) {
@@ -69,18 +70,18 @@ public class Generator {
 					case "nocache": nocache = true; break;
 					case "dbresolver": db_resolver = true; break;
 					case "verbose": verbose = true; break;
+					case "compile": compile = true; break;
 				}
 			} else {
-				scenario = arg;
+				file = arg;
 			}
 		}
 		Log.enable(verbose);
 		Log.i(TAG, "Generator v1");
-		if (scenario == null) {
-			Log.i(TAG, "No scenario file passed!");
+		if (file == null) {
+			Log.i(TAG, "No scenario/ai file passed!");
 			return;
 		}
-		// System.out.println("- Scenario : " + args[0]);
 		
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
@@ -93,10 +94,26 @@ public class Generator {
 		loadChips();
 		loadSummons();
 		
+		if (compile) {
+			compileAI(file, nocache);
+		} else {
+			try {
+				runScenario(file, nocache);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static void compileAI(String file, boolean nocache) {
+		Log.i(TAG, "Compile AI " + file + "...");
 		try {
-			runScenario(scenario, nocache);
-		} catch (Exception e) {
-			e.printStackTrace();
+			EntityAI ai = (EntityAI) LeekScript.compileFile(file, "com.leekwars.game.fight.entity.EntityAI", "generator.jar", nocache);
+			Log.s(TAG, "Compile success!");
+		} catch (Exception e1) {
+			System.out.println("AI " + file + " not compiled");
+			System.out.println(e1.getMessage());
+			Log.e(TAG, "Compile failed!");
 		}
 	}
 
@@ -156,25 +173,24 @@ public class Generator {
 						entity.addChip(Chips.getChip(chip));
 					}
 				}
-				try {
-					int farmer = e.getIntValue("farmer");
-					String aiFile = e.getString("ai");
-					if (aiFile != null) {
-						Log.i(TAG, "Compile AI " + aiFile + "...");
-						((DbResolver) LeekScript.getResolver()).setFarmer(farmer);
+				int farmer = e.getIntValue("farmer");
+				String aiFile = e.getString("ai");
+				if (aiFile != null) {
+					Log.i(TAG, "Compile AI " + aiFile + "...");
+					((DbResolver) LeekScript.getResolver()).setFarmer(farmer);
+					try {
 						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", "../../generator-v1/generator.jar", nocache);
 						Log.i(TAG, "AI " + aiFile + " compiled!");
-						if (ai != null) {
-							entity.setAI(ai);
-							ai.setEntity(entity);
-							if (!logs.containsKey(farmer)) {
-								logs.put(farmer, new LeekLog(entity));
-							}
-							ai.setLogs(logs.get(farmer));
+						entity.setAI(ai);
+						ai.setEntity(entity);
+						if (!logs.containsKey(farmer)) {
+							logs.put(farmer, new LeekLog(entity));
 						}
+						ai.setLogs(logs.get(farmer));
+					} catch (Exception e1) {
+						Log.w(TAG, "AI " + aiFile + " not compiled");
+						Log.w(TAG, e1.getMessage());
 					}
-				} catch (LeekScriptException | LeekCompilerException e1) {
-					e1.printStackTrace();
 				}
 				fight.addEntity(t, entity);
 

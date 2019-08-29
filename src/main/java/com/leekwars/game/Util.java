@@ -21,6 +21,7 @@ public class Util {
 
 	private static HashSet<Integer> primes = null;
 	public static String BLUE = "\033[1;34m";
+	public static String GREEN = "\033[1;32m";
 	public static String YELLOW = "\033[1;33m";
 	public static String RED = "\033[1;31m";
 	public static String END_COLOR = "\033[0m";

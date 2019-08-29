@@ -12,6 +12,10 @@ public class Log {
 		if (enabled)
 			System.out.println("[" + Util.BLUE + tag + Util.END_COLOR + "] " + s);
 	}
+	public static void s(String tag, String s) {
+		if (enabled)
+			System.out.println("[" + Util.GREEN + tag + Util.END_COLOR + "] " + s);
+	}
 	public static void w(String tag, String s) {
 		if (enabled)
 			System.out.println("[" + Util.YELLOW + tag + Util.END_COLOR + "] " + s);
