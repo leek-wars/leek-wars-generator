@@ -2775,8 +2775,8 @@ public class EntityAI extends AI {
 	}
 
 	@Override
-	protected String getErrorString() {
-		return null;
+	protected String[] getErrorString() {
+		return new String[] {};
 	}
 
 	@Override
