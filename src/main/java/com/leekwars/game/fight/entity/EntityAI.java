@@ -2328,10 +2328,18 @@ public class EntityAI extends AI {
 	}
 
 	public boolean isWeapon(int id) {
+		Integer i = Items.getType(id);
+		if (i == null) {
+			return false;
+		}
 		return Items.getType(id) == Items.TYPE_WEAPON;
 	}
 
 	public boolean isChip(int id) {
+		Integer i = Items.getType(id);
+		if (i == null) {
+			return false;
+		}
 		return Items.getType(id) == Items.TYPE_CHIP;
 	}
 
