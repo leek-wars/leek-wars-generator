@@ -174,7 +174,11 @@ public class Generator {
 					}
 				}
 				int farmer = e.getIntValue("farmer");
+				if (!logs.containsKey(farmer)) {
+					logs.put(farmer, new LeekLog(entity));
+				}
 				String aiFile = e.getString("ai");
+				boolean validAI = false;
 				if (aiFile != null) {
 					Log.i(TAG, "Compile AI " + aiFile + "...");
 					((DbResolver) LeekScript.getResolver()).setFarmer(farmer);
@@ -183,17 +187,18 @@ public class Generator {
 						Log.i(TAG, "AI " + aiFile + " compiled!");
 						entity.setAI(ai);
 						ai.setEntity(entity);
-						if (!logs.containsKey(farmer)) {
-							logs.put(farmer, new LeekLog(entity));
-						}
 						ai.setLogs(logs.get(farmer));
+						validAI = true;
 					} catch (Exception e1) {
 						Log.w(TAG, "AI " + aiFile + " not compiled");
 						Log.w(TAG, e1.getMessage());
 					}
 				}
+				if (!validAI) {
+					Log.w(TAG, "AI " + aiFile + " is not valid.");
+					logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
+				}
 				fight.addEntity(t, entity);
-
 				fight.getTrophyManager().addFarmer(new TrophyVariables(entity.getFarmer()));
 			}
 			t++;
