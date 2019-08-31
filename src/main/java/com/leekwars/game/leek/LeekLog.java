@@ -47,15 +47,7 @@ public class LeekLog extends AILog {
 		stream = new AILog.Stream() {
 			@Override
 			public void write(JSONArray array) {
-				array.set(0, mEntity.getFId());
-				int id = mLogs == null ? 0 : mLogs.getNextId();
-				if (mAction < id) {
-					mCurArray = new JSONArray();
-					mObject.put(String.valueOf(id), mCurArray);
-					mAction = id;
-				}
-				mNb++;
-				mCurArray.add(array);
+				addAction(array);
 			}
 		};
 	}
@@ -65,22 +57,27 @@ public class LeekLog extends AILog {
 	}
 
 	private void addAction(JSONArray action) {
-		
+		action.set(0, mEntity.getFId());
+		int id = mLogs == null ? 0 : mLogs.getNextId();
+		if (mAction < id) {
+			mCurArray = new JSONArray();
+			mObject.put(String.valueOf(id), mCurArray);
+			mAction = id;
+		}
+		mNb++;
+		mCurArray.add(action);
 	}
 
 	public void addSystemLog(Entity leek, int type, String trace, String key, String[] parameters) {
-
 		int paramSize = 0;
 		if (parameters != null) {
 			for (String p : parameters) {
 				paramSize += p.length();
 			}
 		}
-
 		if (!addSize(20 + trace.length() + key.length() + paramSize)) {
 			return;
 		}
-
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(type);
