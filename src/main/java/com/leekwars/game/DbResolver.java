@@ -26,7 +26,7 @@ public class DbResolver implements Resolver<DbContext> {
 		String result = resolve_internal(farmer, context.getFolder(), path);
 		
 		if (result.equals("0")) {
-			System.out.println("AI " + path + " not found!");
+			Log.w(TAG, "AI " + path + " not found!");
 			return null;
 		} else {
 			Log.i(TAG, "Resolved ai: " + result);
