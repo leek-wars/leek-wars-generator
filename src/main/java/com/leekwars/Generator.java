@@ -27,6 +27,8 @@ import com.leekwars.game.leek.Leek;
 import com.leekwars.game.leek.LeekLog;
 import com.leekwars.game.trophy.TrophyVariables;
 
+import leekscript.compiler.AIFile;
+import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.RandomGenerator;
 import leekscript.functions.Functions;
@@ -62,6 +64,7 @@ public class Generator {
 		boolean db_resolver = false;
 		boolean verbose = false;
 		boolean compile = false;
+		int farmer = 0;
 
 		for (String arg : args) {
 			if (arg.startsWith("--")) {
@@ -70,6 +73,9 @@ public class Generator {
 					case "dbresolver": db_resolver = true; break;
 					case "verbose": verbose = true; break;
 					case "compile": compile = true; break;
+				}
+				if (arg.startsWith("--farmer=")) {
+					farmer = Integer.parseInt(arg.substring("--farmer=".length()));
 				}
 			} else {
 				file = arg;
@@ -87,7 +93,9 @@ public class Generator {
 		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
 		LeekScript.setRandomGenerator(randomGenerator);
 		if (db_resolver) {
-			LeekScript.setResolver(new DbResolver("./resolver.php"));
+			DbResolver dbResolver = new DbResolver("./resolver.php");
+			dbResolver.setFarmer(farmer);
+			LeekScript.setResolver(dbResolver);
 		}
 		loadWeapons();
 		loadChips();
@@ -104,11 +112,18 @@ public class Generator {
 	private static void compileAI(String file, boolean nocache) {
 		Log.i(TAG, "Compile AI " + file + "...");
 		try {
-			EntityAI ai = (EntityAI) LeekScript.compileFile(file, "com.leekwars.game.fight.entity.EntityAI", "generator.jar", nocache);
-			Log.s(TAG, "Compile success!");
+			AIFile<?> ai = LeekScript.getResolver().resolve(file, null);
+			long t = System.currentTimeMillis();
+			String result = new IACompiler().analyze(ai);
+			long time = System.currentTimeMillis() - t;
+			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
+			Log.s(TAG, "Analyze success!");
+			System.out.println(result);
 		} catch (Exception e1) {
-			System.out.println("AI " + file + " not compiled");
-			System.out.println(e1.getMessage());
+			Log.e(TAG, "AI " + file + " not compiled");
+			if (e1.getMessage() != null) {
+				Log.e(TAG, e1.getMessage());
+			}
 			Log.e(TAG, "Compile failed!");
 		}
 	}

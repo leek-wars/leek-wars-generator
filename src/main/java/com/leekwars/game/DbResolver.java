@@ -9,7 +9,7 @@ public class DbResolver implements Resolver<DbContext> {
 	private static final String TAG = DbResolver.class.getSimpleName();
 
 	private String command;
-	private int farmer;
+	private int farmer = 0;
 
 	public DbResolver(String command) {
 		this.command = command;
@@ -37,7 +37,7 @@ public class DbResolver implements Resolver<DbContext> {
 			String code = Util.readFile("ai/" + aiID + ".leek");
 
 			DbContext newContext = new DbContext(folderID);
-			return new AIFile<DbContext>(path, code, newContext);
+			return new AIFile<DbContext>(path, code, newContext, aiID);
 		}
 	}
 
