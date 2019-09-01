@@ -1278,7 +1278,7 @@ public enum FightFunctions implements ILeekFunction {
 
 	private int mArguments;
 	private int mArgumentsMin;
-	private Integer mOperations = null;
+	private int mOperations = 1;
 	protected VariableOperations mVariableOperations = null;
 
 	public static final int DOUBLE = 1;
@@ -1298,13 +1298,6 @@ public enum FightFunctions implements ILeekFunction {
 	FightFunctions(int arguments, int arguments_max) {
 		mArgumentsMin = arguments;
 		mArguments = arguments_max;
-	}
-
-	public static int isFunction(String name) {
-		FightFunctions f = getValue(name);
-		if (f == null)
-			return -1;
-		return f.mArguments;
 	}
 
 	@Override
@@ -1333,15 +1326,6 @@ public enum FightFunctions implements ILeekFunction {
 	}
 
 	public int getOperations() {
-		if (mOperations == null) {
-			if (!Functions.isReady()) {
-				return 0;
-			}
-			mOperations = Functions.getOperations(this.name());
-			if (mOperations <= 0) {
-				mOperations = 1;
-			}
-		}
 		return mOperations;
 	}
 
@@ -1372,6 +1356,10 @@ public enum FightFunctions implements ILeekFunction {
 
 	public int cost() {
 		return 1;
+	}
+
+	public void setOperations(int operations) {
+		mOperations = operations;
 	}
 
 	public void addOperations(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
