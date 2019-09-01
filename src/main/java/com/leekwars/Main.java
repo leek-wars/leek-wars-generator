@@ -35,7 +35,7 @@ import leekscript.functions.Functions;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 
-public class Generator {
+public class Main {
 
 	private static final String TAG = Generator.class.getSimpleName();
 	
