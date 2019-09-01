@@ -28,9 +28,7 @@ import com.leekwars.game.leek.LeekLog;
 import com.leekwars.game.trophy.TrophyVariables;
 
 import leekscript.compiler.LeekScript;
-import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.RandomGenerator;
-import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.functions.Functions;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
@@ -99,11 +97,7 @@ public class Generator {
 		if (compile) {
 			compileAI(file, nocache);
 		} else {
-			try {
-				runScenario(file, nocache);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			runScenario(file, nocache);
 		}
 	}
 
@@ -119,7 +113,7 @@ public class Generator {
 		}
 	}
 
-	private static void runScenario(String scenarioFile, boolean nocache) throws Exception {
+	private static void runScenario(String scenarioFile, boolean nocache) {
 		JSONObject json = null;
 		try {
 			String data = new String(Files.readAllBytes(Paths.get(scenarioFile)), StandardCharsets.UTF_8);
@@ -163,7 +157,8 @@ public class Generator {
 					for (Object w : weapons) {
 						Weapon weapon = Weapons.getWeapon((Integer) w);
 						if (weapon == null) {
-							throw new Exception("No such weapon: " + w);
+							Log.e(TAG, "No such weapon: " + w);
+							return;
 						}
 						entity.addWeapon(weapon);
 					}
