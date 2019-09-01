@@ -9,7 +9,7 @@ public class DefaultUserAI extends AI {
 	}
 
 	@Override
-	protected String getErrorString() {
+	protected String[] getErrorString() {
 		return null;
 	}
 
