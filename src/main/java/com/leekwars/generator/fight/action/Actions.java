@@ -50,7 +50,7 @@ public class Actions {
 
 		JSONObject dead = new JSONObject();
 		for (Entity entity : entities) {
-			dead.put(String.valueOf(entity.getId()), entity.isDead());
+			dead.put(String.valueOf(entity.getFId()), entity.isDead());
 		}
 		retour.put("dead", dead);
 
