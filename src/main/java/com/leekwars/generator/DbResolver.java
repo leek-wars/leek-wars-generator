@@ -9,7 +9,6 @@ public class DbResolver implements Resolver<DbContext> {
 	private static final String TAG = DbResolver.class.getSimpleName();
 
 	private String command;
-	private int farmer = 0;
 
 	public DbResolver(String command) {
 		this.command = command;
@@ -20,10 +19,11 @@ public class DbResolver implements Resolver<DbContext> {
 
 		DbContext context = (DbContext) basecontext;
 		if (context == null) {
-			context = new DbContext(0);
+			Log.w(TAG, "No context, missing farmer and folder!");
+			return null;
 		}
 
-		String result = resolve_internal(farmer, context.getFolder(), path);
+		String result = resolve_internal(context.getFarmer(), context.getFolder(), path);
 		
 		if (result.equals("0")) {
 			Log.w(TAG, "AI " + path + " not found!");
@@ -34,9 +34,9 @@ public class DbResolver implements Resolver<DbContext> {
 			int folderID = Integer.parseInt(parts[0]);
 			int aiID = Integer.parseInt(parts[1]);
 
-			String code = Util.readFile("ai/" + aiID + ".leek");
+			String code = Util.readFile("../ai/" + aiID + ".leek");
 
-			DbContext newContext = new DbContext(folderID);
+			DbContext newContext = new DbContext(context.getFarmer(), folderID);
 			return new AIFile<DbContext>(path, code, newContext, aiID);
 		}
 	}
@@ -56,10 +56,8 @@ public class DbResolver implements Resolver<DbContext> {
 		}
 	}
 
-	public int getFarmer() {
-		return farmer;
-	}
-	public void setFarmer(int farmer) {
-		this.farmer = farmer;
+	@Override
+	public ResolverContext createContext(int farmer) {
+		return new DbContext(farmer, 0);
 	}
 }
