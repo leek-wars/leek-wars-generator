@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSON;
@@ -2462,38 +2463,53 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getRegisters() throws LeekRunException, Exception {
+		Map<String, String> registers;
+		if (mEntity.isSummon()) {
+			registers = mEntity.getSummoner().getAllRegisters();
+		} else {
+			registers = mEntity.getAllRegisters();
+		}
 		ArrayLeekValue array = new ArrayLeekValue();
-		if (mEntity.getRegister() == null)
-			return array;
-		for (Entry<String, String> e : mEntity.getRegister().getValues().entrySet()) {
+		for (Entry<String, String> e : registers.entrySet()) {
 			array.getOrCreate(this, new StringLeekValue( e.getKey())).set(this, new StringLeekValue(e.getValue()));
 		}
 		return array;
 	}
 
 	public AbstractLeekValue getRegister(AbstractLeekValue key) throws LeekRunException {
-		if (mEntity.getRegister() == null)
+		String keyString = key.getString(this);
+		String register;
+		if (mEntity.isSummon()) {
+			register = mEntity.getSummoner().getRegister(keyString);
+		} else {
+			register = mEntity.getRegister(keyString);
+		}
+		if (register == null) {
 			return LeekValueManager.NULL;
-		String value = mEntity.getRegister().get(key.getString(this));
-		if (value == null)
-			return LeekValueManager.NULL;
-		return new StringLeekValue( value);
+		}
+		return new StringLeekValue(register);
 	}
 
 	public AbstractLeekValue setRegister(AbstractLeekValue key, AbstractLeekValue value) throws LeekRunException {
-		if (mEntity.getRegister() == null) {
-			fight.setRegister(mEntity.getId(), new Register(true));
+		String keyString = key.getString(this);
+		String valueString = value.getString(this);
+		boolean r;
+		if (mEntity.isSummon()) {
+			r = mEntity.getSummoner().setRegister(keyString, valueString);
+		} else {
+			r = mEntity.setRegister(keyString, valueString);
 		}
-		Register r = mEntity.getRegister();
-		if (r == null) return LeekValueManager.getLeekBooleanValue(false);
-		boolean b = r.set(key.getString(this), value.getString(this));
-		return LeekValueManager.getLeekBooleanValue(b);
+		return LeekValueManager.getLeekBooleanValue(r);
 	}
 
 	public AbstractLeekValue deleteRegister(AbstractLeekValue key) throws LeekRunException {
-		if (mEntity.getRegister() == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekBooleanValue(mEntity.getRegister().delete(key.getString(this)));
+		String keyString = key.getString(this);
+		if (mEntity.isSummon()) {
+			mEntity.getSummoner().deleteRegister(keyString);
+		} else {
+			mEntity.deleteRegister(keyString);
+		}
+		return LeekValueManager.NULL;
 	}
 
 	public void arrayFlatten(ArrayLeekValue array, ArrayLeekValue retour, int depth) throws Exception {

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.effect.EffectPoison;
@@ -156,12 +157,44 @@ public abstract class Entity {
 
 	public abstract int getType();
 
-	public void setRegister(Register registre) {
+	public void setRegisters(Register registre) {
 		mRegister = registre;
 	}
 
-	public Register getRegister() {
+	public Register getRegisters() {
 		return mRegister;
+	}
+	private void loadRegisters() {
+		String v = Generator.getRegisterManager().getRegisters(getId());
+		if (v == null) {
+			mRegister = new Register(true);
+		} else {
+			mRegister = Register.fromJSONString(v);
+		}
+	}
+
+	public String getRegister(String key) {
+		if (mRegister == null) {
+			loadRegisters();
+		}
+		return mRegister.get(key);
+	}
+	public Map<String, String> getAllRegisters() {
+		if (mRegister == null) {
+			loadRegisters();
+		}
+		return mRegister.getValues();
+	}
+	public boolean setRegister(String key, String value) {
+		if (mRegister == null) {
+			loadRegisters();
+		}
+		return mRegister.set(key, value);
+	}
+	public void deleteRegister(String key) {
+		if (mRegister != null) {
+			mRegister.delete(key);
+		}
 	}
 
 	public int getHat() {

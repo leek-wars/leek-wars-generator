@@ -185,6 +185,13 @@ public class Generator {
 				logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
 			}
 			report.put("logs", logsJSON);
+
+			// Save registers
+			for (Entity entity : fight.getEntities().values()) {
+				if (!entity.isSummon() && entity.getRegisters() != null && (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
+					getRegisterManager().saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
+				}
+			}
 			
 			return report.toJSONString();
 			

@@ -156,22 +156,6 @@ public class Fight {
 		return context;
 	}
 
-	public void setRegisters(java.util.Map<Integer, Register> registers) {
-		for (Entry<Integer, Entity> e : mEntities.entrySet()) {
-			Leek l = e.getValue().getLeek();
-			if (l != null && registers.containsKey(l.getId()))
-				l.setRegister(registers.get(l.getId()));
-		}
-	}
-
-	public void setRegister(int id, Register register) {
-		for (Entry<Integer, Entity> e : mEntities.entrySet()) {
-			Leek l = e.getValue().getLeek();
-			if (l != null && l.getId() == id)
-				l.setRegister(register);
-		}
-	}
-
 	public void addFlag(int team, int flag) {
 		teams.get(team).addFlag(flag);
 	}
