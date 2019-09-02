@@ -717,7 +717,7 @@ public class Fight {
 			return Attack.USE_INVALID_TARGET;
 		}
 
-		if (target_entity.getOwnerId() != -1) {
+		if (target_entity.isSummon()) {
 			// It's a summon
 			if (teams.get(target_entity.getTeam()).getSummonCount() >= SUMMON_LIMIT) {
 				return Attack.USE_TOO_MANY_SUMMONS;

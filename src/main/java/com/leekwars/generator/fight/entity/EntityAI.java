@@ -404,11 +404,11 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue isSummon(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekBooleanValue(mEntity.getOwnerId() != -1);
+			return LeekValueManager.getLeekBooleanValue(mEntity.isSummon());
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null)
-				return LeekValueManager.getLeekBooleanValue(l.getOwnerId() != -1);
+				return LeekValueManager.getLeekBooleanValue(l.isSummon());
 		}
 		return LeekValueManager.NULL;
 	}
@@ -437,11 +437,11 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue getSummoner(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getOwnerId());
+			return LeekValueManager.getLeekIntValue(mEntity.isSummon() ? mEntity.getSummoner().getFId(): -1);
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getOwnerId());
+				return LeekValueManager.getLeekIntValue(l.isSummon() ? l.getSummoner().getFId(): -1);
 		}
 		return LeekValueManager.NULL;
 	}

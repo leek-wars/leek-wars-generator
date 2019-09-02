@@ -86,7 +86,9 @@ public class Actions {
 		object.put("type", entity.getType());
 
 		object.put("summon", entity instanceof Summon);
-		object.put("owner", entity.getOwnerId());
+		if (entity.isSummon()) {
+			object.put("owner", entity.getSummoner().getFId());
+		}
 
 		leeks.add(object);
 	}

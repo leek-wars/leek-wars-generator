@@ -9,7 +9,7 @@ public class ActionInvocation implements Action {
 	private final int owner;
 
 	public ActionInvocation(Entity target) {
-		this.owner = target.getOwnerId();
+		this.owner = target.getSummoner().getFId();
 		this.target = target.getFId();
 		this.cell = target.getCell().getId();
 	}

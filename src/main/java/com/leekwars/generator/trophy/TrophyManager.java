@@ -274,7 +274,7 @@ public class TrophyManager {
 						total_life += l.getTotalLife();
 						if (l.getFarmer() <= 0)
 							continue;
-						if (l.getOwnerId() != -1)
+						if (l.isSummon())
 							continue;
 						if (!farmers.contains(l.getFarmer()))
 							farmers.add(l.getFarmer());

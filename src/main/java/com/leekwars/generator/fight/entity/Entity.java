@@ -154,10 +154,6 @@ public abstract class Entity {
 		return null;
 	}
 
-	public int getOwnerId() {
-		return -1;
-	}
-
 	public abstract int getType();
 
 	public void setRegister(Register registre) {
@@ -448,7 +444,7 @@ public abstract class Entity {
 		// Kill summons
 		List<Entity> entities = new ArrayList<Entity>(fight.getTeamEntities(getTeam()));
 		for (Entity e : entities) {
-			if (e.getOwnerId() == getFId()) {
+			if (e.isSummon() && e.getSummoner().getFId() == getFId()) {
 				fight.onPlayerDie(e, null);
 				e.die();
 			}
@@ -631,5 +627,12 @@ public abstract class Entity {
 
 	public EntityAI getAI() {
 		return mEntityAI;
+	}
+
+	public boolean isSummon() {
+		return this instanceof Summon;
+	}
+	public Entity getSummoner() {
+		return null;
 	}
 }
