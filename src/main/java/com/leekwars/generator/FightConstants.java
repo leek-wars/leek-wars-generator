@@ -1,7 +1,7 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
-import com.leekwars.game.attack.effect.Effect;
-import com.leekwars.game.fight.Fight;
+import com.leekwars.generator.attack.effect.Effect;
+import com.leekwars.generator.fight.Fight;
 
 import leekscript.runner.ILeekConstant;
 import leekscript.runner.LeekFunctions;

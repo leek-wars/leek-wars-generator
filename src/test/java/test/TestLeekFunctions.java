@@ -17,9 +17,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.leek.Leek;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.leek.Leek;
 
 public class TestLeekFunctions {
 	

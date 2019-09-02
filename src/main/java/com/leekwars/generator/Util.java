@@ -1,4 +1,4 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;

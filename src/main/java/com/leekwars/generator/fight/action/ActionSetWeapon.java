@@ -1,8 +1,8 @@
-package com.leekwars.game.fight.action;
+package com.leekwars.generator.fight.action;
 
 import com.alibaba.fastjson.JSONArray;
-import com.leekwars.game.attack.weapons.Weapon;
-import com.leekwars.game.fight.entity.Entity;
+import com.leekwars.generator.attack.weapons.Weapon;
+import com.leekwars.generator.fight.entity.Entity;
 
 public class ActionSetWeapon implements Action {
 

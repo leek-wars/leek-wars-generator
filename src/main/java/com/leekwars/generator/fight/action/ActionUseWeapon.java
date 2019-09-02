@@ -1,11 +1,11 @@
-package com.leekwars.game.fight.action;
+package com.leekwars.generator.fight.action;
 
 import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
-import com.leekwars.game.attack.weapons.Weapon;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.maps.Cell;
+import com.leekwars.generator.attack.weapons.Weapon;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.maps.Cell;
 
 public class ActionUseWeapon implements Action {
 

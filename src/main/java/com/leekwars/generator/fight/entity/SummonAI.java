@@ -1,4 +1,4 @@
-package com.leekwars.game.fight.entity;
+package com.leekwars.generator.fight.entity;
 
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.FunctionLeekValue;

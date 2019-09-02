@@ -1,4 +1,4 @@
-package com.leekwars.game.maps;
+package com.leekwars.generator.maps;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -13,10 +13,10 @@ import javax.imageio.ImageIO;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.Generator;
-import com.leekwars.game.ErrorManager;
-import com.leekwars.game.fight.Team;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.EntityAI;
+import com.leekwars.generator.ErrorManager;
+import com.leekwars.generator.fight.Team;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.EntityAI;
 
 public class Map {
 	

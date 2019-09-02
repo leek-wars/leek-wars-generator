@@ -1,7 +1,7 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
-import com.leekwars.game.fight.entity.EntityAI;
-import com.leekwars.game.leek.LeekLog;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.LeekLog;
 
 import leekscript.functions.Functions;
 import leekscript.functions.VariableOperations;
@@ -1322,7 +1322,7 @@ public enum FightFunctions implements ILeekFunction {
 	
 	@Override
 	public String getNamespace() {
-		return "com.leekwars.game.FightFunctions";
+		return "com.leekwars.generator.FightFunctions";
 	}
 
 	public int getOperations() {

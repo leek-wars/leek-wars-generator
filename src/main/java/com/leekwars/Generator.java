@@ -11,21 +11,21 @@ import java.util.TreeMap;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.DbResolver;
-import com.leekwars.game.Log;
-import com.leekwars.game.Util;
-import com.leekwars.game.attack.chips.Chip;
-import com.leekwars.game.attack.chips.Chips;
-import com.leekwars.game.attack.weapons.Weapon;
-import com.leekwars.game.attack.weapons.Weapons;
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.EntityAI;
-import com.leekwars.game.fight.summons.SummonTemplate;
-import com.leekwars.game.fight.summons.Summons;
-import com.leekwars.game.leek.Leek;
-import com.leekwars.game.leek.LeekLog;
-import com.leekwars.game.trophy.TrophyVariables;
+import com.leekwars.generator.DbResolver;
+import com.leekwars.generator.Log;
+import com.leekwars.generator.Util;
+import com.leekwars.generator.attack.chips.Chip;
+import com.leekwars.generator.attack.chips.Chips;
+import com.leekwars.generator.attack.weapons.Weapon;
+import com.leekwars.generator.attack.weapons.Weapons;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.fight.summons.SummonTemplate;
+import com.leekwars.generator.fight.summons.Summons;
+import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.trophy.TrophyVariables;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
@@ -35,7 +35,7 @@ import leekscript.functions.Functions;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 
-public class Main {
+public class Generator {
 
 	private static final String TAG = Generator.class.getSimpleName();
 	
@@ -89,8 +89,8 @@ public class Main {
 		}
 		
 		new File("ai/").mkdir();
-		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
-		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
+		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
+		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
 		LeekScript.setRandomGenerator(randomGenerator);
 		if (db_resolver) {
 			DbResolver dbResolver = new DbResolver("./resolver.php");
@@ -195,7 +195,7 @@ public class Main {
 					Log.i(TAG, "Compile AI " + aiFile + "...");
 					((DbResolver) LeekScript.getResolver()).setFarmer(farmer);
 					try {
-						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.game.fight.entity.EntityAI", "../../generator-v1/generator.jar", nocache);
+						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.generator.fight.entity.EntityAI", "../../generator-v1/generator.jar", nocache);
 						Log.i(TAG, "AI " + aiFile + " compiled!");
 						entity.setAI(ai);
 						ai.setEntity(entity);

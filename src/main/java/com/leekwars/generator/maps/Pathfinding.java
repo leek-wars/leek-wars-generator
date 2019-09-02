@@ -1,4 +1,4 @@
-package com.leekwars.game.maps;
+package com.leekwars.generator.maps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.leekwars.game.attack.Attack;
-import com.leekwars.game.fight.entity.EntityAI;
+import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.fight.entity.EntityAI;
 
 public class Pathfinding {
 

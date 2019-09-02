@@ -2,10 +2,10 @@ package test;
 
 import java.io.File;
 
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.EntityAI;
-import com.leekwars.game.leek.LeekLog;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.LeekLog;
 
 import leekscript.LSException;
 import leekscript.compiler.LeekScript;
@@ -17,12 +17,12 @@ public class GeneratorCompilation {
 	
 	static {
 		new File("ai/").mkdir();
-		LeekFunctions.setExtraFunctions("com.leekwars.game.FightFunctions");
-		LeekConstants.setExtraConstants("com.leekwars.game.FightConstants");
+		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
+		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
 	}
 
 	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, AbstractLeekValue s) throws Exception {
-		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.game.fight.entity.EntityAI", "generator.jar");
+		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", "generator.jar");
 		ai.setEntity(entity);
 		ai.setLogs(new LeekLog(entity));
 		ai.setFight(fight);

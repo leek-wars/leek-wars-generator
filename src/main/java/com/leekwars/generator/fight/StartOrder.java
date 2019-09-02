@@ -1,4 +1,4 @@
-package com.leekwars.game.fight;
+package com.leekwars.generator.fight;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.leekwars.Generator;
-import com.leekwars.game.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Entity;
 
 /*
  * Handle the computation of entities starting order

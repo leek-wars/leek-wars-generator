@@ -1,4 +1,4 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
 import java.text.Normalizer;
 import java.util.HashSet;

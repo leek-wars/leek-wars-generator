@@ -1,4 +1,4 @@
-package com.leekwars.game.fight;
+package com.leekwars.generator.fight;
 
 public class FightException extends Exception {
 

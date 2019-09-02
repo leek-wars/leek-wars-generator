@@ -1,4 +1,4 @@
-package com.leekwars.game.attack.effect;
+package com.leekwars.generator.attack.effect;
 
 public class EffectResurrect extends Effect {
 

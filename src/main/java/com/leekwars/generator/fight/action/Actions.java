@@ -1,14 +1,14 @@
-package com.leekwars.game.fight.action;
+package com.leekwars.generator.fight.action;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.Summon;
-import com.leekwars.game.maps.Cell;
-import com.leekwars.game.maps.Map;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Summon;
+import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.maps.Map;
 
 public class Actions {
 

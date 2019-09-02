@@ -1,6 +1,6 @@
-package com.leekwars.game.trophy;
+package com.leekwars.generator.trophy;
 
-import com.leekwars.game.fight.Fight;
+import com.leekwars.generator.fight.Fight;
 
 public class Trophy {
 

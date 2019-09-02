@@ -1,10 +1,10 @@
-package com.leekwars.game.fight;
+package com.leekwars.generator.fight;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.Summon;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Summon;
 
 public class Order {
 

@@ -1,13 +1,13 @@
-package com.leekwars.game.leek;
+package com.leekwars.generator.leek;
 
 import java.io.UnsupportedEncodingException;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.ErrorManager;
-import com.leekwars.game.Util;
-import com.leekwars.game.fight.action.Actions;
-import com.leekwars.game.fight.entity.Entity;
+import com.leekwars.generator.ErrorManager;
+import com.leekwars.generator.Util;
+import com.leekwars.generator.fight.action.Actions;
+import com.leekwars.generator.fight.entity.Entity;
 
 import leekscript.AILog;
 

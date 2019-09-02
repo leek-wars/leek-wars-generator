@@ -1,4 +1,4 @@
-package com.leekwars.game.fight.entity;
+package com.leekwars.generator.fight.entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,18 +6,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.leekwars.game.attack.chips.Chip;
-import com.leekwars.game.attack.effect.Effect;
-import com.leekwars.game.attack.effect.EffectPoison;
-import com.leekwars.game.attack.weapons.Weapon;
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.action.ActionRemoveEffect;
-import com.leekwars.game.fight.action.ActionUpdateEffect;
-import com.leekwars.game.leek.Leek;
-import com.leekwars.game.leek.Register;
-import com.leekwars.game.leek.Stats;
-import com.leekwars.game.maps.Cell;
-import com.leekwars.game.maps.Pathfinding;
+import com.leekwars.generator.attack.chips.Chip;
+import com.leekwars.generator.attack.effect.Effect;
+import com.leekwars.generator.attack.effect.EffectPoison;
+import com.leekwars.generator.attack.weapons.Weapon;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.ActionRemoveEffect;
+import com.leekwars.generator.fight.action.ActionUpdateEffect;
+import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.leek.Register;
+import com.leekwars.generator.leek.Stats;
+import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.maps.Pathfinding;
 
 public abstract class Entity {
 

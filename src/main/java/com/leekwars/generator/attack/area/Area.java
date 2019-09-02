@@ -1,9 +1,9 @@
-package com.leekwars.game.attack.area;
+package com.leekwars.generator.attack.area;
 
 import java.util.List;
 
-import com.leekwars.game.attack.Attack;
-import com.leekwars.game.maps.Cell;
+import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.maps.Cell;
 
 public abstract class Area {
 

@@ -1,4 +1,4 @@
-package com.leekwars.game.fight.statistics;
+package com.leekwars.generator.fight.statistics;
 
 public class FightStatistics {
 

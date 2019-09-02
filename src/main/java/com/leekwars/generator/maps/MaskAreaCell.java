@@ -1,4 +1,4 @@
-package com.leekwars.game.maps;
+package com.leekwars.generator.maps;
 
 public class MaskAreaCell {
 

@@ -1,4 +1,4 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.resolver.Resolver;

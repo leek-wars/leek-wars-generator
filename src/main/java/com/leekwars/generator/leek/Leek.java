@@ -1,6 +1,6 @@
-package com.leekwars.game.leek;
+package com.leekwars.generator.leek;
 
-import com.leekwars.game.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Entity;
 
 public class Leek extends Entity {
 

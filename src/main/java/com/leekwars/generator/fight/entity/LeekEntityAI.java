@@ -1,6 +1,6 @@
-package com.leekwars.game.fight.entity;
+package com.leekwars.generator.fight.entity;
 
-import com.leekwars.game.leek.LeekLog;
+import com.leekwars.generator.leek.LeekLog;
 
 public class LeekEntityAI extends EntityAI {
 

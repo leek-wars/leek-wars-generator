@@ -1,4 +1,4 @@
-package com.leekwars.game.fight.summons;
+package com.leekwars.generator.fight.summons;
 
 import java.util.ArrayList;
 
@@ -6,10 +6,10 @@ import leekscript.runner.values.FunctionLeekValue;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.attack.chips.Chip;
-import com.leekwars.game.attack.chips.Chips;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.Summon;
+import com.leekwars.generator.attack.chips.Chip;
+import com.leekwars.generator.attack.chips.Chips;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Summon;
 
 public class SummonTemplate {
 

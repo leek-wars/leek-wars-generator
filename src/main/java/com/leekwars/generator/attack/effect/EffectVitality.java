@@ -1,7 +1,7 @@
-package com.leekwars.game.attack.effect;
+package com.leekwars.generator.attack.effect;
 
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.action.ActionVitality;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.ActionVitality;
 
 public class EffectVitality extends Effect {
 

@@ -1,4 +1,4 @@
-package com.leekwars.game.fight.action;
+package com.leekwars.generator.fight.action;
 
 import com.alibaba.fastjson.JSONArray;
 

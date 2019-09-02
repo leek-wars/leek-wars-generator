@@ -1,7 +1,7 @@
-package com.leekwars.game.attack.chips;
+package com.leekwars.generator.attack.chips;
 
 import com.alibaba.fastjson.JSONArray;
-import com.leekwars.game.attack.Attack;
+import com.leekwars.generator.attack.Attack;
 
 public class Chip {
 

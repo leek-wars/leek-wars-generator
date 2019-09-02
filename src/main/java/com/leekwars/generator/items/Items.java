@@ -1,4 +1,4 @@
-package com.leekwars.game.items;
+package com.leekwars.generator.items;
 
 import java.util.TreeMap;
 

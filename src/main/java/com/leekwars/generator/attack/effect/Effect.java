@@ -1,4 +1,4 @@
-package com.leekwars.game.attack.effect;
+package com.leekwars.generator.attack.effect;
 
 import java.util.List;
 
@@ -7,10 +7,10 @@ import leekscript.runner.LeekValueManager;
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
 
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.action.ActionAddEffect;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.leek.Stats;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.ActionAddEffect;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.leek.Stats;
 
 public abstract class Effect {
 

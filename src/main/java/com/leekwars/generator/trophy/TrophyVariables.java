@@ -1,4 +1,4 @@
-package com.leekwars.game.trophy;
+package com.leekwars.generator.trophy;
 
 import java.util.ArrayList;
 import java.util.HashSet;

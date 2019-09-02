@@ -1,9 +1,9 @@
-package com.leekwars.game.attack.weapons;
+package com.leekwars.generator.attack.weapons;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.leekwars.game.items.Items;
+import com.leekwars.generator.items.Items;
 
 public class Weapons {
 

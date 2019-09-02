@@ -1,8 +1,8 @@
-package com.leekwars.game.attack.effect;
+package com.leekwars.generator.attack.effect;
 
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.action.ActionHeal;
-import com.leekwars.game.fight.action.ActionLoseLife;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.ActionHeal;
+import com.leekwars.generator.fight.action.ActionLoseLife;
 
 public class EffectDamage extends Effect {
 

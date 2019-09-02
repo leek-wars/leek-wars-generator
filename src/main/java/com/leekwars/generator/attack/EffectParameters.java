@@ -1,6 +1,6 @@
-package com.leekwars.game.attack;
+package com.leekwars.generator.attack;
 
-import com.leekwars.game.attack.effect.Effect;
+import com.leekwars.generator.attack.effect.Effect;
 
 public class EffectParameters {
 

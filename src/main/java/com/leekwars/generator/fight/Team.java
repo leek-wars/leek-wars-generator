@@ -1,4 +1,4 @@
-package com.leekwars.game.fight;
+package com.leekwars.generator.fight;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.leekwars.game.attack.chips.Chip;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.fight.entity.Summon;
+import com.leekwars.generator.attack.chips.Chip;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Summon;
 
 public class Team {
 

@@ -1,7 +1,7 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.fight.entity.Entity;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.entity.Entity;
 
 public class ErrorManager {
 

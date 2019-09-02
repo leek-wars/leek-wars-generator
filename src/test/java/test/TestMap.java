@@ -9,12 +9,12 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.leekwars.game.fight.Team;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.leek.Leek;
-import com.leekwars.game.maps.Cell;
-import com.leekwars.game.maps.Map;
-import com.leekwars.game.maps.Pathfinding;
+import com.leekwars.generator.fight.Team;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.maps.Map;
+import com.leekwars.generator.maps.Pathfinding;
 
 public class TestMap {
 

@@ -6,10 +6,10 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.leekwars.game.fight.StartOrder;
-import com.leekwars.game.fight.Order;
-import com.leekwars.game.fight.entity.Entity;
-import com.leekwars.game.leek.Leek;
+import com.leekwars.generator.fight.StartOrder;
+import com.leekwars.generator.fight.Order;
+import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.leek.Leek;
 
 public class TestOrder {
 

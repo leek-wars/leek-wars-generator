@@ -1,4 +1,4 @@
-package com.leekwars.game.leek;
+package com.leekwars.generator.leek;
 
 import java.util.Map;
 import java.util.Map.Entry;

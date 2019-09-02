@@ -7,11 +7,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.game.FightConstants;
-import com.leekwars.game.fight.Fight;
-import com.leekwars.game.leek.Leek;
-import com.leekwars.game.maps.Cell;
-import com.leekwars.game.maps.Map;
+import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.maps.Map;
 
 import leekscript.LSException;
 import leekscript.runner.AI;

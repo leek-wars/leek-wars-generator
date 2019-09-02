@@ -1,4 +1,4 @@
-package com.leekwars.game;
+package com.leekwars.generator;
 
 public class Log {
 

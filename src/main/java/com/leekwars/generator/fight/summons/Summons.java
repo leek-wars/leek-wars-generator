@@ -1,4 +1,4 @@
-package com.leekwars.game.fight.summons;
+package com.leekwars.generator.fight.summons;
 
 import java.util.TreeMap;
 

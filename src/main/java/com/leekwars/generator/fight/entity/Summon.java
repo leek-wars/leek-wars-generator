@@ -1,10 +1,10 @@
-package com.leekwars.game.fight.entity;
+package com.leekwars.generator.fight.entity;
 
 import leekscript.runner.values.FunctionLeekValue;
 
-import com.leekwars.game.Log;
-import com.leekwars.game.fight.summons.SummonTemplate;
-import com.leekwars.game.fight.summons.Summons;
+import com.leekwars.generator.Log;
+import com.leekwars.generator.fight.summons.SummonTemplate;
+import com.leekwars.generator.fight.summons.Summons;
 
 public class Summon extends Entity {
 

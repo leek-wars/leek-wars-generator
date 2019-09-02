@@ -1,6 +1,6 @@
-package com.leekwars.game.maps;
+package com.leekwars.generator.maps;
 
-import com.leekwars.game.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.Entity;
 
 public class Cell {
 
