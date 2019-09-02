@@ -12,7 +12,7 @@ import javax.imageio.ImageIO;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.Generator;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.fight.Team;
 import com.leekwars.generator.fight.entity.Entity;

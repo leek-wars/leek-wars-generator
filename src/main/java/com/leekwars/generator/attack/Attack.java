@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.Generator;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.area.Area;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.Fight;

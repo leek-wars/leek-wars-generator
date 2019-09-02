@@ -1,19 +1,12 @@
-package com.leekwars;
+package com.leekwars.generator;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.DbResolver;
-import com.leekwars.generator.Log;
-import com.leekwars.generator.Util;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.weapons.Weapon;
@@ -25,12 +18,14 @@ import com.leekwars.generator.fight.summons.SummonTemplate;
 import com.leekwars.generator.fight.summons.Summons;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.trophy.TrophyVariables;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.RandomGenerator;
+import leekscript.compiler.resolver.ResolverContext;
 import leekscript.functions.Functions;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
@@ -39,7 +34,8 @@ public class Generator {
 
 	private static final String TAG = Generator.class.getSimpleName();
 	
-	static RandomGenerator randomGenerator = new RandomGenerator() {
+	private static RegisterManager registerManager = null;
+	private static RandomGenerator randomGenerator = new RandomGenerator() {
 		private long n = 0;
 		public void seed(long seed) {
 			n = seed;
@@ -57,88 +53,49 @@ public class Generator {
 			return min + (int) (getDouble() * (max - min + 1));
 		}
 	};
+	private boolean nocache = false;
+	private String jar = "generator.jar";
 
-	public static void main(String[] args) {
-		String file = null;
-		boolean nocache = false;
-		boolean db_resolver = false;
-		boolean verbose = false;
-		boolean compile = false;
-		int farmer = 0;
-
-		for (String arg : args) {
-			if (arg.startsWith("--")) {
-				switch (arg.substring(2)) {
-					case "nocache": nocache = true; break;
-					case "dbresolver": db_resolver = true; break;
-					case "verbose": verbose = true; break;
-					case "compile": compile = true; break;
-				}
-				if (arg.startsWith("--farmer=")) {
-					farmer = Integer.parseInt(arg.substring("--farmer=".length()));
-				}
-			} else {
-				file = arg;
-			}
-		}
-		Log.enable(verbose);
-		Log.i(TAG, "Generator v1");
-		if (file == null) {
-			Log.i(TAG, "No scenario/ai file passed!");
-			return;
-		}
-		
+	public Generator() {
 		new File("ai/").mkdir();
-		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
-		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
-		LeekScript.setRandomGenerator(randomGenerator);
-		if (db_resolver) {
-			DbResolver dbResolver = new DbResolver("./resolver.php");
-			dbResolver.setFarmer(farmer);
-			LeekScript.setResolver(dbResolver);
-		}
 		loadWeapons();
 		loadChips();
 		loadSummons();
 		loadFunctions();
-		
-		if (compile) {
-			compileAI(file, nocache);
-		} else {
-			runScenario(file, nocache);
-		}
+		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
+		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
+		LeekScript.setRandomGenerator(randomGenerator);
 	}
 
-	private static void compileAI(String file, boolean nocache) {
+	public String compileAI(String file, ResolverContext context) {
 		Log.i(TAG, "Compile AI " + file + "...");
 		try {
-			AIFile<?> ai = LeekScript.getResolver().resolve(file, null);
+			AIFile<?> ai = LeekScript.getResolver().resolve(file, context);
 			long t = System.currentTimeMillis();
 			String result = new IACompiler().analyze(ai);
 			long time = System.currentTimeMillis() - t;
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			Log.s(TAG, "Analyze success!");
-			System.out.println(result);
+			return result;
 		} catch (Exception e1) {
+			System.out.println(e1);
+			e1.printStackTrace();
 			Log.e(TAG, "AI " + file + " not compiled");
 			if (e1.getMessage() != null) {
 				Log.e(TAG, e1.getMessage());
 			}
 			Log.e(TAG, "Compile failed!");
+			return "";
 		}
 	}
 
-	private static void runScenario(String scenarioFile, boolean nocache) {
-		JSONObject json = null;
-		try {
-			String data = new String(Files.readAllBytes(Paths.get(scenarioFile)), StandardCharsets.UTF_8);
-			json = (JSONObject) JSONObject.parse(data);
-			// System.out.println(json);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-		
+	public String runScenarioFile(String scenarioFile) {
+		return runScenario(Util.readFile(scenarioFile));
+	}
+
+	public String runScenario(String scenario) {
+		JSONObject json = JSON.parseObject(scenario);
+
 		if (json.containsKey("random_seed")) {
 			long seed = json.getLongValue("random_seed");
 			randomGenerator.seed(seed);
@@ -155,11 +112,10 @@ public class Generator {
 
 		JSONArray teams = json.getJSONArray("teams");
 		int t = 0;
-		int id = 0;
 		for (Object team : teams) {
 			for (Object entityJson : (JSONArray) team) {
 				JSONObject e = (JSONObject) entityJson;
-				Entity entity = new Leek(id++, 
+				Entity entity = new Leek(e.getIntValue("id"), 
 					e.getString("name"), e.getIntValue("farmer"),
 					e.getIntValue("level"), e.getIntValue("life"), e.getIntValue("tp"), e.getIntValue("mp"), e.getIntValue("strength"), e.getIntValue("agility"), e.getIntValue("frequency"),
 					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	e.getIntValue("skin"),
@@ -173,7 +129,7 @@ public class Generator {
 						Weapon weapon = Weapons.getWeapon((Integer) w);
 						if (weapon == null) {
 							Log.e(TAG, "No such weapon: " + w);
-							return;
+							return "";
 						}
 						entity.addWeapon(weapon);
 					}
@@ -193,9 +149,9 @@ public class Generator {
 				boolean validAI = false;
 				if (aiFile != null) {
 					Log.i(TAG, "Compile AI " + aiFile + "...");
-					((DbResolver) LeekScript.getResolver()).setFarmer(farmer);
 					try {
-						EntityAI ai = (EntityAI) LeekScript.compileFile(aiFile, "com.leekwars.generator.fight.entity.EntityAI", "../../generator-v1/generator.jar", nocache);
+						ResolverContext context = LeekScript.getResolver().createContext(farmer);
+						EntityAI ai = (EntityAI) LeekScript.compileFileContext(aiFile, "com.leekwars.generator.fight.entity.EntityAI", getJar(), context, nocache);
 						Log.i(TAG, "AI " + aiFile + " compiled!");
 						entity.setAI(ai);
 						ai.setEntity(entity);
@@ -230,7 +186,7 @@ public class Generator {
 			}
 			report.put("logs", logsJSON);
 			
-			System.out.println(report);
+			return report.toJSONString();
 			
 			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
 			
@@ -240,10 +196,11 @@ public class Generator {
 			// }
 		} catch (Exception e) {
 			e.printStackTrace();
+			return "";
 		}
 	}
 	
-	public static void loadWeapons() {
+	private void loadWeapons() {
 		try {
 			Log.start(TAG, "- Loading weapons... ");
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
@@ -259,7 +216,7 @@ public class Generator {
 		}
 	}
 	
-	public static void loadChips() {
+	private void loadChips() {
 		try {
 			Log.start(TAG, "- Loading chips... ");
 			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
@@ -276,7 +233,7 @@ public class Generator {
 		}
 	}
 
-	public static void loadSummons() {
+	private void loadSummons() {
 		try {
 			Log.start(TAG, "- Loading summons... ");
 			JSONObject summons = JSON.parseObject(Util.readFile("data/summons.json"));
@@ -290,7 +247,7 @@ public class Generator {
 		}
 	}
 
-	public static void loadFunctions() {
+	private void loadFunctions() {
 		try {
 			Log.start(TAG, "- Loading functions... ");
 			JSONObject functions = JSON.parseObject(Util.readFile("data/functions.json"));
@@ -306,5 +263,21 @@ public class Generator {
 
 	public static RandomGenerator getRandom() {
 		return randomGenerator;
+	}
+	public void setNocache(boolean nocache) {
+		this.nocache = nocache;
+	}
+	public String getJar() {
+		return jar;
+	}
+	public void setJar(String jar) {
+		this.jar = jar;
+	}
+
+	public static void setRegisterManager(RegisterManager registerManager) {
+		Generator.registerManager = registerManager;
+	}
+	public static RegisterManager getRegisterManager() {
+		return registerManager;
 	}
 }

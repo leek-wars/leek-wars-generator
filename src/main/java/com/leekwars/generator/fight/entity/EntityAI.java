@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Censorship;
 import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EffectParameters;
 import com.leekwars.generator.attack.chips.Chip;
