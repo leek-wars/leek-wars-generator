@@ -1,5 +1,5 @@
 # Leek Wars Generator v1
-Leek Wars fight generator first version
+Leek Wars fight generator first version using [leekscript-v1](https://github.com/leek-wars/leekscript-v1).
 
 ## Build
 ```
