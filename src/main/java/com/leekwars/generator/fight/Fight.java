@@ -36,7 +36,6 @@ import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.Summon;
 import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.leek.Leek;
-import com.leekwars.generator.leek.Register;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;

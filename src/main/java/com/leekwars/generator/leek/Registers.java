@@ -6,7 +6,7 @@ import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONObject;
 
-public class Register {
+public class Registers {
 
 	public final static int MAX_ENTRIES = 100;
 	public final static int MAX_KEY_LENGTH = 100;
@@ -16,12 +16,12 @@ public class Register {
 	private boolean mModified = false;
 	private final boolean mNew;
 
-	public Register(boolean new_register) {
+	public Registers(boolean new_register) {
 		mValues = new TreeMap<String, String>();
 		mNew = new_register;
 	}
 
-	public Register() {
+	public Registers() {
 		mValues = new TreeMap<String, String>();
 		mNew = false;
 	}
@@ -75,9 +75,9 @@ public class Register {
 		return datas.toJSONString();
 	}
 
-	public static Register fromJSONString(String value) {
+	public static Registers fromJSONString(String value) {
 		JSONObject datas = JSONObject.parseObject(value);
-		Register register = new Register();
+		Registers register = new Registers();
 		for (String key : datas.keySet()) {
 			register.mValues.put(key, datas.getString(key));
 		}

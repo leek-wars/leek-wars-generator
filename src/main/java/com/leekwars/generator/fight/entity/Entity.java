@@ -15,7 +15,7 @@ import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionRemoveEffect;
 import com.leekwars.generator.fight.action.ActionUpdateEffect;
 import com.leekwars.generator.leek.Leek;
-import com.leekwars.generator.leek.Register;
+import com.leekwars.generator.leek.Registers;
 import com.leekwars.generator.leek.Stats;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
@@ -79,7 +79,7 @@ public abstract class Entity {
 	private int usedMP;
 	private int life;
 
-	private Register mRegister = null;
+	private Registers mRegister = null;
 
 	private boolean mHasMoved = false;
 	private boolean isDiabolic = false;
@@ -157,19 +157,19 @@ public abstract class Entity {
 
 	public abstract int getType();
 
-	public void setRegisters(Register registre) {
+	public void setRegisters(Registers registre) {
 		mRegister = registre;
 	}
 
-	public Register getRegisters() {
+	public Registers getRegisters() {
 		return mRegister;
 	}
 	private void loadRegisters() {
 		String v = Generator.getRegisterManager().getRegisters(getId());
 		if (v == null) {
-			mRegister = new Register(true);
+			mRegister = new Registers(true);
 		} else {
-			mRegister = Register.fromJSONString(v);
+			mRegister = Registers.fromJSONString(v);
 		}
 	}
 

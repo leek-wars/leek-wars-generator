@@ -28,7 +28,7 @@ import com.leekwars.generator.fight.action.ActionShowCell;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
-import com.leekwars.generator.leek.Register;
+import com.leekwars.generator.leek.Registers;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.Log;
