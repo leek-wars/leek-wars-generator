@@ -17,12 +17,13 @@ public class EffectPoison extends Effect {
 		if (target.getLife() < damages) {
 			damages = target.getLife();
 		}
+		if (damages > 0) {
+			int erosion = (int) Math.round(damages * erosionRate);
 
-		int erosion = (int) Math.round(damages * erosionRate);
-
-		fight.log(new ActionLoseLife(target, damages, erosion));
-		target.removeLife(damages, erosion, caster, false);
-		fight.statistics.addDamagePoison(damages);
+			fight.log(new ActionLoseLife(target, damages, erosion));
+			target.removeLife(damages, erosion, caster, false);
+			fight.statistics.addDamagePoison(damages);
+		}
 	}
 	
 	public void reduce() {
