@@ -9,9 +9,10 @@ public class EffectBuffTP extends Effect {
 	public void apply(Fight fight) {
 
 		value = (int) Math.round((value1 + value2 * jet) * (1 + (double) caster.getScience() / 100) * power * criticalPower);
-
-		stats.setStat(Entity.CHARAC_TP, value);
-		target.updateBuffStats(Entity.CHARAC_TP);
+		if (value > 0) {
+			stats.setStat(Entity.CHARAC_TP, value);
+			target.updateBuffStats(Entity.CHARAC_TP);
+		}
 	}
 	
 	public void reduce() {

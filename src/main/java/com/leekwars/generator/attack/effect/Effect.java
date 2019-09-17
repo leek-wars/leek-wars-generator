@@ -106,6 +106,9 @@ public abstract class Effect {
 		effect.erosionRate = id == TYPE_POISON ? 0.10 : 0.05;
 		if (critical) effect.erosionRate += 0.10;
 
+		// Compute the effect
+		effect.apply(fight);
+
 		// Add effect to the target and the caster
 		if (effect.getTurns() > 0) {
 
@@ -121,12 +124,12 @@ public abstract class Effect {
 					}
 				}
 			}
-			target.addEffect(effect);
-			caster.addLaunchedEffect(effect);
+			if (effect.value > 0) {
+				target.addEffect(effect);
+				caster.addLaunchedEffect(effect);
+			}
 		}
 
-		// Compute the effect
-		effect.apply(fight);
 		effect.addLog(fight);
 	}
 	

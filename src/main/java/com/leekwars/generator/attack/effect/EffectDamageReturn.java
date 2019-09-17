@@ -9,9 +9,10 @@ public class EffectDamageReturn extends Effect {
 	public void apply(Fight fight) {
 
 		value = (int) Math.round((value1 + jet * value2) * (1 + caster.getAgility() / 100.0) * power * criticalPower);
-
-		stats.setStat(Entity.CHARAC_DAMAGE_RETURN, value);
-		target.updateBuffStats(Entity.CHARAC_DAMAGE_RETURN);
+		if (value > 0) {
+			stats.setStat(Entity.CHARAC_DAMAGE_RETURN, value);
+			target.updateBuffStats(Entity.CHARAC_DAMAGE_RETURN);
+		}
 	}
 	
 	public void reduce() {

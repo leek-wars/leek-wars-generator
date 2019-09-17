@@ -9,9 +9,10 @@ public class EffectAbsoluteShield extends Effect {
 	public void apply(Fight fight) {
 
 		value = (int) Math.round((value1 + jet * value2) * (1 + caster.getResistance() / 100.0) * power * criticalPower);
-
-		stats.setStat(Entity.CHARAC_ABSOLUTE_SHIELD, value);
-		target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD);
+		if (value > 0) {
+			stats.setStat(Entity.CHARAC_ABSOLUTE_SHIELD, value);
+			target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD);
+		}
 	}
 
 	public void reduce() {
