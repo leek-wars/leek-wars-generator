@@ -12,7 +12,6 @@ public class EffectDamageReturn extends Effect {
 
 		stats.setStat(Entity.CHARAC_DAMAGE_RETURN, value);
 		target.updateBuffStats(Entity.CHARAC_DAMAGE_RETURN);
-		fight.statistics.addDamageReturn(value);
 	}
 	
 	public void reduce() {
