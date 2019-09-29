@@ -25,7 +25,7 @@ public class Chip {
 		this.template = template;
 		this.name = name;
 		this.level = level;
-		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, template);
+		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, id);
 	}
 
 	public int getTemplate() {

@@ -20,7 +20,7 @@ public class Weapon {
 		this.name = name;
 		this.template = template;
 
-		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, template);
+		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, id);
 	}
 
 	public int getId() {
