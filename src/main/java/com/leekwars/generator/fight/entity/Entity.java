@@ -662,9 +662,8 @@ public abstract class Entity {
 		return mEntityAI;
 	}
 
-	public boolean isSummon() {
-		return this instanceof Summon;
-	}
+	abstract public boolean isSummon();
+
 	public Entity getSummoner() {
 		return null;
 	}

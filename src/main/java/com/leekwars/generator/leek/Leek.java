@@ -21,4 +21,9 @@ public class Leek extends Entity {
 	public Leek getLeek() {
 		return this;
 	}
+
+	@Override
+	public boolean isSummon() {
+		return false;
+	}
 }
