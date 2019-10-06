@@ -16,7 +16,7 @@ public class Main {
 		boolean nocache = false;
 		boolean db_resolver = false;
 		boolean verbose = false;
-		boolean compile = false;
+		boolean analyze = false;
 		int farmer = 0;
 
 		for (String arg : args) {
@@ -25,7 +25,7 @@ public class Main {
 					case "nocache": nocache = true; break;
 					case "dbresolver": db_resolver = true; break;
 					case "verbose": verbose = true; break;
-					case "compile": compile = true; break;
+					case "analyze": analyze = true; break;
 				}
 				if (arg.startsWith("--farmer=")) {
 					farmer = Integer.parseInt(arg.substring("--farmer=".length()));
@@ -46,8 +46,8 @@ public class Main {
 		}
 		Generator generator = new Generator();
 		generator.setNocache(nocache);
-		if (compile) {
-			String result = generator.compileAI(file, new DbContext(farmer, 0));
+		if (analyze) {
+			String result = generator.analyzeAI(file, new DbContext(farmer, 0));
 			System.out.println(result);
 		} else {
 			String result = generator.runScenarioFile(file);

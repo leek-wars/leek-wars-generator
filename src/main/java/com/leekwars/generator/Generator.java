@@ -67,8 +67,16 @@ public class Generator {
 		LeekScript.setRandomGenerator(randomGenerator);
 	}
 
-	public String compileAI(String file, ResolverContext context) {
-		Log.i(TAG, "Compile AI " + file + "...");
+	/**
+	 * Analyze an AI task: read a AI code and check for validity. Returns whether the AI is valid,
+	 * or returns the list of errors.
+	 *
+	 * @param file The AI file name.
+	 * @param context The AI resolver context (real folder or DB virtual folder).
+	 * @return a string representing the analysis results: success or list of errors.
+	 */
+	public String analyzeAI(String file, ResolverContext context) {
+		Log.i(TAG, "Analyze AI " + file + "...");
 		try {
 			AIFile<?> ai = LeekScript.getResolver().resolve(file, context);
 			long t = System.currentTimeMillis();
