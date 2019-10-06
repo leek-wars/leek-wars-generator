@@ -1,4 +1,4 @@
-package com.leekwars.generator.fight.summons;
+package com.leekwars.generator.fight.bulbs;
 
 import java.util.ArrayList;
 
@@ -9,9 +9,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.Summon;
+import com.leekwars.generator.fight.entity.Bulb;
 
-public class SummonTemplate {
+public class BulbTemplate {
 
 	// private final static String TAG = SummonTemplate.class.getSimpleName();
 
@@ -48,7 +48,7 @@ public class SummonTemplate {
 	private final int mMinMp;
 	private final int mMaxMp;
 
-	public SummonTemplate(int id, String name, JSONArray chips, JSONObject characteristics) {
+	public BulbTemplate(int id, String name, JSONArray chips, JSONObject characteristics) {
 
 		mId = id;
 		mName = name;
@@ -103,9 +103,9 @@ public class SummonTemplate {
 		return (int) (base + Math.floor((bonus - base) * coeff));
 	}
 
-	public Summon createInvocation(Entity owner, FunctionLeekValue ai, int id, int level) {
+	public Bulb createInvocation(Entity owner, FunctionLeekValue ai, int id, int level) {
 		double c = Math.min(300d, owner.getLevel()) / (300d);
-		Summon inv = new Summon(owner, ai, id, 1, mName, level,
+		Bulb inv = new Bulb(owner, ai, id, 1, mName, level,
 				base(mMinLife, mMaxLife, c),
 				base(mMinStrength, mMaxStrength, c),
 				base(mMinWisdom, mMaxWisdom, c),
