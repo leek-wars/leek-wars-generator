@@ -39,7 +39,6 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
-import com.leekwars.generator.trophy.TrophyManager;
 
 import leekscript.runner.values.FunctionLeekValue;
 
@@ -311,8 +310,10 @@ public class Fight {
 
 		initFight();
 
-		// On check les trophées
-		trophyManager.startFight();
+		// Check all entities characteristics
+		for (Entity entity : mEntities.values()) {
+			statistics.checkCharacteristics(entity);
+		}
 
 		mState = Fight.STATE_RUNNING;
 
@@ -359,7 +360,7 @@ public class Fight {
 		if (alive != 1) {
 			mWinteam = -1;
 		}
-		trophyManager.endFight(mWinteam);
+		statistics.endFight(mEntities.values());
 	}
 
 	public void initFight() throws FightException {
@@ -425,6 +426,9 @@ public class Fight {
 		} catch (Exception e) {
 			ErrorManager.exceptionFight(e, mId);
 		}
+
+		// Initialize statistics
+		statistics.initializeEntities(mEntities.values());
 
 		// On ajoute la map
 		actions.addMap(map);
@@ -553,7 +557,7 @@ public class Fight {
 		ActionUseWeapon log_use = new ActionUseWeapon(launcher, target, weapon, result);
 		actions.log(log_use);
 		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
-		trophyManager.weaponUsed(launcher, weapon, target_leeks);
+		statistics.weaponUsed(launcher, weapon, target_leeks);
 		log_use.setEntities(target_leeks);
 
 		launcher.useTP(weapon.getCost());
@@ -595,9 +599,9 @@ public class Fight {
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
-		List<Entity> target_leeks = template.getAttack().applyOnCell(this, caster, target, critical);
-		log.setEntities(target_leeks);
-		trophyManager.chipUsed(caster, template, target_leeks);
+		List<Entity> targets = template.getAttack().applyOnCell(this, caster, target, critical);
+		log.setEntities(targets);
+		statistics.chipUsed(caster, template, targets);
 
 		if (template.getCooldown() != 0) {
 			addCooldown(caster, template);
@@ -624,7 +628,7 @@ public class Fight {
 		actions.log(new ActionMove(entity, path));
 		actions.log(new ActionLoseMP(entity, size));
 
-		trophyManager.deplacement(entity.getFarmer(), path);
+		statistics.entityMove(entity, path);
 		entity.useMP(size);
 		entity.setHasMoved(true);
 		entity.getCell().setPlayer(null);
@@ -663,15 +667,14 @@ public class Fight {
 
 		// On invoque
 		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel());
-		trophyManager.summon(caster, summon);
-		statistics.addSummons(1);
+		statistics.summon(caster, summon);
 
 		if (template.getCooldown() != 0) {
 			addCooldown(caster, template);
 		}
 
 		caster.useTP(template.getCost());
-		trophyManager.chipUsed(caster, template, new ArrayList<Entity>());
+		statistics.chipUsed(caster, template, new ArrayList<Entity>());
 		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;
@@ -717,7 +720,7 @@ public class Fight {
 		}
 
 		caster.useTP(template.getCost());
-		trophyManager.chipUsed(caster, template, new ArrayList<Entity>());
+		statistics.chipUsed(caster, template, new ArrayList<Entity>());
 		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;

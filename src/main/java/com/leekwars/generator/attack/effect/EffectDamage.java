@@ -37,7 +37,7 @@ public class EffectDamage extends Effect {
 
 		// One shoot
 		if (target.getTotalLife() == value && caster != target) {
-			fight.getTrophyManager().roxxor(caster);
+			fight.statistics.roxxor(caster);
 		}
 
 		int erosion = (int) Math.round(value * erosionRate);
@@ -57,7 +57,7 @@ public class EffectDamage extends Effect {
 			}
 		}
 
-		// Return damage 
+		// Return damage
 		if (returnDamage > 0) {
 
 			if (caster.getLife() < returnDamage) {

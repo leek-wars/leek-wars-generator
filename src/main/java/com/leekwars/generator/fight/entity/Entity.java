@@ -381,21 +381,15 @@ public abstract class Entity {
 			pv = life;
 		}
 		life -= pv;
-		fight.statistics.addDammages(pv);
+		fight.statistics.addDamage(attacker, pv, this.team != attacker.team);
 
 		// Add erosion
 		mTotalLife -= erosion;
 		if (mTotalLife < 1) mTotalLife = 1;
 
-		// Add damage statistic only if it's an enemy
-		if (this.team != attacker.team) {
-			fight.getTrophyManager().addDamage(attacker, pv);
-		}
-
-		// Sniper
-		if (this.team != attacker.team && direct_attack
-				&& attacker.getCell() != null && Pathfinding.getCaseDistance(this.cell, attacker.getCell()) > 10) {
-			fight.getTrophyManager().sniper(attacker);
+		// Sniper : attack from 10 cells+ distance
+		if (this.team != attacker.team && direct_attack && attacker.getCell() != null && Pathfinding.getCaseDistance(this.cell, attacker.getCell()) > 10) {
+			fight.statistics.sniper(attacker);
 		}
 
 		if (life <= 0) {

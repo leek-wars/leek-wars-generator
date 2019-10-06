@@ -157,7 +157,7 @@ public class Attack {
 			returnEntities.add(caster);
 
 			if (start.getComposante() != target.getComposante()) {
-				fight.getTrophyManager().stashed(caster);
+				fight.statistics.stashed(caster);
 			}
 
 			return returnEntities;

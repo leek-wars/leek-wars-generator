@@ -233,9 +233,8 @@ public class EntityAI extends AI {
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Stack Overflow" }, e.getStackTrace());
-			fight.getTrophyManager().stackOverflow(mEntity);
+			fight.statistics.addStackOverflow(mEntity);
 			fight.statistics.addErrors(1);
-			fight.statistics.addStackOverflow(1);
 
 		} catch (ArithmeticException e) {
 
@@ -251,7 +250,7 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
 
 			if (e.getError() == LeekRunException.TOO_MUCH_OPERATIONS) {
-				fight.getTrophyManager().tooMuchInstructions(mEntity);
+				fight.statistics.tooMuchOperations(mEntity);
 			}
 
 		} catch (OutOfMemoryError e) {// Plus de RAM, Erreur critique, on tente
@@ -1789,7 +1788,7 @@ public class EntityAI extends AI {
 		}
 		mEntity.useTP(1);
 		fight.log(new ActionLoseTP(mEntity, 1));
-		fight.getTrophyManager().lama(mEntity);
+		fight.statistics.lama(mEntity);
 	}
 
 	public boolean sendTo(int target, int type, AbstractLeekValue message) {
