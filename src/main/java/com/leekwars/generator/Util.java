@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HashSet;
 
@@ -95,11 +94,15 @@ public class Util {
 		} catch (Exception e) {}
 		return "";
 	}
-	
+
 	public static String readFile(String filepath) {
-		Path file = new File(filepath).toPath();
+		File file = new File(filepath);
+		return readFile(file);
+	}
+
+	public static String readFile(File file) {
 		try {
-			return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+			return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return "";
