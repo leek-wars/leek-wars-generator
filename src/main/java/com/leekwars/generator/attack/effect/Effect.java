@@ -87,7 +87,7 @@ public abstract class Effect {
 		// Create the effect
 		Effect effect;
 		try {
-			effect = (Effect) effects[id - 1].newInstance();
+			effect = (Effect) effects[id - 1].getDeclaredConstructor().newInstance();
 		} catch (Exception e) {
 			return;
 		}
@@ -132,9 +132,9 @@ public abstract class Effect {
 
 		effect.addLog(fight);
 	}
-	
+
 	public static boolean isStackable(int type) {
-		return type == TYPE_POISON || type == TYPE_SHACKLE_MP || type == TYPE_SHACKLE_TP 
+		return type == TYPE_POISON || type == TYPE_SHACKLE_MP || type == TYPE_SHACKLE_TP
 				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY;
 	}
 
