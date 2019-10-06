@@ -115,8 +115,6 @@ public class Fight {
 
 	private String mLeekDatas = "";
 
-	private final TrophyManager trophyManager;
-
 	private double mMultiplicator = 1;
 
 	private final int context;
@@ -132,8 +130,6 @@ public class Fight {
 		initialOrder = new ArrayList<Entity>();
 
 		mState = Fight.STATE_INIT;
-
-		trophyManager = new TrophyManager(this);
 
 		actions = new Actions();
 
@@ -922,10 +918,6 @@ public class Fight {
 
 	public static boolean isChallenge(int type) {
 		return getFightContext(type) == CONTEXT_CHALLENGE;
-	}
-
-	public TrophyManager getTrophyManager() {
-		return trophyManager;
 	}
 
 	public List<Team> getTeams() {
