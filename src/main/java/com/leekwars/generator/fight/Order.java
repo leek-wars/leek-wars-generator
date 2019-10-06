@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.Summon;
 
 public class Order {
 
@@ -21,7 +20,7 @@ public class Order {
 		leeks.add(leek);
 	}
 
-	public void addSummon(Entity owner, Summon invoc) {
+	public void addSummon(Entity owner, Entity invoc) {
 		if (!leeks.contains(owner)) {
 			return;
 		}

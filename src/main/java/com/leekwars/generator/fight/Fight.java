@@ -32,8 +32,8 @@ import com.leekwars.generator.fight.action.ActionStartFight;
 import com.leekwars.generator.fight.action.ActionUseChip;
 import com.leekwars.generator.fight.action.ActionUseWeapon;
 import com.leekwars.generator.fight.action.Actions;
+import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.Summon;
 import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
@@ -347,7 +347,7 @@ public class Fight {
 		// On supprime toutes les invocations
 		List<Entity> entities = getAllEntities(true);
 		for (Entity e : entities) {
-			if (e instanceof Summon)
+			if (e.isSummon())
 				removeInvocation(e, true);
 		}
 
@@ -731,10 +731,10 @@ public class Fight {
 		return Generator.getRandom().getDouble() < ((double) caster.getAgility() / 1000);
 	}
 
-	public Summon createSummon(Entity owner, int type, Cell target, FunctionLeekValue ai, int level) {
+	public Bulb createSummon(Entity owner, int type, Cell target, FunctionLeekValue ai, int level) {
 
 		int fid = getNextEntityId();
-		Summon invoc = Summon.create(owner, ai, -fid, type, level);
+		Bulb invoc = Bulb.create(owner, ai, -fid, type, level);
 		invoc.setFight(this, fid);
 
 		int team = owner.getTeam();

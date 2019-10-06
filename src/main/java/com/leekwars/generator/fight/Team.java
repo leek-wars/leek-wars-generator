@@ -9,7 +9,6 @@ import java.util.TreeMap;
 
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.Summon;
 
 public class Team {
 
@@ -112,7 +111,7 @@ public class Team {
 	public int getSummonCount() {
 		int nb = 0;
 		for (Entity e : entities) {
-			if (!e.isDead() && e instanceof Summon) {
+			if (!e.isDead() && e.isSummon()) {
 				nb++;
 			}
 		}

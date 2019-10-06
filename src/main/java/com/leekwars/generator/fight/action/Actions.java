@@ -6,7 +6,6 @@ import java.util.List;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.Summon;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 
@@ -85,7 +84,7 @@ public class Actions {
 		object.put("farmer", entity.getFarmer());
 		object.put("type", entity.getType());
 
-		object.put("summon", entity instanceof Summon);
+		object.put("summon", entity.isSummon());
 		if (entity.isSummon()) {
 			object.put("owner", entity.getSummoner().getFId());
 		}

@@ -10,7 +10,6 @@ import com.leekwars.generator.attack.area.Area;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.Summon;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
@@ -223,12 +222,12 @@ public class Attack {
 		}
 
 		// Non-Summons
-		if ((targets & Effect.TARGET_NON_SUMMONS) == 0 && !(target instanceof Summon)) {
+		if ((targets & Effect.TARGET_NON_SUMMONS) == 0 && !(target.isSummon())) {
 			return false;
 		}
 
 		// Summons
-		if ((targets & Effect.TARGET_SUMMONS) == 0 && target instanceof Summon) {
+		if ((targets & Effect.TARGET_SUMMONS) == 0 && target.isSummon()) {
 			return false;
 		}
 

@@ -12,10 +12,10 @@ import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.bulbs.BulbTemplate;
+import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.fight.summons.SummonTemplate;
-import com.leekwars.generator.fight.summons.Summons;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
@@ -250,11 +250,11 @@ public class Generator {
 
 	private void loadSummons() {
 		try {
-			Log.start(TAG, "- Loading summons... ");
+			Log.start(TAG, "- Loading bulbs... ");
 			JSONObject summons = JSON.parseObject(Util.readFile("data/summons.json"));
 			for (String id : summons.keySet()) {
 				JSONObject summon = summons.getJSONObject(id);
-				Summons.addInvocationTemplate(new SummonTemplate(Integer.parseInt(id), summon.getString("name"), summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
+				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.getString("name"), summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
 			}
 			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
