@@ -1,11 +1,9 @@
 package com.leekwars.generator;
 
 import java.io.File;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.List;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.chips.Chips;
@@ -16,10 +14,11 @@ import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
-import com.leekwars.generator.trophy.TrophyVariables;
+import com.leekwars.generator.report.Report;
+import com.leekwars.generator.scenario.EntityInfo;
+import com.leekwars.generator.scenario.Scenario;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
@@ -97,63 +96,34 @@ public class Generator {
 		}
 	}
 
-	public String runScenarioFile(String scenarioFile) {
-		return runScenario(Util.readFile(scenarioFile));
-	}
+	/**
+	 * Runs a scenario.
+	 * @param scenario the scenario to run.
+	 * @return the fight report generated.
+	 */
+	public Report runScenario(Scenario scenario) {
 
-	public String runScenario(String scenario) {
-		JSONObject json = JSON.parseObject(scenario);
-
-		if (json.containsKey("random_seed")) {
-			long seed = json.getLongValue("random_seed");
-			randomGenerator.seed(seed);
+		if (scenario.seed != 0) {
+			randomGenerator.seed(scenario.seed);
 		}
 
-		Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
+		Report report = new Report();
 
 		Fight fight = new Fight();
+		fight.setMaxTurns(scenario.maxTurns);
 
-		if (json.containsKey("max_turns")) {
-			int max_turns = json.getIntValue("max_turns");
-			fight.setMaxTurns(max_turns);
-		}
-
-		JSONArray teams = json.getJSONArray("teams");
+		// Create logs and compile AIs
 		int t = 0;
-		for (Object team : teams) {
-			for (Object entityJson : (JSONArray) team) {
-				JSONObject e = (JSONObject) entityJson;
-				Entity entity = new Leek(e.getIntValue("id"),
-					e.getString("name"), e.getIntValue("farmer"),
-					e.getIntValue("level"), e.getIntValue("life"), e.getIntValue("tp"), e.getIntValue("mp"), e.getIntValue("strength"), e.getIntValue("agility"), e.getIntValue("frequency"),
-					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	e.getIntValue("skin"),
-					e.getIntValue("t_id"), e.getString("t_name"),
-					e.getIntValue("ai_id"), e.getString("ai"),
-					e.getString("f_name"), e.getString("f_country"), 0 /* hat */);
-				Log.i(TAG, "Create entity " + entity.getName());
-				JSONArray weapons = e.getJSONArray("weapons");
-				if (weapons != null) {
-					for (Object w : weapons) {
-						Weapon weapon = Weapons.getWeapon((Integer) w);
-						if (weapon == null) {
-							Log.e(TAG, "No such weapon: " + w);
-							return "";
-						}
-						entity.addWeapon(weapon);
-					}
+		for (List<EntityInfo> team : scenario.entities) {
+			for (EntityInfo entityInfo : team) {
+
+				Entity entity = entityInfo.createEntity();
+
+				int farmer = entity.getFarmer();
+				if (!report.logs.containsKey(farmer)) {
+					report.logs.put(farmer, new LeekLog(entity));
 				}
-				JSONArray chips = e.getJSONArray("chips");
-				if (chips != null) {
-					for (Object c : chips) {
-						Integer chip = (Integer) c;
-						entity.addChip(Chips.getChip(chip));
-					}
-				}
-				int farmer = e.getIntValue("farmer");
-				if (!logs.containsKey(farmer)) {
-					logs.put(farmer, new LeekLog(entity));
-				}
-				String aiFile = e.getString("ai");
+				String aiFile = entity.getAIFile();
 				boolean validAI = false;
 				if (aiFile != null) {
 					Log.i(TAG, "Compile AI " + aiFile + "...");
@@ -163,7 +133,7 @@ public class Generator {
 						Log.i(TAG, "AI " + aiFile + " compiled!");
 						entity.setAI(ai);
 						ai.setEntity(entity);
-						ai.setLogs(logs.get(farmer));
+						ai.setLogs(report.logs.get(farmer));
 						validAI = true;
 					} catch (Exception e1) {
 						Log.w(TAG, "AI " + aiFile + " not compiled");
@@ -172,10 +142,9 @@ public class Generator {
 				}
 				if (!validAI) {
 					Log.w(TAG, "AI " + aiFile + " is not valid.");
-					logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
+					report.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
 				}
 				fight.addEntity(t, entity);
-				fight.getTrophyManager().addFarmer(new TrophyVariables(entity.getFarmer()));
 			}
 			t++;
 		}
@@ -185,14 +154,8 @@ public class Generator {
 			fight.startFight();
 			fight.finishFight();
 
-			JSONObject report = new JSONObject();
-			report.put("fight", fight.getActions().toJSON());
-			report.put("winner", fight.getWinner());
-			JSONObject logsJSON = new JSONObject();
-			for (Integer farmer : logs.keySet()) {
-				logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
-			}
-			report.put("logs", logsJSON);
+			report.fight = fight.getActions().toJSON();
+			report.winner = fight.getWinner();
 
 			// Save registers
 			for (Entity entity : fight.getEntities().values()) {
@@ -201,7 +164,7 @@ public class Generator {
 				}
 			}
 
-			return report.toJSONString();
+			return report;
 
 			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
 
@@ -211,7 +174,7 @@ public class Generator {
 			// }
 		} catch (Exception e) {
 			e.printStackTrace();
-			return "";
+			return null;
 		}
 	}
 
