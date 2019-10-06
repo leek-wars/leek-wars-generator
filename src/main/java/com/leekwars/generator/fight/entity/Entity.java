@@ -253,9 +253,15 @@ public abstract class Entity {
 	public Cell getCell() {
 		return cell;
 	}
+	/**
+	 * Returns the id related to this fight
+	 */
 	public int getFId() {
 		return fight_id;
 	}
+	/**
+	 * Returns the real entity id
+	 */
 	public int getId() {
 		return mId;
 	}
