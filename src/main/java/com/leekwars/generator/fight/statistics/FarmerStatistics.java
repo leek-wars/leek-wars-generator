@@ -1,6 +1,7 @@
 package com.leekwars.generator.fight.statistics;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,7 +79,7 @@ class FarmerStatistics {
 		}
 		public void set(int leek, int index) {
 			if (!data.containsKey(leek)) {
-				data.put(leek, new ArrayList<Boolean>(613));
+				data.put(leek, new ArrayList<Boolean>(Collections.nCopies(613, false)));
 			}
 			data.get(leek).set(index, true);
 		}
