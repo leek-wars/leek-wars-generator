@@ -5,12 +5,18 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.leek.LeekLog;
+
+import leekscript.compiler.LeekScript;
+import leekscript.compiler.resolver.ResolverContext;
 
 public class EntityInfo {
 
@@ -75,7 +81,7 @@ public class EntityInfo {
         }
     }
 
-    public Entity createEntity() {
+    public Entity createEntity(Generator generator) {
         try {
             Entity entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
 
@@ -90,7 +96,23 @@ public class EntityInfo {
             for (Object c : chips) {
                 Integer chip = (Integer) c;
                 entity.addChip(Chips.getChip(chip));
-            }
+			}
+
+			boolean validAI = false;
+			if (ai != null) {
+				Log.i(TAG, "Compile AI " + ai + "...");
+				try {
+					ResolverContext context = LeekScript.getResolver().createContext(farmer);
+					EntityAI ai = (EntityAI) LeekScript.compileFileContext(this.ai, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), context, generator.nocache);
+					Log.i(TAG, "AI " + ai + " compiled!");
+					entity.setAI(ai);
+					ai.setEntity(entity);
+					validAI = true;
+				} catch (Exception e1) {
+					Log.w(TAG, "AI " + ai + " not compiled");
+					Log.w(TAG, e1.getMessage());
+				}
+			}
 
         } catch (Exception e) {
             e.printStackTrace();

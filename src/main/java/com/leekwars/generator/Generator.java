@@ -52,7 +52,7 @@ public class Generator {
 			return min + (int) (getDouble() * (max - min + 1));
 		}
 	};
-	private boolean nocache = false;
+	public boolean nocache = false;
 	private String jar = "generator.jar";
 
 	public Generator() {
@@ -117,31 +117,16 @@ public class Generator {
 		for (List<EntityInfo> team : scenario.entities) {
 			for (EntityInfo entityInfo : team) {
 
-				Entity entity = entityInfo.createEntity();
+				Entity entity = entityInfo.createEntity(this);
 
 				int farmer = entity.getFarmer();
 				if (!report.logs.containsKey(farmer)) {
 					report.logs.put(farmer, new LeekLog(entity));
 				}
-				String aiFile = entity.getAIFile();
-				boolean validAI = false;
-				if (aiFile != null) {
-					Log.i(TAG, "Compile AI " + aiFile + "...");
-					try {
-						ResolverContext context = LeekScript.getResolver().createContext(farmer);
-						EntityAI ai = (EntityAI) LeekScript.compileFileContext(aiFile, "com.leekwars.generator.fight.entity.EntityAI", getJar(), context, nocache);
-						Log.i(TAG, "AI " + aiFile + " compiled!");
-						entity.setAI(ai);
-						ai.setEntity(entity);
-						ai.setLogs(report.logs.get(farmer));
-						validAI = true;
-					} catch (Exception e1) {
-						Log.w(TAG, "AI " + aiFile + " not compiled");
-						Log.w(TAG, e1.getMessage());
-					}
-				}
-				if (!validAI) {
-					Log.w(TAG, "AI " + aiFile + " is not valid.");
+				if (entity.getAI() != null) {
+					entity.getAI().setLogs(report.logs.get(farmer));
+				} else {
+					Log.w(TAG, "AI " + entityInfo.ai + " doesn't exist or is not valid.");
 					report.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
 				}
 				fight.addEntity(t, entity);
