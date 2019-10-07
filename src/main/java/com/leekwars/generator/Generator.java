@@ -13,10 +13,9 @@ import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
-import com.leekwars.generator.report.Report;
+import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.EntityInfo;
 import com.leekwars.generator.scenario.Scenario;
 
@@ -99,15 +98,15 @@ public class Generator {
 	/**
 	 * Runs a scenario.
 	 * @param scenario the scenario to run.
-	 * @return the fight report generated.
+	 * @return the fight outcome generated.
 	 */
-	public Report runScenario(Scenario scenario) {
+	public Outcome runScenario(Scenario scenario) {
 
 		if (scenario.seed != 0) {
 			randomGenerator.seed(scenario.seed);
 		}
 
-		Report report = new Report();
+		Outcome outcome = new Outcome();
 
 		Fight fight = new Fight();
 		fight.setMaxTurns(scenario.maxTurns);
@@ -120,14 +119,14 @@ public class Generator {
 				Entity entity = entityInfo.createEntity(this);
 
 				int farmer = entity.getFarmer();
-				if (!report.logs.containsKey(farmer)) {
-					report.logs.put(farmer, new LeekLog(entity));
+				if (!outcome.logs.containsKey(farmer)) {
+					outcome.logs.put(farmer, new LeekLog(entity));
 				}
 				if (entity.getAI() != null) {
-					entity.getAI().setLogs(report.logs.get(farmer));
+					entity.getAI().setLogs(outcome.logs.get(farmer));
 				} else {
 					Log.w(TAG, "AI " + entityInfo.ai + " doesn't exist or is not valid.");
-					report.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
+					outcome.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
 				}
 				fight.addEntity(t, entity);
 			}
@@ -139,8 +138,8 @@ public class Generator {
 			fight.startFight();
 			fight.finishFight();
 
-			report.fight = fight.getActions().toJSON();
-			report.winner = fight.getWinner();
+			outcome.fight = fight.getActions().toJSON();
+			outcome.winner = fight.getWinner();
 
 			// Save registers
 			for (Entity entity : fight.getEntities().values()) {
@@ -149,7 +148,7 @@ public class Generator {
 				}
 			}
 
-			return report;
+			return outcome;
 
 			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
 

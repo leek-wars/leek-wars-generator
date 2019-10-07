@@ -7,7 +7,7 @@ import com.leekwars.generator.DbContext;
 import com.leekwars.generator.DbResolver;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
-import com.leekwars.generator.report.Report;
+import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.Scenario;
 
 import leekscript.compiler.LeekScript;
@@ -60,8 +60,8 @@ public class Main {
 				Log.e(TAG, "Failed to parse scenario!");
 				return;
 			}
-			Report report = generator.runScenario(scenario);
-			System.out.println(JSON.toJSONString(report.toJson(), false));
+			Outcome outcome = generator.runScenario(scenario);
+			System.out.println(JSON.toJSONString(outcome.toJson(), false));
 		}
 	}
 }

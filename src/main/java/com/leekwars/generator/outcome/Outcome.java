@@ -1,4 +1,4 @@
-package com.leekwars.generator.report;
+package com.leekwars.generator.outcome;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -7,7 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.leek.LeekLog;
 
-public class Report {
+public class Outcome {
     /**
      * Fight: public data: entities, map, actions, flags, duration, ai times
      */
