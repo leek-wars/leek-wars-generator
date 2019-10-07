@@ -41,12 +41,12 @@ public abstract class Entity {
 	protected Cell cell;
 	protected final Stats mBaseStats;
 	protected final Stats mBuffStats;
-	protected final String mName;
-	protected final int mId;
-	protected final int mFarmer;
+	protected String name;
+	protected int mId;
+	protected int mFarmer;
 	protected int mLevel;
-	protected final int mSkin;
-	protected final int mHat;
+	protected int mSkin;
+	protected int mHat;
 	protected String mFarmerName;
 	protected String mFarmerCountry;
 	protected String mTeamName = "";
@@ -85,10 +85,14 @@ public abstract class Entity {
 	private boolean isDiabolic = false;
 	private int fight_id;
 
+	public Entity() {
+		this(0, "");
+	}
+
 	public Entity(Integer id, String name, int farmer, int level, int life, int turn_point, int move_point, int force, int agility, int frequency, int wisdom, int resistance, int science, int magic, int skin, int team_id, String team_name, int ai_id, String ai_name, String farmer_name, String farmer_country, int hat) {
 
 		mId = id;
-		mName = name;
+		this.name = name;
 		mLevel = level;
 		mFarmer = farmer;
 		mSkin = skin;
@@ -124,7 +128,7 @@ public abstract class Entity {
 
 	public Entity(Integer id, String name) {
 		mId = id;
-		mName = name;
+		this.name = name;
 		mLevel = 1;
 		mFarmer = 0;
 		mSkin = 0;
@@ -265,6 +269,9 @@ public abstract class Entity {
 	public int getId() {
 		return mId;
 	}
+	public void setId(int id) {
+		mId = id;
+	}
 	public EntityAI getLeekIA() {
 		return mEntityAI;
 	}
@@ -289,8 +296,11 @@ public abstract class Entity {
 	public void setTotalLife(int vitality) {
 		mTotalLife = vitality;
 	}
+	public void setName(String name) {
+		this.name = name;
+	}
 	public String getName() {
-		return mName;
+		return name;
 	}
 	public int getStat(int id) {
 		return mBaseStats.getStat(id) + mBuffStats.getStat(id);
@@ -522,7 +532,7 @@ public abstract class Entity {
 	public void removeLaunchedEffect(Effect effect) {
 		launchedEffects.remove(effect);
 	}
-	
+
 	public void updateEffect(Effect effect) {
 		fight.log(new ActionUpdateEffect(effect.getLogID(), effect.value));
 	}
@@ -540,7 +550,7 @@ public abstract class Entity {
 
 		effects.clear();
 	}
-	
+
 	public void reduceEffects() {
 		for (int i = 0; i < effects.size(); ++i) {
 			effects.get(i).reduce();
@@ -651,7 +661,7 @@ public abstract class Entity {
 
 	@Override
 	public String toString() {
-		return mName;
+		return name;
 	}
 
 	public boolean isAlive() {
@@ -666,5 +676,33 @@ public abstract class Entity {
 
 	public Entity getSummoner() {
 		return null;
+	}
+
+	public void setStrength(int strength) {
+		mBaseStats.setStat(CHARAC_STRENGTH, strength);
+	}
+	public void setAgility(int agility) {
+		mBaseStats.setStat(CHARAC_AGILITY, agility);
+	}
+	public void setWisdom(int wisdom) {
+		mBaseStats.setStat(CHARAC_WISDOM, wisdom);
+	}
+	public void setResistance(int resistance) {
+		mBaseStats.setStat(CHARAC_RESISTANCE, resistance);
+	}
+	public void setScience(int science) {
+		mBaseStats.setStat(CHARAC_SCIENCE, science);
+	}
+	public void setMagic(int magic) {
+		mBaseStats.setStat(CHARAC_MAGIC, magic);
+	}
+	public void setFrequency(int frequency) {
+		mBaseStats.setStat(CHARAC_FREQUENCY, frequency);
+	}
+	public void setTP(int tp) {
+		mBaseStats.setStat(CHARAC_TP, tp);
+	}
+	public void setMP(int mp) {
+		mBaseStats.setStat(CHARAC_MP, mp);
 	}
 }

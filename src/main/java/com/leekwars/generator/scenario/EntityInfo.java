@@ -1,6 +1,7 @@
 package com.leekwars.generator.scenario;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
@@ -46,8 +47,9 @@ public class EntityInfo {
     public int resistance;
     public int science;
     public int magic;
-    public List<Integer> chips;
-    public List<Integer> weapons;
+    public List<Integer> chips = new ArrayList<Integer>();
+	public List<Integer> weapons = new ArrayList<Integer>();
+	public int cell;
 
     public EntityInfo(JSONObject e) {
         id = e.getIntValue("id");
@@ -65,7 +67,7 @@ public class EntityInfo {
         wisdom = e.getIntValue("wisdom");
         resistance = e.getIntValue("resistance");
         science = e.getIntValue("science");
-        magic = e.getIntValue("magic");
+		magic = e.getIntValue("magic");
 
         JSONArray weapons = e.getJSONArray("weapons");
         if (weapons != null) {
@@ -79,18 +81,32 @@ public class EntityInfo {
                 this.chips.add((Integer) c);
             }
         }
+		cell = e.getIntValue("cell");
     }
 
     public Entity createEntity(Generator generator) {
         try {
-            Entity entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
+			Entity entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
+			entity.setId(id);
+			entity.setName(name);
+			entity.setLevel(level);
+			entity.setTotalLife(life);
+			entity.setStrength(strength);
+			entity.setAgility(agility);
+			entity.setWisdom(wisdom);
+			entity.setResistance(resistance);
+			entity.setScience(science);
+			entity.setMagic(magic);
+			entity.setFrequency(frequency);
+			entity.setTP(tp);
+			entity.setMP(mp);
 
             for (Object w : weapons) {
                 Weapon weapon = Weapons.getWeapon((Integer) w);
                 if (weapon == null) {
                     Log.e(TAG, "No such weapon: " + w);
                     return null;
-                }
+				}
                 entity.addWeapon(weapon);
             }
             for (Object c : chips) {
@@ -103,7 +119,7 @@ public class EntityInfo {
 				try {
 					ResolverContext context = LeekScript.getResolver().createContext(farmer);
 					EntityAI ai = (EntityAI) LeekScript.compileFileContext(this.ai, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), context, generator.nocache);
-					Log.i(TAG, "AI " + ai + " compiled!");
+					Log.i(TAG, "AI " + this.ai + " compiled!");
 					entity.setAI(ai);
 					ai.setEntity(entity);
 				} catch (Exception e1) {
@@ -111,6 +127,7 @@ public class EntityInfo {
 					Log.w(TAG, e1.getMessage());
 				}
 			}
+			return entity;
         } catch (Exception e) {
             e.printStackTrace();
         }
