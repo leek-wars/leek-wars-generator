@@ -98,7 +98,6 @@ public class EntityInfo {
                 entity.addChip(Chips.getChip(chip));
 			}
 
-			boolean validAI = false;
 			if (ai != null) {
 				Log.i(TAG, "Compile AI " + ai + "...");
 				try {
@@ -107,13 +106,11 @@ public class EntityInfo {
 					Log.i(TAG, "AI " + ai + " compiled!");
 					entity.setAI(ai);
 					ai.setEntity(entity);
-					validAI = true;
 				} catch (Exception e1) {
 					Log.w(TAG, "AI " + ai + " not compiled");
 					Log.w(TAG, e1.getMessage());
 				}
 			}
-
         } catch (Exception e) {
             e.printStackTrace();
         }
