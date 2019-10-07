@@ -23,5 +23,17 @@ public class Report {
     /**
      * Fight statistics
      */
-    public FightStatistics statistics;
+	public FightStatistics statistics;
+
+	public JSONObject toJson() {
+		JSONObject json = new JSONObject();
+		JSONObject logsJSON = new JSONObject();
+		for (Integer farmer : logs.keySet()) {
+			logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
+		}
+		json.put("fight", fight);
+		json.put("logs", logsJSON);
+		json.put("winner", winner);
+		return json;
+	}
 }

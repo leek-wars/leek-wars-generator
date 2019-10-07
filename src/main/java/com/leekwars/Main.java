@@ -2,6 +2,7 @@ package com.leekwars;
 
 import java.io.File;
 
+import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.DbContext;
 import com.leekwars.generator.DbResolver;
 import com.leekwars.generator.Generator;
@@ -60,7 +61,7 @@ public class Main {
 				return;
 			}
 			Report report = generator.runScenario(scenario);
-			System.out.println(report);
+			System.out.println(JSON.toJSONString(report.toJson(), false));
 		}
 	}
 }
