@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.game.fight.statistics.FightStatistics;
+import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.leek.LeekLog;
 
 public class Report {
