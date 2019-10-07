@@ -63,4 +63,15 @@ public class Scenario {
 		}
 		teams.get(teamID).id = teamRealID;
 	}
+
+	public JSONObject toJson() {
+		JSONObject json = new JSONObject();
+		json.put("entities", new JSONArray());
+		return json;
+	}
+
+	@Override
+	public String toString() {
+		return toJson().toJSONString();
+	}
 }
