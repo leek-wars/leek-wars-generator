@@ -19,7 +19,11 @@ public class Outcome {
     /**
      * Winner team id
      */
-    public int winner;
+	public int winner;
+	/**
+	 * Duration
+	 */
+	public int duration;
     /**
      * Fight statistics
      */
@@ -34,6 +38,7 @@ public class Outcome {
 		json.put("fight", fight);
 		json.put("logs", logsJSON);
 		json.put("winner", winner);
+		json.put("duration", duration);
 		return json;
 	}
 }
