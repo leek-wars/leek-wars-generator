@@ -51,15 +51,15 @@ public class Scenario {
 		if (entity == null || teamID < 0) {
 			return;
 		}
-		while (teams.size() < teamID + 1) {
+		while (entities.size() < teamID + 1) {
 			entities.add(new ArrayList<EntityInfo>());
 		}
 		entities.get(teamID).add(entity);
 	}
 
 	public void setTeamID(int teamID, int teamRealID) {
-		while (teams.size() < teamID + 1) {
-			entities.add(new ArrayList<EntityInfo>());
+		if (!teams.containsKey(teamID)) {
+			teams.put(teamID, new TeamInfo());
 		}
 		teams.get(teamID).id = teamRealID;
 	}
