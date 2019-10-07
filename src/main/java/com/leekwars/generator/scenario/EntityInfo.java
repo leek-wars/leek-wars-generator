@@ -1,6 +1,5 @@
 package com.leekwars.generator.scenario;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +13,6 @@ import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.Leek;
-import com.leekwars.generator.leek.LeekLog;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.resolver.ResolverContext;
@@ -50,6 +48,8 @@ public class EntityInfo {
     public List<Integer> chips = new ArrayList<Integer>();
 	public List<Integer> weapons = new ArrayList<Integer>();
 	public int cell;
+
+	public EntityInfo() {}
 
     public EntityInfo(JSONObject e) {
         id = e.getIntValue("id");
