@@ -61,11 +61,7 @@ class FarmerStatistics {
 	}
 
 	public class LeekValue {
-		private final Map<Integer, Long> data;
-
-		public LeekValue() {
-			data = new HashMap<Integer, Long>();
-		}
+		private final Map<Integer, Long> data = new HashMap<Integer, Long>();
 		public void set(int leek, long value) {
 			data.put(leek, value);
 		}
