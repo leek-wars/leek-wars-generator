@@ -34,7 +34,7 @@ public class Scenario {
         if (json.containsKey("max_turns")) {
 			scenario.maxTurns = json.getIntValue("max_turns");
         }
-		for (Object teamJson : json.getJSONArray("teams")) {
+		for (Object teamJson : json.getJSONArray("entities")) {
             List<EntityInfo> team = new ArrayList<EntityInfo>();
 			for (Object entityJson : (JSONArray) teamJson) {
 				JSONObject e = (JSONObject) entityJson;
