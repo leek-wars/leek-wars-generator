@@ -10,7 +10,7 @@ import java.util.Map;
 /*
  * Object to keep track of farmer statistics during the fight
  */
-class FarmerStatistics {
+public class FarmerStatistics {
 
     public int stashed = 0;
     public int summons = 0;

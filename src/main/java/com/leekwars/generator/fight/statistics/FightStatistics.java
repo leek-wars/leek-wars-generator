@@ -58,7 +58,7 @@ public class FightStatistics {
 	/*
 	 * Statistics per farmer
 	 */
-	private final Map<Integer, FarmerStatistics> farmers;
+	public final Map<Integer, FarmerStatistics> farmers;
 
 	public FightStatistics() {
 		farmers = new TreeMap<Integer, FarmerStatistics>();
