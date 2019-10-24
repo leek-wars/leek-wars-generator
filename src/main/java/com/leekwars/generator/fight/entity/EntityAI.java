@@ -85,7 +85,7 @@ public class EntityAI extends AI {
 
 	protected boolean fp = true;
 	protected boolean mIsValid = true;
-	
+
 	public EntityAI() {}
 
 	public EntityAI(Entity entity, LeekLog logs) {
@@ -145,7 +145,7 @@ public class EntityAI extends AI {
 	public void setEntity(Entity entity) {
 		mEntity = entity;
 	}
-	
+
 	public void addSystemLog(int type, String key) {
 		addSystemLog(type, key, null);
 	}
@@ -1563,7 +1563,7 @@ public class EntityAI extends AI {
 			if (target != null && !target.isDead()) {
 				List<Cell> path = fight.getMap().getPathBeetween(this, mEntity.getCell(), target.getCell(), null);
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(path.size(), pm + 1)));
+					used_pm = fight.moveEntity(mEntity, path.subList(0, Math.min(path.size(), pm + 1)));
 				}
 			}
 		}
@@ -1586,7 +1586,7 @@ public class EntityAI extends AI {
 					path = fight.getMap().getPathBeetween(this, mEntity.getCell(), target, null);
 
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(pm, path.size())));
+					used_pm = fight.moveEntity(mEntity, path.subList(0, Math.min(pm, path.size())));
 				}
 			}
 		}
@@ -1609,7 +1609,7 @@ public class EntityAI extends AI {
 			if (targets.size() != 0) {
 				List<Cell> path = Pathfinding.getAStarPath(this, mEntity.getCell(), targets);
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(pm, path.size())));
+					used_pm = fight.moveEntity(mEntity, path.subList(0, Math.min(pm, path.size())));
 				}
 			}
 		}
@@ -1632,7 +1632,7 @@ public class EntityAI extends AI {
 			if (targets.size() != 0) {
 				List<Cell> path = Pathfinding.getAStarPath(this, mEntity.getCell(), targets);
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.subList(1, Math.min(pm, path.size())));
+					used_pm = fight.moveEntity(mEntity, path.subList(0, Math.min(pm, path.size())));
 				}
 			}
 		}

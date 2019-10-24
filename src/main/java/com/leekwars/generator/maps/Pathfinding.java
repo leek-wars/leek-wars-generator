@@ -472,13 +472,14 @@ public class Pathfinding {
 		c1.weight = 0;
 		c1.visited = true;
 		open.add(c1);
-		
+
 		while (open.size() > 0) {
 			Cell u = open.pollFirst();
 			u.closed = true;
-			
+
 			if (endCells.contains(u)) {
 				List<Cell> result = new ArrayList<>();
+				u = u.parent; // Remove first cell
 				int s = u.cost;
 				while (s-- >= 0) {
 					result.add(u);
