@@ -600,12 +600,12 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getWeapon(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL) {
 			if (mEntity.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getTemplate());
+				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getId());
 		}
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null && l.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(l.getWeapon().getTemplate());
+				return LeekValueManager.getLeekIntValue(l.getWeapon().getId());
 		}
 		return LeekValueManager.NULL;
 	}
