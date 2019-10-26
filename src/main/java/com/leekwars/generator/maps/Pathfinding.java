@@ -479,9 +479,8 @@ public class Pathfinding {
 
 			if (endCells.contains(u)) {
 				List<Cell> result = new ArrayList<>();
-				u = u.parent; // Remove first cell
 				int s = u.cost;
-				while (s-- >= 0) {
+				while (s-- >= 1) {
 					result.add(u);
 					u = u.parent;
 				}

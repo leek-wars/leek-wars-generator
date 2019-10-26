@@ -1563,7 +1563,7 @@ public class EntityAI extends AI {
 			if (target != null && !target.isDead()) {
 				List<Cell> path = fight.getMap().getPathBeetween(this, mEntity.getCell(), target.getCell(), null);
 				if (path != null) {
-					used_pm = fight.moveEntity(mEntity, path.subList(0, Math.min(path.size(), pm + 1)));
+					used_pm = fight.moveEntity(mEntity, path.subList(0, Math.min(path.size(), pm)));
 				}
 			}
 		}
