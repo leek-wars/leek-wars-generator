@@ -65,6 +65,7 @@ public class EntityAI extends AI {
 	// Le LeekIA s'occuper de gérer les liens entre le code utilisateur et les
 	// fonctions du combat
 
+	protected Entity mInitialEntity;
 	protected Entity mEntity;
 	protected Fight fight;
 	protected final static boolean LOG_IA = true;
@@ -88,6 +89,7 @@ public class EntityAI extends AI {
 
 	public EntityAI(Entity entity, LeekLog logs) {
 		this.mEntity = entity;
+		this.mInitialEntity = entity;
 		this.logs = logs;
 //		if (ai == null || ai.getValid() == 0) {
 //			mIsValid = false;
@@ -142,6 +144,7 @@ public class EntityAI extends AI {
 
 	public void setEntity(Entity entity) {
 		mEntity = entity;
+		mInitialEntity = entity;
 	}
 
 	public void addSystemLog(int type, String key) {
@@ -223,6 +226,7 @@ public class EntityAI extends AI {
 
 		try {
 
+			mEntity = mInitialEntity;
 			runIA();
 
 		} catch (StackOverflowError e) {
