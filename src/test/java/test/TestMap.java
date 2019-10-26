@@ -145,16 +145,16 @@ public class TestMap {
 		 * start = System.nanoTime(); // List<Cell> path2 =
 		 * Pathfinding.getAStarPath(c, ends, null); System.out.println(
 		 * "Old A* : " + (System.nanoTime() - start));
-		 * 
+		 *
 		 * start = System.nanoTime(); // List<Cell> path3 =
 		 * Pathfinding.getAStarPath(c, ends, null); System.out.println(
 		 * "Old A* : " + (System.nanoTime() - start));
-		 * 
+		 *
 		 * /* if(path2 != null) System.out.println("Len : " + path2.size());
-		 * 
+		 *
 		 * if(path != null) map.drawMap(path); else map.drawMap(); if(path2 !=
 		 * null){ try{ Thread.sleep(5000); map.drawMap(path2); } catch(Exception
-		 * e){ // TODO: handle exception } }
+		 * e){ // handle exception } }
 		 */
 
 	}

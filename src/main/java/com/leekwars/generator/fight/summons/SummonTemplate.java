@@ -13,7 +13,7 @@ import com.leekwars.generator.fight.entity.Summon;
 
 public class SummonTemplate {
 
-	private final static String TAG = SummonTemplate.class.getSimpleName();
+	// private final static String TAG = SummonTemplate.class.getSimpleName();
 
 	private final int mId;
 

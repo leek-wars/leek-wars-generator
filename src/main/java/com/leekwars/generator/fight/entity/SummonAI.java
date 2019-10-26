@@ -5,7 +5,7 @@ import leekscript.runner.values.FunctionLeekValue;
 
 public class SummonAI extends EntityAI {
 
-	private static final String TAG = SummonAI.class.getSimpleName();
+	// private static final String TAG = SummonAI.class.getSimpleName();
 
 	private FunctionLeekValue mAIFunction;
 
