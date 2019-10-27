@@ -33,7 +33,7 @@ import leekscript.runner.LeekFunctions;
 public class Generator {
 
 	private static final String TAG = Generator.class.getSimpleName();
-	
+
 	private static RegisterManager registerManager = null;
 	private static RandomGenerator randomGenerator = new RandomGenerator() {
 		private long n = 0;
@@ -100,7 +100,7 @@ public class Generator {
 			long seed = json.getLongValue("random_seed");
 			randomGenerator.seed(seed);
 		}
-		
+
 		Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
 
 		Fight fight = new Fight();
@@ -115,13 +115,13 @@ public class Generator {
 		for (Object team : teams) {
 			for (Object entityJson : (JSONArray) team) {
 				JSONObject e = (JSONObject) entityJson;
-				Entity entity = new Leek(e.getIntValue("id"), 
+				Entity entity = new Leek(e.getIntValue("id"),
 					e.getString("name"), e.getIntValue("farmer"),
 					e.getIntValue("level"), e.getIntValue("life"), e.getIntValue("tp"), e.getIntValue("mp"), e.getIntValue("strength"), e.getIntValue("agility"), e.getIntValue("frequency"),
 					e.getIntValue("wisdom"), e.getIntValue("resistance"), e.getIntValue("science"), e.getIntValue("magic"),	e.getIntValue("skin"),
-					1212, // team id
-					"team",	1212, // ai id
-					"ai", "farmer", "France", 0 /* hat */);
+					e.getIntValue("t_id"), e.getString("t_name"),
+					e.getIntValue("ai_id"), e.getString("ai"),
+					e.getString("f_name"), e.getString("f_country"), 0 /* hat */);
 				Log.i(TAG, "Create entity " + entity.getName());
 				JSONArray weapons = e.getJSONArray("weapons");
 				if (weapons != null) {
@@ -176,7 +176,7 @@ public class Generator {
 			Log.i(TAG, "Start fight...");
 			fight.startFight();
 			fight.finishFight();
-			
+
 			JSONObject report = new JSONObject();
 			report.put("fight", fight.getActions().toJSON());
 			report.put("winner", fight.getWinner());
@@ -192,11 +192,11 @@ public class Generator {
 					getRegisterManager().saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
 				}
 			}
-			
+
 			return report.toJSONString();
-			
+
 			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
-			
+
 			// Write to file
 			// try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
 			// 	writer.write(report.toString());
@@ -206,14 +206,14 @@ public class Generator {
 			return "";
 		}
 	}
-	
+
 	private void loadWeapons() {
 		try {
 			Log.start(TAG, "- Loading weapons... ");
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"), 
+				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"),
 						weapon.getInteger("max_range"), weapon.getJSONArray("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
@@ -222,16 +222,16 @@ public class Generator {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void loadChips() {
 		try {
 			Log.start(TAG, "- Loading chips... ");
 			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
-				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"), 
+				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"),
 						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"), chip.getByte("area"), chip.getBoolean("los"),
-						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"), 
+						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"),
 						chip.getInteger("template"), chip.getString("name")));
 			}
 			Log.end(chips.size() + " chips loaded.");
