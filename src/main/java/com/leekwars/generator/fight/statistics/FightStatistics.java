@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.effect.Effect;
@@ -334,5 +335,28 @@ public class FightStatistics {
 
 	public void tooMuchOperations(Entity entity) {
 		this.farmers.get(entity.getFarmer()).tooMuchOperations++;
+	}
+
+	public JSONObject toJson() {
+		JSONObject json = new JSONObject();
+		json.put("kills", sKills);
+		json.put("bullets", sBullets);
+		json.put("used_chips", sUsedChips);
+		json.put("summons", sSummons);
+		json.put("damage", sDammages);
+		json.put("heal", sHeal);
+		json.put("distance", sDistance);
+		json.put("stack_overflows", sStackOverflow);
+		json.put("errors", sErrors);
+		json.put("resurrects", sResurrects);
+		json.put("damage_poison", sDamagePoison);
+		json.put("damage_return", sDamageReturn);
+		json.put("critical_hits", sCriticalHits);
+		json.put("tp_used", sTPUsed);
+		json.put("mp_used", sMPUsed);
+		json.put("operations", sOperations);
+		json.put("says", sSays);
+		json.put("says_length", sSaysLength);
+		return json;
 	}
 }
