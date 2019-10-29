@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.Attack;
@@ -339,24 +340,31 @@ public class FightStatistics {
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
-		json.put("kills", sKills);
-		json.put("bullets", sBullets);
-		json.put("used_chips", sUsedChips);
-		json.put("summons", sSummons);
-		json.put("damage", sDammages);
-		json.put("heal", sHeal);
-		json.put("distance", sDistance);
-		json.put("stack_overflows", sStackOverflow);
-		json.put("errors", sErrors);
-		json.put("resurrects", sResurrects);
-		json.put("damage_poison", sDamagePoison);
-		json.put("damage_return", sDamageReturn);
-		json.put("critical_hits", sCriticalHits);
-		json.put("tp_used", sTPUsed);
-		json.put("mp_used", sMPUsed);
-		json.put("operations", sOperations);
-		json.put("says", sSays);
-		json.put("says_length", sSaysLength);
+		JSONObject global = new JSONObject();
+		global.put("kills", sKills);
+		global.put("bullets", sBullets);
+		global.put("used_chips", sUsedChips);
+		global.put("summons", sSummons);
+		global.put("damage", sDammages);
+		global.put("heal", sHeal);
+		global.put("distance", sDistance);
+		global.put("stack_overflows", sStackOverflow);
+		global.put("errors", sErrors);
+		global.put("resurrects", sResurrects);
+		global.put("damage_poison", sDamagePoison);
+		global.put("damage_return", sDamageReturn);
+		global.put("critical_hits", sCriticalHits);
+		global.put("tp_used", sTPUsed);
+		global.put("mp_used", sMPUsed);
+		global.put("operations", sOperations);
+		global.put("says", sSays);
+		global.put("says_length", sSaysLength);
+		json.put("global", global);
+		JSONObject farmers = new JSONObject();
+		for (Entry<Integer, FarmerStatistics> farmer : this.farmers.entrySet()) {
+			farmers.put(String.valueOf(farmer.getKey()), farmer.getValue().toJson());
+		}
+		json.put("farmers", farmers);
 		return json;
 	}
 }

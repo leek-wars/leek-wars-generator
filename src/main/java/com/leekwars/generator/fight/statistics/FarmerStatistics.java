@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 /*
  * Object to keep track of farmer statistics during the fight
@@ -58,12 +62,30 @@ public class FarmerStatistics {
 			}
 			return retour;
 		}
+		public JSONObject toJson() {
+			JSONObject json = new JSONObject();
+			for (Entry<Integer, HashSet<Long>> set : data.entrySet()) {
+				JSONArray array = new JSONArray();
+				for (Long value : set.getValue()) {
+					array.add(value);
+				}
+				json.put(String.valueOf(set.getKey()), array);
+			}
+			return json;
+		}
 	}
 
 	public class LeekValue {
 		private final Map<Integer, Long> data = new HashMap<Integer, Long>();
 		public void set(int leek, long value) {
 			data.put(leek, value);
+		}
+		public JSONObject toJson() {
+			JSONObject json = new JSONObject();
+			for (Entry<Integer, Long> value : data.entrySet()) {
+				json.put(String.valueOf(value.getKey()), value.getValue());
+			}
+			return json;
 		}
 	}
 
@@ -79,5 +101,46 @@ public class FarmerStatistics {
 			}
 			data.get(leek).set(index, true);
 		}
+		public JSONObject toJson() {
+			JSONObject json = new JSONObject();
+			for (Entry<Integer, List<Boolean>> list : data.entrySet()) {
+				JSONArray array = new JSONArray();
+				for (Boolean value : list.getValue()) {
+					array.add(value ? 1 : 0);
+				}
+				json.put(String.valueOf(list.getKey()), array);
+			}
+			return json;
+		}
+	}
+
+	public JSONObject toJson() {
+		JSONObject json = new JSONObject();
+		json.put("stashed", stashed);
+		json.put("summons", summons);
+		json.put("roxxor", roxxor);
+		json.put("maxEntityLife", maxEntityLife);
+		json.put("maxEntityTP", maxEntityTP);
+		json.put("maxEntityMP", maxEntityMP);
+		json.put("weaponShot", weaponShot);
+		json.put("usedChips", usedChips);
+		json.put("suicides", suicides);
+		json.put("kills", kills);
+		json.put("kamikaze", kamikaze);
+		json.put("killedAllies", killedAllies);
+		json.put("healedEnemies", healedEnemies);
+		json.put("maxHurtEnemies", maxHurtEnemies);
+		json.put("maxKilledEnemies", maxKilledEnemies);
+		json.put("walkedDistance", walkedDistance);
+		json.put("damage", damage);
+		json.put("snipers", snipers);
+		json.put("lamas", lamas);
+		json.put("tooMuchOperations", tooMuchOperations);
+		json.put("stackOverflows", stackOverflows);
+		json.put("weaponsUsed", weaponsUsed.toJson());
+		json.put("chipsUsed", chipsUsed.toJson());
+		json.put("endCells", endCells.toJson());
+		json.put("walkedCells", walkedCells.toJson());
+		return json;
 	}
 }
