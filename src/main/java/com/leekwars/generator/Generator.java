@@ -140,6 +140,8 @@ public class Generator {
 
 			outcome.fight = fight.getActions().toJSON();
 			outcome.winner = fight.getWinner();
+			outcome.duration = fight.getOrder().getTurn();
+			outcome.statistics = fight.statistics;
 
 			// Save registers
 			for (Entity entity : fight.getEntities().values()) {
