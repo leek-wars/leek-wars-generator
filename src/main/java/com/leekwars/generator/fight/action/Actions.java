@@ -15,7 +15,7 @@ public class Actions {
 
 	private final List<Entity> entities = new ArrayList<Entity>();
 	private final JSONArray leeks = new JSONArray();
-	private final JSONObject map = new JSONObject();
+	public final JSONObject map = new JSONObject();
 
 	private int mNextEffectId = 0;
 
