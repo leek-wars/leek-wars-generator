@@ -39,6 +39,11 @@ public class Outcome {
 		json.put("logs", logsJSON);
 		json.put("winner", winner);
 		json.put("duration", duration);
+		json.put("statistics", statistics.toJson());
 		return json;
+	}
+
+	public String toString() {
+		return toJson().toJSONString();
 	}
 }
