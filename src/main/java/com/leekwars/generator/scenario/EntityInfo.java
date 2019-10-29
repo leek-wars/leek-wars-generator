@@ -90,7 +90,7 @@ public class EntityInfo {
 			entity.setId(id);
 			entity.setName(name);
 			entity.setLevel(level);
-			entity.setTotalLife(life);
+			entity.setLife(life);
 			entity.setStrength(strength);
 			entity.setAgility(agility);
 			entity.setWisdom(wisdom);

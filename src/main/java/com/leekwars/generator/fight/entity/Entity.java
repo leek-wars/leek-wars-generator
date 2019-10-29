@@ -678,6 +678,11 @@ public abstract class Entity {
 		return null;
 	}
 
+	public void setLife(int life) {
+		mBaseStats.setStat(CHARAC_LIFE, life);
+		mTotalLife = life;
+		this.life = life;
+	}
 	public void setStrength(int strength) {
 		mBaseStats.setStat(CHARAC_STRENGTH, strength);
 	}
