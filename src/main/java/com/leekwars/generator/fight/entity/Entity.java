@@ -710,4 +710,7 @@ public abstract class Entity {
 	public void setMP(int mp) {
 		mBaseStats.setStat(CHARAC_MP, mp);
 	}
+	public void setFarmer(int farmer) {
+		this.mFarmer = farmer;
+	}
 }

@@ -99,7 +99,8 @@ public class EntityInfo {
 			entity.setMagic(magic);
 			entity.setFrequency(frequency);
 			entity.setTP(tp);
-			entity.setMP(mp);
+            entity.setMP(mp);
+            entity.setFarmer(farmer);
 
             for (Object w : weapons) {
                 Weapon weapon = Weapons.getWeapon((Integer) w);
