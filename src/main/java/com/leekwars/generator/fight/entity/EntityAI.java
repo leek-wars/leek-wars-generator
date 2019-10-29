@@ -76,7 +76,6 @@ public class EntityAI extends AI {
 
 	protected int ai_id = -1;
 	protected String ai_name = "";
-	protected int mInstructions;
 	protected LeekLog logs;
 
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
@@ -101,7 +100,6 @@ public class EntityAI extends AI {
 //			return;
 //		}
 //		ai_name = ai.getName();
-//		mInstructions = ai.getInstructions();
 		try {
 //			if (ai != null) {
 //				ai_id = ai.getId();
@@ -188,10 +186,6 @@ public class EntityAI extends AI {
 
 	public int getLevel() {
 		return mEntity.getLevel();
-	}
-
-	public int getInstructions() {
-		return mInstructions;
 	}
 
 	public boolean isValid() {
