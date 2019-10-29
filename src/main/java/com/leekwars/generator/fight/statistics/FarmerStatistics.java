@@ -136,7 +136,10 @@ public class FarmerStatistics {
 		json.put("weaponsUsed", weaponsUsed.toJson());
 		json.put("chipsUsed", chipsUsed.toJson());
 		json.put("endCells", endCells.toJson());
+		json.put("endLifes", endLifes.toJson());
+		json.put("totalLifes", totalLifes.toJson());
 		json.put("walkedCells", walkedCells.toJson());
+		json.put("aiInstructions", aiInstructions.toJson());
 		return json;
 	}
 }
