@@ -150,9 +150,9 @@ public class Generator {
 				}
 			}
 			Log.i(TAG, "SHA-1: " + Util.sha1(outcome.toString()));
+			Log.s(TAG, "Fight generated!");
 
 			return outcome;
-
 
 			// Write to file
 			// try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
@@ -160,6 +160,7 @@ public class Generator {
 			// }
 		} catch (Exception e) {
 			e.printStackTrace();
+			Log.e(TAG, "Error during fight generation!");
 			return null;
 		}
 	}
