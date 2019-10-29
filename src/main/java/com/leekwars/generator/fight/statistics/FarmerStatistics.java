@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -40,6 +38,8 @@ public class FarmerStatistics {
 	public LeekSet weaponsUsed = new LeekSet();
 	public LeekSet chipsUsed = new LeekSet();
 	public LeekValue endCells = new LeekValue();
+	public LeekValue endLifes = new LeekValue();
+	public LeekValue totalLifes = new LeekValue();
 	public LeekCellList walkedCells = new LeekCellList();
 
     public class LeekSet extends HashMap<Integer, HashSet<Long>> {

@@ -313,9 +313,12 @@ public class FightStatistics {
 	public void endFight(Collection<Entity> entities) {
 		// Save end cells of each entity
 		for (Entity entity : entities) {
+			FarmerStatistics farmer = this.farmers.get(entity.getFarmer());
 			if (entity.getCell() != null) {
-				this.farmers.get(entity.getFarmer()).endCells.set(entity.getId(), entity.getCell().getId());
+				farmer.endCells.set(entity.getId(), entity.getCell().getId());
 			}
+			farmer.endLifes.set(entity.getId(), entity.getLife());
+			farmer.totalLifes.set(entity.getId(), entity.getTotalLife());
 		}
 	}
 
