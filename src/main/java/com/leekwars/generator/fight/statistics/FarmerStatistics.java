@@ -42,21 +42,17 @@ public class FarmerStatistics {
 	public LeekValue endCells = new LeekValue();
 	public LeekCellList walkedCells = new LeekCellList();
 
-    public class LeekSet {
-		private final Map<Integer, HashSet<Long>> data;
-
-		public LeekSet() {
-			data = new HashMap<Integer, HashSet<Long>>();
-		}
+    public class LeekSet extends HashMap<Integer, HashSet<Long>> {
+		private static final long serialVersionUID = 404567813674607806L;
 		public void add(int leek, long value) {
-			if (!data.containsKey(leek)) {
-				data.put(leek, new HashSet<Long>());
+			if (!containsKey(leek)) {
+				put(leek, new HashSet<Long>());
 			}
-			data.get(leek).add(value);
+			get(leek).add(value);
 		}
 		public int getCount() {
 			int retour = 0;
-			for (HashSet<Long> list : data.values()) {
+			for (HashSet<Long> list : values()) {
 				if (list.size() > retour)
 					retour = list.size();
 			}
@@ -64,7 +60,7 @@ public class FarmerStatistics {
 		}
 		public JSONObject toJson() {
 			JSONObject json = new JSONObject();
-			for (Entry<Integer, HashSet<Long>> set : data.entrySet()) {
+			for (Entry<Integer, HashSet<Long>> set : entrySet()) {
 				JSONArray array = new JSONArray();
 				for (Long value : set.getValue()) {
 					array.add(value);
@@ -75,35 +71,34 @@ public class FarmerStatistics {
 		}
 	}
 
-	public class LeekValue {
-		private final Map<Integer, Long> data = new HashMap<Integer, Long>();
+	public class LeekValue extends HashMap<Integer, Long> {
+		private static final long serialVersionUID = -641938448092752857L;
 		public void set(int leek, long value) {
-			data.put(leek, value);
+			put(leek, value);
 		}
 		public JSONObject toJson() {
 			JSONObject json = new JSONObject();
-			for (Entry<Integer, Long> value : data.entrySet()) {
+			for (Entry<Integer, Long> value : entrySet()) {
 				json.put(String.valueOf(value.getKey()), value.getValue());
 			}
 			return json;
 		}
+		public void add(int id, long amount) {
+			merge(id, amount, Long::sum);
+		}
 	}
 
-	public class LeekCellList {
-		private final Map<Integer, List<Boolean>> data;
-
-		public LeekCellList() {
-			data = new HashMap<Integer, List<Boolean>>();
-		}
+	public class LeekCellList extends HashMap<Integer, List<Boolean>> {
+		private static final long serialVersionUID = -949384035567270356L;
 		public void set(int leek, int index) {
-			if (!data.containsKey(leek)) {
-				data.put(leek, new ArrayList<Boolean>(Collections.nCopies(613, false)));
+			if (!containsKey(leek)) {
+				put(leek, new ArrayList<Boolean>(Collections.nCopies(613, false)));
 			}
-			data.get(leek).set(index, true);
+			get(leek).set(index, true);
 		}
 		public JSONObject toJson() {
 			JSONObject json = new JSONObject();
-			for (Entry<Integer, List<Boolean>> list : data.entrySet()) {
+			for (Entry<Integer, List<Boolean>> list : entrySet()) {
 				JSONArray array = new JSONArray();
 				for (Boolean value : list.getValue()) {
 					array.add(value ? 1 : 0);
