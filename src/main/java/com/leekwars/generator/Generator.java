@@ -149,10 +149,10 @@ public class Generator {
 					getRegisterManager().saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
 				}
 			}
+			Log.i(TAG, "SHA-1: " + Util.sha1(outcome.toString()));
 
 			return outcome;
 
-			// System.out.println("SHA-1: " + Util.sha1(report.toString()));
 
 			// Write to file
 			// try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
