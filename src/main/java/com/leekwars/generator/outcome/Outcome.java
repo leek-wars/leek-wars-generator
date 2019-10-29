@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.leek.LeekLog;
 
@@ -11,7 +12,7 @@ public class Outcome {
     /**
      * Fight: public data: entities, map, actions, flags, duration, ai times
      */
-    public JSONObject fight;
+    public Actions fight;
     /**
      * Logs: debugs, marks, pauses
      */
@@ -35,7 +36,7 @@ public class Outcome {
 		for (Integer farmer : logs.keySet()) {
 			logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
 		}
-		json.put("fight", fight);
+		json.put("fight", fight.toJSON());
 		json.put("logs", logsJSON);
 		json.put("winner", winner);
 		json.put("duration", duration);

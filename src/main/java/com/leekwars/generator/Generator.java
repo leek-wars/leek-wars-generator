@@ -138,7 +138,7 @@ public class Generator {
 			fight.startFight();
 			fight.finishFight();
 
-			outcome.fight = fight.getActions().toJSON();
+			outcome.fight = fight.getActions();
 			outcome.winner = fight.getWinner();
 			outcome.duration = fight.getOrder().getTurn();
 			outcome.statistics = fight.statistics;
