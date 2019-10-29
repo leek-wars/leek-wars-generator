@@ -319,6 +319,8 @@ public class Fight {
 
 		int count_errors = 0;
 
+		Log.i(TAG, "Turn 1");
+
 		// On lance les tours
 		while (order.getTurn() <= max_turns && mState == Fight.STATE_RUNNING) {
 
@@ -526,6 +528,7 @@ public class Fight {
 
 				if (order.getTurn() <= Fight.MAX_TURNS) {
 					actions.log(new ActionNewTurn(order.getTurn()));
+					Log.i(TAG, "Turn " + order.getTurn());
 				}
 
 				for (Team t : teams) {
