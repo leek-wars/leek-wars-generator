@@ -41,6 +41,7 @@ public class FarmerStatistics {
 	public LeekValue endLifes = new LeekValue();
 	public LeekValue totalLifes = new LeekValue();
 	public LeekCellList walkedCells = new LeekCellList();
+	public LeekValue aiInstructions = new LeekValue();
 
     public class LeekSet extends HashMap<Integer, HashSet<Long>> {
 		private static final long serialVersionUID = 404567813674607806L;

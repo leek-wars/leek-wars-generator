@@ -71,6 +71,7 @@ public class FightStatistics {
 			if (!this.farmers.containsKey(entity.getFarmer())) {
 				this.farmers.put(entity.getFarmer(), new FarmerStatistics());
 			}
+			this.farmers.get(entity.getFarmer()).aiInstructions.set(entity.getId(), entity.getAI().getInstructions());
 		}
 	}
 
