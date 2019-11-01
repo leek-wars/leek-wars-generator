@@ -30,7 +30,8 @@ public class EntityInfo {
 
     public int id;
     public String name;
-    public String ai;
+	public String ai;
+	public int aiOwner;
     public int type;
     public int farmer;
     public int team;
@@ -123,7 +124,7 @@ public class EntityInfo {
 			if (ai != null) {
 				Log.i(TAG, "Compile AI " + ai + "...");
 				try {
-					ResolverContext context = LeekScript.getResolver().createContext(farmer);
+					ResolverContext context = LeekScript.getResolver().createContext(farmer, aiOwner);
 					EntityAI ai = (EntityAI) LeekScript.compileFileContext(this.ai, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), context, generator.nocache);
 					Log.i(TAG, "AI " + this.ai + " compiled!");
 					entity.setAI(ai);
@@ -156,6 +157,7 @@ public class EntityInfo {
 		json.put("mp", mp);
 		json.put("farmer", farmer);
 		json.put("ai", ai);
+		json.put("ai_owner", aiOwner);
 		JSONArray weapons = new JSONArray();
 		for (int weapon : this.weapons) {
 			weapons.add(weapon);

@@ -58,7 +58,7 @@ public class DbResolver implements Resolver<DbContext> {
 	}
 
 	@Override
-	public ResolverContext createContext(int farmer) {
+	public ResolverContext createContext(int farmer, int owner) {
 		return new DbContext(farmer, 0);
 	}
 }
