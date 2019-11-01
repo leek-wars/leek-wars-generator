@@ -84,7 +84,7 @@ public class EntityInfo {
 		cell = e.getIntValue("cell");
     }
 
-    public Entity createEntity(Generator generator) {
+    public Entity createEntity(Generator generator, Scenario scenario) {
         try {
 			Entity entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
 			entity.setId(id);
@@ -100,7 +100,12 @@ public class EntityInfo {
 			entity.setFrequency(frequency);
 			entity.setTP(tp);
             entity.setMP(mp);
-            entity.setFarmer(farmer);
+			entity.setFarmer(farmer);
+			entity.setFarmerName(scenario.farmers.get(farmer).name);
+			entity.setFarmerCountry(scenario.farmers.get(farmer).country);
+			entity.setAIName(ai);
+			entity.setTeamID(team);
+			entity.setTeamName(scenario.teams.get(team).name);
 
             for (Object w : weapons) {
                 Weapon weapon = Weapons.getWeapon((Integer) w);

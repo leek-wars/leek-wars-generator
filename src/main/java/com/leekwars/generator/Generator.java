@@ -116,7 +116,7 @@ public class Generator {
 		for (List<EntityInfo> team : scenario.entities) {
 			for (EntityInfo entityInfo : team) {
 
-				Entity entity = entityInfo.createEntity(this);
+				Entity entity = entityInfo.createEntity(this, scenario);
 
 				int farmer = entity.getFarmer();
 				if (!outcome.logs.containsKey(farmer)) {

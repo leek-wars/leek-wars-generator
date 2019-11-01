@@ -713,4 +713,19 @@ public abstract class Entity {
 	public void setFarmer(int farmer) {
 		this.mFarmer = farmer;
 	}
+	public void setFarmerName(String name) {
+		this.mFarmerName = name;
+	}
+	public void setFarmerCountry(String country) {
+		this.mFarmerCountry = country;
+	}
+	public void setAIName(String ai) {
+		this.mAIName = ai;
+	}
+	public void setTeamID(int team) {
+		this.mTeamId = team;
+	}
+	public void setTeamName(String name) {
+		this.mTeamName = name;
+	}
 }
