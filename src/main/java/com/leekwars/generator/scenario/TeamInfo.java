@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 
 public class TeamInfo {
 	public int id;
-	public String name;
+	public String name = "";
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
