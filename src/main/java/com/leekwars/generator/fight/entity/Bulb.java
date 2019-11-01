@@ -20,7 +20,9 @@ public class Bulb extends Entity {
 		mType = type;
 
 		// On détermine l'ia de l'invocation
-		mEntityAI = new BulbAI(this, owner.mEntityAI, ai);
+		try {
+			mEntityAI = new BulbAI(this, owner.mEntityAI, ai);
+		} catch (Exception e) {}
 	}
 
 	@Override

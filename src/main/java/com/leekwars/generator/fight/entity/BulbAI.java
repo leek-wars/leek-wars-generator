@@ -10,7 +10,7 @@ public class BulbAI extends EntityAI {
 	private FunctionLeekValue mAIFunction;
 	private EntityAI mOwnerAI;
 
-	public BulbAI(Entity entity, EntityAI owner_ai, FunctionLeekValue ai) {
+	public BulbAI(Entity entity, EntityAI owner_ai, FunctionLeekValue ai) throws Exception {
 		super(entity, owner_ai.logs);
 		mAIFunction = ai;
 		setFight(owner_ai.fight);

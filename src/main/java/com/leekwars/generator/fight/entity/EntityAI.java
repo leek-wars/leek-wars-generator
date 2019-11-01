@@ -84,9 +84,9 @@ public class EntityAI extends AI {
 	protected boolean fp = true;
 	protected boolean mIsValid = true;
 
-	public EntityAI() {}
+	public EntityAI() throws Exception {}
 
-	public EntityAI(Entity entity, LeekLog logs) {
+	public EntityAI(Entity entity, LeekLog logs) throws Exception {
 		this.mEntity = entity;
 		this.mInitialEntity = entity;
 		this.logs = logs;
