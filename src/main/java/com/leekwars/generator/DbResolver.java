@@ -33,11 +33,12 @@ public class DbResolver implements Resolver<DbContext> {
 			String[] parts = result.split(" ", 2);
 			int folderID = Integer.parseInt(parts[0]);
 			int aiID = Integer.parseInt(parts[1]);
+			long timestamp = Long.parseLong(parts[2]);
 
 			String code = Util.readFile("../ai/" + aiID + ".leek");
 
 			DbContext newContext = new DbContext(context.getFarmer(), folderID);
-			return new AIFile<DbContext>(path, code, newContext, aiID);
+			return new AIFile<DbContext>(path, code, timestamp, newContext, aiID);
 		}
 	}
 
