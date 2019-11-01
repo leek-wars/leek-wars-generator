@@ -71,6 +71,11 @@ public class Scenario {
 			farmers.put(String.valueOf(farmer.id), farmer.toJson());
 		}
 		json.put("farmers", farmers);
+		JSONObject teams = new JSONObject();
+		for (TeamInfo team : this.teams.values()) {
+			teams.put(String.valueOf(team.id), team.toJson());
+		}
+		json.put("teams", teams);
 		JSONArray entities = new JSONArray();
 		for (List<EntityInfo> list : this.entities) {
 			JSONArray team = new JSONArray();
