@@ -71,6 +71,15 @@ public class Scenario {
 		teams.get(teamID).id = teamRealID;
 	}
 
+	public void setEntityAI(int team, int leek_id, String fullPath, int aiOwner) {
+		for (EntityInfo entity : entities.get(team)) {
+			if (entity.id == leek_id) {
+				entity.ai = fullPath;
+				entity.aiOwner = aiOwner;
+			}
+		}
+	}
+
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
 		JSONObject farmers = new JSONObject();
