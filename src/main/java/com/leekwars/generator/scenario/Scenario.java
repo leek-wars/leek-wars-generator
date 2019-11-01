@@ -14,7 +14,14 @@ import com.leekwars.generator.Util;
 
 public class Scenario {
 
-    public static final String TAG = Scenario.class.getSimpleName();
+	public static final String TAG = Scenario.class.getSimpleName();
+	
+	private static final FarmerInfo leekwarsFarmer = new FarmerInfo();
+	static {
+		leekwarsFarmer.id = 0;
+		leekwarsFarmer.name = "Leek Wars";
+		leekwarsFarmer.country = "fr";
+	}
 
     public long seed = 0;
     public int maxTurns = 64;
@@ -91,5 +98,13 @@ public class Scenario {
 	@Override
 	public String toString() {
 		return toJson().toJSONString();
+	}
+
+	public FarmerInfo getFarmer(int farmer) {
+		if (farmer == 0) {
+			return leekwarsFarmer;
+		} else {
+			return this.farmers.get(farmer);
+		}
 	}
 }
