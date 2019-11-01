@@ -134,4 +134,33 @@ public class EntityInfo {
         }
         return null;
 	}
+
+	public JSONObject toJson() {
+		JSONObject json = new JSONObject();
+		json.put("id", id);
+		json.put("name", name);
+		json.put("level", level);
+		json.put("strength", strength);
+		json.put("agility", agility);
+		json.put("wisdom", wisdom);
+		json.put("resistance", resistance);
+		json.put("science", science);
+		json.put("magic", magic);
+		json.put("frequency", frequency);
+		json.put("tp", tp);
+		json.put("mp", mp);
+		json.put("farmer", farmer);
+		json.put("ai", ai);
+		JSONArray weapons = new JSONArray();
+		for (int weapon : this.weapons) {
+			weapons.add(weapon);
+		}
+		json.put("weapons", weapons);
+		JSONArray chips = new JSONArray();
+		for (int chip : this.chips) {
+			chips.add(chip);
+		}
+		json.put("chips", chips);
+		return json;
+	}
 }

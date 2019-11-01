@@ -66,7 +66,15 @@ public class Scenario {
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
-		json.put("entities", new JSONArray());
+		JSONArray entities = new JSONArray();
+		for (List<EntityInfo> list : this.entities) {
+			JSONArray team = new JSONArray();
+			for (EntityInfo entity : list) {
+				team.add(entity.toJson());
+			}
+			entities.add(team);
+		}
+		json.put("entities", entities);
 		return json;
 	}
 
