@@ -6,7 +6,7 @@ import java.util.TreeMap;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.statistics.FightStatistics;
-import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.leek.FarmerLog;
 
 public class Outcome {
     /**
@@ -16,7 +16,7 @@ public class Outcome {
     /**
      * Logs: debugs, marks, pauses
      */
-    public Map<Integer, LeekLog> logs = new TreeMap<Integer, LeekLog>();
+    public Map<Integer, FarmerLog> logs = new TreeMap<Integer, FarmerLog>();
     /**
      * Winner team id
      */

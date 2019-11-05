@@ -13,6 +13,7 @@ import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.outcome.Outcome;
@@ -120,13 +121,14 @@ public class Generator {
 
 				int farmer = entity.getFarmer();
 				if (!outcome.logs.containsKey(farmer)) {
-					outcome.logs.put(farmer, new LeekLog(entity));
+					outcome.logs.put(farmer, new FarmerLog());
 				}
 				if (entity.getAI() != null) {
-					entity.getAI().setLogs(outcome.logs.get(farmer));
+					LeekLog logs = new LeekLog(outcome.logs.get(farmer), entity);
+					entity.getAI().setLogs(logs);
 				} else {
 					Log.w(TAG, "AI " + entityInfo.ai + " doesn't exist or is not valid.");
-					outcome.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
+					outcome.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", FarmerLog.NO_AI_EQUIPPED, null);
 				}
 				fight.addEntity(t, entity);
 			}

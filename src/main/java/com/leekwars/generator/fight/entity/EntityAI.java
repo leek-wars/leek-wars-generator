@@ -26,6 +26,7 @@ import com.leekwars.generator.fight.action.ActionSay;
 import com.leekwars.generator.fight.action.ActionSetWeapon;
 import com.leekwars.generator.fight.action.ActionShowCell;
 import com.leekwars.generator.items.Items;
+import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.maps.Cell;
@@ -155,15 +156,15 @@ public class EntityAI extends AI {
 
 	public void addSystemLog(int type, String key, String[] parameters, StackTraceElement[] elements) {
 
-		if (type == LeekLog.WARNING)
-			type = LeekLog.SWARNING;
-		else if (type == LeekLog.ERROR)
-			type = LeekLog.SERROR;
-		else if (type == LeekLog.STANDARD)
-			type = LeekLog.SSTANDARD;
+		if (type == FarmerLog.WARNING)
+			type = FarmerLog.SWARNING;
+		else if (type == FarmerLog.ERROR)
+			type = FarmerLog.SERROR;
+		else if (type == FarmerLog.STANDARD)
+			type = FarmerLog.SSTANDARD;
 
 		if (this != null) {
-			logs.addSystemLog(mEntity, type, this.getErrorMessage(elements), key, parameters);
+			logs.addSystemLog(type, this.getErrorMessage(elements), key, parameters);
 		}
 	}
 
@@ -698,7 +699,7 @@ public class EntityAI extends AI {
 		if (target != null && target != mEntity && !target.isDead()) {
 			if (mEntity.getWeapon() == null) {
 				this.addOperations(EntityAI.ERROR_LOG_COST);
-				addSystemLog(LeekLog.WARNING, LeekLog.NO_WEAPON_EQUIPED);
+				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPED);
 			}
 			success = fight.useWeapon(mEntity, target.getCell());
 		}
@@ -711,7 +712,7 @@ public class EntityAI extends AI {
 		if (target != null && target != mEntity.getCell()) {
 			if (mEntity.getWeapon() == null) {
 				this.addOperations(EntityAI.ERROR_LOG_COST);
-				addSystemLog(LeekLog.WARNING, LeekLog.NO_WEAPON_EQUIPED);
+				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPED);
 			}
 			success = fight.useWeapon(mEntity, target);
 		}
@@ -823,9 +824,9 @@ public class EntityAI extends AI {
 
 			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null) {
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
+				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
+				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
 		if (target != null && chip != null && !target.isDead()) {
@@ -845,9 +846,9 @@ public class EntityAI extends AI {
 
 			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null) {
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
+				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
+				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
 		if (target != null && template != null) {
@@ -1045,7 +1046,7 @@ public class EntityAI extends AI {
 				ignore.add(l);
 			}
 		} else if (leeks_to_ignore.getType() == AbstractLeekValue.NUMBER) {
-			logs.addLog(mEntity, LeekLog.WARNING,
+			logs.addLog(FarmerLog.WARNING,
 					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désorthiss utiliser un tableau de cellules à ignorer.");
 			Entity l = fight.getEntity(leeks_to_ignore.getInt(this));
 			if (l != null && l.getCell() != null) {
@@ -2272,13 +2273,13 @@ public class EntityAI extends AI {
 		if (duration.getType() == AbstractLeekValue.NUMBER)
 			d = duration.getInt(this);
 
-		logs.addCell(mEntity, cel, col, d);
+		logs.addCell(cel, col, d);
 
 		return LeekValueManager.getLeekBooleanValue(true);
 	}
 
 	public void pause() {
-		logs.addPause(mEntity);
+		logs.addPause();
 	}
 
 	public AbstractLeekValue show(AbstractLeekValue cell, AbstractLeekValue color) throws LeekRunException {
@@ -2677,9 +2678,9 @@ public class EntityAI extends AI {
 
 			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null)
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)) });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)) });
 			else
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)), ct.getName() });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)), ct.getName() });
 			return LeekValueManager.getLeekIntValue(-1);
 		}
 
@@ -2722,9 +2723,9 @@ public class EntityAI extends AI {
 
 			addOperations(ERROR_LOG_COST);
 			if (ct == null)
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
 			else
-				addSystemLog(LeekLog.WARNING, LeekLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
 			return LeekValueManager.getLeekIntValue(-1);
 		}
 
@@ -2768,7 +2769,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) {
 
-			getLogs().addLog(leek(), LeekLog.ERROR, "Cannot encode object \"" + object.toString() + "\"");
+			getLogs().addLog(LeekLog.ERROR, "Cannot encode object \"" + object.toString() + "\"");
 			try {
 				addOperations(100);
 			} catch (Exception e1) {}
@@ -2786,7 +2787,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) {
 
-			getLogs().addLog(leek(), LeekLog.ERROR, "Cannot parse json \"" + json + "\"");
+			getLogs().addLog(LeekLog.ERROR, "Cannot parse json \"" + json + "\"");
 			try {
 				addOperations(100);
 			} catch (Exception e1) {}

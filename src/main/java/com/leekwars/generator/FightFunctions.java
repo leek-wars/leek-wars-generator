@@ -1,7 +1,7 @@
 package com.leekwars.generator;
 
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.leek.FarmerLog;
 
 import leekscript.functions.Functions;
 import leekscript.functions.VariableOperations;
@@ -239,7 +239,7 @@ public enum FightFunctions implements ILeekFunction {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			((EntityAI) leekIA).addOperations(EntityAI.ERROR_LOG_COST);
-			((EntityAI) leekIA).addSystemLog(LeekLog.WARNING, LeekLog.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
+			((EntityAI) leekIA).addSystemLog(FarmerLog.WARNING, FarmerLog.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 			return LeekValueManager.NULL;
 		}
 	},
@@ -1378,7 +1378,7 @@ public enum FightFunctions implements ILeekFunction {
 			// Message d'erreur
 			String ret = AbstractLeekValue.getParamString(parameters);
 			((EntityAI) leekIA).addOperations(EntityAI.ERROR_LOG_COST);
-			((EntityAI) leekIA).addSystemLog(LeekLog.ERROR, LeekLog.UNKNOWN_FUNCTION, new String[] { function + "(" + ret + ")" });
+			((EntityAI) leekIA).addSystemLog(FarmerLog.ERROR, FarmerLog.UNKNOWN_FUNCTION, new String[] { function + "(" + ret + ")" });
 			return LeekValueManager.NULL;
 		}
 		// throw new LeekRunException(LeekRunException.UNKNOWN_FUNCTION);
