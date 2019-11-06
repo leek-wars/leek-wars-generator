@@ -24,6 +24,7 @@ import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.RandomGenerator;
+import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.resolver.ResolverContext;
 import leekscript.functions.Functions;
 import leekscript.runner.LeekConstants;
@@ -72,14 +73,14 @@ public class Generator {
 	 *
 	 * @param file The AI file name.
 	 * @param context The AI resolver context (real folder or DB virtual folder).
-	 * @return a string representing the analysis results: success or list of errors.
+	 * @return a object representing the analysis results: success or list of errors.
 	 */
-	public String analyzeAI(String file, ResolverContext context) {
+	public AnalyzeResult analyzeAI(String file, ResolverContext context) {
 		Log.i(TAG, "Analyze AI " + file + "...");
 		try {
 			AIFile<?> ai = LeekScript.getResolver().resolve(file, context);
 			long t = System.currentTimeMillis();
-			String result = new IACompiler().analyze(ai);
+			AnalyzeResult result = new IACompiler().analyze(ai);
 			long time = System.currentTimeMillis() - t;
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			Log.s(TAG, "Analyze success!");
@@ -92,7 +93,7 @@ public class Generator {
 				Log.e(TAG, e1.getMessage());
 			}
 			Log.e(TAG, "Compile failed!");
-			return "";
+			return null;
 		}
 	}
 
