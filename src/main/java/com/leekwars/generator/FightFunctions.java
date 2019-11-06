@@ -1317,7 +1317,7 @@ public enum FightFunctions implements ILeekFunction {
 	
 	@Override
 	public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, AbstractLeekValue retour, int count) throws Exception {
-		
+		leekIA.addOperations(getOperations());
 	}
 	
 	@Override
