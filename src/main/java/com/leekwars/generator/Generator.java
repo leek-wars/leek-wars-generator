@@ -57,13 +57,13 @@ public class Generator {
 
 	public Generator() {
 		new File("ai/").mkdir();
+		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
+		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
+		LeekScript.setRandomGenerator(randomGenerator);
 		loadWeapons();
 		loadChips();
 		loadSummons();
 		loadFunctions();
-		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
-		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
-		LeekScript.setRandomGenerator(randomGenerator);
 	}
 
 	/**
