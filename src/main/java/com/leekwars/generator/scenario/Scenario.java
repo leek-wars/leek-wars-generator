@@ -40,7 +40,20 @@ public class Scenario {
         }
         if (json.containsKey("max_turns")) {
 			scenario.maxTurns = json.getIntValue("max_turns");
-        }
+		}
+		for (Object farmerJson : json.getJSONArray("farmers")) {
+			FarmerInfo farmer = new FarmerInfo();
+			farmer.id = ((JSONObject) farmerJson).getInteger("id");
+			farmer.name = ((JSONObject) farmerJson).getString("name");
+			farmer.country = ((JSONObject) farmerJson).getString("country");
+			scenario.farmers.put(farmer.id, farmer);
+		}
+		for (Object teamJson : json.getJSONArray("teams")) {
+			TeamInfo team = new TeamInfo();
+			team.id = ((JSONObject) teamJson).getInteger("id");
+			team.name = ((JSONObject) teamJson).getString("name");
+			scenario.teams.put(team.id, team);
+		}
 		for (Object teamJson : json.getJSONArray("entities")) {
             List<EntityInfo> team = new ArrayList<EntityInfo>();
 			for (Object entityJson : (JSONArray) teamJson) {
