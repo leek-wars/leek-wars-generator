@@ -41,6 +41,7 @@ public abstract class Effect {
 	public final static int TYPE_SHACKLE_MAGIC = 24;
 	public final static int TYPE_AFTEREFFECT = 25;
 	public final static int TYPE_VULNERABILITY = 26;
+	public final static int TYPE_ABSOLUTE_VULNERABILITY = 27;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -56,7 +57,7 @@ public abstract class Effect {
 	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
 			EffectBuffMP.class, EffectBuffTP.class, EffectDebuff.class, EffectTeleport.class, EffectPermutation.class, EffectVitality.class, EffectPoison.class, EffectSummon.class,
 			EffectResurrect.class, EffectKill.class, EffectShackleMP.class, EffectShackleTP.class, EffectShackleStrength.class, EffectDamageReturn.class, EffectBuffResistance.class,
-			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class };
+			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class };
 
 	// Effect characteristics
 	protected int id;

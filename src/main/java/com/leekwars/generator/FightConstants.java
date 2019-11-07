@@ -64,6 +64,7 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_ANTIDOTE(Effect.TYPE_ANTIDOTE, LeekFunctions.INT),
 	EFFECT_AFTEREFFECT(Effect.TYPE_AFTEREFFECT, LeekFunctions.INT),
 	EFFECT_VULNERABILITY(Effect.TYPE_VULNERABILITY, LeekFunctions.INT),
+	EFFECT_ABSOLUTE_VULNERABILITY(Effect.TYPE_ABSOLUTE_VULNERABILITY, LeekFunctions.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, LeekFunctions.INT),
