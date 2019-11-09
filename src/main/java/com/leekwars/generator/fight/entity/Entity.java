@@ -502,12 +502,8 @@ public abstract class Entity {
 		}
 	}
 
-	public void updateBuffStats(int id) {
-		mBuffStats.setStat(id, 0);
-		for (Effect effect : effects) {
-			if (effect.getStats() != null)
-				mBuffStats.addStat(id, effect.getStats().getStat(id));
-		}
+	public void updateBuffStats(int id, int value) {
+		mBuffStats.updateStat(id, value);
 	}
 
 	public void addEffect(Effect effect) {

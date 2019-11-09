@@ -12,13 +12,13 @@ public class EffectShackleTP extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * (1.0 + Math.max(0, caster.getMagic()) / 100.0) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_TP, -value);
-			target.updateBuffStats(Entity.CHARAC_TP);
+			target.updateBuffStats(Entity.CHARAC_TP, -value);
 		}
 	}
 	
 	public void reduce() {
 		value /= 2;
 		stats.setStat(Entity.CHARAC_TP, -value);
-		target.updateBuffStats(Entity.CHARAC_TP);
+		target.updateBuffStats(Entity.CHARAC_TP, -value);
 	}
 }

@@ -37,4 +37,8 @@ public class Stats {
 		int cur = getStat(key);
 		stats.put(key, value + cur);
 	}
+
+	public void updateStat(int id, int value) {
+		stats.merge(id, value, Integer::sum);
+	}
 }
