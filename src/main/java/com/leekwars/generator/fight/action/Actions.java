@@ -16,6 +16,7 @@ public class Actions {
 	private final List<Entity> entities = new ArrayList<Entity>();
 	private final JSONArray leeks = new JSONArray();
 	public final JSONObject map = new JSONObject();
+	public JSONObject dead = new JSONObject();
 
 	private int mNextEffectId = 0;
 
@@ -46,11 +47,6 @@ public class Actions {
 		retour.put("leeks", leeks);
 		retour.put("map", map);
 		retour.put("actions", json);
-
-		JSONObject dead = new JSONObject();
-		for (Entity entity : entities) {
-			dead.put(String.valueOf(entity.getFId()), entity.isDead());
-		}
 		retour.put("dead", dead);
 
 		return retour;

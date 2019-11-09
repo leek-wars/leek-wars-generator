@@ -142,6 +142,7 @@ public class Generator {
 			fight.finishFight();
 
 			outcome.fight = fight.getActions();
+			outcome.fight.dead = fight.getDeadReport();
 			outcome.winner = fight.getWinner();
 			outcome.duration = fight.getOrder().getTurn();
 			outcome.statistics = fight.statistics;

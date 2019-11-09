@@ -934,4 +934,12 @@ public class Fight {
 		this.max_turns = max_turns;
 	}
 
+	public JSONObject getDeadReport() {
+		JSONObject dead = new JSONObject();
+		for (Entity entity : mEntities.values()) {
+			dead.put(String.valueOf(entity.getId()), entity.isDead());
+		}
+		return dead;
+	}
+
 }
