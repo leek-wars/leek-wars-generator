@@ -107,16 +107,11 @@ public abstract class Effect {
 		effect.erosionRate = id == TYPE_POISON ? 0.10 : 0.05;
 		if (critical) effect.erosionRate += 0.10;
 
-		// Compute the effect
-		effect.apply(fight);
-
-		// Add effect to the target and the caster
+		// Remove previous effect of the same type (that is not stackable)
 		if (effect.getTurns() > 0) {
-
 			boolean stackable = isStackable(id);
 			if (!stackable) {
 				List<Effect> effects = target.getEffects();
-
 				for (int i = 0; i < effects.size(); ++i) {
 					Effect e = effects.get(i);
 					if (e.attackID == attack_id) {
@@ -125,10 +120,14 @@ public abstract class Effect {
 					}
 				}
 			}
-			if (effect.value > 0) {
-				target.addEffect(effect);
-				caster.addLaunchedEffect(effect);
-			}
+		}
+		// Compute the effect
+		effect.apply(fight);
+
+		// Add effect to the target and the caster
+		if (effect.getTurns() > 0 && effect.value > 0) {
+			target.addEffect(effect);
+			caster.addLaunchedEffect(effect);
 		}
 
 		effect.addLog(fight);
