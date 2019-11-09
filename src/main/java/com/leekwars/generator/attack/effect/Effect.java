@@ -136,7 +136,7 @@ public abstract class Effect {
 
 	public static boolean isStackable(int type) {
 		return type == TYPE_POISON || type == TYPE_SHACKLE_MP || type == TYPE_SHACKLE_TP
-				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY;
+				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY || type == TYPE_ABSOLUTE_VULNERABILITY;
 	}
 
 	protected void addLog(Fight fight) {
