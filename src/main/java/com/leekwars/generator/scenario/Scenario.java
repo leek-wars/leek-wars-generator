@@ -88,14 +88,14 @@ public class Scenario {
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
-		JSONObject farmers = new JSONObject();
+		JSONArray farmers = new JSONArray();
 		for (FarmerInfo farmer : this.farmers.values()) {
-			farmers.put(String.valueOf(farmer.id), farmer.toJson());
+			farmers.add(farmer.toJson());
 		}
 		json.put("farmers", farmers);
-		JSONObject teams = new JSONObject();
+		JSONArray teams = new JSONArray();
 		for (TeamInfo team : this.teams.values()) {
-			teams.put(String.valueOf(team.id), team.toJson());
+			teams.add(team.toJson());
 		}
 		json.put("teams", teams);
 		JSONArray entities = new JSONArray();
