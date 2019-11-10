@@ -156,6 +156,7 @@ public class EntityInfo {
 		json.put("tp", tp);
 		json.put("mp", mp);
 		json.put("farmer", farmer);
+		json.put("team", team);
 		json.put("ai", ai);
 		json.put("ai_owner", aiOwner);
 		JSONArray weapons = new JSONArray();
