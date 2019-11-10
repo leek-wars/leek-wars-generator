@@ -77,13 +77,6 @@ public class Scenario {
 		entities.get(teamID).add(entity);
 	}
 
-	public void setTeamID(int teamID, int teamRealID) {
-		if (!teams.containsKey(teamID)) {
-			teams.put(teamID, new TeamInfo());
-		}
-		teams.get(teamID).id = teamRealID;
-	}
-
 	public void setEntityAI(int team, int leek_id, String fullPath, int aiOwner) {
 		for (EntityInfo entity : entities.get(team)) {
 			if (entity.id == leek_id) {
