@@ -19,4 +19,20 @@ public class EffectAftereffect extends Effect {
 		fight.log(new ActionLoseLife(target, value, erosion));
 		target.removeLife(value, erosion, caster, false);
 	}
+
+	@Override
+	public void applyStartTurn(Fight fight) {
+
+		if (target.getLife() < value) {
+			value = target.getLife();
+		}
+		int erosion = (int) Math.round(value * erosionRate);
+
+		fight.log(new ActionLoseLife(target, value, erosion));
+		target.removeLife(value, erosion, caster, false);
+	}
+
+	public void reduce() {
+		value /= 2;
+	}
 }
