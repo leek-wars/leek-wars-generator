@@ -106,7 +106,9 @@ public class EntityInfo {
 			entity.setFarmerCountry(scenario.getFarmer(farmer).country);
 			entity.setAIName(ai);
 			entity.setTeamID(team);
-			entity.setTeamName(scenario.teams.get(team).name);
+			if (team > 0) {
+				entity.setTeamName(scenario.teams.get(team).name);
+			}
 
             for (Object w : weapons) {
                 Weapon weapon = Weapons.getWeapon((Integer) w);
