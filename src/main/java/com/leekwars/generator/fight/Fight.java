@@ -114,8 +114,6 @@ public class Fight {
 
 	private String mLeekDatas = "";
 
-	private double mMultiplicator = 1;
-
 	private final int context;
 	private final int type;
 
@@ -160,14 +158,6 @@ public class Fight {
 
 	public int getWinner() {
 		return mWinteam;
-	}
-
-	public double getMultiplicator() {
-		return mMultiplicator;
-	}
-
-	public void setMultiplicator(double multiplicator) {
-		mMultiplicator = multiplicator;
 	}
 
 	public void setTeamID(int team, int id) {
