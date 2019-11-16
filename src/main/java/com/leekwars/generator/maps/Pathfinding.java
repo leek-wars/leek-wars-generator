@@ -507,7 +507,7 @@ public class Pathfinding {
 			}
 		}
 		// System.out.println("No path found!");
-		return new ArrayList<>();
+		return null;
 	}
 
 	public static List<Cell> getOldAStarPath(Cell c1, List<Cell> endCells, List<Cell> cells_to_ignore) {
