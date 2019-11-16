@@ -14,6 +14,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.ErrorManager;
+import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.Team;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
@@ -32,7 +33,7 @@ public class Map {
 	private int min_y = -1;
 	private int max_y = -1;
 
-	public static Map generateMap(int width, int height, int obstacles_count, List<Team> teams, JSONObject custom_map) {
+	public static Map generateMap(int context, int width, int height, int obstacles_count, List<Team> teams, JSONObject custom_map) {
 
 		boolean valid = false;
 		int nb = 0;
@@ -93,7 +94,13 @@ public class Map {
 			while (!valid && nb < 63) {
 	
 				map = new Map(width, height);
-				map.setType(Generator.getRandom().getInt(0, 4));
+				if (context == Fight.CONTEXT_TEST) {
+					map.setType(-1); // Nexus
+				} else if (context == Fight.CONTEXT_TOURNAMENT) {
+					map.setType(5); // Arena
+				} else {
+					map.setType(Generator.getRandom().getInt(0, 4));
+				}
 	
 				for (int i = 0; i < obstacles_count; i++) {
 					Cell c = map.getCell(Generator.getRandom().getInt(0, map.getNbCell()));

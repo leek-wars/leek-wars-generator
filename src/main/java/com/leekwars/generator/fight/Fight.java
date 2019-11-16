@@ -397,7 +397,7 @@ public class Fight {
 
 		int obstacle_count = Generator.getRandom().getInt(40, 60);
 
-		this.map = Map.generateMap(18, 18, obstacle_count, teams, custom_map);
+		this.map = Map.generateMap(context, 18, 18, obstacle_count, teams, custom_map);
 
 		// Initialize positions and game order
 		StartOrder bootorder = new StartOrder();
