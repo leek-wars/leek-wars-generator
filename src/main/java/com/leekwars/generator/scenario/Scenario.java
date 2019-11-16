@@ -24,7 +24,9 @@ public class Scenario {
 	}
 
     public long seed = 0;
-    public int maxTurns = 64;
+	public int maxTurns = 64;
+	public int type = 0;
+	public int context = 0;
 	public Map<Integer, FarmerInfo> farmers = new HashMap<Integer, FarmerInfo>();
 	public Map<Integer, TeamInfo> teams = new HashMap<Integer, TeamInfo>();
 	public List<List<EntityInfo>> entities = new ArrayList<List<EntityInfo>>();

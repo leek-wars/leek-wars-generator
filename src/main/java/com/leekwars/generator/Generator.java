@@ -112,6 +112,8 @@ public class Generator {
 
 		Fight fight = new Fight();
 		fight.setMaxTurns(scenario.maxTurns);
+		fight.setType(scenario.type);
+		fight.setContext(scenario.context);
 
 		// Create logs and compile AIs
 		int t = 0;

@@ -114,8 +114,8 @@ public class Fight {
 
 	private String mLeekDatas = "";
 
-	private final int context;
-	private final int type;
+	private int context;
+	private int type;
 
 	JSONObject custom_map = null;
 
@@ -932,4 +932,10 @@ public class Fight {
 		return dead;
 	}
 
+	public void setContext(int context) {
+		this.context = context;
+	}
+	public void setType(int type) {
+		this.type = type;
+	}
 }
