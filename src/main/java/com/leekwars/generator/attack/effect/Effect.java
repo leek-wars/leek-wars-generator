@@ -128,9 +128,8 @@ public abstract class Effect {
 		if (effect.getTurns() > 0 && effect.value > 0) {
 			target.addEffect(effect);
 			caster.addLaunchedEffect(effect);
+			effect.addLog(fight);
 		}
-
-		effect.addLog(fight);
 	}
 
 	public static boolean isStackable(int type) {
