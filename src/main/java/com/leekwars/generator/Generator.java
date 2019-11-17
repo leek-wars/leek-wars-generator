@@ -40,15 +40,18 @@ public class Generator {
 	private static RegisterManager registerManager = null;
 	private static RandomGenerator randomGenerator = new RandomGenerator() {
 		private long n = 0;
+
 		public void seed(long seed) {
 			n = seed;
 		}
+
 		@Override
 		public double getDouble() {
 			n = n * 1103515245 + 12345;
 			long r = (n / 65536) % 32768 + 32768;
 			return (double) r / 65536;
 		}
+
 		@Override
 		public int getInt(int min, int max) {
 			if (max - min + 1 <= 0)
@@ -71,12 +74,13 @@ public class Generator {
 	}
 
 	/**
-	 * Analyze an AI task: read a AI code and check for validity. Returns whether the AI is valid,
-	 * or returns the list of errors.
+	 * Analyze an AI task: read a AI code and check for validity. Returns whether
+	 * the AI is valid, or returns the list of errors.
 	 *
-	 * @param file The AI file name.
+	 * @param file    The AI file name.
 	 * @param context The AI resolver context (real folder or DB virtual folder).
-	 * @return a object representing the analysis results: success or list of errors.
+	 * @return a object representing the analysis results: success or list of
+	 *         errors.
 	 */
 	public AnalyzeResult analyzeAI(String file, ResolverContext context) {
 		Log.i(TAG, "Analyze AI " + file + "...");
@@ -102,6 +106,7 @@ public class Generator {
 
 	/**
 	 * Runs a scenario.
+	 * 
 	 * @param scenario the scenario to run.
 	 * @return the fight outcome generated.
 	 */
@@ -154,8 +159,10 @@ public class Generator {
 
 			// Save registers
 			for (Entity entity : fight.getEntities().values()) {
-				if (!entity.isSummon() && entity.getRegisters() != null && (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
-					getRegisterManager().saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
+				if (!entity.isSummon() && entity.getRegisters() != null
+						&& (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
+					getRegisterManager().saveRegisters(entity.getId(), entity.getRegisters().toJSONString(),
+							entity.getRegisters().isNew());
 				}
 			}
 			Log.i(TAG, "SHA-1: " + Util.sha1(outcome.toString()));
@@ -164,8 +171,9 @@ public class Generator {
 			return outcome;
 
 			// Write to file
-			// try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../client/src/report.json"), "utf-8"))) {
-			// 	writer.write(report.toString());
+			// try (Writer writer = new BufferedWriter(new OutputStreamWriter(new
+			// FileOutputStream("../client/src/report.json"), "utf-8"))) {
+			// writer.write(report.toString());
 			// }
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -180,8 +188,9 @@ public class Generator {
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"), weapon.getInteger("min_range"),
-						weapon.getInteger("max_range"), weapon.getJSONArray("effects"), weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
+				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"),
+						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
+						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name")));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
@@ -197,8 +206,9 @@ public class Generator {
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
 				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"),
-						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"), chip.getByte("area"), chip.getBoolean("los"),
-						chip.getInteger("cooldown"), chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"),
+						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"),
+						chip.getByte("area"), chip.getBoolean("los"), chip.getInteger("cooldown"),
+						chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"),
 						chip.getInteger("template"), chip.getString("name")));
 			}
 			Log.end(chips.size() + " chips loaded.");
@@ -213,7 +223,8 @@ public class Generator {
 			JSONObject summons = JSON.parseObject(Util.readFile("data/summons.json"));
 			for (String id : summons.keySet()) {
 				JSONObject summon = summons.getJSONObject(id);
-				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.getString("name"), summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
+				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.getString("name"),
+						summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
 			}
 			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
@@ -238,12 +249,15 @@ public class Generator {
 	public static RandomGenerator getRandom() {
 		return randomGenerator;
 	}
+
 	public void setNocache(boolean nocache) {
 		this.nocache = nocache;
 	}
+
 	public String getJar() {
 		return jar;
 	}
+
 	public void setJar(String jar) {
 		this.jar = jar;
 	}
@@ -251,6 +265,7 @@ public class Generator {
 	public static void setRegisterManager(RegisterManager registerManager) {
 		Generator.registerManager = registerManager;
 	}
+
 	public static RegisterManager getRegisterManager() {
 		return registerManager;
 	}
