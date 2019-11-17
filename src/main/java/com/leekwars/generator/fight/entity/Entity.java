@@ -413,6 +413,7 @@ public abstract class Entity {
 			pv = getTotalLife() - life;
 		fight.statistics.addHeal(pv);
 		life += pv;
+		fight.statistics.checkCharacteristics(this);
 	}
 
 	public void setCell(Cell cell) {
@@ -504,6 +505,7 @@ public abstract class Entity {
 
 	public void updateBuffStats(int id, int value) {
 		mBuffStats.updateStat(id, value);
+		fight.statistics.checkCharacteristics(this);
 	}
 
 	public void addEffect(Effect effect) {
