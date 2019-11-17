@@ -23,10 +23,13 @@ import com.leekwars.generator.scenario.Scenario;
 import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
+import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.RandomGenerator;
 import leekscript.compiler.IACompiler.AnalyzeResult;
+import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.compiler.resolver.ResolverContext;
 import leekscript.functions.Functions;
+import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 
@@ -250,5 +253,24 @@ public class Generator {
 	}
 	public static RegisterManager getRegisterManager() {
 		return registerManager;
+	}
+
+	/**
+	 * Compile an AI task (debug purposes)
+	 */
+	public String compileAI(String file, ResolverContext context) {
+		Log.i(TAG, "Compile AI " + file + "...");
+		try {
+			AI ai = LeekScript.compileFileContext(file, "com.leekwars.generator.fight.entity.EntityAI", getJar(), context, true);
+			return ai != null ? "success" : "failure";
+		} catch (LeekScriptException e) {
+			System.out.println("LeekScriptException " + e.getType());
+			e.printStackTrace();
+			return e.getMessage();
+		} catch (LeekCompilerException e) {
+			System.out.println("LeekCompilerException");
+			e.printStackTrace();
+			return e.getMessage();
+		}
 	}
 }
