@@ -662,6 +662,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) leekIA).getSummoner(parameters[0]);
 		}
 	},
+	isStatic(0, 1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).isStatic(parameters[0]);
+		}
+	},
 	getBirthTurn(0, 1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
@@ -1309,17 +1315,17 @@ public enum FightFunctions implements ILeekFunction {
 	public int getArgumentsMin() {
 		return mArgumentsMin;
 	}
-	
+
 	@Override
 	public boolean isExtra() {
 		return true;
 	}
-	
+
 	@Override
 	public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, AbstractLeekValue retour, int count) throws Exception {
 		leekIA.addOperations(getOperations());
 	}
-	
+
 	@Override
 	public String getNamespace() {
 		return "com.leekwars.generator.FightFunctions";

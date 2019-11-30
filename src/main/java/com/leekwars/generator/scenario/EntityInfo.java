@@ -49,6 +49,7 @@ public class EntityInfo {
     public List<Integer> chips = new ArrayList<Integer>();
 	public List<Integer> weapons = new ArrayList<Integer>();
 	public int cell;
+	public boolean static_;
 
 	public EntityInfo() {}
 
@@ -69,6 +70,7 @@ public class EntityInfo {
         resistance = e.getIntValue("resistance");
         science = e.getIntValue("science");
 		magic = e.getIntValue("magic");
+		static_ = e.getBooleanValue("static");
 
         JSONArray weapons = e.getJSONArray("weapons");
         if (weapons != null) {
@@ -100,7 +102,8 @@ public class EntityInfo {
 			entity.setMagic(magic);
 			entity.setFrequency(frequency);
 			entity.setTP(tp);
-            entity.setMP(mp);
+			entity.setMP(mp);
+			entity.setStatic(static_);
 			entity.setFarmer(farmer);
 			entity.setFarmerName(scenario.getFarmer(farmer).name);
 			entity.setFarmerCountry(scenario.getFarmer(farmer).country);
@@ -157,6 +160,7 @@ public class EntityInfo {
 		json.put("frequency", frequency);
 		json.put("tp", tp);
 		json.put("mp", mp);
+		json.put("static", static_);
 		json.put("farmer", farmer);
 		json.put("team", team);
 		json.put("ai", ai);

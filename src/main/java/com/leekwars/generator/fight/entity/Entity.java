@@ -54,6 +54,7 @@ public abstract class Entity {
 	protected int mTeamId;
 	protected int mAIId;
 	protected int mTotalLife;
+	protected boolean mStatic;
 
 	// Current effects on the entity
 	protected final ArrayList<Effect> effects = new ArrayList<Effect>();
@@ -725,5 +726,11 @@ public abstract class Entity {
 	}
 	public void setTeamName(String name) {
 		this.mTeamName = name;
+	}
+	public void setStatic(boolean isStatic) {
+		this.mStatic = isStatic;
+	}
+	public boolean isStatic() {
+		return mStatic;
 	}
 }

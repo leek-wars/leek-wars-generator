@@ -611,6 +611,8 @@ public class Fight {
 
 	public int moveEntity(Entity entity, List<Cell> path) {
 
+		if (entity.isStatic()) return 0; // Static entity cannot move.
+
 		int size = path.size();
 		if (size == 0) {
 			return 0;

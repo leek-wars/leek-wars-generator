@@ -443,6 +443,17 @@ public class EntityAI extends AI {
 		return LeekValueManager.NULL;
 	}
 
+	public AbstractLeekValue isStatic(AbstractLeekValue value) throws LeekRunException {
+		if (value.getType() == AbstractLeekValue.NULL)
+			return LeekValueManager.getLeekBooleanValue(mEntity.isStatic());
+		if (value.getType() == AbstractLeekValue.NUMBER) {
+			Entity l = fight.getEntity(value.getInt(this));
+			if (l != null && l.getLeekIA() != null)
+				return LeekValueManager.getLeekBooleanValue(l.isStatic());
+		}
+		return LeekValueManager.FALSE;
+	}
+
 	public AbstractLeekValue getAgility(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL)
 			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_AGILITY));
