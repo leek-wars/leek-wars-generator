@@ -102,8 +102,10 @@ public class EntityInfo {
 			entity.setMP(mp);
 			entity.setStatic(static_);
 			entity.setFarmer(farmer);
-			entity.setFarmerName(scenario.getFarmer(farmer).name);
-			entity.setFarmerCountry(scenario.getFarmer(farmer).country);
+			if (farmer >= 0) {
+				entity.setFarmerName(scenario.getFarmer(farmer).name);
+				entity.setFarmerCountry(scenario.getFarmer(farmer).country);
+			}
 			entity.setAIName(ai);
 			entity.setTeamID(team);
 			if (team > 0) {
