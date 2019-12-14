@@ -299,8 +299,8 @@ public class EntityAI extends AI {
 			if (w != null) {
 				mEntity.setWeapon(w);
 				mEntity.useTP(1);
-				fight.log(new ActionLoseTP(mEntity, 1));
 				fight.log(new ActionSetWeapon(mEntity, w));
+				fight.log(new ActionLoseTP(mEntity, 1));
 				success = true;
 			}
 		}
