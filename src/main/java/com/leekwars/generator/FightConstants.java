@@ -208,7 +208,10 @@ public enum FightConstants implements ILeekConstant {
 	FIGHT_CONTEXT_GARDEN(Fight.CONTEXT_GARDEN, LeekFunctions.INT),
 	FIGHT_CONTEXT_CHALLENGE(Fight.CONTEXT_CHALLENGE, LeekFunctions.INT),
 	FIGHT_CONTEXT_TOURNAMENT(Fight.CONTEXT_TOURNAMENT, LeekFunctions.INT),
-	FIGHT_CONTEXT_BATTLE_ROYALE(Fight.CONTEXT_BATTLE_ROYALE, LeekFunctions.INT);
+	FIGHT_CONTEXT_BATTLE_ROYALE(Fight.CONTEXT_BATTLE_ROYALE, LeekFunctions.INT),
+
+	SUMMON_LIMIT(Fight.SUMMON_LIMIT, LeekFunctions.INT),
+	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, LeekFunctions.DOUBLE);
 
 	private double value;
 	private int type;

@@ -51,7 +51,7 @@ public abstract class Effect {
 	public final static int TARGET_SUMMONS = 16; // Summons
 
 	// Power in case of critical hit
-	private static final double CRITICAL_POWER = 1.4;
+	public static final double CRITICAL_FACTOR = 1.4;
 
 	// Array of effect classes
 	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
@@ -98,7 +98,7 @@ public abstract class Effect {
 		effect.value1 = value1;
 		effect.value2 = value2;
 		effect.critical = critical;
-		effect.criticalPower = critical ? CRITICAL_POWER : 1.0;
+		effect.criticalPower = critical ? CRITICAL_FACTOR : 1.0;
 		effect.caster = caster;
 		effect.target = target;
 		effect.attackType = attack_type;
