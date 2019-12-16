@@ -587,6 +587,13 @@ public class Fight {
 			}
 		}
 
+		// Impossible d'inverser une entité statique
+		if (template.getId() == FightConstants.CHIP_INVERSION.getIntValue()) {
+			if (target.getPlayer() != null && target.getPlayer().isStatic()) {
+				return Attack.USE_INVALID_TARGET;
+			}
+		}
+
 		boolean critical = generateCritical(caster);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
