@@ -44,49 +44,46 @@ public class Map {
 			map = new Map(width, height);
 			map.setType(-1); // Nexus
 
-			JSONObject data = custom_map.getJSONObject("data");
-			if (data != null) {
-				JSONObject obstacles = data.getJSONObject("obstacles");
-				JSONArray team1 = data.getJSONArray("team1");
-				JSONArray team2 = data.getJSONArray("team2");
+			JSONObject obstacles = custom_map.getJSONObject("obstacles");
+			JSONArray team1 = custom_map.getJSONArray("team1");
+			JSONArray team2 = custom_map.getJSONArray("team2");
 
-				// Set entities positions
-				for (int t = 0; t < teams.size(); ++t) {
-					int pos = 0;
-					for (Entity l : teams.get(t).getEntities()) {
-						// Random cell
-						Cell c;
-						if (teams.size() == 2) { // 2 teams : 2 sides
-							c = map.getRandomCell(t == 0 ? 1 : 4);
-						} else { // 2+ teams : random
-							c = map.getRandomCell();
-						}
-						// User custom cell?
-						if (t < 2) {
-							JSONArray team = t == 0 ? team1 : team2;
-							if (team != null) {
-								if (pos < team.size()) {
-									int cell_id = team.getIntValue(pos++);
-									if (cell_id >= 0 || cell_id < map.nb_cells) {
-										c = new Cell(map, cell_id);
-									}
+			// Set entities positions
+			for (int t = 0; t < teams.size(); ++t) {
+				int pos = 0;
+				for (Entity l : teams.get(t).getEntities()) {
+					// Random cell
+					Cell c;
+					if (teams.size() == 2) { // 2 teams : 2 sides
+						c = map.getRandomCell(t == 0 ? 1 : 4);
+					} else { // 2+ teams : random
+						c = map.getRandomCell();
+					}
+					// User custom cell?
+					if (t < 2) {
+						JSONArray team = t == 0 ? team1 : team2;
+						if (team != null) {
+							if (pos < team.size()) {
+								int cell_id = team.getIntValue(pos++);
+								if (cell_id >= 0 || cell_id < map.nb_cells) {
+									c = new Cell(map, cell_id);
 								}
 							}
 						}
-						c.setPlayer(l);
 					}
+					c.setPlayer(l);
 				}
+			}
 
-				// Obstacles
-				for (String c : obstacles.keySet()) {
-					try {
-						int cell_id = Integer.parseInt(c);
-						Cell cell = map.getCell(cell_id);
-						if (cell.available()) {
-							cell.setObstacle(0, 1);
-						}
-					} catch (Exception e) {}
-				}
+			// Obstacles
+			for (String c : obstacles.keySet()) {
+				try {
+					int cell_id = Integer.parseInt(c);
+					Cell cell = map.getCell(cell_id);
+					if (cell.available()) {
+						cell.setObstacle(0, 1);
+					}
+				} catch (Exception e) {}
 			}
 
 		} else {

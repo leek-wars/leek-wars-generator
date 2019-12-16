@@ -30,6 +30,7 @@ public class Scenario {
 	public Map<Integer, FarmerInfo> farmers = new HashMap<Integer, FarmerInfo>();
 	public Map<Integer, TeamInfo> teams = new HashMap<Integer, TeamInfo>();
 	public List<List<EntityInfo>> entities = new ArrayList<List<EntityInfo>>();
+	public JSONObject map = null;
 
     public static Scenario fromFile(File file) {
 
