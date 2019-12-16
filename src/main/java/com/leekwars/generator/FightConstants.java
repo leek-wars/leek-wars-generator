@@ -17,6 +17,7 @@ public enum FightConstants implements ILeekConstant {
 	// Type entity
 	ENTITY_LEEK(1, LeekFunctions.INT),
 	ENTITY_BULB(2, LeekFunctions.INT),
+	ENTITY_TURRET(3, LeekFunctions.INT),
 
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, LeekFunctions.INT),
@@ -190,7 +191,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_BURNING(105, LeekFunctions.INT),
 	CHIP_FRACTURE(106, LeekFunctions.INT),
 	CHIP_ANTIDOTE(110, LeekFunctions.INT),
-	
+
 	MAP_NEXUS(1, LeekFunctions.INT),
 	MAP_FACTORY(2, LeekFunctions.INT),
 	MAP_DESERT(3, LeekFunctions.INT),
@@ -208,15 +209,15 @@ public enum FightConstants implements ILeekConstant {
 	FIGHT_CONTEXT_CHALLENGE(Fight.CONTEXT_CHALLENGE, LeekFunctions.INT),
 	FIGHT_CONTEXT_TOURNAMENT(Fight.CONTEXT_TOURNAMENT, LeekFunctions.INT),
 	FIGHT_CONTEXT_BATTLE_ROYALE(Fight.CONTEXT_BATTLE_ROYALE, LeekFunctions.INT);
-	
+
 	private double value;
 	private int type;
-	
+
 	FightConstants(double value, int type) {
 		this.value = value;
 		this.type = type;
 	}
-	
+
 	@Override
 	public double getValue() {
 		return value;

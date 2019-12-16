@@ -20,7 +20,7 @@ import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 
 public class Map {
-	
+
 	private final List<Cell> cells;
 	private final int height;
 	private final int width;
@@ -38,18 +38,18 @@ public class Map {
 		boolean valid = false;
 		int nb = 0;
 		Map map = null;
-		
+
 		if (custom_map != null) {
-			
+
 			map = new Map(width, height);
 			map.setType(Generator.getRandom().getInt(0, 4));
-			
+
 			JSONObject data = custom_map.getJSONObject("data");
 			if (data != null) {
 				JSONObject obstacles = data.getJSONObject("obstacles");
 				JSONArray team1 = data.getJSONArray("team1");
 				JSONArray team2 = data.getJSONArray("team2");
-				
+
 				// Set entities positions
 				for (int t = 0; t < teams.size(); ++t) {
 					int pos = 0;
@@ -76,7 +76,7 @@ public class Map {
 						c.setPlayer(l);
 					}
 				}
-				
+
 				// Obstacles
 				for (String c : obstacles.keySet()) {
 					try {
@@ -88,11 +88,11 @@ public class Map {
 					} catch (Exception e) {}
 				}
 			}
-			
+
 		} else {
 
 			while (!valid && nb < 63) {
-	
+
 				map = new Map(width, height);
 				if (context == Fight.CONTEXT_TEST) {
 					map.setType(-1); // Nexus
@@ -101,7 +101,7 @@ public class Map {
 				} else {
 					map.setType(Generator.getRandom().getInt(0, 4));
 				}
-	
+
 				for (int i = 0; i < obstacles_count; i++) {
 					Cell c = map.getCell(Generator.getRandom().getInt(0, map.getNbCell()));
 					if (c != null && c.available()) {
@@ -115,8 +115,8 @@ public class Map {
 								size = 1;
 							else {
 								c2.setObstacle(0, -1);
-								c3.setObstacle(0, -1);
-								c4.setObstacle(0, -1);
+								c3.setObstacle(0, -2);
+								c4.setObstacle(0, -3);
 							}
 						}
 						c.setObstacle(type, size);
@@ -124,27 +124,34 @@ public class Map {
 				}
 				ConnexeMap cm = new ConnexeMap(map);
 				ArrayList<Entity> leeks = new ArrayList<Entity>();
-	
+
 				// Set entities positions
 				for (int t = 0; t < teams.size(); ++t) {
-	
+
 					for (Entity l : teams.get(t).getEntities()) {
-	
+
 						Cell c;
 						if (teams.size() == 2) { // 2 teams : 2 sides
-	
+
 							c = map.getRandomCell(t == 0 ? 1 : 4);
-	
+
 						} else { // 2+ teams : random
-	
+
 							c = map.getRandomCell();
 						}
-	
+
 						c.setPlayer(l);
 						leeks.add(l);
+
+						// If turret, remove obstacles 6 cells around
+						if (l.getType() == Entity.TYPE_TURRET) {
+							for (Cell cell : map.getCellsInCircle(c, 6)) {
+								map.removeObstacle(cell);
+							}
+						}
 					}
 				}
-	
+
 				// Check paths
 				valid = true;
 				if (leeks.size() > 0) {
@@ -469,5 +476,34 @@ public class Map {
 		List<Cell> r = Pathfinding.getAStarPath(ai, start, new Cell[] { end }, cells_to_ignore);
 //		mPathCache.put(key, r);
 		return r;
+	}
+
+	private List<Cell> getCellsInCircle(Cell cell, int radius) {
+		List<Cell> cells = new ArrayList<>();
+		for (int x = cell.x - radius; x <= cell.x + radius; ++x) {
+			for (int y = cell.y - radius; y <= cell.y + radius; ++y) {
+				Cell c = getCell(x, y);
+				if (c != null) cells.add(c);
+			}
+		}
+		return cells;
+	}
+
+	private void removeObstacle(Cell cell) {
+		if (cell.getObstacleSize() > 0) {
+			if (cell.getObstacleSize() == 2) {
+				Cell c2 = Pathfinding.getCellByDir(cell, Pathfinding.EAST);
+				Cell c3 = Pathfinding.getCellByDir(cell, Pathfinding.SOUTH);
+				Cell c4 = Pathfinding.getCellByDir(c3, Pathfinding.EAST);
+				c2.setObstacle(0, 0);
+				c2.setWalkable(true);
+				c3.setObstacle(0, 0);
+				c3.setWalkable(true);
+				c4.setObstacle(0, 0);
+				c4.setWalkable(true);
+			}
+			cell.setObstacle(0, 0);
+			cell.setWalkable(true);
+		}
 	}
 }

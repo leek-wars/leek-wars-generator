@@ -22,6 +22,10 @@ import com.leekwars.generator.maps.Pathfinding;
 
 public abstract class Entity {
 
+	public static final int TYPE_LEEK = 0;
+	public static final int TYPE_BULB = 1;
+	public static final int TYPE_TURRET = 2;
+
 	// Characteristics constants
 	public final static int CHARAC_LIFE = 0;
 	public final static int CHARAC_TP = 1;
@@ -671,7 +675,9 @@ public abstract class Entity {
 		return mEntityAI;
 	}
 
-	abstract public boolean isSummon();
+	public boolean isSummon() {
+		return false;
+	}
 
 	public Entity getSummoner() {
 		return null;

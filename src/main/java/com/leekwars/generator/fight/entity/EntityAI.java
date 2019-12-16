@@ -27,7 +27,6 @@ import com.leekwars.generator.fight.action.ActionSetWeapon;
 import com.leekwars.generator.fight.action.ActionShowCell;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.leek.FarmerLog;
-import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
@@ -422,12 +421,14 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getType(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity instanceof Leek ? FightConstants.ENTITY_LEEK.getIntValue() : FightConstants.ENTITY_BULB.getIntValue());
+		if (value.getType() == AbstractLeekValue.NULL) {
+			return LeekValueManager.getLeekIntValue(mEntity.getType() + 1);
+		}
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
-			if (l != null)
-				return LeekValueManager.getLeekIntValue(l instanceof Leek ? FightConstants.ENTITY_LEEK.getIntValue() : FightConstants.ENTITY_BULB.getIntValue());
+			if (l != null) {
+				return LeekValueManager.getLeekIntValue(l.getType() + 1);
+			}
 		}
 		return LeekValueManager.NULL;
 	}

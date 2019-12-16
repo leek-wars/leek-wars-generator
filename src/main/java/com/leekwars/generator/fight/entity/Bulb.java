@@ -11,13 +11,11 @@ public class Bulb extends Entity {
 	private static final String TAG = Bulb.class.getSimpleName();
 
 	protected Entity mOwner;
-	protected int mType;
 
-	public Bulb(Entity owner, FunctionLeekValue ai, Integer id, int type, String name, int level, int life, int strength, int wisdom, int agility, int resistance, int science, int magic, int tp, int mp, int skin, int hat) {
+	public Bulb(Entity owner, FunctionLeekValue ai, Integer id, String name, int level, int life, int strength, int wisdom, int agility, int resistance, int science, int magic, int tp, int mp, int skin, int hat) {
 		super(id, name, owner.getFarmer(), level, life, tp, mp, strength, agility, 0, wisdom, resistance, science, magic, skin, owner.getTeamId(), owner.getTeamName(), owner.getAIId(), owner.getAIName(), owner.getFarmerName(), owner.getFarmerCountry(), hat);
 
 		mOwner = owner;
-		mType = type;
 
 		// On détermine l'ia de l'invocation
 		try {
@@ -37,7 +35,7 @@ public class Bulb extends Entity {
 
 	@Override
 	public int getType() {
-		return mType;
+		return Entity.TYPE_BULB;
 	}
 
 	@Override

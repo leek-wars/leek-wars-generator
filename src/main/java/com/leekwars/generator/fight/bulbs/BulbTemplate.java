@@ -105,7 +105,7 @@ public class BulbTemplate {
 
 	public Bulb createInvocation(Entity owner, FunctionLeekValue ai, int id, int level) {
 		double c = Math.min(300d, owner.getLevel()) / (300d);
-		Bulb inv = new Bulb(owner, ai, id, 1, mName, level,
+		Bulb inv = new Bulb(owner, ai, id, mName, level,
 				base(mMinLife, mMaxLife, c),
 				base(mMinStrength, mMaxStrength, c),
 				base(mMinWisdom, mMaxWisdom, c),

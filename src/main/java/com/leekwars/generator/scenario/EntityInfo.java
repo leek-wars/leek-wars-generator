@@ -10,8 +10,10 @@ import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
+import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.fight.turret.Turret;
 import com.leekwars.generator.leek.Leek;
 
 import leekscript.compiler.LeekScript;
@@ -21,12 +23,7 @@ public class EntityInfo {
 
     static public final String TAG = EntityInfo.class.getSimpleName();
 
-    static public class Type {
-        public static final int LEEK = 1;
-        public static final int BULB = 2;
-    }
-
-    static private final Class<?> classes[] = { Leek.class };
+    static private final Class<?> classes[] = { Leek.class, Bulb.class, Turret.class };
 
     public int id;
     public String name;

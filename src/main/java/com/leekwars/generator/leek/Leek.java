@@ -16,7 +16,7 @@ public class Leek extends Entity {
 
 	@Override
 	public int getType() {
-		return 0;
+		return Entity.TYPE_LEEK;
 	}
 
 	@Override
