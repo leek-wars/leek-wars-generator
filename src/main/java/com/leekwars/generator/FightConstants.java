@@ -26,6 +26,7 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_TARGET_NOT_CASTER(0, LeekFunctions.INT),
 	EFFECT_TARGET_NON_SUMMONS(Effect.TARGET_NON_SUMMONS, LeekFunctions.INT),
 	EFFECT_TARGET_SUMMONS(Effect.TARGET_SUMMONS, LeekFunctions.INT),
+	EFFECT_TARGET_ALWAYS_CASTER(Effect.TARGET_ALWAYS_CASTER, LeekFunctions.INT),
 
 	EFFECT_DAMAGE(1, LeekFunctions.INT),
 	EFFECT_HEAL(2, LeekFunctions.INT),

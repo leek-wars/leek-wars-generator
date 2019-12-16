@@ -122,21 +122,20 @@ public class Attack {
 		// Puis on applique les effets
 		for (EffectParameters parameters : effects) {
 			for (Entity targetLeek : targetEntities) {
-
 				if (targetLeek.isDead()) {
 					continue;
 				}
 				if (!filterTarget(parameters.getTargets(), caster, targetLeek)) {
 					continue;
 				}
-
-				if (!returnEntities.contains(targetLeek))
+				if (!returnEntities.contains(targetLeek)) {
 					returnEntities.add(targetLeek);
+				}
 			}
-			// if ((parameters.getTargets() & Effect.TARGET_CASTER) != 0 &&
-			// !returnEntities.contains(caster)) {
-			// returnEntities.add(caster);
-			// }
+			// Always caster?
+			if ((parameters.getTargets() & Effect.TARGET_ALWAYS_CASTER) != 0 && !returnEntities.contains(caster)) {
+				returnEntities.add(caster);
+			}
 		}
 		return returnEntities;
 	}
@@ -199,6 +198,12 @@ public class Attack {
 				double power = getPowerForCell(caster.getCell(), target, targetEntity.getCell());
 
 				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet);
+			}
+
+			// Always caster
+			if ((parameters.getTargets() & Effect.TARGET_ALWAYS_CASTER) != 0 && !returnEntities.contains(caster)) {
+				returnEntities.add(caster);
+				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet);
 			}
 		}
 		return returnEntities;

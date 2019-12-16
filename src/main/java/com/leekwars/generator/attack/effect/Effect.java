@@ -49,6 +49,7 @@ public abstract class Effect {
 	public final static int TARGET_CASTER = 4; // Caster
 	public final static int TARGET_NON_SUMMONS = 8; // Non-summons
 	public final static int TARGET_SUMMONS = 16; // Summons
+	public final static int TARGET_ALWAYS_CASTER = 32; // Always the caster, even if not in the area
 
 	// Power in case of critical hit
 	public static final double CRITICAL_FACTOR = 1.4;
