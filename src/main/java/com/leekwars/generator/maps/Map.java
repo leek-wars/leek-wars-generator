@@ -42,7 +42,7 @@ public class Map {
 		if (custom_map != null) {
 
 			map = new Map(width, height);
-			map.setType(Generator.getRandom().getInt(0, 4));
+			map.setType(-1); // Nexus
 
 			JSONObject data = custom_map.getJSONObject("data");
 			if (data != null) {
