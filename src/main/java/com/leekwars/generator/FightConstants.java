@@ -193,6 +193,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_BURNING(105, LeekFunctions.INT),
 	CHIP_FRACTURE(106, LeekFunctions.INT),
 	CHIP_ANTIDOTE(110, LeekFunctions.INT),
+	CHIP_PUNISHMENT(114, LeekFunctions.INT),
 
 	MAP_NEXUS(1, LeekFunctions.INT),
 	MAP_FACTORY(2, LeekFunctions.INT),
