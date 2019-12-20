@@ -140,9 +140,9 @@ public class Map {
 						c.setPlayer(l);
 						leeks.add(l);
 
-						// If turret, remove obstacles 6 cells around
+						// If turret, remove obstacles 5 cells around
 						if (l.getType() == Entity.TYPE_TURRET) {
-							for (Cell cell : map.getCellsInCircle(c, 6)) {
+							for (Cell cell : map.getCellsInCircle(c, 5)) {
 								map.removeObstacle(cell);
 							}
 						}
