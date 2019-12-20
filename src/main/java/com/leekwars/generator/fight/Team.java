@@ -60,9 +60,18 @@ public class Team {
 	 * Are all entities in the team dead?
 	 */
 	public boolean isDead() {
-		for (Entity l : entities)
-			if (!l.isDead())
+		for (Entity entity : entities) {
+			// The team is dead if the turret is dead
+			if (entity.getType() == Entity.TYPE_TURRET && entity.isDead()) {
+				return true;
+			}
+		}
+		for (Entity entity : entities) {
+			// The team is not dead if there is an alive leek
+			if (entity.getType() != Entity.TYPE_TURRET && !entity.isDead()) {
 				return false;
+			}
+		}
 		return true;
 	}
 
