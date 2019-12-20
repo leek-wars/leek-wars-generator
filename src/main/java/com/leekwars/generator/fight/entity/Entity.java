@@ -739,4 +739,10 @@ public abstract class Entity {
 	public boolean isStatic() {
 		return mStatic;
 	}
+	public void setSkin(int skin) {
+		mSkin = skin;
+	}
+	public void setHat(int hat) {
+		mHat = hat;
+	}
 }

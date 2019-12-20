@@ -47,6 +47,8 @@ public class EntityInfo {
 	public List<Integer> weapons = new ArrayList<Integer>();
 	public int cell;
 	public boolean static_;
+	public int skin;
+	public int hat;
 
 	public EntityInfo() {}
 
@@ -111,6 +113,8 @@ public class EntityInfo {
 			if (team > 0) {
 				entity.setTeamName(scenario.teams.get(team).name);
 			}
+			entity.setSkin(skin);
+			entity.setHat(hat);
 
             for (Object w : weapons) {
                 Weapon weapon = Weapons.getWeapon((Integer) w);
