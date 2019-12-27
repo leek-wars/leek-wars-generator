@@ -25,8 +25,4 @@ public class EffectPoison extends Effect {
 			fight.statistics.addDamagePoison(damages);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-	}
 }

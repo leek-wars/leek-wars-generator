@@ -14,10 +14,4 @@ public class EffectBuffWisdom extends Effect {
 			target.updateBuffStats(Entity.CHARAC_WISDOM, value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_WISDOM, value);
-		target.updateBuffStats(Entity.CHARAC_WISDOM, value);
-	}
 }

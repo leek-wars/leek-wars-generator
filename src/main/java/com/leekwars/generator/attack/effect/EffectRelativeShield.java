@@ -13,10 +13,4 @@ public class EffectRelativeShield extends Effect {
 			target.updateBuffStats(Entity.CHARAC_RELATIVE_SHIELD, value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_RELATIVE_SHIELD, value);
-		target.updateBuffStats(Entity.CHARAC_RELATIVE_SHIELD, value);
-	}
 }

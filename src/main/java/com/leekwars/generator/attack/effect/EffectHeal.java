@@ -29,8 +29,4 @@ public class EffectHeal extends Effect {
 		fight.log(new ActionHeal(target, life));
 		target.addLife(life);
 	}
-
-	public void reduce() {
-		value /= 2;
-	}
 }

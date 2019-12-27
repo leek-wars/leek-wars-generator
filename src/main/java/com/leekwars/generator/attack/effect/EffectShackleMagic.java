@@ -15,10 +15,4 @@ public class EffectShackleMagic extends Effect {
 			target.updateBuffStats(Entity.CHARAC_MAGIC, -value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_MAGIC, -value);
-		target.updateBuffStats(Entity.CHARAC_MAGIC, -value);
-	}
 }

@@ -31,8 +31,4 @@ public class EffectAftereffect extends Effect {
 		fight.log(new ActionLoseLife(target, value, erosion));
 		target.removeLife(value, erosion, caster, false);
 	}
-
-	public void reduce() {
-		value /= 2;
-	}
 }

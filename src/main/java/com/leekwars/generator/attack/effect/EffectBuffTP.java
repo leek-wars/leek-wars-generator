@@ -14,10 +14,4 @@ public class EffectBuffTP extends Effect {
 			target.updateBuffStats(Entity.CHARAC_TP, value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_TP, value);
-		target.updateBuffStats(Entity.CHARAC_TP, value);
-	}
 }

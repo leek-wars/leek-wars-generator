@@ -1,6 +1,7 @@
 package com.leekwars.generator.attack.effect;
 
 import java.util.List;
+import java.util.Map;
 
 import leekscript.runner.AI;
 import leekscript.runner.LeekValueManager;
@@ -207,10 +208,17 @@ public abstract class Effect {
 		return retour;
 	}
 
+	public void reduce(double percent) {
+		int oldValue = value;
+		value = (int) Math.round((double) value * (1 - percent));
+		for (Map.Entry<Integer, Integer> stat : stats.stats.entrySet()) {
+			stats.setStat(stat.getKey(), value);
+			target.updateBuffStats(stat.getKey(), value - oldValue);
+		}
+	}
+
 	// Abstract methods
 	public void apply(Fight fight) {}
 
 	public void applyStartTurn(Fight fight) {}
-
-	public void reduce() {}
 }

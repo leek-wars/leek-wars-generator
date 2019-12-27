@@ -15,10 +15,4 @@ public class EffectShackleStrength extends Effect {
 			target.updateBuffStats(Entity.CHARAC_STRENGTH, -value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_STRENGTH, -value);
-		target.updateBuffStats(Entity.CHARAC_STRENGTH, -value);
-	}
 }

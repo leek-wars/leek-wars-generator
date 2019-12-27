@@ -14,10 +14,4 @@ public class EffectBuffAgility extends Effect {
 			target.updateBuffStats(Entity.CHARAC_AGILITY, value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_AGILITY, value);
-		target.updateBuffStats(Entity.CHARAC_AGILITY, value);
-	}
 }

@@ -14,10 +14,4 @@ public class EffectBuffResistance extends Effect {
 			target.updateBuffStats(Entity.CHARAC_RESISTANCE, value);
 		}
 	}
-	
-	public void reduce() {
-		value /= 2;
-		stats.setStat(Entity.CHARAC_RESISTANCE, value);
-		target.updateBuffStats(Entity.CHARAC_RESISTANCE, value);
-	}
 }

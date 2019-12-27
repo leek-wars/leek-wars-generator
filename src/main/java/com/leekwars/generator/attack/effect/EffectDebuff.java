@@ -6,6 +6,6 @@ public class EffectDebuff extends Effect {
 
 	@Override
 	public void apply(Fight fight) {
-		target.reduceEffects();
+		target.reduceEffects((double) value1 / 100);
 	}
 }
