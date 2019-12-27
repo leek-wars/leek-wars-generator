@@ -554,10 +554,15 @@ public abstract class Entity {
 		effects.clear();
 	}
 
-	public void reduceEffects() {
+	public void reduceEffects(double percent) {
 		for (int i = 0; i < effects.size(); ++i) {
-			effects.get(i).reduce();
-			updateEffect(effects.get(i));
+			effects.get(i).reduce(percent);
+			if (effects.get(i).value == 0) {
+				removeEffect(effects.get(i));
+				i--;
+			} else {
+				updateEffect(effects.get(i));
+			}
 		}
 		updateBuffStats();
 	}
