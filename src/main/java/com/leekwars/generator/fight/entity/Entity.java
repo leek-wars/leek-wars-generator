@@ -508,8 +508,8 @@ public abstract class Entity {
 		}
 	}
 
-	public void updateBuffStats(int id, int value) {
-		mBuffStats.updateStat(id, value);
+	public void updateBuffStats(int id, int delta) {
+		mBuffStats.updateStat(id, delta);
 		fight.statistics.checkCharacteristics(this);
 	}
 
