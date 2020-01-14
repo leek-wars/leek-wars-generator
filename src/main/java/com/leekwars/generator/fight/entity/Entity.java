@@ -750,4 +750,14 @@ public abstract class Entity {
 	public void setHat(int hat) {
 		mHat = hat;
 	}
+
+	public List<Entity> getSummons() {
+		List<Entity> summons = new ArrayList<Entity>();
+		for (Entity e : fight.getTeamEntities(getTeam())) {
+			if (e.isSummon() && e.getSummoner().getFId() == getFId()) {
+				summons.add(e);
+			}
+		}
+		return summons;
+	}
 }

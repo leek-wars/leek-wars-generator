@@ -704,6 +704,22 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
+	public AbstractLeekValue getSummons(AbstractLeekValue value) throws Exception {
+		Entity l = null;
+		if (value.getType() == AbstractLeekValue.NULL)
+			l = mEntity;
+		else if (value.getType() == AbstractLeekValue.NUMBER)
+			l = fight.getEntity(value.getInt(this));
+		if (l == null)
+			return LeekValueManager.NULL;
+		List<Entity> summons = l.getSummons();
+		ArrayLeekValue retour = new ArrayLeekValue();
+		for (short i = 0; i < summons.size(); i++) {
+			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(summons.get(i).getId()));
+		}
+		return retour;
+	}
+
 	// ----- Fonctions Weapon -----
 	public int useWeapon(int leek_id) throws Exception {
 		int success = -1;

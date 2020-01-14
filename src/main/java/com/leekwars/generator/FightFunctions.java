@@ -644,6 +644,12 @@ public enum FightFunctions implements ILeekFunction {
 			return new int[] { NUMBER, NUMBER, FUNCTION };
 		}
 	},
+	getSummons(0, 1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getSummons(parameters[0]);
+		}
+	},
 	getType(0, 1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
