@@ -181,7 +181,11 @@ public class Attack {
 		double jet = Generator.getRandom().getDouble();
 
 		// Apply effects
+		int previousEffectTotalValue = 0;
+
 		for (EffectParameters parameters : effects) {
+
+			int effectTotalValue = 0;
 
 			for (Entity targetEntity : targetEntities) {
 
@@ -197,14 +201,16 @@ public class Attack {
 
 				double power = getPowerForCell(caster.getCell(), target, targetEntity.getCell());
 
-				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet);
+				effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet, previousEffectTotalValue);
 			}
 
 			// Always caster
 			if ((parameters.getTargets() & Effect.TARGET_ALWAYS_CASTER) != 0 && !returnEntities.contains(caster)) {
 				returnEntities.add(caster);
-				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet);
+				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet, previousEffectTotalValue);
 			}
+
+			previousEffectTotalValue = effectTotalValue;
 		}
 		return returnEntities;
 	}
@@ -246,7 +252,9 @@ public class Attack {
 			return 1.0;
 		}
 		double dist = Pathfinding.getCaseDistance(target_cell, curent_cell);
-		return (area.getRadius() - dist) / area.getRadius() * 0.5 + 0.5;
+		// Previous formula
+		// return 0.5 + (area.getRadius() - dist) / area.getRadius() * 0.5;
+		return 1 - dist * 0.2;
 	}
 
 	public int getMinRange() {

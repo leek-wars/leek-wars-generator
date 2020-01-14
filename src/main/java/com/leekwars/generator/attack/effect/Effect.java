@@ -44,6 +44,7 @@ public abstract class Effect {
 	public final static int TYPE_VULNERABILITY = 26;
 	public final static int TYPE_ABSOLUTE_VULNERABILITY = 27;
 	public final static int TYPE_LIFE_DAMAGE = 28;
+	public final static int TYPE_STEAL_ABSOLUTE_SHIELD = 29;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -60,7 +61,7 @@ public abstract class Effect {
 	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
 			EffectBuffMP.class, EffectBuffTP.class, EffectDebuff.class, EffectTeleport.class, EffectPermutation.class, EffectVitality.class, EffectPoison.class, EffectSummon.class,
 			EffectResurrect.class, EffectKill.class, EffectShackleMP.class, EffectShackleTP.class, EffectShackleStrength.class, EffectDamageReturn.class, EffectBuffResistance.class,
-			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class };
+			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class };
 
 	// Effect characteristics
 	protected int id;
@@ -79,13 +80,14 @@ public abstract class Effect {
 	protected int logID = 0;
 	protected double erosionRate;
 	public int value = 0;
+	public int previousEffectTotalValue;
 
-	public static void createEffect(Fight fight, int id, int turns, double power, double value1, double value2, boolean critical, Entity target, Entity caster, int attack_type, int attack_id,
-			double jet) {
+	public static int createEffect(Fight fight, int id, int turns, double power, double value1, double value2, boolean critical, Entity target, Entity caster, int attack_type, int attack_id,
+			double jet, int previousEffectTotalValue) {
 
 		// Invalid effect id
 		if (id < 0 || id > effects.length) {
-			return;
+			return 0;
 		}
 
 		// Create the effect
@@ -93,7 +95,7 @@ public abstract class Effect {
 		try {
 			effect = (Effect) effects[id - 1].getDeclaredConstructor().newInstance();
 		} catch (Exception e) {
-			return;
+			return 0;
 		}
 		effect.id = id;
 		effect.turns = turns;
@@ -109,6 +111,7 @@ public abstract class Effect {
 		effect.jet = jet;
 		effect.erosionRate = id == TYPE_POISON ? 0.10 : 0.05;
 		if (critical) effect.erosionRate += 0.10;
+		effect.previousEffectTotalValue = previousEffectTotalValue;
 
 		// Remove previous effect of the same type (that is not stackable)
 		if (effect.getTurns() > 0) {
@@ -133,11 +136,12 @@ public abstract class Effect {
 			caster.addLaunchedEffect(effect);
 			effect.addLog(fight);
 		}
+		return effect.value;
 	}
 
 	public static boolean isStackable(int type) {
 		return type == TYPE_POISON || type == TYPE_SHACKLE_MP || type == TYPE_SHACKLE_TP
-				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY || type == TYPE_ABSOLUTE_VULNERABILITY;
+				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY || type == TYPE_ABSOLUTE_VULNERABILITY || type == TYPE_STEAL_ABSOLUTE_SHIELD;
 	}
 
 	protected void addLog(Fight fight) {
