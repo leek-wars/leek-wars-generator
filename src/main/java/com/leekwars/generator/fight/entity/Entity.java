@@ -89,6 +89,7 @@ public abstract class Entity {
 	private boolean mHasMoved = false;
 	private boolean isDiabolic = false;
 	private int fight_id;
+	private int mAiOwner;
 
 	public Entity() {
 		this(0, "");
@@ -749,6 +750,12 @@ public abstract class Entity {
 	}
 	public void setHat(int hat) {
 		mHat = hat;
+	}
+	public void setAIOwner(int aiOwner) {
+		mAiOwner = aiOwner;
+	}
+	public int getAIOwner() {
+		return mAiOwner;
 	}
 
 	public List<Entity> getSummons() {

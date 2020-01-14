@@ -136,6 +136,7 @@ public class EntityInfo {
 					EntityAI ai = (EntityAI) LeekScript.compileFileContext(this.ai, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), context, generator.nocache);
 					Log.i(TAG, "AI " + this.ai + " compiled!");
 					entity.setAI(ai);
+					entity.setAIOwner(aiOwner);
 					ai.setEntity(entity);
 				} catch (Exception e1) {
 					Log.w(TAG, "AI " + ai + " not compiled");

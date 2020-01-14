@@ -131,16 +131,16 @@ public class Generator {
 
 				Entity entity = entityInfo.createEntity(this, scenario);
 
-				int farmer = entity.getFarmer();
-				if (!outcome.logs.containsKey(farmer)) {
-					outcome.logs.put(farmer, new FarmerLog());
+				int aiOwner = entity.getAIOwner();
+				if (!outcome.logs.containsKey(aiOwner)) {
+					outcome.logs.put(aiOwner, new FarmerLog());
 				}
 				if (entity.getAI() != null) {
-					LeekLog logs = new LeekLog(outcome.logs.get(farmer), entity);
+					LeekLog logs = new LeekLog(outcome.logs.get(aiOwner), entity);
 					entity.getAI().setLogs(logs);
 				} else {
 					Log.w(TAG, "AI " + entityInfo.ai + " doesn't exist or is not valid.");
-					outcome.logs.get(farmer).addSystemLog(entity, LeekLog.SERROR, "", FarmerLog.NO_AI_EQUIPPED, null);
+					outcome.logs.get(aiOwner).addSystemLog(entity, LeekLog.SERROR, "", FarmerLog.NO_AI_EQUIPPED, null);
 				}
 				fight.addEntity(t, entity);
 			}
