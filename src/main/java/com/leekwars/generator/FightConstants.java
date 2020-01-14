@@ -98,6 +98,7 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_KATANA(107, LeekFunctions.INT),
 	WEAPON_BROADSWORD(108, LeekFunctions.INT),
 	WEAPON_AXE(109, LeekFunctions.INT),
+	WEAPON_J_LASER(115, LeekFunctions.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, LeekFunctions.INT),
