@@ -65,7 +65,7 @@ public class TestMap {
 			}
 		}
 		// On teste différents chemins
-		map = Map.generateMap(18, 18, 50, new ArrayList<Team>(), null);
+		map = Map.generateMap(0, 18, 18, 50, new ArrayList<Team>(), null);
 		Map.ConnexeMap cm = new Map.ConnexeMap(map);
 
 		for (int i = 1; i < map.getNbCell(); i += 10) {
@@ -104,7 +104,7 @@ public class TestMap {
 		t1.add(l1);
 		t2.add(l2);
 
-		Map map = Map.generateMap(18, 18, 50, new ArrayList<Team>(), null);
+		Map map = Map.generateMap(0, 18, 18, 50, new ArrayList<Team>(), null);
 		// On vérifie le nombre de cases
 		Assert.assertEquals(map.getNbCell(), 613);
 		// On vérifie que la carte a bien des obstacles
@@ -125,7 +125,7 @@ public class TestMap {
 	public void astar2Test() throws Exception {
 
 		// On génère une map sans obstacles
-		Map map = Map.generateMap(18, 18, 100, new ArrayList<Team>(), null);
+		Map map = Map.generateMap(0, 18, 18, 100, new ArrayList<Team>(), null);
 
 		long start = System.nanoTime();
 
