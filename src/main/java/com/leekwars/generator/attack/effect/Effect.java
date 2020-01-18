@@ -213,11 +213,13 @@ public abstract class Effect {
 	}
 
 	public void reduce(double percent) {
-		int oldValue = value;
-		value = (int) Math.round((double) value * (1 - percent));
+		double reduction = 1 - percent;
+		value = (int) Math.round((double) value * reduction);
 		for (Map.Entry<Integer, Integer> stat : stats.stats.entrySet()) {
-			stats.setStat(stat.getKey(), value);
-			target.updateBuffStats(stat.getKey(), value - oldValue);
+			int newValue = (int) Math.round((double) stat.getValue() * reduction);
+			int delta = newValue - stat.getValue();
+			stats.updateStat(stat.getKey(), delta);
+			target.updateBuffStats(stat.getKey(), delta);
 		}
 	}
 
