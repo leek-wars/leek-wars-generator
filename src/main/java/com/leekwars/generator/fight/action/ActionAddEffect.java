@@ -15,20 +15,28 @@ public class ActionAddEffect implements Action {
 	private final int value;
 	private final int turns;
 
-	public static int createEffect(Actions logs, int type, int attackID, Entity caster, Entity target, int effectID, int value, int turns) {
+	public static int createEffect(Actions logs, int type, int attackID, Entity caster, Entity target, int effectID, int value, int turns, boolean stacked) {
 
 		int r = logs.getEffectId();
-		ActionAddEffect effect = new ActionAddEffect(type, attackID, r, caster.getFId(), target.getFId(), effectID, value, turns);
+		ActionAddEffect effect = new ActionAddEffect(type, attackID, r, caster.getFId(), target.getFId(), effectID, value, turns, stacked);
 		logs.log(effect);
 		return r;
 	}
 
-	public ActionAddEffect(int type, int attackID, int id, int caster, int target, int effectID, int value, int turns) {
+	public ActionAddEffect(int type, int attackID, int id, int caster, int target, int effectID, int value, int turns, boolean stacked) {
 
 		if (type == Attack.TYPE_CHIP) {
-			this.type = Action.ADD_CHIP_EFFECT;
+			if (stacked) {
+				this.type = Action.ADD_STACKED_EFFECT;
+			} else {
+				this.type = Action.ADD_CHIP_EFFECT;
+			}
 		} else if (type == Attack.TYPE_WEAPON) {
-			this.type = Action.ADD_WEAPON_EFFECT;
+			if (stacked) {
+				this.type = Action.ADD_STACKED_EFFECT;
+			} else {
+				this.type = Action.ADD_WEAPON_EFFECT;
+			}
 		} else {
 			this.type = type;
 		}

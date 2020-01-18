@@ -130,11 +130,20 @@ public abstract class Effect {
 		// Compute the effect
 		effect.apply(fight);
 
+		// Stack to previous item with the same characteristics
+		for (Effect e : target.getEffects()) {
+			if (e.attackID == attack_id && e.id == id && e.turns == turns && e.caster == caster) {
+				e.mergeWith(effect);
+				effect.addLog(fight, true);
+				return effect.value; // No need to apply the effect again
+			}
+		}
+
 		// Add effect to the target and the caster
 		if (effect.getTurns() > 0 && effect.value > 0) {
 			target.addEffect(effect);
 			caster.addLaunchedEffect(effect);
-			effect.addLog(fight);
+			effect.addLog(fight, false);
 		}
 		return effect.value;
 	}
@@ -144,11 +153,11 @@ public abstract class Effect {
 				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY || type == TYPE_ABSOLUTE_VULNERABILITY || type == TYPE_STEAL_ABSOLUTE_SHIELD;
 	}
 
-	protected void addLog(Fight fight) {
+	protected void addLog(Fight fight, boolean stacked) {
 		if (turns == 0) {
 			return;
 		}
-		logID = ActionAddEffect.createEffect(fight.getActions(), attackType, attackID, caster, target, id, value, turns);
+		logID = ActionAddEffect.createEffect(fight.getActions(), attackType, attackID, caster, target, id, value, turns, stacked);
 	}
 
 	public Stats getStats() {
@@ -220,6 +229,14 @@ public abstract class Effect {
 			int delta = newValue - stat.getValue();
 			stats.updateStat(stat.getKey(), delta);
 			target.updateBuffStats(stat.getKey(), delta);
+		}
+	}
+
+	public void mergeWith(Effect effect) {
+		value += effect.value;
+		for (Map.Entry<Integer, Integer> stat : stats.stats.entrySet()) {
+			int signum = stat.getValue() > 0 ? 1 : -1;
+			stats.updateStat(stat.getKey(), effect.value * signum);
 		}
 	}
 

@@ -37,6 +37,7 @@ public interface Action {
 	public final static int ADD_CHIP_EFFECT = 302;
 	public final static int REMOVE_EFFECT = 303;
 	public final static int UPDATE_EFFECT = 304;
+	public final static int ADD_STACKED_EFFECT = 305;
 
 	// Other
 	public final static int ERROR = 1000;
