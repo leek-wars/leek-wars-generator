@@ -116,6 +116,10 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_BROADSWORD(108, LeekFunctions.INT),
 	WEAPON_AXE(109, LeekFunctions.INT),
 	WEAPON_J_LASER(115, LeekFunctions.INT),
+	WEAPON_ILLICIT_GRENADE_LAUNCHER(116, LeekFunctions.INT),
+	WEAPON_MYSTERIOUS_ELECTRISOR(117, LeekFunctions.INT),
+	WEAPON_UNBRIDLED_GAZOR(118, LeekFunctions.INT),
+	WEAPON_REVOKED_M_LASER(119, LeekFunctions.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, LeekFunctions.INT),
@@ -218,6 +222,9 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_FRACTURE(106, LeekFunctions.INT),
 	CHIP_ANTIDOTE(110, LeekFunctions.INT),
 	CHIP_PUNISHMENT(114, LeekFunctions.INT),
+	CHIP_COVETOUSNESS(120, LeekFunctions.INT),
+	CHIP_VAMPIRIZATION(121, LeekFunctions.INT),
+	CHIP_PRECIPITATION(122, LeekFunctions.INT),
 
 	MAP_NEXUS(1, LeekFunctions.INT),
 	MAP_FACTORY(2, LeekFunctions.INT),
