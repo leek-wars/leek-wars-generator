@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import com.leekwars.generator.Generator;
+import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.attack.EffectParameters;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.effect.EffectPoison;
@@ -65,6 +67,9 @@ public abstract class Entity {
 
 	// Effects created by the entity
 	private final ArrayList<Effect> launchedEffects = new ArrayList<Effect>();
+
+	// Passive effects
+	private final ArrayList<EffectParameters> passiveEffects = new ArrayList<EffectParameters>();
 
 	// Current cooldowns of the entity
 	protected final Map<Integer, Integer> mCooldown = new TreeMap<Integer, Integer>();
@@ -254,6 +259,7 @@ public abstract class Entity {
 	}
 	public void addWeapon(Weapon w) {
 		mWeapons.add(w);
+		passiveEffects.addAll(w.getPassiveEffects());
 	}
 
 	public Stats getBaseStats() {
@@ -411,6 +417,57 @@ public abstract class Entity {
 		if (life <= 0) {
 			fight.onPlayerDie(this, attacker);
 			die();
+		}
+	}
+
+	public void onDirectDamage(int damage) {
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnDamagePassiveEffect(effect, Attack.TYPE_WEAPON, weapon.getId(), damage);
+			}
+		}
+	}
+	public void onNovaDamage(int damage) {
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnNovaDamagePassiveEffect(effect, Attack.TYPE_WEAPON, weapon.getId(), damage);
+			}
+		}
+	}
+	public void onPoisonDamage(int damage) {
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnPoisonDamagePassiveEffect(effect, Attack.TYPE_WEAPON, weapon.getId(), damage);
+			}
+		}
+	}
+
+	public void activateOnDamagePassiveEffect(EffectParameters effect, int attackType, int attackID, int inputValue) {
+		if (effect.getId() == Effect.TYPE_DAMAGE_TO_ABSOLUTE_SHIELD) {
+			double value = inputValue * (effect.getValue1() / 100);
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_ABSOLUTE_SHIELD, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+		}
+		else if (effect.getId() == Effect.TYPE_DAMAGE_TO_STRENGTH) {
+			double value = inputValue * (effect.getValue1() / 100);
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_STRENGTH, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+		}
+	}
+
+	public void activateOnNovaDamagePassiveEffect(EffectParameters effect, int attackType, int attackID, int inputValue) {
+		if (effect.getId() == Effect.TYPE_NOVA_DAMAGE_TO_MAGIC) {
+			double value = inputValue * (effect.getValue1() / 100);
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MAGIC, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+		}
+	}
+
+	public void activateOnPoisonDamagePassiveEffect(EffectParameters effect, int attackType, int attackID, int inputValue) {
+		if (effect.getId() == Effect.TYPE_POISON_TO_SCIENCE) {
+			double value = inputValue * (effect.getValue1() / 100);
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_SCIENCE, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
 		}
 	}
 
@@ -646,6 +703,10 @@ public abstract class Entity {
 
 	public List<Effect> getLaunchedEffects() {
 		return launchedEffects;
+	}
+
+	public List<EffectParameters> getPassiveEffects() {
+		return passiveEffects;
 	}
 
 	public void setLevel(int level) {

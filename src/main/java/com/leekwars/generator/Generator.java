@@ -192,10 +192,11 @@ public class Generator {
 				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"),
 						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
 						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
-						weapon.getInteger("template"), weapon.getString("name")));
+						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects")));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
+			Log.e(TAG, "Error loading weapons!");
 			e.printStackTrace();
 		}
 	}

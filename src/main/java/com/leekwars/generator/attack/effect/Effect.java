@@ -46,6 +46,16 @@ public abstract class Effect {
 	public final static int TYPE_LIFE_DAMAGE = 28;
 	public final static int TYPE_STEAL_ABSOLUTE_SHIELD = 29;
 	public final static int TYPE_NOVA_DAMAGE = 30;
+	public final static int TYPE_RAW_BUFF_MP = 31;
+	public final static int TYPE_RAW_BUFF_TP = 32;
+	public final static int TYPE_POISON_TO_SCIENCE = 33;
+	public final static int TYPE_DAMAGE_TO_ABSOLUTE_SHIELD = 34;
+	public final static int TYPE_DAMAGE_TO_STRENGTH = 35;
+	public final static int TYPE_NOVA_DAMAGE_TO_MAGIC = 36;
+	public final static int TYPE_RAW_ABSOLUTE_SHIELD = 37;
+	public final static int TYPE_RAW_BUFF_STRENGTH = 38;
+	public final static int TYPE_RAW_BUFF_MAGIC = 39;
+	public final static int TYPE_RAW_BUFF_SCIENCE = 40;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -66,7 +76,7 @@ public abstract class Effect {
 	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
 			EffectBuffMP.class, EffectBuffTP.class, EffectDebuff.class, EffectTeleport.class, EffectPermutation.class, EffectVitality.class, EffectPoison.class, EffectSummon.class,
 			EffectResurrect.class, EffectKill.class, EffectShackleMP.class, EffectShackleTP.class, EffectShackleStrength.class, EffectDamageReturn.class, EffectBuffResistance.class,
-			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class };
+			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class, EffectNovaDamage.class, EffectRawBuffMP.class, EffectRawBuffTP.class, null, null, null, null, EffectRawAbsoluteShield.class, EffectRawBuffStrength.class,EffectRawBuffMagic.class, EffectRawBuffScience.class };
 
 	// Effect characteristics
 	protected int id;

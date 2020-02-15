@@ -839,6 +839,24 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
+	public AbstractLeekValue getWeaponPassiveEffects(int id) throws Exception {
+		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
+		if (template == null)
+			return LeekValueManager.NULL;
+		ArrayLeekValue retour = new ArrayLeekValue();
+		for (EffectParameters e : template.getPassiveEffects()) {
+			ArrayLeekValue effect = new ArrayLeekValue();
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
+			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1()));
+			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
+			retour.push(this, effect);
+		}
+		return retour;
+	}
+
 	// ---- Fonctions Chip ----
 
 	public int useChip(int chip_id, int leek_id) throws Exception {
@@ -1898,6 +1916,30 @@ public class EntityAI extends AI {
 		for (Effect effect : l.getLaunchedEffects()) {
 			retour.get(this, i).set(this, effect.getLeekValue(this));
 			i++;
+		}
+		return retour;
+	}
+
+	public AbstractLeekValue getPassiveEffects(AbstractLeekValue value) throws Exception {
+		Entity l = null;
+		if (value.getType() == AbstractLeekValue.NULL) {
+			l = mEntity;
+		} else if (value.getType() == AbstractLeekValue.NUMBER) {
+			l = fight.getEntity(value.getInt(this));
+		}
+		if (l == null) {
+			return LeekValueManager.NULL;
+		}
+		ArrayLeekValue retour = new ArrayLeekValue();
+		for (EffectParameters e : l.getPassiveEffects()) {
+			ArrayLeekValue effect = new ArrayLeekValue();
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
+			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1()));
+			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
+			retour.push(this, effect);
 		}
 		return retour;
 	}

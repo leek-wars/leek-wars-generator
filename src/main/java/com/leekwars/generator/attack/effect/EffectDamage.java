@@ -44,6 +44,8 @@ public class EffectDamage extends Effect {
 
 		fight.log(new ActionLoseLife(target, value, erosion));
 		target.removeLife(value, erosion, caster, true);
+		target.onDirectDamage(value);
+		target.onNovaDamage(erosion);
 
 		// Life steal
 		if (lifeSteal > 0) {
@@ -70,6 +72,7 @@ public class EffectDamage extends Effect {
 				fight.log(new ActionLoseLife(caster, returnDamage, returnErosion));
 				caster.removeLife(returnDamage, returnErosion, target, false);
 				fight.statistics.addDamageReturn(returnDamage);
+				caster.onNovaDamage(returnErosion);
 			}
 		}
 	}

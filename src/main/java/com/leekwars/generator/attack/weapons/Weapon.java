@@ -1,7 +1,12 @@
 package com.leekwars.generator.attack.weapons;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.attack.EffectParameters;
 
 public class Weapon {
 
@@ -11,8 +16,9 @@ public class Weapon {
 	private final Attack attack;
 	private final String name;
 	private final int template;
+	private final List<EffectParameters> passiveEffects = new ArrayList<EffectParameters>();
 
-	public Weapon(int id, byte type, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int template, String name) {
+	public Weapon(int id, byte type, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int template, String name, JSONArray passiveEffects) {
 
 		this.id = id;
 		this.type = type;
@@ -21,6 +27,17 @@ public class Weapon {
 		this.template = template;
 
 		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, id);
+
+		for (Object e : passiveEffects) {
+			JSONObject effect = (JSONObject) e;
+			int etype = effect.getIntValue("id");
+			double value1 = effect.getDoubleValue("value1");
+			double value2 = effect.getDoubleValue("value2");
+			int turns = effect.getIntValue("turns");
+			int targets = effect.getIntValue("targets");
+			int modifiers = effect.getIntValue("modifiers");
+			this.passiveEffects.add(new EffectParameters(etype, value1, value2, turns, targets, modifiers));
+		}
 	}
 
 	public int getId() {
@@ -45,5 +62,9 @@ public class Weapon {
 
 	public String getName() {
 		return name;
+	}
+
+	public List<EffectParameters> getPassiveEffects() {
+		return passiveEffects;
 	}
 }

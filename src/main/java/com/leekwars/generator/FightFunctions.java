@@ -211,6 +211,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) leekIA).getLaunchedEffects(parameters[0]);
 		}
 	},
+	getPassiveEffects(0, 1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getPassiveEffects(parameters[0]);
+		}
+	},
 	getAbsoluteShield(0, 1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
@@ -348,6 +354,12 @@ public enum FightFunctions implements ILeekFunction {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return ((EntityAI) leekIA).getWeaponEffects(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]));
+		}
+	},
+	getWeaponPassiveEffects(0, 1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getWeaponPassiveEffects(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]));
 		}
 	},
 	getWeaponMaxScope(0, 1) {
