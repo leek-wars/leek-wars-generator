@@ -69,13 +69,14 @@ public class Attack {
 			double value2 = effect.getDoubleValue("value2");
 			int turns = effect.getIntValue("turns");
 			int targets = effect.getIntValue("targets");
+			int modifiers = effect.getIntValue("modifiers");
 			if (type == Effect.TYPE_HEAL) {
 				healAttack |= targets;
 			}
 			if (type == Effect.TYPE_DAMAGE) {
 				dammageAttack |= targets;
 			}
-			this.effects.add(new EffectParameters(type, value1, value2, turns, targets));
+			this.effects.add(new EffectParameters(type, value1, value2, turns, targets, modifiers));
 		}
 	}
 
@@ -130,7 +131,7 @@ public class Attack {
 				}
 			}
 			// Always caster?
-			if ((parameters.getTargets() & Effect.TARGET_ALWAYS_CASTER) != 0 && !returnEntities.contains(caster)) {
+			if ((parameters.getModifiers() & Effect.MODIFIER_ON_CASTER) != 0 && !returnEntities.contains(caster)) {
 				returnEntities.add(caster);
 			}
 		}
@@ -169,7 +170,7 @@ public class Attack {
 		List<Entity> targetEntities = new ArrayList<Entity>();
 
 		for (Cell cell : targetCells) {
-			if (cell.getPlayer() != null) {
+			if (cell.getPlayer() != null && cell.getPlayer().isAlive()) {
 				targetEntities.add(cell.getPlayer());
 			}
 		}
@@ -182,29 +183,40 @@ public class Attack {
 
 		for (EffectParameters parameters : effects) {
 
+			boolean onCaster = (parameters.getModifiers() & Effect.MODIFIER_ON_CASTER) != 0;
+			boolean stackable = (parameters.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
 			int effectTotalValue = 0;
+			boolean multiplied_by_target_count = (parameters.getModifiers() & Effect.MODIFIER_MULTIPLIED_BY_TARGETS) != 0;
+			List<Entity> effectTargetEntities = new ArrayList<Entity>();
 
 			for (Entity targetEntity : targetEntities) {
-
-				if (targetEntity.isDead()) {
-					continue;
-				}
+				if (targetEntity.isDead()) continue;
 				if (!filterTarget(parameters.getTargets(), caster, targetEntity)) {
 					continue;
 				}
-
-				if (!returnEntities.contains(targetEntity))
+				if (onCaster && targetEntity == caster) {
+					continue;
+				}
+				if (!returnEntities.contains(targetEntity)) {
 					returnEntities.add(targetEntity);
+				}
+				effectTargetEntities.add(targetEntity);
+			}
+			int targetCount = multiplied_by_target_count ? effectTargetEntities.size() : 1;
 
-				double power = getPowerForCell(caster.getCell(), target, targetEntity.getCell());
+			if (!onCaster) { // If the effect is on caster, we only count the targets, not apply the effect
+				for (Entity targetEntity : effectTargetEntities) {
+					
+					double power = getPowerForCell(caster.getCell(), target, targetEntity.getCell());
 
-				effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet, previousEffectTotalValue);
+					effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
+				}
 			}
 
 			// Always caster
-			if ((parameters.getTargets() & Effect.TARGET_ALWAYS_CASTER) != 0 && !returnEntities.contains(caster)) {
+			if (onCaster) {
 				returnEntities.add(caster);
-				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet, previousEffectTotalValue);
+				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
 			}
 
 			previousEffectTotalValue = effectTotalValue;
@@ -230,7 +242,7 @@ public class Attack {
 		}
 
 		// Non-Summons
-		if ((targets & Effect.TARGET_NON_SUMMONS) == 0 && !(target.isSummon())) {
+		if ((targets & Effect.TARGET_NON_SUMMONS) == 0 && !target.isSummon()) {
 			return false;
 		}
 

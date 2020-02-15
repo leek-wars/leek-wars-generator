@@ -52,7 +52,11 @@ public abstract class Effect {
 	public final static int TARGET_CASTER = 4; // Caster
 	public final static int TARGET_NON_SUMMONS = 8; // Non-summons
 	public final static int TARGET_SUMMONS = 16; // Summons
-	public final static int TARGET_ALWAYS_CASTER = 32; // Always the caster, even if not in the area
+
+	// Modifiers
+	public final static int MODIFIER_STACKABLE = 1; // The effect is stackable
+	public final static int MODIFIER_MULTIPLIED_BY_TARGETS = 2; // The effect is multiplied by the number of targets in the area
+	public final static int MODIFIER_ON_CASTER = 4; // The effect is applied on the caster
 
 	// Power in case of critical hit
 	public static final double CRITICAL_FACTOR = 1.4;
@@ -81,9 +85,10 @@ public abstract class Effect {
 	protected double erosionRate;
 	public int value = 0;
 	public int previousEffectTotalValue;
+	public int targetCount;
 
 	public static int createEffect(Fight fight, int id, int turns, double power, double value1, double value2, boolean critical, Entity target, Entity caster, int attack_type, int attack_id,
-			double jet, int previousEffectTotalValue) {
+			double jet, boolean stackable, int previousEffectTotalValue, int targetCount) {
 
 		// Invalid effect id
 		if (id < 0 || id > effects.length) {
@@ -112,10 +117,10 @@ public abstract class Effect {
 		effect.erosionRate = id == TYPE_POISON ? 0.10 : 0.05;
 		if (critical) effect.erosionRate += 0.10;
 		effect.previousEffectTotalValue = previousEffectTotalValue;
+		effect.targetCount = targetCount;
 
 		// Remove previous effect of the same type (that is not stackable)
 		if (effect.getTurns() > 0) {
-			boolean stackable = isStackable(id);
 			if (!stackable) {
 				List<Effect> effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
@@ -148,12 +153,7 @@ public abstract class Effect {
 		return effect.value;
 	}
 
-	public static boolean isStackable(int type) {
-		return type == TYPE_POISON || type == TYPE_SHACKLE_MP || type == TYPE_SHACKLE_TP
-				|| type == TYPE_SHACKLE_STRENGTH || type == TYPE_SHACKLE_MAGIC || type == TYPE_VULNERABILITY || type == TYPE_ABSOLUTE_VULNERABILITY || type == TYPE_STEAL_ABSOLUTE_SHIELD;
-	}
-
-	protected void addLog(Fight fight, boolean stacked) {
+	public void addLog(Fight fight, boolean stacked) {
 		if (turns == 0) {
 			return;
 		}

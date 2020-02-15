@@ -1,7 +1,5 @@
 package com.leekwars.generator.attack;
 
-import com.leekwars.generator.attack.effect.Effect;
-
 public class EffectParameters {
 
 	private final int id;
@@ -9,16 +7,16 @@ public class EffectParameters {
 	private final double value2;
 	private final int turns;
 	private final int targets;
-	private final boolean stackable;
+	private final int modifiers;
 	
-	public EffectParameters(int id, double value1, double value2, int turns, int targets) {
+	public EffectParameters(int id, double value1, double value2, int turns, int targets, int modifiers) {
 
 		this.id = id;
 		this.value1 = value1;
 		this.value2 = value2;
 		this.turns = turns;
 		this.targets = targets;
-		this.stackable = Effect.isStackable(id);
+		this.modifiers = modifiers;
 	}
 
 	public int getId() {
@@ -41,7 +39,7 @@ public class EffectParameters {
 		return targets;
 	}
 
-	public boolean isStackable() {
-		return stackable;
+	public int getModifiers() {
+		return modifiers;
 	}
 }

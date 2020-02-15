@@ -833,7 +833,7 @@ public class EntityAI extends AI {
 			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
-			effect.push(this, LeekValueManager.getLeekBooleanValue(e.isStackable()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
 			retour.push(this, effect);
 		}
 		return retour;
@@ -1004,7 +1004,7 @@ public class EntityAI extends AI {
 			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
-			effect.push(this, LeekValueManager.getLeekBooleanValue(e.isStackable()));
+			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
 			retour.push(this, effect);
 		}
 		return retour;
