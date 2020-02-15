@@ -120,7 +120,7 @@ public abstract class Effect {
 		effect.targetCount = targetCount;
 
 		// Remove previous effect of the same type (that is not stackable)
-		if (effect.getTurns() > 0) {
+		if (effect.getTurns() != 0) {
 			if (!stackable) {
 				List<Effect> effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
@@ -136,16 +136,18 @@ public abstract class Effect {
 		effect.apply(fight);
 
 		// Stack to previous item with the same characteristics
-		for (Effect e : target.getEffects()) {
-			if (e.attackID == attack_id && e.id == id && e.turns == turns && e.caster == caster) {
-				e.mergeWith(effect);
-				effect.addLog(fight, true);
-				return effect.value; // No need to apply the effect again
+		if (effect.value > 0) {
+			for (Effect e : target.getEffects()) {
+				if (e.attackID == attack_id && e.id == id && e.turns == turns && e.caster == caster) {
+					e.mergeWith(effect);
+					effect.addLog(fight, true);
+					return effect.value; // No need to apply the effect again
+				}
 			}
 		}
 
 		// Add effect to the target and the caster
-		if (effect.getTurns() > 0 && effect.value > 0) {
+		if (effect.getTurns() != 0 && effect.value > 0) {
 			target.addEffect(effect);
 			caster.addLaunchedEffect(effect);
 			effect.addLog(fight, false);

@@ -461,9 +461,11 @@ public abstract class Entity {
 
 			Effect effect = launchedEffects.get(e);
 
-			effect.setTurns(effect.getTurns() - 1); // Decrease duration
+			if (effect.getTurns() != -1) { // Decrease duration
+				effect.setTurns(effect.getTurns() - 1);
+			}
 
-			if (effect.getTurns() <= 0) { // Effect done
+			if (effect.getTurns() == 0) { // Effect done
 
 				effect.getTarget().removeEffect(effect);
 				launchedEffects.remove(e);
