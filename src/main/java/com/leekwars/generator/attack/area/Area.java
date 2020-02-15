@@ -13,6 +13,12 @@ public abstract class Area {
 	public final static int TYPE_CIRCLE1 = 3;
 	public final static int TYPE_CIRCLE2 = 4;
 	public final static int TYPE_CIRCLE3 = 5;
+	public final static int TYPE_AREA_PLUS_1 = 3; // Equals to CIRCLE_1
+	public final static int TYPE_AREA_PLUS_2 = 6;
+	public final static int TYPE_AREA_PLUS_3 = 7;
+	public final static int TYPE_X_1 = 8;
+	public final static int TYPE_X_2 = 9;
+	public final static int TYPE_X_3 = 10;
 
 	protected int mId;
 	protected Attack mAttack;
@@ -36,14 +42,22 @@ public abstract class Area {
 			return new AreaSingleCell(attack);
 		else if (type == Area.TYPE_LASER_LINE)
 			return new AreaLaserLine(attack);
-		else if (type == Area.TYPE_CIRCLE1)
+		else if (type == Area.TYPE_CIRCLE1 || type == Area.TYPE_AREA_PLUS_1)
 			return new AreaCircle1(attack);
 		else if (type == Area.TYPE_CIRCLE2)
 			return new AreaCircle2(attack);
 		else if (type == Area.TYPE_CIRCLE3)
 			return new AreaCircle3(attack);
+		else if (type == Area.TYPE_AREA_PLUS_2)
+			return new AreaPlus2(attack);
+		else if (type == Area.TYPE_AREA_PLUS_3)
+			return new AreaPlus3(attack);
+		else if (type == Area.TYPE_X_1)
+			return new AreaX1(attack);
+		else if (type == Area.TYPE_X_2)
+			return new AreaX2(attack);
+		else if (type == Area.TYPE_X_3)
+			return new AreaX3(attack);
 		return null;
 	}
-
-	public abstract int getRadius();
 }

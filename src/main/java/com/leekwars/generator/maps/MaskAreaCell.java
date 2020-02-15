@@ -37,4 +37,40 @@ public class MaskAreaCell {
 		}
 		return retour;
 	}
+
+	public static int[][] generatePlusMask(int radius) {
+
+		int nbCells = 1 + radius * 4;
+		int[][] retour = new int[nbCells][2];
+
+		retour[0] = new int[] { 0, 0 };
+
+		int index = 1;
+		for (int size = 1; size <= radius; size++) {
+			retour[index] = new int[] { size, 0 };
+			retour[index + 1] = new int[] { 0, -size };
+			retour[index + 2] = new int[] { -size, 0 };
+			retour[index + 3] = new int[] { 0, size };
+			index += 4;
+		}
+		return retour;
+	}
+
+	public static int[][] generateXMask(int radius) {
+
+		int nbCells = 1 + radius * 4;
+		int[][] retour = new int[nbCells][2];
+
+		retour[0] = new int[] { 0, 0 };
+
+		int index = 1;
+		for (int size = 1; size <= radius; size++) {
+			retour[index] = new int[] { size, size };
+			retour[index + 1] = new int[] { size, -size };
+			retour[index + 2] = new int[] { -size, size };
+			retour[index + 3] = new int[] { -size, -size };
+			index += 4;
+		}
+		return retour;
+	}
 }

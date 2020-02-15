@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.area.Area;
+import com.leekwars.generator.attack.area.AreaLaserLine;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.Entity;
@@ -80,10 +81,6 @@ public class Attack {
 
 	public int getArea() {
 		return areaID;
-	}
-
-	public int getRadius() {
-		return area.getRadius();
 	}
 
 	public boolean canLaunch(Leek caster, Cell target) {
@@ -248,9 +245,10 @@ public class Attack {
 	// Compute the area effect attenuation : 100% at center, 50% on the border
 	public double getPowerForCell(Cell launch_cell, Cell target_cell, Cell curent_cell) {
 
-		if (area.getRadius() == 0) {
+		if (area instanceof AreaLaserLine) {
 			return 1.0;
 		}
+
 		double dist = Pathfinding.getCaseDistance(target_cell, curent_cell);
 		// Previous formula
 		// return 0.5 + (area.getRadius() - dist) / area.getRadius() * 0.5;

@@ -18,9 +18,4 @@ public class AreaSingleCell extends Area {
 		area.add(targetCell);
 		return area;
 	}
-
-	@Override
-	public int getRadius() {
-		return 0;
-	}
 }

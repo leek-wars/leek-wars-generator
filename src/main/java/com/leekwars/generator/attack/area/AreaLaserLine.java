@@ -46,9 +46,4 @@ public class AreaLaserLine extends Area {
 		}
 		return cells;
 	}
-
-	@Override
-	public int getRadius() {
-		return 0;
-	}
 }

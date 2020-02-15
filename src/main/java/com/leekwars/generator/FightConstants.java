@@ -123,6 +123,12 @@ public enum FightConstants implements ILeekConstant {
 	AREA_CIRCLE_1(3, LeekFunctions.INT),
 	AREA_CIRCLE_2(4, LeekFunctions.INT),
 	AREA_CIRCLE_3(5, LeekFunctions.INT),
+	AREA_PLUS_1(3, LeekFunctions.INT),
+	AREA_PLUS_2(6, LeekFunctions.INT),
+	AREA_PLUS_3(7, LeekFunctions.INT),
+	AREA_X_1(8, LeekFunctions.INT),
+	AREA_X_2(9, LeekFunctions.INT),
+	AREA_X_3(10, LeekFunctions.INT),
 
 	// Chips
 	CHIP_BANDAGE(3, LeekFunctions.INT),

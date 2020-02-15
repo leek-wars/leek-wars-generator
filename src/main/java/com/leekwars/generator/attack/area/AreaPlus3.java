@@ -3,11 +3,11 @@ package com.leekwars.generator.attack.area;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.maps.MaskAreaCell;
 
-public class AreaCircle2 extends MaskArea {
+public class AreaPlus3 extends MaskArea {
 
-	private static int[][] area = MaskAreaCell.generateCircleMask(0, 2);
+	private static int[][] area = MaskAreaCell.generatePlusMask(3);
 
-	public AreaCircle2(Attack attack) {
+	public AreaPlus3(Attack attack) {
 		super(attack, area);
 	}
 }
