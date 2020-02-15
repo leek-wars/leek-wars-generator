@@ -45,6 +45,7 @@ public abstract class Effect {
 	public final static int TYPE_ABSOLUTE_VULNERABILITY = 27;
 	public final static int TYPE_LIFE_DAMAGE = 28;
 	public final static int TYPE_STEAL_ABSOLUTE_SHIELD = 29;
+	public final static int TYPE_NOVA_DAMAGE = 30;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies

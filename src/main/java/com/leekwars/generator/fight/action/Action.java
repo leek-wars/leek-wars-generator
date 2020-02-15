@@ -26,6 +26,7 @@ public interface Action {
 	public static final int VITALITY = 104;
 	public static final int RESURRECT = 105;
 	public static final int LOSE_STRENGTH = 106;
+	public final static int LOST_MAX_LIFE = 107;
 
 	// "fun" actions
 	public final static int SAY = 200;
