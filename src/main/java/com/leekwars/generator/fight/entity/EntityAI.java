@@ -21,6 +21,7 @@ import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionAIError;
+import com.leekwars.generator.fight.action.ActionLama;
 import com.leekwars.generator.fight.action.ActionLoseTP;
 import com.leekwars.generator.fight.action.ActionSay;
 import com.leekwars.generator.fight.action.ActionSetWeapon;
@@ -1829,6 +1830,7 @@ public class EntityAI extends AI {
 		}
 		mEntity.useTP(1);
 		fight.log(new ActionLoseTP(mEntity, 1));
+		fight.log(new ActionLama(mEntity));
 		fight.statistics.lama(mEntity);
 	}
 
