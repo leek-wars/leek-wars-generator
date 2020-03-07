@@ -450,7 +450,7 @@ public class EntityAI extends AI {
 			return LeekValueManager.getLeekBooleanValue(mEntity.isStatic());
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
-			if (l != null && l.getLeekIA() != null)
+			if (l != null)
 				return LeekValueManager.getLeekBooleanValue(l.isStatic());
 		}
 		return LeekValueManager.FALSE;
