@@ -89,4 +89,8 @@ public class Order {
 	public List<Entity> getEntities() {
 		return leeks;
 	}
+
+	public int getPosition() {
+		return position;
+	}
 }

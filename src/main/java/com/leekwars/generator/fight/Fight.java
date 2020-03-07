@@ -947,4 +947,33 @@ public class Fight {
 	public void setType(int type) {
 		this.type = type;
 	}
+
+	private double getMaxDeadRatio() {
+		double max = 0;
+		for (Team team : teams) {
+			double ratio = team.getDeadRatio();
+			if (ratio > max) max = ratio;
+		}
+		return max;
+	}
+	private double getMaxLifeRatio() {
+		double max = 0;
+		for (Team team : teams) {
+			double ratio = 1 - team.getLifeRatio();
+			if (ratio > max) max = ratio;
+		}
+		return max;
+	}
+
+	public double getProgress() {
+		if (this.order == null) return 0;
+
+		int entityCount = this.order.getEntities().size();
+
+		double d = getMaxDeadRatio();
+		double t = Math.pow((double) (this.getTurn() * entityCount + this.order.getPosition()) / (MAX_TURNS * entityCount), 0.5);
+		double l = getMaxLifeRatio();
+
+		return Math.max(t, Math.max(d, l));
+	}
 }

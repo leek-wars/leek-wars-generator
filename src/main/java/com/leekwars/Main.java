@@ -61,7 +61,7 @@ public class Main {
 				Log.e(TAG, "Failed to parse scenario!");
 				return;
 			}
-			Outcome outcome = generator.runScenario(scenario);
+			Outcome outcome = generator.runScenario(scenario, null);
 			System.out.println(JSON.toJSONString(outcome.toJson(), false));
 		}
 	}

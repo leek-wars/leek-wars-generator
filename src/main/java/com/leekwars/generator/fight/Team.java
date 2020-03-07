@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.turret.Turret;
 
 public class Team {
 
@@ -125,5 +126,28 @@ public class Team {
 			}
 		}
 		return nb;
+	}
+
+	public double getDeadRatio() {
+		int dead = 0;
+		int total = 0;
+		for (Entity entity : entities) {
+			if (entity.isSummon()) continue;
+			total++;
+			if (entity.isDead()) dead++;
+		}
+		return (double) dead / total;
+	}
+
+	public double getLifeRatio() {
+		int life = 0;
+		int total = 0;
+		for (Entity entity : entities) {
+			if (entity.isSummon()) continue;
+			if (entity instanceof Turret) continue;
+			total += entity.getTotalLife();
+			life += entity.getLife();
+		}
+		return (double) life / total;
 	}
 }
