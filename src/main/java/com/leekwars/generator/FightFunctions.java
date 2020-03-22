@@ -721,7 +721,7 @@ public enum FightFunctions implements ILeekFunction {
 		}
 
 		@Override
-		public void addOperations(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
+		public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
 			((EntityAI) leekIA).addOperations(hasVariableOperations() ? mVariableOperations.getOperations(retour.getInt(((EntityAI) leekIA).getUAI())) : 1);
 		}
 	},
@@ -732,7 +732,7 @@ public enum FightFunctions implements ILeekFunction {
 		}
 
 		@Override
-		public void addOperations(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
+		public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
 			((EntityAI) leekIA).addOperations(hasVariableOperations() ? mVariableOperations.getOperations(retour.isArray() ? retour.getArray().size() : 1) : 1);
 		}
 	},
@@ -1384,10 +1384,6 @@ public enum FightFunctions implements ILeekFunction {
 
 	public void setOperations(int operations) {
 		mOperations = operations;
-	}
-
-	public void addOperations(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
-		((EntityAI) leekIA).addOperations(getOperations());
 	}
 
 	public static AbstractLeekValue executeFunction(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], int count) throws Exception {
