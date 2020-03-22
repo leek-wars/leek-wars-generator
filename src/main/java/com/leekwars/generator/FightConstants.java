@@ -226,6 +226,10 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_COVETOUSNESS(120, LeekFunctions.INT),
 	CHIP_VAMPIRIZATION(121, LeekFunctions.INT),
 	CHIP_PRECIPITATION(122, LeekFunctions.INT),
+	CHIP_ALTERATION(141, LeekFunctions.INT),
+	CHIP_WIZARD_BULB(142, LeekFunctions.INT),
+	CHIP_PLASMA(143, LeekFunctions.INT),
+	CHIP_JUMP(144, LeekFunctions.INT),
 
 	MAP_NEXUS(1, LeekFunctions.INT),
 	MAP_FACTORY(2, LeekFunctions.INT),
