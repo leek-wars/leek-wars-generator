@@ -56,6 +56,7 @@ public abstract class Effect {
 	public final static int TYPE_RAW_BUFF_STRENGTH = 38;
 	public final static int TYPE_RAW_BUFF_MAGIC = 39;
 	public final static int TYPE_RAW_BUFF_SCIENCE = 40;
+	public final static int TYPE_RAW_BUFF_AGILITY = 41;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -76,7 +77,7 @@ public abstract class Effect {
 	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
 			EffectBuffMP.class, EffectBuffTP.class, EffectDebuff.class, EffectTeleport.class, EffectPermutation.class, EffectVitality.class, EffectPoison.class, EffectSummon.class,
 			EffectResurrect.class, EffectKill.class, EffectShackleMP.class, EffectShackleTP.class, EffectShackleStrength.class, EffectDamageReturn.class, EffectBuffResistance.class,
-			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class, EffectNovaDamage.class, EffectRawBuffMP.class, EffectRawBuffTP.class, null, null, null, null, EffectRawAbsoluteShield.class, EffectRawBuffStrength.class,EffectRawBuffMagic.class, EffectRawBuffScience.class };
+			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class, EffectNovaDamage.class, EffectRawBuffMP.class, EffectRawBuffTP.class, null, null, null, null, EffectRawAbsoluteShield.class, EffectRawBuffStrength.class,EffectRawBuffMagic.class, EffectRawBuffScience.class, EffectRawBuffAgility.class };
 
 	// Effect characteristics
 	protected int id;
