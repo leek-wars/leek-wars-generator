@@ -8,7 +8,7 @@ public class EffectHeal extends Effect {
 	@Override
 	public void apply(Fight fight) {
 
-		value = (int) Math.round((value1 + jet * value2) * (1 + (double) caster.getWisdom() / 100) * power * criticalPower);
+		value = (int) Math.round((value1 + jet * value2) * (1 + (double) caster.getWisdom() / 100) * power * criticalPower * targetCount);
 
 		if (turns == 0) {
 			if (target.getLife() + value > target.getTotalLife()) {
