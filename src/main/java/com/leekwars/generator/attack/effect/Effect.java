@@ -77,7 +77,7 @@ public abstract class Effect {
 	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
 			EffectBuffMP.class, EffectBuffTP.class, EffectDebuff.class, EffectTeleport.class, EffectPermutation.class, EffectVitality.class, EffectPoison.class, EffectSummon.class,
 			EffectResurrect.class, EffectKill.class, EffectShackleMP.class, EffectShackleTP.class, EffectShackleStrength.class, EffectDamageReturn.class, EffectBuffResistance.class,
-			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class, EffectNovaDamage.class, EffectRawBuffMP.class, EffectRawBuffTP.class, null, null, null, null, EffectRawAbsoluteShield.class, EffectRawBuffStrength.class,EffectRawBuffMagic.class, EffectRawBuffScience.class, EffectRawBuffAgility.class };
+			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class, EffectNovaDamage.class, EffectRawBuffMP.class, EffectRawBuffTP.class, null, null, null, null, EffectRawAbsoluteShield.class, EffectRawBuffStrength.class, EffectRawBuffMagic.class, EffectRawBuffScience.class, EffectRawBuffAgility.class };
 
 	// Effect characteristics
 	protected int id;

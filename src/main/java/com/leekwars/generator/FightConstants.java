@@ -44,7 +44,6 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_TELEPORT(10, LeekFunctions.INT),
 	EFFECT_INVERT(Effect.TYPE_PERMUTATION, LeekFunctions.INT),
 	EFFECT_RESURRECT(Effect.TYPE_RESURRECT, LeekFunctions.INT),
-
 	EFFECT_BUFF_DAMAGE(1, LeekFunctions.INT),
 	EFFECT_BUFF_HEAL(2, LeekFunctions.INT),
 	EFFECT_BUFF_FORCE(3, LeekFunctions.INT),
