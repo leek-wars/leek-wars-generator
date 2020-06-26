@@ -10,7 +10,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.ErrorManager;
-import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EffectParameters;
@@ -578,16 +577,13 @@ public class Fight {
 			return summonEntity(caster, target, template, null);
 		}
 
-		// Si c'est une téléportation on ajoute une petite vérification
-		if (template.getId() == FightConstants.CHIP_TELEPORTATION.getIntValue()) {
-			if (!target.available()) {
+		for (EffectParameters parameters : template.getAttack().getEffects()) {
+			// Si c'est une téléportation on ajoute une petite vérification
+			if (parameters.getId() == Effect.TYPE_TELEPORT && !target.available()) {
 				return Attack.USE_INVALID_TARGET;
 			}
-		}
-
-		// Impossible d'inverser une entité statique
-		if (template.getId() == FightConstants.CHIP_INVERSION.getIntValue()) {
-			if (target.getPlayer() != null && target.getPlayer().isStatic()) {
+			// Impossible d'inverser une entité statique
+			if (parameters.getId() == Effect.TYPE_PERMUTATION && target.getPlayer() != null && target.getPlayer().isStatic()) {
 				return Attack.USE_INVALID_TARGET;
 			}
 		}
