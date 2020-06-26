@@ -66,7 +66,7 @@ public class Map {
 							if (pos < team.size()) {
 								int cell_id = team.getIntValue(pos++);
 								if (cell_id >= 0 || cell_id < map.nb_cells) {
-									c = new Cell(map, cell_id);
+									c = map.getCell(cell_id);
 								}
 							}
 						}

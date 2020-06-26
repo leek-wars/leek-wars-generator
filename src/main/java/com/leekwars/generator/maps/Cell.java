@@ -115,7 +115,7 @@ public class Cell {
 	public void setPlayer(Entity entity) {
 		if (this.player == entity)
 			return;
-		this.map.positionChanged();
+		// this.map.positionChanged();
 		if (entity == null) {
 			this.player = null;
 			return;
