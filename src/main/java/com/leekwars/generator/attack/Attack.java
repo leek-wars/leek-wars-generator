@@ -2,6 +2,8 @@ package com.leekwars.generator.attack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -138,30 +140,12 @@ public class Attack {
 		return returnEntities;
 	}
 
+	/*
+	 * On suppose que l'autorisation de lancer le sort (minRange, maxRange, launchType) a été vérifiée avant l'appel
+	 */
 	public List<Entity> applyOnCell(Fight fight, Entity caster, Cell target, boolean critical) {
 
 		List<Entity> returnEntities = new ArrayList<Entity>();
-
-		if (effects.size() > 0 && effects.get(0).getId() == Effect.TYPE_TELEPORT) {
-
-			caster.setHasMoved(true);
-			Cell start = caster.getCell();
-			caster.setCell(null);
-
-			start.setPlayer(null);
-			target.setPlayer(caster);
-
-			returnEntities.add(caster);
-
-			if (start.getComposante() != target.getComposante()) {
-				fight.statistics.stashed(caster);
-			}
-
-			return returnEntities;
-		}
-
-		// On suppose que l'autorisation de lancer le sort (minRange, maxRange,
-		// launchType) a été vérifiée avant l'appel
 
 		// On récupère les cases cibles
 		List<Cell> targetCells = area.getArea(caster.getCell(), target);
@@ -169,9 +153,13 @@ public class Attack {
 		// On trouve les poireaux sur ces cellules
 		List<Entity> targetEntities = new ArrayList<Entity>();
 
+		// Facteurs de zones pour chaque entité
+		Map<Integer, Double> areaFactors = new TreeMap<Integer, Double>();
+
 		for (Cell cell : targetCells) {
 			if (cell.getPlayer() != null && cell.getPlayer().isAlive()) {
 				targetEntities.add(cell.getPlayer());
+				areaFactors.put(cell.getPlayer().getFId(), getPowerForCell(target, cell));
 			}
 		}
 
@@ -183,43 +171,60 @@ public class Attack {
 
 		for (EffectParameters parameters : effects) {
 
-			boolean onCaster = (parameters.getModifiers() & Effect.MODIFIER_ON_CASTER) != 0;
-			boolean stackable = (parameters.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			int effectTotalValue = 0;
-			boolean multiplied_by_target_count = (parameters.getModifiers() & Effect.MODIFIER_MULTIPLIED_BY_TARGETS) != 0;
-			List<Entity> effectTargetEntities = new ArrayList<Entity>();
+			if (parameters.getId() == Effect.TYPE_TELEPORT) {
 
-			for (Entity targetEntity : targetEntities) {
-				if (targetEntity.isDead()) continue;
-				if (!filterTarget(parameters.getTargets(), caster, targetEntity)) {
-					continue;
-				}
-				if (onCaster && targetEntity == caster) {
-					continue;
-				}
-				if (!returnEntities.contains(targetEntity)) {
-					returnEntities.add(targetEntity);
-				}
-				effectTargetEntities.add(targetEntity);
-			}
-			int targetCount = multiplied_by_target_count ? effectTargetEntities.size() : 1;
+				caster.setHasMoved(true);
+				Cell start = caster.getCell();
+				caster.setCell(null);
 
-			if (!onCaster) { // If the effect is on caster, we only count the targets, not apply the effect
-				for (Entity targetEntity : effectTargetEntities) {
-					
-					double power = getPowerForCell(caster.getCell(), target, targetEntity.getCell());
+				start.setPlayer(null);
+				target.setPlayer(caster);
 
-					effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
-				}
-			}
-
-			// Always caster
-			if (onCaster) {
 				returnEntities.add(caster);
-				Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
-			}
 
-			previousEffectTotalValue = effectTotalValue;
+				if (start.getComposante() != target.getComposante()) {
+					fight.statistics.stashed(caster);
+				}
+			} else {
+
+				boolean onCaster = (parameters.getModifiers() & Effect.MODIFIER_ON_CASTER) != 0;
+				boolean stackable = (parameters.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+				int effectTotalValue = 0;
+				boolean multiplied_by_target_count = (parameters.getModifiers() & Effect.MODIFIER_MULTIPLIED_BY_TARGETS) != 0;
+				List<Entity> effectTargetEntities = new ArrayList<Entity>();
+
+				for (Entity targetEntity : targetEntities) {
+					if (targetEntity.isDead()) continue;
+					if (!filterTarget(parameters.getTargets(), caster, targetEntity)) {
+						continue;
+					}
+					if (onCaster && targetEntity == caster) {
+						continue;
+					}
+					if (!returnEntities.contains(targetEntity)) {
+						returnEntities.add(targetEntity);
+					}
+					effectTargetEntities.add(targetEntity);
+				}
+				int targetCount = multiplied_by_target_count ? effectTargetEntities.size() : 1;
+
+				if (!onCaster) { // If the effect is on caster, we only count the targets, not apply the effect
+					for (Entity targetEntity : effectTargetEntities) {
+
+						double power = areaFactors.get(targetEntity.getFId());
+
+						effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
+					}
+				}
+
+				// Always caster
+				if (onCaster) {
+					returnEntities.add(caster);
+					Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
+				}
+
+				previousEffectTotalValue = effectTotalValue;
+			}
 		}
 		return returnEntities;
 	}
@@ -255,13 +260,13 @@ public class Attack {
 	}
 
 	// Compute the area effect attenuation : 100% at center, 50% on the border
-	public double getPowerForCell(Cell launch_cell, Cell target_cell, Cell curent_cell) {
+	public double getPowerForCell(Cell target_cell, Cell current_cell) {
 
 		if (area instanceof AreaLaserLine) {
 			return 1.0;
 		}
 
-		double dist = Pathfinding.getCaseDistance(target_cell, curent_cell);
+		double dist = Pathfinding.getCaseDistance(target_cell, current_cell);
 		// Previous formula
 		// return 0.5 + (area.getRadius() - dist) / area.getRadius() * 0.5;
 		return 1 - dist * 0.2;
