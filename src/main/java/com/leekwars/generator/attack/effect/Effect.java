@@ -137,7 +137,7 @@ public abstract class Effect {
 				List<Effect> effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
 					Effect e = effects.get(i);
-					if (e.attackID == attack_id) {
+					if (e.id == id && e.attackID == attack_id) {
 						target.removeEffect(e);
 						break;
 					}
