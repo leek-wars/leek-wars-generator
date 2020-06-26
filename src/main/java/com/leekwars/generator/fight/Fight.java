@@ -91,8 +91,6 @@ public class Fight {
 
 	public final static int MAX_LOG_COUNT = 5000;
 
-	public static final double LEVEL_POWER = 2.5;
-
 	private final List<Team> teams;
 	private final List<Entity> initialOrder;
 
