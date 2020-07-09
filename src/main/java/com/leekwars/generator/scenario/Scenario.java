@@ -33,10 +33,10 @@ public class Scenario {
 	public JSONObject map = null;
 
     public static Scenario fromFile(File file) {
-
         Scenario scenario = new Scenario();
-
-		JSONObject json = JSON.parseObject(Util.readFile(file));
+        
+        String fileContent = Util.readFile(file);
+        JSONObject json = JSON.parseObject(fileContent);
 
 		if (json.containsKey("random_seed")) {
             scenario.seed = json.getLongValue("random_seed");

@@ -86,7 +86,7 @@ public class Generator {
 	public AnalyzeResult analyzeAI(String file, ResolverContext context) {
 		Log.i(TAG, "Analyze AI " + file + "...");
 		try {
-			AIFile<?> ai = LeekScript.getResolver().resolve(file, context);
+			AIFile<?> ai = LeekScript.getResolver().resolve(file, null);//context);
 			long t = System.currentTimeMillis();
 			AnalyzeResult result = new IACompiler().analyze(ai);
 			long time = System.currentTimeMillis() - t;
@@ -197,6 +197,7 @@ public class Generator {
 						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
 						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects")));
+                //System.out.print(weapon.getJSONArray("passive_effects"));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
