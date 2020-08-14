@@ -284,12 +284,6 @@ public abstract class Entity {
 	public void setId(int id) {
 		mId = id;
 	}
-	public EntityAI getLeekIA() {
-		return mEntityAI;
-	}
-	public EntityAI getUsedLeekIA() {
-		return mEntityAI;
-	}
 	public int getLevel() {
 		return mLevel;
 	}
