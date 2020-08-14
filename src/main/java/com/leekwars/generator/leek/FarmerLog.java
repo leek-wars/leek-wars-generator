@@ -1,6 +1,6 @@
 package com.leekwars.generator.leek;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -37,7 +37,7 @@ public class FarmerLog extends AILog {
 	public static final String CODE_TOO_LARGE = "code_too_large";
 	public static final String CODE_TOO_LARGE_FUNCTION = "code_too_large_function";
 	public static final String NUMBER_OF_OPERATIONS = "number_of_operations";
-	
+
 	public FarmerLog() {
 		super();
 		mObject = new JSONObject();
@@ -106,11 +106,7 @@ public class FarmerLog extends AILog {
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(type);
-		try {
-			obj.add(new String(message.getBytes("UTF-8"), "UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			ErrorManager.exception(e);
-		}
+		obj.add(new String(message.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
 		if (color != 0) {
 			obj.add(color);
 		}
