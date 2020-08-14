@@ -53,7 +53,7 @@ public abstract class Entity {
 	protected int mLevel;
 	protected int mSkin;
 	protected int mHat;
-	protected String mFarmerName;
+	protected String mFarmerName = "";
 	protected String mFarmerCountry;
 	protected String mTeamName = "";
 	protected String mAIName;
