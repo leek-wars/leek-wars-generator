@@ -501,7 +501,8 @@ public abstract class Entity {
 	// (poisons, ...)
 	public void startTurn() {
 
-		for (Effect effect : this.effects) {
+		ArrayList<Effect> effectsCopy = new ArrayList<Effect>(this.effects);
+		for (Effect effect : effectsCopy) {
 			effect.applyStartTurn(fight);
 			if (dead) {
 				return;
