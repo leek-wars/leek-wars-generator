@@ -47,6 +47,7 @@ public class Order {
 		leeks.remove(index);
 		if (position == -1) {
 			position = leeks.size() - 1;
+			turn--; // On décrémente le tour car on va le réincrémenter tout de suite derrière
 		}
 	}
 
