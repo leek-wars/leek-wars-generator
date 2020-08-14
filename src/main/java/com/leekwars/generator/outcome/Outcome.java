@@ -29,6 +29,10 @@ public class Outcome {
      * Fight statistics
      */
 	public FightStatistics statistics;
+	/**
+	 * Exception
+	 */
+	public Exception exception = null;
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();

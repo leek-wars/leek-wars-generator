@@ -9,7 +9,6 @@ import java.util.TreeMap;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.Generator;
-import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EffectParameters;
@@ -293,7 +292,7 @@ public class Fight {
 		return true;
 	}
 
-	public void startFight() throws FightException {
+	public void startFight() throws Exception {
 
 		initFight();
 
@@ -304,22 +303,13 @@ public class Fight {
 
 		mState = Fight.STATE_RUNNING;
 
-		int count_errors = 0;
-
 		Log.i(TAG, "Turn 1");
 
 		// On lance les tours
 		while (order.getTurn() <= max_turns && mState == Fight.STATE_RUNNING) {
 
-			try {
-				startTurn();
-			} catch (Exception e) {
-				ErrorManager.exceptionFight(e, mId);
-				count_errors++;
-				if (count_errors > 50) {
-					break;
-				}
-			}
+			startTurn();
+
 			if (order.current() == null) {
 				finishFight();
 				break;
@@ -405,15 +395,10 @@ public class Fight {
 				bootorder.addEntity(e);
 			}
 		}
-
-		try {
-			for (Entity e : bootorder.compute()) {
-				this.order.addEntity(e);
-				actions.addEntity(e);
-				initialOrder.add(e);
-			}
-		} catch (Exception e) {
-			ErrorManager.exceptionFight(e, mId);
+		for (Entity e : bootorder.compute()) {
+			this.order.addEntity(e);
+			actions.addEntity(e);
+			initialOrder.add(e);
 		}
 
 		// Initialize statistics
@@ -442,7 +427,7 @@ public class Fight {
 		mState = Fight.STATE_FINISHED;
 	}
 
-	public void startTurn() {
+	public void startTurn() throws Exception {
 
 		Entity current = order.current();
 		if (current == null) {
@@ -456,16 +441,15 @@ public class Fight {
 		current.applyCoolDown();
 		current.startTurn();
 
-		lt.setPM(order.current().getMP());
-		lt.setTP(order.current().getTP());
+		lt.setPM(current.getMP());
+		lt.setTP(current.getTP());
 
-		if (!current.isDead() && order.current().getUsedLeekIA() != null) {
-
-			order.current().getUsedLeekIA().runTurn();
-
-			if (order.current() != null) {
-				order.current().endTurn();
+		if (!current.isDead()) {
+			if (current.getAI() != null) {
+				current.getAI().runTurn();
 			}
+			current.endTurn();
+			actions.log(new ActionEndTurn(current));
 		}
 		endTurn();
 	}
@@ -508,8 +492,6 @@ public class Fight {
 		if (isFinished()) {
 			mState = Fight.STATE_FINISHED;
 		} else {
-
-			actions.log(new ActionEndTurn(order.current()));
 
 			if (order.next()) {
 

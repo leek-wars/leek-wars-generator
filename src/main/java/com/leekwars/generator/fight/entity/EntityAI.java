@@ -9,9 +9,7 @@ import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Censorship;
-import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.FightConstants;
-import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EffectParameters;
 import com.leekwars.generator.attack.chips.Chip;
@@ -75,14 +73,12 @@ public class EntityAI extends AI {
 	protected long mIARunTime = 0;
 	protected long mIACpuRunTime = 0;
 
-	protected int ai_id = -1;
 	protected String ai_name = "";
 	protected LeekLog logs;
 
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
 	protected final List<String> mSays = new ArrayList<String>();
 
-	protected boolean fp = true;
 	protected boolean mIsValid = true;
 
 	public EntityAI() throws Exception {}
@@ -102,9 +98,6 @@ public class EntityAI extends AI {
 //		}
 //		ai_name = ai.getName();
 		try {
-//			if (ai != null) {
-//				ai_id = ai.getId();
-//			}
 //			mUAI = LeekScript.getUserAI(ai);
 //			if (this == null) {
 //				mIsValid = false;
@@ -113,7 +106,6 @@ public class EntityAI extends AI {
 //				this.setLeekIA(this);
 //			}
 		} catch (ClassFormatError e) {
-			System.out.println("Impossible de charger l'IA " + ai_id);
 //			log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, null);
 //		} catch (LeekScriptException e) {
 //			ErrorManager.exception(e);
@@ -224,22 +216,21 @@ public class EntityAI extends AI {
 			mEntity = mInitialEntity;
 			runIA();
 
-		} catch (StackOverflowError e) {
+		} catch (StackOverflowError e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Stack Overflow" }, e.getStackTrace());
 			fight.statistics.addStackOverflow(mEntity);
 			fight.statistics.addErrors(1);
 
-		} catch (ArithmeticException e) {
+		} catch (ArithmeticException e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
 			fight.statistics.addErrors(1);
 
-		} catch (LeekRunException e) {
+		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
-			// Exception de l'utilisateur, normales
 			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
@@ -248,36 +239,27 @@ public class EntityAI extends AI {
 				fight.statistics.tooMuchOperations(mEntity);
 			}
 
-		} catch (OutOfMemoryError e) {// Plus de RAM, Erreur critique, on tente
-										// de sauver les meubles
+		} catch (OutOfMemoryError e) { // Plus de RAM, Erreur critique, on tente de sauver les meubles
+
 			fight.statistics.addErrors(1);
+			fight.log(new ActionAIError(mEntity));
 			// Premierement on coupe l'IA incriminée
 			mIsValid = false;
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Out Of Memory" }, e.getStackTrace());
 			System.out.println("Out Of Memory , Fight : " + fight.getId());
+			throw e;
 
-			ErrorManager.exception(e, ai_id);
-
-		} catch (Exception e) {
-
-			ErrorManager.exception(e, ai_id);
+		} catch (Exception e) { // Autre erreur, là c'est pas l'utilisateur
 
 			fight.statistics.addErrors(1);
-			Log.i(TAG, "Erreur importante dans l'IA " + ai_id + "  " + e.getMessage());
-
+			fight.log(new ActionAIError(mEntity));
+			System.out.println("Erreur importante dans l'IA " + mEntity.getAIId() + "  " + e.getMessage());
+			e.printStackTrace();
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Undefined Error" }, e.getStackTrace());
-			if (fp) {
-				ErrorManager.registerAIError(fight, mEntity, this.getErrorMessage(e), e);
-				Log.i(TAG, "Informations sur l'erreur");
-				fp = false;
-			}
-		} catch (Throwable e) {
-
-			// ErrorManager.exception(e, mLeekAI.getId());
+			throw new RuntimeException("Erreur importante dans l'IA " + mEntity.getAIId() + "  " + e.getMessage(), e);
 
 		} finally {
 			if (this != null) {
-//				Logger.logOp(fight.getId(), mEntity.getId(), mEntity.getName(), this.getOperations());
 				fight.statistics.addOperations(this.getOperations());
 			}
 		}

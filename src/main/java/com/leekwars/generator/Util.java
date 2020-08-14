@@ -57,7 +57,7 @@ public class Util {
 			out.append(data.toJSONString());
 			out.close();
 		} catch (Exception e) {
-			ErrorManager.exception(e);
+			e.printStackTrace();
 		}
 	}
 
@@ -77,7 +77,7 @@ public class Util {
 			return JSON.parseArray(new String(datas.toByteArray()));
 
 		} catch (Exception e) {
-			ErrorManager.exception(e);
+			e.printStackTrace();
 		}
 		return null;
 	}

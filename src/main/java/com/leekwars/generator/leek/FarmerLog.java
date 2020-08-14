@@ -4,7 +4,6 @@ import java.io.UnsupportedEncodingException;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.Util;
 import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.entity.Entity;

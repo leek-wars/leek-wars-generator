@@ -144,10 +144,11 @@ public class EntityInfo {
 				}
 			}
 			return entity;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public JSONObject toJson() {

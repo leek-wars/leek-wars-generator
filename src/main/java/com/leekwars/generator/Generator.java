@@ -107,7 +107,7 @@ public class Generator {
 
 	/**
 	 * Runs a scenario.
-	 * 
+	 *
 	 * @param scenario the scenario to run.
 	 * @return the fight outcome generated.
 	 */
@@ -181,9 +181,10 @@ public class Generator {
 			// writer.write(report.toString());
 			// }
 		} catch (Exception e) {
+			outcome.exception = e;
 			e.printStackTrace();
 			Log.e(TAG, "Error during fight generation!");
-			return null;
+			return outcome;
 		}
 	}
 

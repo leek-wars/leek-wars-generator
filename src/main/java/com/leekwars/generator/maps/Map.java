@@ -13,7 +13,6 @@ import javax.imageio.ImageIO;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.Generator;
-import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.Team;
 import com.leekwars.generator.fight.entity.Entity;
@@ -322,7 +321,7 @@ public class Map {
 		try {
 			ImageIO.write(img, "png", new File("Img.png"));
 		} catch (IOException e) {
-			ErrorManager.exception(e);
+			e.printStackTrace();
 		}
 	}
 
