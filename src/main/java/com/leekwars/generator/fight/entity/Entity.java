@@ -404,7 +404,7 @@ public abstract class Entity {
 		if (mTotalLife < 1) mTotalLife = 1;
 
 		// Sniper : attack from 10 cells+ distance
-		if (this.team != attacker.team && direct_attack && attacker.getCell() != null && Pathfinding.getCaseDistance(this.cell, attacker.getCell()) > 10) {
+		if (this.team != attacker.team && direct_attack && this.cell != null && attacker.getCell() != null && Pathfinding.getCaseDistance(this.cell, attacker.getCell()) > 10) {
 			fight.statistics.sniper(attacker);
 		}
 
