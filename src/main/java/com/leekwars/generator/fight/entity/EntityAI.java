@@ -397,8 +397,8 @@ public class EntityAI extends AI {
 			return LeekValueManager.getLeekIntValue(mBirthTurn);
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
-			if (l != null && l.getLeekIA() != null)
-				return LeekValueManager.getLeekIntValue(l.getLeekIA().mBirthTurn);
+			if (l != null && l.getAI() != null)
+				return LeekValueManager.getLeekIntValue(l.getAI().mBirthTurn);
 		}
 		return LeekValueManager.NULL;
 	}
@@ -1824,8 +1824,8 @@ public class EntityAI extends AI {
 		if (l == null) {
 			return false;
 		}
-		if (l.getUsedLeekIA() != null)
-			l.getUsedLeekIA().addMessage(new LeekMessage(mEntity.getFId(), type, message));
+		if (l.getAI() != null)
+			l.getAI().addMessage(new LeekMessage(mEntity.getFId(), type, message));
 		return true;
 	}
 
@@ -1833,8 +1833,8 @@ public class EntityAI extends AI {
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam())) {
 			if (l.getId() == mEntity.getId())
 				continue;
-			if (l.getUsedLeekIA() != null)
-				l.getUsedLeekIA().addMessage(new LeekMessage(mEntity.getFId(), type, message));
+			if (l.getAI() != null)
+				l.getAI().addMessage(new LeekMessage(mEntity.getFId(), type, message));
 		}
 	}
 
@@ -1852,16 +1852,18 @@ public class EntityAI extends AI {
 		}
 
 		// On crée le tableau de retour
-		EntityAI lia = l.getLeekIA();
+		EntityAI lia = l.getAI();
 		ArrayLeekValue messages = new ArrayLeekValue();
 
 		// On y ajoute les messages
-		for (LeekMessage message : lia.mMessages) {
-			ArrayLeekValue m = new ArrayLeekValue();
-			m.get(this, 0).set(this, LeekValueManager.getLeekIntValue(message.mAuthor));
-			m.get(this, 1).set(this, LeekValueManager.getLeekIntValue(message.mType));
-			m.get(this, 2).set(this, LeekOperations.clone(this, message.mMessage));
-			messages.push(this, m);
+		if (lia != null) {
+			for (LeekMessage message : lia.mMessages) {
+				ArrayLeekValue m = new ArrayLeekValue();
+				m.get(this, 0).set(this, LeekValueManager.getLeekIntValue(message.mAuthor));
+				m.get(this, 1).set(this, LeekValueManager.getLeekIntValue(message.mType));
+				m.get(this, 2).set(this, LeekOperations.clone(this, message.mMessage));
+				messages.push(this, m);
+			}
 		}
 		return messages;
 	}
@@ -2367,9 +2369,9 @@ public class EntityAI extends AI {
 	public AbstractLeekValue listen() throws Exception {
 		ArrayLeekValue values = new ArrayLeekValue();
 		for (Entity l : fight.getAllEntities(false)) {
-			if (l == mEntity)
+			if (l == null || l == mEntity || l.getAI() == null)
 				continue;
-			for (String say : l.getLeekIA().getSays()) {
+			for (String say : l.getAI().getSays()) {
 				ArrayLeekValue s = new ArrayLeekValue();
 				s.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
 				s.push(this, new StringLeekValue(say));
