@@ -15,7 +15,7 @@ import com.leekwars.generator.Util;
 public class Scenario {
 
 	public static final String TAG = Scenario.class.getSimpleName();
-	
+
 	private static final FarmerInfo leekwarsFarmer = new FarmerInfo();
 	static {
 		leekwarsFarmer.id = 0;
@@ -23,7 +23,7 @@ public class Scenario {
 		leekwarsFarmer.country = "fr";
 	}
 
-    public long seed = 0;
+    public int seed = 0;
 	public int maxTurns = 64;
 	public int type = 0;
 	public int context = 0;
@@ -32,6 +32,11 @@ public class Scenario {
 	public List<List<EntityInfo>> entities = new ArrayList<List<EntityInfo>>();
 	public JSONObject map = null;
 
+	public Scenario() {
+		// Between 1 and MAX_VALUE (included)
+		this.seed = 1 + (int) ((Math.random() * System.nanoTime()) % (Integer.MAX_VALUE));
+	}
+
     public static Scenario fromFile(File file) {
 
         Scenario scenario = new Scenario();
@@ -39,7 +44,7 @@ public class Scenario {
 		JSONObject json = JSON.parseObject(Util.readFile(file));
 
 		if (json.containsKey("random_seed")) {
-            scenario.seed = json.getLongValue("random_seed");
+            scenario.seed = json.getIntValue("random_seed");
         }
         if (json.containsKey("max_turns")) {
 			scenario.maxTurns = json.getIntValue("max_turns");

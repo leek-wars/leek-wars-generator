@@ -90,13 +90,6 @@ public class Map {
 			while (!valid && nb < 63) {
 
 				map = new Map(width, height);
-				if (context == Fight.CONTEXT_TEST) {
-					map.setType(-1); // Nexus
-				} else if (context == Fight.CONTEXT_TOURNAMENT) {
-					map.setType(5); // Arena
-				} else {
-					map.setType(Generator.getRandom().getInt(0, 4));
-				}
 
 				for (int i = 0; i < obstacles_count; i++) {
 					Cell c = map.getCell(Generator.getRandom().getInt(0, map.getNbCell()));
@@ -162,6 +155,16 @@ public class Map {
 				nb++;
 			}
 		}
+
+		// Generate type at the end
+		if (context == Fight.CONTEXT_TEST) {
+			map.setType(-1); // Nexus
+		} else if (context == Fight.CONTEXT_TOURNAMENT) {
+			map.setType(5); // Arena
+		} else {
+			map.setType(Generator.getRandom().getInt(0, 4));
+		}
+
 		return map;
 	}
 
