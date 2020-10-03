@@ -1250,6 +1250,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) leekIA).mark(parameters[0], parameters[1], parameters[2]);
 		}
 	},
+	markText(2, 4) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).markText(parameters[0], parameters[1], parameters[2], parameters[3]);
+		}
+	},
 	show(1, 2) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {

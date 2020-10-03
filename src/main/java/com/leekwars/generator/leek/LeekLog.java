@@ -38,6 +38,10 @@ public class LeekLog extends AILog {
 		farmerLogs.addCell(entity, cells, color, duration);
 	}
 
+	public void addCellText(int[] cells, String text, int color, int duration) {
+		farmerLogs.addCellText(entity, cells, text, color, duration);
+	}
+
 	public void addPause() {
 		farmerLogs.addPause(entity);
 	}

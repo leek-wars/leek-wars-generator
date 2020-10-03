@@ -20,6 +20,10 @@ public class FarmerLog extends AILog {
 	private int mSize = 0;
 	private final static int MAX_LENGTH = 500000;
 
+	public final static int MARK = 4;
+	public final static int PAUSE = 5;
+	public final static int MARK_TEXT = 9;
+
 	// Clés
 	public static final String NO_WEAPON_EQUIPED = "no_weapon_equipped";
 	public static final String CHIP_NOT_EQUIPED = "chip_not_equipped";
@@ -88,6 +92,21 @@ public class FarmerLog extends AILog {
 		obj.add(leek.getFId());
 		obj.add(MARK);
 		obj.add(cells);
+		obj.add(Util.getHexaColor(color));
+		obj.add(duration);
+		addAction(leek, obj);
+	}
+
+	public void addCellText(Entity leek, int[] cells, String text, int color, int duration) {
+
+		if (!addSize(cells.length * 5 + 8 + text.length())) {
+			return;
+		}
+		JSONArray obj = new JSONArray();
+		obj.add(leek.getFId());
+		obj.add(MARK_TEXT);
+		obj.add(cells);
+		obj.add(text);
 		obj.add(Util.getHexaColor(color));
 		obj.add(duration);
 		addAction(leek, obj);

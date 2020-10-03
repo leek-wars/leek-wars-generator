@@ -2334,6 +2334,42 @@ public class EntityAI extends AI {
 		return LeekValueManager.getLeekBooleanValue(true);
 	}
 
+	public AbstractLeekValue markText(AbstractLeekValue cell, AbstractLeekValue text, AbstractLeekValue color, AbstractLeekValue duration) throws LeekRunException {
+		int d = 1;
+		int col = 1;
+		int[] cel = null;
+		if (cell.getType() == AbstractLeekValue.NUMBER) {
+			int id = cell.getInt(this);
+			if (fight.getMap().getCell(id) == null)
+				return LeekValueManager.getLeekBooleanValue(false);
+			cel = new int[] { cell.getInt(this) };
+		} else if (cell.getType() == AbstractLeekValue.ARRAY) {
+			cel = new int[cell.getArray().size()];
+			int i = 0;
+			for (AbstractLeekValue value : cell.getArray()) {
+				if (fight.getMap().getCell(value.getInt(this)) == null)
+					continue;
+				cel[i] = value.getInt(this);
+				i++;
+			}
+			if (i == 0)
+				return LeekValueManager.getLeekBooleanValue(false);
+		} else
+			return LeekValueManager.getLeekBooleanValue(false);
+
+		if (color.getType() == AbstractLeekValue.NUMBER)
+			col = color.getInt(this);
+		if (duration.getType() == AbstractLeekValue.NUMBER)
+			d = duration.getInt(this);
+
+		String userText = text.getString(this);
+		String finalText = userText.substring(0, Math.min(userText.length(), 10));
+
+		logs.addCellText(cel, finalText, col, d);
+
+		return LeekValueManager.getLeekBooleanValue(true);
+	}
+
 	public void pause() {
 		logs.addPause();
 	}
