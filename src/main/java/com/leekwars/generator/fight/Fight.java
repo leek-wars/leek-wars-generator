@@ -925,6 +925,17 @@ public class Fight {
 	}
 
 	private double getMaxDeadRatio() {
+
+		if (this.type == TYPE_BATTLE_ROYALE) {
+			double dead = 0;
+			for (Team team : teams) {
+				if (team.isDead()) {
+					dead++;
+				}
+			}
+			return dead / teams.size();
+		}
+
 		double max = 0;
 		for (Team team : teams) {
 			double ratio = team.getDeadRatio();
@@ -933,6 +944,11 @@ public class Fight {
 		return max;
 	}
 	private double getMaxLifeRatio() {
+
+		if (this.type == TYPE_BATTLE_ROYALE) {
+			return 0; // For BR, don't count this value
+		}
+
 		double max = 0;
 		for (Team team : teams) {
 			double ratio = 1 - team.getLifeRatio();
@@ -946,8 +962,11 @@ public class Fight {
 
 		int entityCount = this.order.getEntities().size();
 
+		// Nombre d'entités mortes
 		double d = getMaxDeadRatio();
+		// Nombre de "tours d'entité", racine carrée
 		double t = Math.pow((double) (this.getTurn() * entityCount + this.order.getPosition()) / (MAX_TURNS * entityCount), 0.5);
+		// Ratio de vie restante
 		double l = getMaxLifeRatio();
 
 		return Math.max(t, Math.max(d, l));
