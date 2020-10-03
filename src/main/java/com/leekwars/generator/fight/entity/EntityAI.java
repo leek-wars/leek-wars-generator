@@ -46,7 +46,7 @@ import leekscript.runner.values.VariableLeekValue;
 public class EntityAI extends AI {
 
 	public static final int ERROR_LOG_COST = 1000;
-	private static final String TAG = EntityAI.class.getSimpleName();
+	// private static final String TAG = EntityAI.class.getSimpleName();
 
 	protected static class LeekMessage {
 		private final int mAuthor;
