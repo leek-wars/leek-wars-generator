@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.chips.Chips;
+import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.Bulb;
 
@@ -99,22 +100,24 @@ public class BulbTemplate {
 		return mName;
 	}
 
-	public static int base(int base, int bonus, double coeff) {
-		return (int) (base + Math.floor((bonus - base) * coeff));
+	public static int base(int base, int bonus, double coeff, double multiplier) {
+		return (int) ((base + Math.floor((bonus - base) * coeff)) * multiplier);
 	}
 
-	public Bulb createInvocation(Entity owner, FunctionLeekValue ai, int id, int level) {
+	public Bulb createInvocation(Entity owner, FunctionLeekValue ai, int id, int level, boolean critical) {
 		double c = Math.min(300d, owner.getLevel()) / (300d);
+		double multiplier = critical ? Effect.CRITICAL_FACTOR : 1.0;
+
 		Bulb inv = new Bulb(owner, ai, id, mName, level,
-				base(mMinLife, mMaxLife, c),
-				base(mMinStrength, mMaxStrength, c),
-				base(mMinWisdom, mMaxWisdom, c),
-				base(mMinAgility, mMaxAgility, c),
-				base(mMinResistance, mMaxResistance, c),
-				base(mMinScience, mMaxScience, c),
-				base(mMinMagic, mMaxMagic, c),
-				base(mMinTp, mMaxTp, c),
-				base(mMinMp, mMaxMp, c),
+				base(mMinLife, mMaxLife, c, multiplier),
+				base(mMinStrength, mMaxStrength, c, multiplier),
+				base(mMinWisdom, mMaxWisdom, c, multiplier),
+				base(mMinAgility, mMaxAgility, c, multiplier),
+				base(mMinResistance, mMaxResistance, c, multiplier),
+				base(mMinScience, mMaxScience, c, multiplier),
+				base(mMinMagic, mMaxMagic, c, multiplier),
+				base(mMinTp, mMaxTp, c, multiplier),
+				base(mMinMp, mMaxMp, c, multiplier),
 				mId, 0);
 
 		for (Chip chip : mChips) {

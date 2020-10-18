@@ -422,7 +422,7 @@ public class Fight {
 		}
 		for (Entity e : bootorder.compute(this)) {
 			this.order.addEntity(e);
-			actions.addEntity(e);
+			actions.addEntity(e, false);
 			initialOrder.add(e);
 		}
 
@@ -663,14 +663,18 @@ public class Fight {
 			return -5;
 		}
 
-		int result = Attack.USE_SUCCESS;
+		boolean critical = generateCritical(caster);
+		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
 
 		// On invoque
-		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel());
+		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel(), critical);
 		statistics.summon(caster, summon);
+
+		// On balance l'action
+		actions.log(new ActionInvocation(summon, result));
 
 		if (template.getCooldown() != 0) {
 			addCooldown(caster, template);
@@ -733,10 +737,10 @@ public class Fight {
 		return getRandom().getDouble() < ((double) caster.getAgility() / 1000);
 	}
 
-	public Bulb createSummon(Entity owner, int type, Cell target, FunctionLeekValue ai, int level) {
+	public Bulb createSummon(Entity owner, int type, Cell target, FunctionLeekValue ai, int level, boolean critical) {
 
 		int fid = getNextEntityId();
-		Bulb invoc = Bulb.create(owner, ai, -fid, type, level);
+		Bulb invoc = Bulb.create(owner, ai, -fid, type, level, critical);
 		invoc.setFight(this, fid);
 
 		int team = owner.getTeam();
@@ -755,10 +759,7 @@ public class Fight {
 		target.setPlayer(invoc);
 
 		// On l'ajoute dans les infos du combat
-		actions.addEntity(invoc);
-
-		// On balance l'action
-		actions.log(new ActionInvocation(invoc));
+		actions.addEntity(invoc, critical);
 
 		return invoc;
 	}

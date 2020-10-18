@@ -48,11 +48,11 @@ public class Bulb extends Entity {
 		return (int) (base + Math.floor(bonus * coeff));
 	}
 
-	public static Bulb create(Entity owner, FunctionLeekValue ai, int id, int type, int level) {
+	public static Bulb create(Entity owner, FunctionLeekValue ai, int id, int type, int level, boolean critical) {
 
 		BulbTemplate bulb_template = Bulbs.getInvocationTemplate(type);
 		if (bulb_template != null) {
-			return bulb_template.createInvocation(owner, ai, id, level);
+			return bulb_template.createInvocation(owner, ai, id, level, critical);
 		} else {
 			Log.e(TAG, "Invocation " + type + " inexistante");
 		}

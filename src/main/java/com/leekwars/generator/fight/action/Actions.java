@@ -52,7 +52,7 @@ public class Actions {
 		return retour;
 	}
 
-	public void addEntity(Entity entity) {
+	public void addEntity(Entity entity, boolean critical) {
 
 		entities.add(entity);
 
@@ -83,6 +83,7 @@ public class Actions {
 		object.put("summon", entity.isSummon());
 		if (entity.isSummon()) {
 			object.put("owner", entity.getSummoner().getFId());
+			object.put("critical", critical);
 		}
 
 		leeks.add(object);
