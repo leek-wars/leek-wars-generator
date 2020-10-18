@@ -1,7 +1,7 @@
 package com.leekwars.generator.attack.effect;
 
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.action.ActionLoseLife;
+import com.leekwars.generator.fight.action.ActionKill;
 
 public class EffectKill extends Effect {
 
@@ -9,7 +9,7 @@ public class EffectKill extends Effect {
 	public void apply(Fight fight) {
 
 		value = target.getLife();
-		fight.log(new ActionLoseLife(target, value, 0));
+		fight.log(new ActionKill(caster, target));
 		target.removeLife(value, 0, caster, true);
 	}
 }

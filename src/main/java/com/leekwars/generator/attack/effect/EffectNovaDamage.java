@@ -1,7 +1,8 @@
 package com.leekwars.generator.attack.effect;
 
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.action.ActionLoseMaxLife;
+import com.leekwars.generator.fight.action.ActionDamage;
+import com.leekwars.generator.fight.action.DamageType;
 
 public class EffectNovaDamage extends Effect {
 
@@ -17,7 +18,7 @@ public class EffectNovaDamage extends Effect {
 			value = target.getTotalLife() - target.getLife();
 		}
 
-		fight.log(new ActionLoseMaxLife(target, value));
+		fight.log(new ActionDamage(DamageType.NOVA, target, value, 0));
 		target.removeLife(0, value, caster, true);
 	}
 }

@@ -2,7 +2,8 @@ package com.leekwars.generator.attack.effect;
 
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionHeal;
-import com.leekwars.generator.fight.action.ActionLoseLife;
+import com.leekwars.generator.fight.action.DamageType;
+import com.leekwars.generator.fight.action.ActionDamage;
 
 public class EffectDamage extends Effect {
 
@@ -42,7 +43,7 @@ public class EffectDamage extends Effect {
 
 		int erosion = (int) Math.round(value * erosionRate);
 
-		fight.log(new ActionLoseLife(target, value, erosion));
+		fight.log(new ActionDamage(DamageType.DIRECT, target, value, erosion));
 		target.removeLife(value, erosion, caster, true);
 		target.onDirectDamage(value);
 		target.onNovaDamage(erosion);
@@ -69,7 +70,7 @@ public class EffectDamage extends Effect {
 			int returnErosion = (int) Math.round(returnDamage * erosionRate);
 
 			if (returnDamage > 0) {
-				fight.log(new ActionLoseLife(caster, returnDamage, returnErosion));
+				fight.log(new ActionDamage(DamageType.RETURN, caster, returnDamage, returnErosion));
 				caster.removeLife(returnDamage, returnErosion, target, false);
 				fight.statistics.addDamageReturn(returnDamage);
 				caster.onNovaDamage(returnErosion);
