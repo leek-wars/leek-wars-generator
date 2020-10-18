@@ -38,6 +38,7 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 
+import leekscript.compiler.RandomGenerator;
 import leekscript.runner.values.FunctionLeekValue;
 
 public class Fight {
@@ -89,6 +90,28 @@ public class Fight {
 
 	public final static int MAX_LOG_COUNT = 5000;
 
+	private RandomGenerator randomGenerator = new RandomGenerator() {
+		private long n = 0;
+
+		public void seed(long seed) {
+			n = seed;
+		}
+
+		@Override
+		public double getDouble() {
+			n = n * 1103515245 + 12345;
+			long r = (n / 65536) % 32768 + 32768;
+			return (double) r / 65536;
+		}
+
+		@Override
+		public int getInt(int min, int max) {
+			if (max - min + 1 <= 0)
+				return 0;
+			return min + (int) (getDouble() * (max - min + 1));
+		}
+	};
+
 	private final List<Team> teams;
 	private final List<Entity> initialOrder;
 
@@ -98,6 +121,7 @@ public class Fight {
 	private final java.util.Map<Integer, Entity> mEntities;
 	private final TreeMap<Integer, Entity> mEntitiesById;
 
+	public Generator generator;
 	private int mId;
 	public int mState;
 	private Order order;
@@ -117,8 +141,9 @@ public class Fight {
 
 	public FightStatistics statistics;
 
-	public Fight() {
+	public Fight(Generator generator) {
 
+		this.generator = generator;
 		teams = new ArrayList<Team>();
 		initialOrder = new ArrayList<Entity>();
 
@@ -382,9 +407,9 @@ public class Fight {
 		}
 		mLeekDatas = list.toJSONString();
 
-		int obstacle_count = Generator.getRandom().getInt(40, 60);
+		int obstacle_count = getRandom().getInt(40, 60);
 
-		this.map = Map.generateMap(context, 18, 18, obstacle_count, teams, custom_map);
+		this.map = Map.generateMap(this, context, 18, 18, obstacle_count, teams, custom_map);
 
 		// Initialize positions and game order
 		StartOrder bootorder = new StartOrder();
@@ -395,7 +420,7 @@ public class Fight {
 				bootorder.addEntity(e);
 			}
 		}
-		for (Entity e : bootorder.compute()) {
+		for (Entity e : bootorder.compute(this)) {
 			this.order.addEntity(e);
 			actions.addEntity(e);
 			initialOrder.add(e);
@@ -705,7 +730,7 @@ public class Fight {
 	}
 
 	public boolean generateCritical(Entity caster) {
-		return Generator.getRandom().getDouble() < ((double) caster.getAgility() / 1000);
+		return getRandom().getDouble() < ((double) caster.getAgility() / 1000);
 	}
 
 	public Bulb createSummon(Entity owner, int type, Cell target, FunctionLeekValue ai, int level) {
@@ -970,5 +995,12 @@ public class Fight {
 		double l = getMaxLifeRatio();
 
 		return Math.max(t, Math.max(d, l));
+	}
+
+	public void seed(int seed) {
+		randomGenerator.seed(seed);
+	}
+	public RandomGenerator getRandom() {
+		return randomGenerator;
 	}
 }

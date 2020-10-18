@@ -12,7 +12,6 @@ import javax.imageio.ImageIO;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.Team;
 import com.leekwars.generator.fight.entity.Entity;
@@ -32,7 +31,7 @@ public class Map {
 	private int min_y = -1;
 	private int max_y = -1;
 
-	public static Map generateMap(int context, int width, int height, int obstacles_count, List<Team> teams, JSONObject custom_map) {
+	public static Map generateMap(Fight fight, int context, int width, int height, int obstacles_count, List<Team> teams, JSONObject custom_map) {
 
 		boolean valid = false;
 		int nb = 0;
@@ -41,7 +40,6 @@ public class Map {
 		if (custom_map != null) {
 
 			map = new Map(width, height);
-			map.setType(-1); // Nexus
 
 			JSONObject obstacles = custom_map.getJSONObject("obstacles");
 			JSONArray team1 = custom_map.getJSONArray("team1");
@@ -54,9 +52,9 @@ public class Map {
 					// Random cell
 					Cell c;
 					if (teams.size() == 2) { // 2 teams : 2 sides
-						c = map.getRandomCell(t == 0 ? 1 : 4);
+						c = map.getRandomCell(fight, t == 0 ? 1 : 4);
 					} else { // 2+ teams : random
-						c = map.getRandomCell();
+						c = map.getRandomCell(fight);
 					}
 					// User custom cell?
 					if (t < 2) {
@@ -92,10 +90,10 @@ public class Map {
 				map = new Map(width, height);
 
 				for (int i = 0; i < obstacles_count; i++) {
-					Cell c = map.getCell(Generator.getRandom().getInt(0, map.getNbCell()));
+					Cell c = map.getCell(fight.getRandom().getInt(0, map.getNbCell()));
 					if (c != null && c.available()) {
-						int size = Generator.getRandom().getInt(1, 2);
-						int type = Generator.getRandom().getInt(0, 2);
+						int size = fight.getRandom().getInt(1, 2);
+						int type = fight.getRandom().getInt(0, 2);
 						if (size == 2) {
 							Cell c2 = Pathfinding.getCellByDir(c, Pathfinding.EAST);
 							Cell c3 = Pathfinding.getCellByDir(c, Pathfinding.SOUTH);
@@ -122,11 +120,11 @@ public class Map {
 						Cell c;
 						if (teams.size() == 2) { // 2 teams : 2 sides
 
-							c = map.getRandomCell(t == 0 ? 1 : 4);
+							c = map.getRandomCell(fight, t == 0 ? 1 : 4);
 
 						} else { // 2+ teams : random
 
-							c = map.getRandomCell();
+							c = map.getRandomCell(fight);
 						}
 
 						c.setPlayer(l);
@@ -156,13 +154,13 @@ public class Map {
 			}
 		}
 
-		// Generate type at the end
+		// Generate type
+		map.setType(fight.getRandom().getInt(0, 4));
+
 		if (context == Fight.CONTEXT_TEST) {
 			map.setType(-1); // Nexus
 		} else if (context == Fight.CONTEXT_TOURNAMENT) {
 			map.setType(5); // Arena
-		} else {
-			map.setType(Generator.getRandom().getInt(0, 4));
 		}
 
 		return map;
@@ -258,19 +256,19 @@ public class Map {
 		}
 	}
 
-	public Cell getRandomCell() {
+	public Cell getRandomCell(Fight fight) {
 		Cell retour = null;
 		while (retour == null || !retour.available()) {
-			retour = getCell(Generator.getRandom().getInt(0, nb_cells));
+			retour = getCell(fight.getRandom().getInt(0, nb_cells));
 		}
 		return retour;
 	}
 
-	public Cell getRandomCell(int part) {
+	public Cell getRandomCell(Fight fight, int part) {
 		Cell retour = null;
 		while (retour == null || !retour.available()) {
-			int y = Generator.getRandom().getInt(0, height - 1);
-			int x = Generator.getRandom().getInt(0, width / 4);
+			int y = fight.getRandom().getInt(0, height - 1);
+			int x = fight.getRandom().getInt(0, width / 4);
 			int cellid = y * (width * 2 - 1);
 			cellid += (part - 1) * width / 4 + x;
 			retour = getCell(cellid);

@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.entity.Entity;
 
 /*
@@ -27,7 +26,7 @@ public class StartOrder {
 		totalEntities++;
 	}
 
-	public List<Entity> compute() {
+	public List<Entity> compute(Fight fight) {
 
 		// Sort entities inside team on their frequency
 		for (List<Entity> team : teams) {
@@ -77,7 +76,7 @@ public class StartOrder {
 
 		for (int t = 0; t < teams.size(); ++t) {
 
-			double v = Generator.getRandom().getDouble();
+			double v = fight.getRandom().getDouble();
 			// Logger.log("Remaining : " +
 			// Arrays.toString(remaining.toArray()));
 			// Logger.log("Probabilities : " +

@@ -7,7 +7,6 @@ import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.area.Area;
 import com.leekwars.generator.attack.area.AreaLaserLine;
 import com.leekwars.generator.attack.effect.Effect;
@@ -164,7 +163,7 @@ public class Attack {
 		}
 
 		// On défini le jet
-		double jet = Generator.getRandom().getDouble();
+		double jet = fight.getRandom().getDouble();
 
 		// Apply effects
 		int previousEffectTotalValue = 0;

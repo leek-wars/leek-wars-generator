@@ -25,7 +25,6 @@ import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
-import leekscript.compiler.RandomGenerator;
 import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.compiler.resolver.ResolverContext;
@@ -39,27 +38,7 @@ public class Generator {
 	private static final String TAG = Generator.class.getSimpleName();
 
 	private static RegisterManager registerManager = null;
-	private static RandomGenerator randomGenerator = new RandomGenerator() {
-		private long n = 0;
 
-		public void seed(long seed) {
-			n = seed;
-		}
-
-		@Override
-		public double getDouble() {
-			n = n * 1103515245 + 12345;
-			long r = (n / 65536) % 32768 + 32768;
-			return (double) r / 65536;
-		}
-
-		@Override
-		public int getInt(int min, int max) {
-			if (max - min + 1 <= 0)
-				return 0;
-			return min + (int) (getDouble() * (max - min + 1));
-		}
-	};
 	public boolean nocache = false;
 	private String jar = "generator.jar";
 
@@ -67,7 +46,6 @@ public class Generator {
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
 		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
-		LeekScript.setRandomGenerator(randomGenerator);
 		loadWeapons();
 		loadChips();
 		loadSummons();
@@ -113,10 +91,6 @@ public class Generator {
 	 */
 	public Outcome runScenario(Scenario scenario, FightListener listener) {
 
-		if (scenario.seed != 0) {
-			randomGenerator.seed(scenario.seed);
-		}
-
 		Outcome outcome = new Outcome();
 
 		Fight fight = new Fight();
@@ -127,6 +101,7 @@ public class Generator {
 		fight.setType(scenario.type);
 		fight.setContext(scenario.context);
 		fight.setCustomMap(scenario.map);
+		fight.seed(scenario.seed);
 
 		// Create logs and compile AIs
 		int t = 0;
@@ -251,10 +226,6 @@ public class Generator {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static RandomGenerator getRandom() {
-		return randomGenerator;
 	}
 
 	public void setNocache(boolean nocache) {
