@@ -39,6 +39,8 @@ public interface Action {
 	public final static int REMOVE_EFFECT = 303;
 	public final static int UPDATE_EFFECT = 304;
 	public final static int ADD_STACKED_EFFECT = 305;
+	public final static int REDUCE_EFFECTS = 306; // Action juste pour afficher "Les effets de X sont réduits de Y%"
+	public final static int REMOVE_POISONS = 307; // Action juste pour afficher "Les poisons de X sont neutralisés"
 
 	// Other
 	public final static int ERROR = 1000;
