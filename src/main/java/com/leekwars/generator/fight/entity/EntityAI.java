@@ -1163,11 +1163,10 @@ public class EntityAI extends AI {
 	}
 
 	public int getNearestEnemy() throws Exception {
-
-		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
-
 		if (mEntity.getCell() == null)
 			return -1;
+		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
+
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
@@ -1183,7 +1182,8 @@ public class EntityAI extends AI {
 	}
 
 	public int getFarthestEnemy() throws Exception {
-
+		if (mEntity.getCell() == null)
+			return -1;
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
 
 		int dist = -1;
@@ -1271,9 +1271,9 @@ public class EntityAI extends AI {
 	}
 
 	public int getNearestAlly() throws Exception {
-		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
 		if (mEntity.getCell() == null)
 			return -1;
+		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
@@ -1289,6 +1289,7 @@ public class EntityAI extends AI {
 	}
 
 	public int getFarthestAlly() throws Exception {
+		if (mEntity.getCell() == null) return -1;
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
 		int dist = -1;
 		Entity farest = null;
@@ -2144,19 +2145,19 @@ public class EntityAI extends AI {
 
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
 
-		Entity entitie = fight.getEntity(leek_id);
-		if (entitie == null || entitie.getCell() == null)
+		Entity entity = fight.getEntity(leek_id);
+		if (entity == null || entity.getCell() == null)
 			return LeekValueManager.NULL;
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
 			if (l.isDead())
 				continue;
-			if (entitie == l)
+			if (entity == l)
 				continue;
 			if (l.getCell() == null)
 				continue;
-			int d = Pathfinding.getDistance2(entitie.getCell(), l.getCell());
+			int d = Pathfinding.getDistance2(entity.getCell(), l.getCell());
 			if (d < dist || dist == -1) {
 				dist = d;
 				nearest = l;
@@ -2542,11 +2543,11 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue getAIId(AbstractLeekValue value) throws LeekRunException {
 		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getAIId());
+			return LeekValueManager.getLeekIntValue(id);
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getAIId());
+				return LeekValueManager.getLeekIntValue(l.getAI().getId());
 		}
 		return LeekValueManager.NULL;
 	}
