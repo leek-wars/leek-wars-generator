@@ -6,9 +6,9 @@ Leek Wars fight generator first version using [leekscript-v1](https://github.com
 gradle jar
 ```
 
-## AI Compilation task
+## AI analysis task
 ```
-java -jar generator.jar --compile test/ai/basic.leek
+java -jar generator.jar --analyze test/ai/basic.leek
 ```
 ![Fight generation task](https://github.com/leek-wars/leek-wars-generator-v1/blob/master/doc/compilation_task.svg)
 
