@@ -53,7 +53,7 @@ public class FarmerLog extends AILog {
 
 	public void addAction(Entity entity, JSONArray action) {
 		action.set(0, entity.getFId());
-		int id = mLogs == null ? 0 : mLogs.getNextId();
+		int id = mLogs == null ? 0 : Math.max(0, mLogs.getNextId() - 1);
 		if (mAction < id) {
 			mCurArray = new JSONArray();
 			mObject.put(String.valueOf(id), mCurArray);
@@ -67,7 +67,9 @@ public class FarmerLog extends AILog {
 		int paramSize = 0;
 		if (parameters != null) {
 			for (String p : parameters) {
-				paramSize += p.length();
+				if (p != null) {
+					paramSize += p.length();
+				}
 			}
 		}
 		if (!addSize(20 + trace.length() + key.length() + paramSize)) {
