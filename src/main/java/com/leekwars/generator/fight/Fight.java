@@ -472,8 +472,11 @@ public class Fight {
 		lt.setTP(current.getTP());
 
 		if (!current.isDead()) {
-			if (current.getAI() != null) {
+
+			if (current.hasValidAI()) {
+				long startTime = System.nanoTime();
 				current.getAI().runTurn();
+				long endTime = System.nanoTime();
 				statistics.addTimes(current, endTime - startTime, current.getAI().getOperations());
 			}
 			current.endTurn();
