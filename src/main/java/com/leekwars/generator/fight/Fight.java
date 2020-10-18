@@ -643,21 +643,21 @@ public class Fight {
 
 	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value) {
 
-		if (order.current() != caster) {
+		EffectParameters params = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);
+		if (order.current() != caster || params == null) {
 			return -1;
 		}
 		if (template.getCost() > caster.getTP()) {
 			return -2;
 		}
-		if (!Pathfinding.canUseAttack(caster.getCell(), target, template.getAttack())) {
-			return -4;
-		}
 		if (hasCooldown(caster, template)) {
 			return -3;
 		}
-		EffectParameters params = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);
-		if (params == null || !target.available()) {
-			return -3;
+		if (!Pathfinding.canUseAttack(caster.getCell(), target, template.getAttack())) {
+			return -4;
+		}
+		if (!target.available()) {
+			return -4;
 		}
 		if (teams.get(caster.getTeam()).getSummonCount() >= SUMMON_LIMIT) {
 			return -5;
