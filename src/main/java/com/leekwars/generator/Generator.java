@@ -14,6 +14,7 @@ import com.leekwars.generator.fight.FightListener;
 import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
@@ -37,6 +38,7 @@ public class Generator {
 
 	private static final String TAG = Generator.class.getSimpleName();
 
+	private static ErrorManager errorManager = null;
 	private static RegisterManager registerManager = null;
 
 	public boolean nocache = false;
@@ -93,7 +95,7 @@ public class Generator {
 
 		Outcome outcome = new Outcome();
 
-		Fight fight = new Fight();
+		Fight fight = new Fight(this);
 		if (listener != null) {
 			listener.setFight(fight);
 		}
@@ -108,20 +110,18 @@ public class Generator {
 		for (List<EntityInfo> team : scenario.entities) {
 			for (EntityInfo entityInfo : team) {
 
-				Entity entity = entityInfo.createEntity(this, scenario);
-
-				int aiOwner = entity.getAIOwner();
+				// Create farmer logs
+				int aiOwner = entityInfo.aiOwner;
 				if (!outcome.logs.containsKey(aiOwner)) {
 					outcome.logs.put(aiOwner, new FarmerLog());
 				}
-				if (entity.getAI() != null) {
-					LeekLog logs = new LeekLog(outcome.logs.get(aiOwner), entity);
-					entity.getAI().setLogs(logs);
-				} else {
-					Log.w(TAG, "AI " + entityInfo.ai + " doesn't exist or is not valid.");
-					outcome.logs.get(aiOwner).addSystemLog(entity, LeekLog.SERROR, "", FarmerLog.NO_AI_EQUIPPED, null);
-				}
+				// Create entity
+				Entity entity = entityInfo.createEntity(this, scenario);
 				fight.addEntity(t, entity);
+
+				// Create AI
+				LeekLog logs = new LeekLog(outcome.logs.get(aiOwner), entity);
+				entity.setAI(EntityAI.build(this, entityInfo.ai, entity.getFarmer(), aiOwner, entity, logs));
 			}
 			t++;
 		}
@@ -264,6 +264,25 @@ public class Generator {
 			System.out.println("LeekCompilerException");
 			e.printStackTrace();
 			return e.getMessage();
+		} catch (Exception e) {
+			System.out.println("Exception");
+			e.printStackTrace();
+			return e.getMessage();
+		}
+	}
+
+	public static void setErrorManager(ErrorManager manager) {
+		errorManager = manager;
+	}
+
+	public void exception(Throwable e, Fight fight) {
+		if (errorManager != null) {
+			errorManager.exception(e, fight.getId());
+		}
+	}
+	public void exception(Throwable e, Fight fight, int aiID) {
+		if (errorManager != null) {
+			errorManager.exception(e, fight.getId(), aiID);
 		}
 	}
 }

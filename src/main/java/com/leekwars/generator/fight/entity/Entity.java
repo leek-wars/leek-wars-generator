@@ -94,7 +94,6 @@ public abstract class Entity {
 	private boolean mHasMoved = false;
 	private boolean isDiabolic = false;
 	private int fight_id;
-	private int mAiOwner;
 
 	public Entity() {
 		this(0, "");
@@ -216,10 +215,6 @@ public abstract class Entity {
 		return mHat;
 	}
 
-	public int getAIId() {
-		return mAIId;
-	}
-
 	public int getTeamId() {
 		return mTeamId;
 	}
@@ -256,6 +251,7 @@ public abstract class Entity {
 	}
 	public void setAI(EntityAI ai) {
 		this.mEntityAI = ai;
+		ai.setFight(fight);
 	}
 	public void addWeapon(Weapon w) {
 		mWeapons.add(w);
@@ -682,7 +678,7 @@ public abstract class Entity {
 		return new ArrayList<Chip>(mChips.values());
 	}
 
-	public boolean hasValidAI(int fight_type) {
+	public boolean hasValidAI() {
 		if (mEntityAI == null)
 			return false;
 		return mEntityAI.isValid();
@@ -808,12 +804,6 @@ public abstract class Entity {
 	}
 	public void setHat(int hat) {
 		mHat = hat;
-	}
-	public void setAIOwner(int aiOwner) {
-		mAiOwner = aiOwner;
-	}
-	public int getAIOwner() {
-		return mAiOwner;
 	}
 
 	public List<Entity> getSummons() {

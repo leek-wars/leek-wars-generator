@@ -1,5 +1,7 @@
 package com.leekwars.generator;
 
+import java.io.FileNotFoundException;
+
 import leekscript.compiler.AIFile;
 import leekscript.compiler.resolver.Resolver;
 import leekscript.compiler.resolver.ResolverContext;
@@ -15,19 +17,19 @@ public class DbResolver implements Resolver<DbContext> {
 	}
 
 	@Override
-	public AIFile<DbContext> resolve(String path, ResolverContext basecontext) {
+	public AIFile<DbContext> resolve(String path, ResolverContext basecontext) throws FileNotFoundException {
 
 		DbContext context = (DbContext) basecontext;
 		if (context == null) {
 			Log.w(TAG, "No context, missing farmer and folder!");
-			return null;
+			throw new FileNotFoundException();
 		}
 
 		String result = resolve_internal(context.getFarmer(), context.getFolder(), path);
-		
+
 		if (result.equals("0")) {
 			Log.w(TAG, "AI " + path + " not found!");
-			return null;
+			throw new FileNotFoundException();
 		} else {
 			Log.i(TAG, "Resolved ai: " + result);
 			String[] parts = result.split(" ", 2);

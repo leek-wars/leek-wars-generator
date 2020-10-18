@@ -13,12 +13,8 @@ import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.fight.turret.Turret;
 import com.leekwars.generator.leek.Leek;
-
-import leekscript.compiler.LeekScript;
-import leekscript.compiler.resolver.ResolverContext;
 
 public class EntityInfo {
 
@@ -131,20 +127,6 @@ public class EntityInfo {
 				entity.addChip(Chips.getChip(chip));
 			}
 
-			if (ai != null) {
-				Log.i(TAG, "Compile AI " + ai + "...");
-				try {
-					ResolverContext context = LeekScript.getResolver().createContext(farmer, aiOwner);
-					EntityAI ai = (EntityAI) LeekScript.compileFileContext(this.ai, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), context, generator.nocache);
-					Log.i(TAG, "AI " + this.ai + " compiled!");
-					entity.setAI(ai);
-					entity.setAIOwner(aiOwner);
-					ai.setEntity(entity);
-				} catch (Exception e1) {
-					Log.w(TAG, "AI " + ai + " not compiled");
-					Log.w(TAG, e1.getMessage());
-				}
-			}
 			return entity;
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {

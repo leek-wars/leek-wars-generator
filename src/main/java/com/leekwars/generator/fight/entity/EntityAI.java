@@ -1,5 +1,6 @@
 package com.leekwars.generator.fight.entity;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -10,6 +11,8 @@ import java.util.Map.Entry;
 import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Censorship;
 import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.Generator;
+import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EffectParameters;
 import com.leekwars.generator.attack.chips.Chip;
@@ -30,6 +33,11 @@ import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
 
+import leekscript.compiler.AIFile;
+import leekscript.compiler.LeekScript;
+import leekscript.compiler.LeekScriptException;
+import leekscript.compiler.exceptions.LeekCompilerException;
+import leekscript.compiler.resolver.ResolverContext;
 import leekscript.runner.AI;
 import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
@@ -46,7 +54,7 @@ import leekscript.runner.values.VariableLeekValue;
 public class EntityAI extends AI {
 
 	public static final int ERROR_LOG_COST = 1000;
-	// private static final String TAG = EntityAI.class.getSimpleName();
+	private static final String TAG = EntityAI.class.getSimpleName();
 
 	protected static class LeekMessage {
 		private final int mAuthor;
@@ -79,45 +87,71 @@ public class EntityAI extends AI {
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
 	protected final List<String> mSays = new ArrayList<String>();
 
-	protected boolean mIsValid = true;
+	protected boolean valid = false;
 
-	public EntityAI() throws Exception {}
+	public EntityAI() {} // Empty constructor for reflection
 
-	public EntityAI(Entity entity, LeekLog logs) throws Exception {
-		this.mEntity = entity;
-		this.mInitialEntity = entity;
+	public EntityAI(Entity entity, LeekLog logs) {
+		setEntity(entity);
 		this.logs = logs;
-//		if (ai == null || ai.getValid() == 0) {
-//			mIsValid = false;
-//			log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
-//			return;
-//		}
-//		mLeekAI = ai;
-//		if (ai.v2) {
-//			return;
-//		}
-//		ai_name = ai.getName();
+	}
+
+	/**
+	 * Build an entity AI from parameters
+	 * Add the correct errors in farmer logs
+	 */
+	public static EntityAI build(Generator generator, String path, int farmer, int aiOwner, Entity entity, LeekLog logs) {
+
+		// No AI equipped : user error
+		if (path == null) {
+			logs.addSystemLog(LeekLog.SERROR, "", LeekLog.NO_AI_EQUIPPED, null);
+			return new EntityAI(entity, logs);
+		}
+
+		// Resolve first
+		ResolverContext context = LeekScript.getResolver().createContext(farmer, aiOwner);
+		AIFile<?> file;
 		try {
-//			mUAI = LeekScript.getUserAI(ai);
-//			if (this == null) {
-//				mIsValid = false;
-//				return;
-//			} else {
-//				this.setLeekIA(this);
-//			}
-		} catch (ClassFormatError e) {
-//			log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, null);
-//		} catch (LeekScriptException e) {
-//			ErrorManager.exception(e);
-//			if (e.getType() == LeekScriptException.CODE_TOO_LARGE) {
-//				log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.CODE_TOO_LARGE, null);
-//			} else if (e.getType() == LeekScriptException.CODE_TOO_LARGE_FUNCTION) {
-//				log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.CODE_TOO_LARGE_FUNCTION, new String[] { e.getFunction() });
-//			} else {
-//				log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, null);
-//			}
+			file = LeekScript.getResolver().resolve(path, context);
+		} catch (FileNotFoundException e) {
+			// Failed to resolve, not normal
+			generator.exception(e, entity.fight);
+			logs.addSystemLog(LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, new String[] { "Failed to resolve AI" });
+			return new EntityAI(entity, logs);
+		}
+
+		Log.i(TAG, "Compile AI " + path + "...");
+		try {
+			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), generator.nocache);
+
+			Log.i(TAG, "AI " + path + " compiled!");
+			ai.valid = true;
+			ai.setEntity(entity);
+			ai.setLogs(logs);
+			return ai;
+
+		} catch (LeekScriptException e) {
+			// Java compilation error : server error
+			generator.exception(e, entity.fight, file.getId());
+			if (e.getType() == LeekScriptException.CODE_TOO_LARGE) {
+				logs.addSystemLog(LeekLog.SERROR, "", LeekLog.CODE_TOO_LARGE, new String[] { e.getMessage() });
+			} else if (e.getType() == LeekScriptException.CODE_TOO_LARGE_FUNCTION) {
+				logs.addSystemLog(LeekLog.SERROR, "", LeekLog.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
+			} else {
+				logs.addSystemLog(LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, new String[] { e.getMessage() });
+			}
+			return new EntityAI(entity, logs);
+
+		} catch (LeekCompilerException e) {
+			// Analyze error : AI is not valid, user error, no need to log it
+			logs.addSystemLog(LeekLog.SERROR, "", LeekLog.INVALID_AI, new String[] { e.getMessage() });
+			return new EntityAI(entity, logs);
+
 		} catch (Exception e) {
-//			log.addSystemLog(leek, LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, null);
+			// Other error : server error
+			generator.exception(e, entity.fight, file.getId());
+			logs.addSystemLog(LeekLog.SERROR, "", LeekLog.CAN_NOT_COMPILE_AI, new String[] { e.getMessage() });
+			return new EntityAI(entity, logs);
 		}
 	}
 
@@ -136,6 +170,7 @@ public class EntityAI extends AI {
 	public void setEntity(Entity entity) {
 		mEntity = entity;
 		mInitialEntity = entity;
+		this.fight = entity.fight;
 		this.randomGenerator = entity.fight.getRandom();
 	}
 
@@ -183,7 +218,7 @@ public class EntityAI extends AI {
 	}
 
 	public boolean isValid() {
-		return mIsValid;
+		return valid;
 	}
 
 	public LeekLog getLogs() {
@@ -223,12 +258,14 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Stack Overflow" }, e.getStackTrace());
 			fight.statistics.addStackOverflow(mEntity);
 			fight.statistics.addErrors(1);
+			// Pas de rethrow
 
 		} catch (ArithmeticException e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
 			fight.statistics.addErrors(1);
+			// Pas de rethrow
 
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
@@ -239,25 +276,38 @@ public class EntityAI extends AI {
 			if (e.getError() == LeekRunException.TOO_MUCH_OPERATIONS) {
 				fight.statistics.tooMuchOperations(mEntity);
 			}
+			// Pas de rethrow
 
 		} catch (OutOfMemoryError e) { // Plus de RAM, Erreur critique, on tente de sauver les meubles
 
 			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
 			// Premierement on coupe l'IA incriminée
-			mIsValid = false;
+			valid = false;
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Out Of Memory" }, e.getStackTrace());
 			System.out.println("Out Of Memory , Fight : " + fight.getId());
-			throw e;
+			fight.generator.exception(e, fight, id);
+			throw e; // On rethrow tel quel
+
+		} catch (RuntimeException e) { // Autre erreur, là c'est pas l'utilisateur
+
+			fight.statistics.addErrors(1);
+			fight.log(new ActionAIError(mEntity));
+			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
+			e.printStackTrace();
+			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
+			fight.generator.exception(e, fight, id);
+			throw e; // On rethrow tel quel
 
 		} catch (Exception e) { // Autre erreur, là c'est pas l'utilisateur
 
 			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
-			System.out.println("Erreur importante dans l'IA " + mEntity.getAIId() + "  " + e.getMessage());
+			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
 			e.printStackTrace();
-			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Undefined Error" }, e.getStackTrace());
-			throw new RuntimeException("Erreur importante dans l'IA " + mEntity.getAIId() + "  " + e.getMessage(), e);
+			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
+			fight.generator.exception(e, fight, id);
+			throw new RuntimeException("Erreur importante dans l'IA " + id + "  " + e.getMessage(), e);
 
 		} finally {
 			if (this != null) {
