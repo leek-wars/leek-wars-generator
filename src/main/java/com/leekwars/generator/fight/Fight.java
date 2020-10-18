@@ -365,6 +365,8 @@ public class Fight {
 			mWinteam = -1;
 		}
 		statistics.endFight(mEntities.values());
+
+		actions.addOpsAndTimes(statistics);
 	}
 
 	public void initFight() throws FightException {
@@ -472,6 +474,7 @@ public class Fight {
 		if (!current.isDead()) {
 			if (current.getAI() != null) {
 				current.getAI().runTurn();
+				statistics.addTimes(current, endTime - startTime, current.getAI().getOperations());
 			}
 			current.endTurn();
 			actions.log(new ActionEndTurn(current));
@@ -484,13 +487,17 @@ public class Fight {
 		if (entity.isDead())
 			return;
 
-		statistics.addKills(1);
 		entity.setDead(true);
 		order.removeEntity(entity);
 		if (entity.getCell() != null) {
 			entity.getCell().setPlayer(null);
 		}
 		entity.setCell(null);
+
+		statistics.addKills(1);
+		if (killer != null) { // Le tueur peut être null dans le cas ou les invocations d'un cible meurent avec elle
+			statistics.entityDied(entity, killer);
+		}
 
 		actions.log(new ActionEntityDie(entity, killer));
 	}

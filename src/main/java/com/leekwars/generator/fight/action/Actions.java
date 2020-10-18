@@ -2,10 +2,13 @@ package com.leekwars.generator.fight.action;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.statistics.FarmerStatistics;
+import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 
@@ -17,6 +20,8 @@ public class Actions {
 	private final JSONArray leeks = new JSONArray();
 	public final JSONObject map = new JSONObject();
 	public JSONObject dead = new JSONObject();
+	public JSONObject ops = new JSONObject();
+	public JSONObject times = new JSONObject();
 
 	private int mNextEffectId = 0;
 
@@ -48,8 +53,17 @@ public class Actions {
 		retour.put("map", map);
 		retour.put("actions", json);
 		retour.put("dead", dead);
+		retour.put("ops", ops);
 
 		return retour;
+	}
+
+	public void addOpsAndTimes(FightStatistics statistics) {
+		for (Entry<Integer, FarmerStatistics> farmer : statistics.farmers.entrySet()) {
+			for (Entry<Integer, Long> entity : farmer.getValue().aiOperations.entrySet()) {
+				ops.put(String.valueOf(entity.getKey()), entity.getValue());
+			}
+		}
 	}
 
 	public void addEntity(Entity entity, boolean critical) {

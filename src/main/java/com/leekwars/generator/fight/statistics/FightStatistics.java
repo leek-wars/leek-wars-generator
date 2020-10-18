@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.chips.Chip;
@@ -15,25 +16,6 @@ import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.maps.Cell;
 
 public class FightStatistics {
-
-	public static int KILLS = 12;
-	public static int BULLETS = 13;
-	public static int USED_CHIPS = 14;
-	public static int SUMMONS = 17;
-	public static int DAMAGE = 30;
-	public static int HEAL = 31;
-	public static int DISTANCE = 32;
-	public static int STACK_OVERFLOWS = 34;
-	public static int ERRORS = 33;
-	public static int RESURRECTS = 47;
-	public static int DAMAGE_POISON = 48;
-	public static int DAMAGE_RETURN = 49;
-	public static int CRITICAL_HITS = 50;
-	public static int TP_USED = 51;
-	public static int MP_USED = 52;
-	public static int OPERATIONS = 53;
-	public static int SAYS = 54;
-	public static int SAYS_LENGTH = 55;
 
 	/*
 	 * Global fight statistics
@@ -72,7 +54,7 @@ public class FightStatistics {
 				this.farmers.put(entity.getFarmer(), new FarmerStatistics());
 			}
 			if (entity.getAI() != null) {
-				this.farmers.get(entity.getFarmer()).aiInstructions.set(entity.getId(), entity.getAI().getInstructions());
+				this.farmers.get(entity.getFarmer()).aiInstructions.set(entity.getFId(), entity.getAI().getInstructions());
 			}
 		}
 	}
@@ -238,7 +220,7 @@ public class FightStatistics {
 		stats.walkedDistance += path.size();
 		// Save walked cells
 		for (Cell c : path) {
-			stats.walkedCells.set(entity.getId(), c.getId());
+			stats.walkedCells.set(entity.getFId(), c.getId());
 		}
 	}
 
@@ -246,7 +228,7 @@ public class FightStatistics {
 		sUsedChips++;
 		FarmerStatistics stats = this.farmers.get(caster.getFarmer());
 		stats.usedChips++;
-		stats.chipsUsed.add(caster.getId(), chip.getId());
+		stats.chipsUsed.add(caster.getFId(), chip.getId());
 		attackUsed(caster, targets, chip.getAttack());
 	}
 
@@ -262,14 +244,8 @@ public class FightStatistics {
 
 		FarmerStatistics stats = this.farmers.get(caster.getFarmer());
 
-		// Le mec s'est suicidé avec son attaque ?
-		if (caster.isDead()) {
-			stats.suicides++;
-		}
-
 		int hurt_enemies = 0;
 		int healed_enemies = 0;
-		int killed_allies = 0;
 		int killed_enemies = 0;
 
 		for (Entity target : targets) {
@@ -283,21 +259,11 @@ public class FightStatistics {
 				if (attack.isHealAttack(Effect.TARGET_ENEMIES) && !attack.isDamageAttack(Effect.TARGET_ENEMIES)) {
 					healed_enemies++;
 				}
-			} else if (target.getId() != caster.getId()) { // Allié
-				if (target.isDead()) {
-					killed_allies++;
-				}
 			}
 		}
-		// Cibles tuées
-		stats.kills += killed_allies + killed_enemies;
 		// Kamikaze ?
 		if (caster.isDead() && killed_enemies > 0) {
 			stats.kamikaze++;
-		}
-		// Tuer un allié
-		if (killed_allies > 0) {
-			stats.killedAllies++;
 		}
 		// Soigner un ennemi
 		if (healed_enemies > 0) {
@@ -310,6 +276,24 @@ public class FightStatistics {
 		// Tuer plusieurs ennemis
 		if (killed_enemies > stats.maxKilledEnemies) {
 			stats.maxKilledEnemies = killed_enemies;
+		}
+	}
+
+	public void entityDied(Entity dead, Entity killer) {
+
+		FarmerStatistics stats = this.farmers.get(killer.getFarmer());
+
+		// Le mec s'est suicidé avec son attaque ?
+		if (dead == killer) {
+			stats.suicides++;
+		}
+
+		// Compteur de kills
+		stats.kills++;
+
+		// Tuer un allié
+		if (dead.getTeam() == killer.getTeam()) {
+			stats.killedAllies++;
 		}
 	}
 
@@ -372,5 +356,43 @@ public class FightStatistics {
 		}
 		json.put("farmers", farmers);
 		return json;
+	}
+
+	public JSONArray toDBJson() {
+		JSONArray array = new JSONArray();
+		JSONObject farmers = new JSONObject();
+		for (Entry<Integer, FarmerStatistics> farmer : this.farmers.entrySet()) {
+			farmers.put(String.valueOf(farmer.getKey()), farmer.getValue().toDBJson());
+		}
+		array.add(farmers);
+		array.add(sKills);
+		array.add(sBullets);
+		array.add(sUsedChips);
+		array.add(sSummons);
+		array.add(sDammages);
+		array.add(sHeal);
+		array.add(sDistance);
+		array.add(sStackOverflow);
+		array.add(sErrors);
+		array.add(sResurrects);
+		array.add(sDamagePoison);
+		array.add(sDamageReturn);
+		array.add(sCriticalHits);
+		array.add(sTPUsed);
+		array.add(sMPUsed);
+		array.add(sOperations);
+		array.add(sSays);
+		array.add(sSaysLength);
+		return array;
+	}
+
+	public void addTimes(Entity entity, long time, long operations) {
+
+		FarmerStatistics farmer = this.farmers.get(entity.getFarmer());
+
+		int owner = entity.isSummon() ? entity.getSummoner().getFId() : entity.getFId();
+
+		farmer.aiOperations.add(owner, operations);
+		farmer.aiTimes.add(owner, time);
 	}
 }
