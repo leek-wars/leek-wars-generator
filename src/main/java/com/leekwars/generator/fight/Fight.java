@@ -17,6 +17,7 @@ import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.fight.action.Action;
+import com.leekwars.generator.fight.action.ActionAIError;
 import com.leekwars.generator.fight.action.ActionEndTurn;
 import com.leekwars.generator.fight.action.ActionEntityDie;
 import com.leekwars.generator.fight.action.ActionEntityTurn;
@@ -479,7 +480,11 @@ public class Fight {
 				long startTime = System.nanoTime();
 				current.getAI().runTurn();
 				long endTime = System.nanoTime();
+
 				statistics.addTimes(current, endTime - startTime, current.getAI().getOperations());
+			} else {
+				// Add 'crash' action if AI is invalid
+				log(new ActionAIError(current));
 			}
 			current.endTurn();
 			actions.log(new ActionEndTurn(current));
