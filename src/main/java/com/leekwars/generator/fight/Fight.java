@@ -128,6 +128,7 @@ public class Fight {
 	private final int fullType;
 	private int mStartFarmer = -1;
 	private int max_turns = MAX_TURNS;
+	private int lastTurn = 0;
 
 	private Map map;
 	private final Actions actions;
@@ -327,6 +328,7 @@ public class Fight {
 		}
 
 		mState = Fight.STATE_RUNNING;
+		lastTurn = 0;
 
 		Log.i(TAG, "Turn 1");
 
@@ -530,8 +532,9 @@ public class Fight {
 
 			if (order.next()) {
 
-				if (order.getTurn() <= Fight.MAX_TURNS) {
+				if (lastTurn != order.getTurn() && order.getTurn() <= Fight.MAX_TURNS) {
 					actions.log(new ActionNewTurn(order.getTurn()));
+					lastTurn = order.getTurn();
 					Log.i(TAG, "Turn " + order.getTurn());
 				}
 
