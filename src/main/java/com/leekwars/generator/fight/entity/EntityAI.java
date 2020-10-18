@@ -648,8 +648,8 @@ public class EntityAI extends AI {
 		if (message.length() > 500)
 			message = message.substring(0, 500);
 		message = Censorship.checkString(message);
-		fight.log(new ActionLoseTP(mEntity, 1));
 		fight.log(new ActionSay(mEntity, message));
+		fight.log(new ActionLoseTP(mEntity, 1));
 		mSays.add(message);
 		fight.statistics.addSays(1);
 		fight.statistics.addSaysLength(message.length());
