@@ -38,6 +38,8 @@ public class EffectLifeDamage extends Effect {
 
 		fight.log(new ActionDamage(DamageType.LIFE, target, value, erosion));
 		target.removeLife(value, erosion, caster, true);
+		target.onDirectDamage(value);
+		target.onNovaDamage(erosion);
 
 		// Return damage
 		if (returnDamage > 0) {
