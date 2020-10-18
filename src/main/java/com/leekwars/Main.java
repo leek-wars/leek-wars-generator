@@ -3,6 +3,7 @@ package com.leekwars;
 import java.io.File;
 
 import com.alibaba.fastjson.JSON;
+import com.leekwars.generator.Data;
 import com.leekwars.generator.DbContext;
 import com.leekwars.generator.DbResolver;
 import com.leekwars.generator.Generator;
@@ -12,6 +13,7 @@ import com.leekwars.generator.scenario.Scenario;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
+import leekscript.compiler.resolver.FileSystemContext;
 
 public class Main {
 
@@ -46,6 +48,8 @@ public class Main {
 			Log.i(TAG, "No scenario/ai file passed!");
 			return;
 		}
+
+		Data.checkData("https://leekwars.com/api/");
 		if (db_resolver) {
 			DbResolver dbResolver = new DbResolver("../resolver.php");
 			LeekScript.setResolver(dbResolver);
@@ -53,7 +57,7 @@ public class Main {
 		Generator generator = new Generator();
 		generator.setNocache(nocache);
 		if (analyze) {
-			AnalyzeResult result = generator.analyzeAI(file, new DbContext(farmer, 0));
+			AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
 			System.out.println(result.informations);
 		} else {
 			Scenario scenario = Scenario.fromFile(new File(file));

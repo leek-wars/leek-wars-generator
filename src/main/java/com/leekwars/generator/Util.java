@@ -142,4 +142,15 @@ public class Util {
 			}
 		}
 	}
+
+	public static void writeFile(String data, String file) {
+		File f = new File(file);
+		try {
+			PrintWriter out = new PrintWriter(f);
+			out.append(data);
+			out.close();
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
 }
