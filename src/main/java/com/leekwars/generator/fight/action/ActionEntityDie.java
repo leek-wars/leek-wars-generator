@@ -19,7 +19,9 @@ public class ActionEntityDie implements Action {
 		JSONArray retour = new JSONArray();
 		retour.add(Action.PLAYER_DEAD);
 		retour.add(id);
-		retour.add(killer);
+		if (killer != -1) {
+			retour.add(killer);
+		}
 		return retour;
 	}
 }
