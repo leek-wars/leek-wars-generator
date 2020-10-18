@@ -99,6 +99,7 @@ public class Generator {
 		if (listener != null) {
 			listener.setFight(fight);
 		}
+		fight.setId(scenario.fightID);
 		fight.setMaxTurns(scenario.maxTurns);
 		fight.setType(scenario.type);
 		fight.setContext(scenario.context);
