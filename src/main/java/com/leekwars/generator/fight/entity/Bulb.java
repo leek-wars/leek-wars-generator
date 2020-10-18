@@ -39,8 +39,8 @@ public class Bulb extends Entity {
 	}
 
 	@Override
-	public void resurrect(Entity entity) {
-		super.resurrect(entity);
+	public void resurrect(Entity entity, double factor) {
+		super.resurrect(entity, factor);
 		mOwner = entity;
 	}
 

@@ -713,13 +713,14 @@ public class Fight {
 			}
 		}
 
-		int result = Attack.USE_SUCCESS;
+		boolean critical = generateCritical(caster);
+		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
 
 		// Resurrect
-		resurrect(caster, target_entity, target);
+		resurrect(caster, target_entity, target, critical);
 		statistics.addResurrects(1);
 
 		if (template.getCooldown() != 0) {
@@ -775,7 +776,7 @@ public class Fight {
 		}
 	}
 
-	public void resurrect(Entity owner, Entity entity, Cell cell) {
+	public void resurrect(Entity owner, Entity entity, Cell cell, boolean critical) {
 
 		Entity next = null;
 		boolean start = false;
@@ -798,7 +799,7 @@ public class Fight {
 		} else {
 			order.addEntity(order.getEntityTurnOrder(next) - 1, entity);
 		}
-		entity.resurrect(owner);
+		entity.resurrect(owner, critical ? Effect.CRITICAL_FACTOR : 1.0);
 
 		// On met la cellule
 		cell.setPlayer(entity);

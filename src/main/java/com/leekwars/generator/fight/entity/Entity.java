@@ -708,9 +708,9 @@ public abstract class Entity {
 		mLevel = level;
 	}
 
-	public void resurrect(Entity entity) {
+	public void resurrect(Entity entity, double factor) {
 		clearEffects();
-		mTotalLife = Math.max(10, mTotalLife / 2);
+		mTotalLife = Math.max(10, (int) Math.round(mTotalLife * 0.5 * factor));
 		life = mTotalLife / 2;
 		dead = false;
 		endTurn();
