@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
@@ -26,6 +27,7 @@ import leekscript.runner.values.StringLeekValue;
 
 public class TestFightFunctions {
 
+	private Generator generator;
 	private Fight mFight;
 	private Leek mLeek1;
 	private Leek mLeek2;
@@ -36,7 +38,8 @@ public class TestFightFunctions {
 	@Before
 	public void setUp() throws Exception {
 
-		mFight = new Fight();
+		generator = new Generator();
+		mFight = new Fight(generator);
 		mLeek1 = new Leek(1, "Test");
 		mLeek2 = new Leek(2, "Bob");
 
@@ -52,7 +55,7 @@ public class TestFightFunctions {
 	@Test
 	public void nullPointerTest() throws Exception {
 
-		Fight fight = new Fight();
+		Fight fight = new Fight(generator);
 		Leek leek1 = new Leek(1, "Test");
 		Leek leek2 = new Leek(2, "Bob");
 		fight.addEntity(0, leek1);
@@ -232,7 +235,7 @@ public class TestFightFunctions {
 
 		Assert.assertTrue(testAI(mLeek1, codes, values));
 	}
-	
+
 
 	@Test
 	public void MapFunctionsTest() throws Exception {

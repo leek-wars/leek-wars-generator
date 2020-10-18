@@ -3,15 +3,28 @@ package test;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import com.leekwars.generator.fight.StartOrder;
+import com.leekwars.generator.Generator;
+import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.Order;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Leek;
 
 public class TestOrder {
+
+	private Generator generator;
+	private Fight fight;
+
+	@Before
+	public void setUp() throws Exception {
+
+		generator = new Generator();
+		fight = new Fight(generator);
+	}
 
 	@Test
 	public void orderTest() {
@@ -87,7 +100,7 @@ public class TestOrder {
 		l6.setTeam(2);
 		l6.getBaseStats().setStat(Entity.CHARAC_FREQUENCY, 130);
 		order.addEntity(l6);
-		List<Entity> leeks = order.compute();
+		List<Entity> leeks = order.compute(fight);
 		Assert.assertEquals(leeks.get(0).getId(), 2);
 		Assert.assertEquals(leeks.get(1).getId(), 4);
 		Assert.assertEquals(leeks.get(2).getId(), 1);
@@ -102,7 +115,7 @@ public class TestOrder {
 		order.addEntity(l4);
 		order.addEntity(l5);
 		order.addEntity(l6);
-		leeks = order.compute();
+		leeks = order.compute(fight);
 		Assert.assertEquals(leeks.get(0).getId(), 2);
 		Assert.assertEquals(leeks.get(1).getId(), 4);
 		Assert.assertEquals(leeks.get(2).getId(), 3);
@@ -116,7 +129,7 @@ public class TestOrder {
 		order.addEntity(l3);
 		order.addEntity(l5);
 		order.addEntity(l6);
-		leeks = order.compute();
+		leeks = order.compute(fight);
 		Assert.assertEquals(leeks.get(0).getId(), 2);
 		Assert.assertEquals(leeks.get(1).getId(), 6);
 		Assert.assertEquals(leeks.get(2).getId(), 1);

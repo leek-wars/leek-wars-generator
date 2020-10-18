@@ -4,7 +4,6 @@ import java.io.File;
 
 import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Data;
-import com.leekwars.generator.DbContext;
 import com.leekwars.generator.DbResolver;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;

@@ -17,12 +17,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Leek;
 
 public class TestLeekFunctions {
-	
+
+	private Generator generator;
 	private Fight mFight;
 	private Leek mLeek1;
 	private Leek mLeek2;
@@ -31,7 +33,8 @@ public class TestLeekFunctions {
 	@Before
 	public void setUp() throws Exception {
 
-		mFight = new Fight();
+		generator = new Generator();
+		mFight = new Fight(generator);
 
 		mLeek1 = new Leek(1, "Test", 0, 10, 500, 6, 7, 150, 151, 10, 56, 9, 0, 0, 0, 0, "Noname", 0, "", "", "", 0);
 		mLeek2 = new Leek(2, "Bob", 0, 10, 510, 4, 6, 152, 154, 11, 46, 8, 0, 0, 0, 0, "Noname", 0, "", "", "", 0);
@@ -272,9 +275,9 @@ public class TestLeekFunctions {
 
 		// Test getAIName
 		codes.add("getAIID()");
-		values.add(mLeek1.getAIId());
+		values.add(mLeek1.getAI().getId());
 		codes.add("getAIID(" + mLeek2.getFId() + ")");
-		values.add(mLeek2.getAIId());
+		values.add(mLeek2.getAI().getId());
 		codes.add("getAIID(-1)");
 		values.add(null);
 

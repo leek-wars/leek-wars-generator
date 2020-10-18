@@ -14,7 +14,7 @@ import leekscript.runner.LeekFunctions;
 import leekscript.runner.values.AbstractLeekValue;
 
 public class GeneratorCompilation {
-	
+
 	static {
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");

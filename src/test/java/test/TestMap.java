@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.leekwars.generator.Generator;
+import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.Team;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Leek;
@@ -17,6 +19,16 @@ import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 
 public class TestMap {
+
+	private Generator generator;
+	private Fight fight;
+
+	@Before
+	public void setUp() throws Exception {
+
+		generator = new Generator();
+		fight = new Fight(generator);
+	}
 
 	@Test
 	public void getDistanceTest() throws Exception {
@@ -65,7 +77,7 @@ public class TestMap {
 			}
 		}
 		// On teste différents chemins
-		map = Map.generateMap(0, 18, 18, 50, new ArrayList<Team>(), null);
+		map = Map.generateMap(fight, 0, 18, 18, 50, new ArrayList<Team>(), null);
 		Map.ConnexeMap cm = new Map.ConnexeMap(map);
 
 		for (int i = 1; i < map.getNbCell(); i += 10) {
@@ -95,7 +107,6 @@ public class TestMap {
 	}
 
 	@Test
-	@Ignore
 	public void generationTest() throws Exception {
 		Leek l1 = new Leek(1, "Bob");
 		Leek l2 = new Leek(2, "Martin");
@@ -104,7 +115,7 @@ public class TestMap {
 		t1.add(l1);
 		t2.add(l2);
 
-		Map map = Map.generateMap(0, 18, 18, 50, new ArrayList<Team>(), null);
+		Map map = Map.generateMap(fight, 0, 18, 18, 50, new ArrayList<Team>(), null);
 		// On vérifie le nombre de cases
 		Assert.assertEquals(map.getNbCell(), 613);
 		// On vérifie que la carte a bien des obstacles
@@ -125,7 +136,7 @@ public class TestMap {
 	public void astar2Test() throws Exception {
 
 		// On génère une map sans obstacles
-		Map map = Map.generateMap(0, 18, 18, 100, new ArrayList<Team>(), null);
+		Map map = Map.generateMap(fight, 0, 18, 18, 100, new ArrayList<Team>(), null);
 
 		long start = System.nanoTime();
 
