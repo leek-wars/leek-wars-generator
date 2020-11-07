@@ -692,6 +692,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) leekIA).getBirthTurn(parameters[0]);
 		}
 	},
+	getBulbChips(1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getBulbChips(parameters[0]);
+		}
+	},
 	getDistance(2) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {

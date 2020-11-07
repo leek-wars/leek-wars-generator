@@ -126,4 +126,8 @@ public class BulbTemplate {
 
 		return inv;
 	}
+
+	public ArrayList<Chip> getChips() {
+		return mChips;
+	}
 }

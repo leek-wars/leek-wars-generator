@@ -27,6 +27,8 @@ import com.leekwars.generator.fight.action.ActionLoseTP;
 import com.leekwars.generator.fight.action.ActionSay;
 import com.leekwars.generator.fight.action.ActionSetWeapon;
 import com.leekwars.generator.fight.action.ActionShowCell;
+import com.leekwars.generator.fight.bulbs.BulbTemplate;
+import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
@@ -450,6 +452,25 @@ public class EntityAI extends AI {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null && l.getAI() != null)
 				return LeekValueManager.getLeekIntValue(l.getAI().mBirthTurn);
+		}
+		return LeekValueManager.NULL;
+	}
+
+	public AbstractLeekValue getBulbChips(AbstractLeekValue value) throws Exception {
+		int id = value.getInt(this);
+		if (id > 0) {
+			Chip chip = Chips.getChip(id);
+			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
+				BulbTemplate template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
+				if (template != null) {
+					List<Chip> chips = template.getChips();
+					ArrayLeekValue retour = new ArrayLeekValue();
+					for (short i = 0; i < chips.size(); i++) {
+						retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
+					}
+					return retour;
+				}
+			}
 		}
 		return LeekValueManager.NULL;
 	}
