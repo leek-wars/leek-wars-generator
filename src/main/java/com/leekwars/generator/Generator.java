@@ -170,7 +170,7 @@ public class Generator {
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeapon(new Weapon(Integer.parseInt(id), (byte) 1, weapon.getInteger("cost"),
+				Weapons.addWeapon(new Weapon(weapon.getInteger("item"), (byte) 1, weapon.getInteger("cost"),
 						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
 						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects")));
