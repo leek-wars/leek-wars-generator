@@ -20,5 +20,6 @@ public class EffectNovaDamage extends Effect {
 
 		fight.log(new ActionDamage(DamageType.NOVA, target, value, 0));
 		target.removeLife(0, value, caster, true);
+		target.onNovaDamage(value);
 	}
 }
