@@ -2526,12 +2526,13 @@ public class EntityAI extends AI {
 	}
 
 	public AbstractLeekValue getAIName(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return new StringLeekValue(mEntity.getAIName());
+		if (value.getType() == AbstractLeekValue.NULL) {
+			return LeekValueManager.getStringOrNullValue(mEntity.getAIName());
+		}
 		if (value.getType() == AbstractLeekValue.NUMBER) {
 			Entity l = fight.getEntity(value.getInt(this));
 			if (l != null)
-				return new StringLeekValue(l.getAIName());
+				return LeekValueManager.getStringOrNullValue(l.getAIName());
 		}
 		return LeekValueManager.NULL;
 	}
