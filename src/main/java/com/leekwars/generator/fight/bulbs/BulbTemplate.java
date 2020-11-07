@@ -8,7 +8,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.chips.Chips;
-import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.Bulb;
 
@@ -106,7 +105,7 @@ public class BulbTemplate {
 
 	public Bulb createInvocation(Entity owner, FunctionLeekValue ai, int id, int level, boolean critical) {
 		double c = Math.min(300d, owner.getLevel()) / (300d);
-		double multiplier = critical ? Effect.CRITICAL_FACTOR : 1.0;
+		double multiplier = critical ? 1.2 : 1.0;
 
 		Bulb inv = new Bulb(owner, ai, id, mName, level,
 				base(mMinLife, mMaxLife, c, multiplier),
