@@ -659,6 +659,42 @@ public class Fight {
 		return path.size();
 	}
 
+
+	public void teleportEntity(Entity entity, Cell cell) {
+
+		Cell start = entity.getCell();
+		entity.setCell(null);
+
+		start.setPlayer(null);
+		cell.setPlayer(entity);
+
+		statistics.entityMove(entity, cell);
+		entity.setHasMoved(true);
+
+		if (start.getComposante() != cell.getComposante()) {
+			statistics.stashed(entity);
+		}
+	}
+
+	public void invertEntities(Entity caster, Entity target) {
+
+		Cell start = caster.getCell();
+		Cell end = target.getCell();
+		if (start == null || end == null) {
+			return;
+		}
+
+		statistics.entityMove(caster, end);
+		statistics.entityMove(target, start);
+		caster.setHasMoved(true);
+
+		target.setCell(start);
+		start.setCellPlayer(target);
+
+		end.setCellPlayer(caster);
+		caster.setCell(end);
+	}
+
 	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value) {
 
 		EffectParameters params = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);

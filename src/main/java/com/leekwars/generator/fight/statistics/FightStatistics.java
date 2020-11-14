@@ -1,5 +1,6 @@
 package com.leekwars.generator.fight.statistics;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -212,6 +213,11 @@ public class FightStatistics {
 		if (entity.getLife() > stats.maxEntityMP) {
 			stats.maxEntityMP = entity.getMP();
 		}
+	}
+	public void entityMove(Entity entity, Cell cell) {
+		List<Cell> list = new ArrayList<Cell>();
+		list.add(cell);
+		entityMove(entity, list);
 	}
 
 	public void entityMove(Entity entity, List<Cell> path) {

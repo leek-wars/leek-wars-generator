@@ -172,18 +172,9 @@ public class Attack {
 
 			if (parameters.getId() == Effect.TYPE_TELEPORT) {
 
-				caster.setHasMoved(true);
-				Cell start = caster.getCell();
-				caster.setCell(null);
-
-				start.setPlayer(null);
-				target.setPlayer(caster);
-
+				fight.teleportEntity(caster, target);
 				returnEntities.add(caster);
 
-				if (start.getComposante() != target.getComposante()) {
-					fight.statistics.stashed(caster);
-				}
 			} else {
 
 				boolean onCaster = (parameters.getModifiers() & Effect.MODIFIER_ON_CASTER) != 0;
