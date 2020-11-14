@@ -117,7 +117,7 @@ public class Generator {
 					outcome.logs.put(aiOwner, new FarmerLog());
 				}
 				// Create entity
-				Entity entity = entityInfo.createEntity(this, scenario);
+				Entity entity = entityInfo.createEntity(this, scenario, fight);
 				fight.addEntity(t, entity);
 
 				// Create AI

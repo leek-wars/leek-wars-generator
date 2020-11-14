@@ -11,6 +11,7 @@ import com.leekwars.generator.Log;
 import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
+import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.turret.Turret;
@@ -84,7 +85,7 @@ public class EntityInfo {
 		cell = e.getIntValue("cell");
 	}
 
-	public Entity createEntity(Generator generator, Scenario scenario) {
+	public Entity createEntity(Generator generator, Scenario scenario, Fight fight) {
 		try {
 			Entity entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
 			entity.setId(id);
@@ -130,7 +131,7 @@ public class EntityInfo {
 			return entity;
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
+			generator.exception(e, fight);
 			return null;
 		}
 	}
