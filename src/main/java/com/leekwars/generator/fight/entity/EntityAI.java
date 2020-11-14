@@ -979,7 +979,7 @@ public class EntityAI extends AI {
 	public AbstractLeekValue getChipTargets(int chip_id, int cell_id) throws Exception {
 
 		Cell target = fight.getMap().getCell(cell_id);
-		Chip template = mEntity.getChip(chip_id);
+		Chip template = Chips.getChip(chip_id);
 		if (target != null && template != null) {
 			ArrayLeekValue retour = new ArrayLeekValue();
 			List<Entity> entities = template.getAttack().getWeaponTargets(fight, mEntity, fight.getMap().getCell(cell_id));
