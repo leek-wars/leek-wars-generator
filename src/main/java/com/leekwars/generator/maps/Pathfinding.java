@@ -485,7 +485,8 @@ public class Pathfinding {
 					u = u.parent;
 				}
 				Collections.reverse(result);
-				if (result.get(result.size() - 1).getPlayer() != null) {
+				Cell last = result.get(result.size() - 1);
+				if (last.getPlayer() != null && !cells_to_ignore.contains(last)) {
 					result.remove(result.size() - 1);
 				}
 				return result;
