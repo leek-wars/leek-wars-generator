@@ -12,6 +12,7 @@ public enum FightConstants implements ILeekConstant {
 
 	CELL_EMPTY(0, LeekFunctions.INT),
 	CELL_PLAYER(1, LeekFunctions.INT),
+	CELL_ENTITY(1, LeekFunctions.INT),
 	CELL_OBSTACLE(2, LeekFunctions.INT),
 
 	// Type entity

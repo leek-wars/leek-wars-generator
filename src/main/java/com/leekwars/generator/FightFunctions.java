@@ -193,6 +193,12 @@ public enum FightFunctions implements ILeekFunction {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getEntity());
 		}
 	},
+	getEntity(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getEntity());
+		}
+	},
 	getChips(0, 1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
@@ -274,6 +280,12 @@ public enum FightFunctions implements ILeekFunction {
 		}
 	},
 	getLeekID(0, 1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getLeekID(parameters[0]);
+		}
+	},
+	getEntityID(0, 1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return ((EntityAI) leekIA).getLeekID(parameters[0]);
@@ -747,7 +759,16 @@ public enum FightFunctions implements ILeekFunction {
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getLeekOnCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
-
+		@Override
+		public int[] parameters() {
+			return new int[] { NUMBER };
+		}
+	},
+	getEntityOnCell(1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getLeekOnCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
+		}
 		@Override
 		public int[] parameters() {
 			return new int[] { NUMBER };
@@ -803,6 +824,16 @@ public enum FightFunctions implements ILeekFunction {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isLeekCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
+		@Override
+		public int[] parameters() {
+			return new int[] { NUMBER };
+		}
+	},
+	isEntity(1) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isLeekCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
+		}
 		@Override
 		public int[] parameters() {
 			return new int[] { NUMBER };
@@ -985,7 +1016,16 @@ public enum FightFunctions implements ILeekFunction {
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
-
+		@Override
+		public int[] parameters() {
+			return new int[] { ARRAY, -1 };
+		}
+	},
+	moveTowardEntities(1, 2) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
+		}
 		@Override
 		public int[] parameters() {
 			return new int[] { ARRAY, -1 };
@@ -1030,7 +1070,16 @@ public enum FightFunctions implements ILeekFunction {
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
-
+		@Override
+		public int[] parameters() {
+			return new int[] { ARRAY, -1 };
+		}
+	},
+	moveAwayFromEntities(1, 2) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
+		}
 		@Override
 		public int[] parameters() {
 			return new int[] { ARRAY, -1 };
