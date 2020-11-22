@@ -92,7 +92,6 @@ public abstract class Entity {
 	private Registers mRegister = null;
 
 	private boolean mHasMoved = false;
-	private boolean isDiabolic = false;
 	private int fight_id;
 
 	public Entity() {
@@ -236,12 +235,6 @@ public abstract class Entity {
 			return "?";
 		}
 		return mFarmerCountry;
-	}
-	public boolean isDiabolic() {
-		return isDiabolic;
-	}
-	public void setDiabolic(boolean diabolic) {
-		isDiabolic = diabolic;
 	}
 	public boolean hasMoved() {
 		return mHasMoved;
