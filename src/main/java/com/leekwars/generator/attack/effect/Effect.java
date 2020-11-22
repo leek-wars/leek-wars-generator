@@ -57,6 +57,9 @@ public abstract class Effect {
 	public final static int TYPE_RAW_BUFF_MAGIC = 39;
 	public final static int TYPE_RAW_BUFF_SCIENCE = 40;
 	public final static int TYPE_RAW_BUFF_AGILITY = 41;
+	public final static int TYPE_RAW_BUFF_RESISTANCE = 42;
+	public final static int TYPE_PROPAGATION = 43;
+	public final static int TYPE_RAW_BUFF_WISDOM = 44;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -75,10 +78,52 @@ public abstract class Effect {
 	public static final double CRITICAL_FACTOR = 1.4;
 
 	// Array of effect classes
-	private final static Class<?>[] effects = { EffectDamage.class, EffectHeal.class, EffectBuffStrength.class, EffectBuffAgility.class, EffectRelativeShield.class, EffectAbsoluteShield.class,
-			EffectBuffMP.class, EffectBuffTP.class, EffectDebuff.class, EffectTeleport.class, EffectPermutation.class, EffectVitality.class, EffectPoison.class, EffectSummon.class,
-			EffectResurrect.class, EffectKill.class, EffectShackleMP.class, EffectShackleTP.class, EffectShackleStrength.class, EffectDamageReturn.class, EffectBuffResistance.class,
-			EffectBuffWisdom.class, EffectAntidote.class, EffectShackleMagic.class, EffectAftereffect.class, EffectVulnerability.class, EffectAbsoluteVulnerability.class, EffectLifeDamage.class, EffectStealAbsoluteShield.class, EffectNovaDamage.class, EffectRawBuffMP.class, EffectRawBuffTP.class, null, null, null, null, EffectRawAbsoluteShield.class, EffectRawBuffStrength.class, EffectRawBuffMagic.class, EffectRawBuffScience.class, EffectRawBuffAgility.class };
+	private final static Class<?>[] effects = {
+		EffectDamage.class, // 1
+		EffectHeal.class, // 2
+		EffectBuffStrength.class, // 3
+		EffectBuffAgility.class, // 4
+		EffectRelativeShield.class, // 5
+		EffectAbsoluteShield.class, // 6
+		EffectBuffMP.class, // 7
+		EffectBuffTP.class, // 8
+		EffectDebuff.class, // 9
+		EffectTeleport.class, // 10
+		EffectPermutation.class, // 11
+		EffectVitality.class, // 12
+		EffectPoison.class, // 13
+		EffectSummon.class, // 14
+		EffectResurrect.class, // 15
+		EffectKill.class, // 16
+		EffectShackleMP.class, // 17
+		EffectShackleTP.class, // 18
+		EffectShackleStrength.class, // 19
+		EffectDamageReturn.class, // 20
+		EffectBuffResistance.class, // 21
+		EffectBuffWisdom.class, // 22
+		EffectAntidote.class, // 23
+		EffectShackleMagic.class, // 24
+		EffectAftereffect.class, // 25
+		EffectVulnerability.class, // 26
+		EffectAbsoluteVulnerability.class, // 27
+		EffectLifeDamage.class, // 28
+		EffectStealAbsoluteShield.class, // 29
+		EffectNovaDamage.class, // 30
+		EffectRawBuffMP.class, // 31
+		EffectRawBuffTP.class, // 32
+		null, // 33
+		null, // 34
+		null, // 35
+		null, // 36
+		EffectRawAbsoluteShield.class, // 37
+		EffectRawBuffStrength.class, // 38
+		EffectRawBuffMagic.class, // 39
+		EffectRawBuffScience.class, // 40
+		EffectRawBuffAgility.class, // 41
+		EffectRawBuffResistance.class, // 42
+		null, // 43
+		EffectRawBuffWisdom.class // 44
+	};
 
 	// Effect characteristics
 	protected int id;

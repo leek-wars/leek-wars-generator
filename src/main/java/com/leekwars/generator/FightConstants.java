@@ -86,6 +86,9 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_RAW_BUFF_MAGIC(Effect.TYPE_RAW_BUFF_MAGIC, LeekFunctions.INT),
 	EFFECT_RAW_BUFF_SCIENCE(Effect.TYPE_RAW_BUFF_SCIENCE, LeekFunctions.INT),
 	EFFECT_RAW_BUFF_AGILITY(Effect.TYPE_RAW_BUFF_AGILITY, LeekFunctions.INT),
+	EFFECT_RAW_BUFF_RESISTANCE(Effect.TYPE_RAW_BUFF_RESISTANCE, LeekFunctions.INT),
+	EFFECT_PROPAGATION(Effect.TYPE_PROPAGATION, LeekFunctions.INT),
+	EFFECT_RAW_BUFF_WISDOM(Effect.TYPE_RAW_BUFF_WISDOM, LeekFunctions.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, LeekFunctions.INT),
