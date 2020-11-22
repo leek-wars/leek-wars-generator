@@ -405,51 +405,51 @@ public abstract class Entity {
 	public void onDirectDamage(int damage) {
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
-				activateOnDamagePassiveEffect(effect, Attack.TYPE_WEAPON, weapon.getId(), damage);
+				activateOnDamagePassiveEffect(effect, weapon.getAttack(), damage);
 			}
 		}
 	}
 	public void onNovaDamage(int damage) {
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
-				activateOnNovaDamagePassiveEffect(effect, Attack.TYPE_WEAPON, weapon.getId(), damage);
+				activateOnNovaDamagePassiveEffect(effect, weapon.getAttack(), damage);
 			}
 		}
 	}
 	public void onPoisonDamage(int damage) {
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
-				activateOnPoisonDamagePassiveEffect(effect, Attack.TYPE_WEAPON, weapon.getId(), damage);
+				activateOnPoisonDamagePassiveEffect(effect, weapon.getAttack(), damage);
 			}
 		}
 	}
 
-	public void activateOnDamagePassiveEffect(EffectParameters effect, int attackType, int attackID, int inputValue) {
+	public void activateOnDamagePassiveEffect(EffectParameters effect, Attack attack, int inputValue) {
 		if (effect.getId() == Effect.TYPE_DAMAGE_TO_ABSOLUTE_SHIELD) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_ABSOLUTE_SHIELD, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_ABSOLUTE_SHIELD, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
 		}
 		else if (effect.getId() == Effect.TYPE_DAMAGE_TO_STRENGTH) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_STRENGTH, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_STRENGTH, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
 		}
 	}
 
-	public void activateOnNovaDamagePassiveEffect(EffectParameters effect, int attackType, int attackID, int inputValue) {
+	public void activateOnNovaDamagePassiveEffect(EffectParameters effect, Attack attack, int inputValue) {
 		if (effect.getId() == Effect.TYPE_NOVA_DAMAGE_TO_MAGIC) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MAGIC, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MAGIC, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
 		}
 	}
 
-	public void activateOnPoisonDamagePassiveEffect(EffectParameters effect, int attackType, int attackID, int inputValue) {
+	public void activateOnPoisonDamagePassiveEffect(EffectParameters effect, Attack attack, int inputValue) {
 		if (effect.getId() == Effect.TYPE_POISON_TO_SCIENCE) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_SCIENCE, effect.getTurns(), 1, value, 0, false, this, this, attackType, attackID, 0, stackable, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_SCIENCE, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
 		}
 	}
 
@@ -519,6 +519,29 @@ public abstract class Entity {
 
 		usedMP = 0;
 		usedTP = 0;
+
+		// Propagation des effets
+		for (Effect effect : effects) {
+			if (effect.propagate > 0) {
+				Attack attack = effect.getAttack();
+				EffectParameters propagation = attack.getEffects().get(0); // First effect is the propagation information
+				EffectParameters original = attack.getEffects().get(1); // Second effect is the actual effect
+				double jet = fight.getRandom().getDouble();
+				for (Entity target : getEntitiesAround(effect.propagate)) {
+					if ((propagation.getModifiers() & Effect.MODIFIER_NOT_REPLACEABLE) != 0 && target.hasEffect(attack.getId())) {
+						continue; // La cible a déjà l'effet et il n'est pas remplacable
+					}
+					Effect.createEffect(fight, effect.getID(), original.getTurns(), 1, original.getValue1(), original.getValue2(), effect.isCritical(), target, effect.getCaster(), attack, jet, (propagation.getModifiers() & Effect.MODIFIER_STACKABLE) != 0, 0, 0, effect.propagate);
+				}
+			}
+		}
+	}
+
+	public boolean hasEffect(int attackID) {
+		for (Effect target_effect : effects) {
+			if (target_effect.getAttack().getId() == attackID) return true;
+		}
+		return false;
 	}
 
 	// When entity dies
@@ -806,5 +829,20 @@ public abstract class Entity {
 			}
 		}
 		return summons;
+	}
+
+	public List<Entity> getEntitiesAround(int distance) {
+		List<Entity> entities = new ArrayList<Entity>();
+		for (Entity entity : fight.getEntities().values()) {
+			if (entity != this && entity.getDistance(this) <= distance) {
+				entities.add(entity);
+			}
+		}
+		return entities;
+	}
+
+	public int getDistance(Entity entity) {
+		if (dead || entity.dead) return 999;
+		return Pathfinding.getCaseDistance(getCell(), entity.getCell());
 	}
 }

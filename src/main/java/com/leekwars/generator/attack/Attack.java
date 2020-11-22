@@ -167,6 +167,7 @@ public class Attack {
 
 		// Apply effects
 		int previousEffectTotalValue = 0;
+		int propagate = 0;
 
 		for (EffectParameters parameters : effects) {
 
@@ -174,6 +175,10 @@ public class Attack {
 
 				fight.teleportEntity(caster, target);
 				returnEntities.add(caster);
+
+			} else if (parameters.getId() == Effect.TYPE_PROPAGATION) {
+
+				propagate = (int) parameters.getValue1();
 
 			} else {
 
@@ -208,14 +213,14 @@ public class Attack {
 
 						double power = areaFactors.get(targetEntity.getFId());
 
-						effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
+						effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate);
 					}
 				}
 
 				// Always caster
 				if (onCaster) {
 					returnEntities.add(caster);
-					Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, attackType, attackID, jet, stackable, previousEffectTotalValue, targetCount);
+					Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate);
 				}
 
 				previousEffectTotalValue = effectTotalValue;
@@ -303,4 +308,10 @@ public class Attack {
 		return (dammageAttack & target) != 0;
 	}
 
+	public int getId() {
+		return attackID;
+	}
+	public int getType() {
+		return attackType;
+	}
 }

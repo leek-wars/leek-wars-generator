@@ -8,10 +8,12 @@ import leekscript.runner.LeekValueManager;
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
 
+import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionAddEffect;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Stats;
+import com.leekwars.leek.Leek;
 
 public abstract class Effect {
 
@@ -135,8 +137,7 @@ public abstract class Effect {
 	protected double criticalPower = 1.0;
 	protected Entity caster;
 	protected Entity target;
-	protected int attackType;
-	protected int attackID;
+	protected Attack attack;
 	protected double jet;
 	protected Stats stats = new Stats();
 	protected int logID = 0;
@@ -144,9 +145,9 @@ public abstract class Effect {
 	public int value = 0;
 	public int previousEffectTotalValue;
 	public int targetCount;
+	public int propagate = 0; // Distance de propagation
 
-	public static int createEffect(Fight fight, int id, int turns, double power, double value1, double value2, boolean critical, Entity target, Entity caster, int attack_type, int attack_id,
-			double jet, boolean stackable, int previousEffectTotalValue, int targetCount) {
+	public static int createEffect(Fight fight, int id, int turns, double power, double value1, double value2, boolean critical, Entity target, Entity caster, Attack attack, double jet, boolean stackable, int previousEffectTotalValue, int targetCount, int propagate) {
 
 		// Invalid effect id
 		if (id < 0 || id > effects.length) {
@@ -169,13 +170,13 @@ public abstract class Effect {
 		effect.criticalPower = critical ? CRITICAL_FACTOR : 1.0;
 		effect.caster = caster;
 		effect.target = target;
-		effect.attackType = attack_type;
-		effect.attackID = attack_id;
+		effect.attack = attack;
 		effect.jet = jet;
 		effect.erosionRate = id == TYPE_POISON ? 0.10 : 0.05;
 		if (critical) effect.erosionRate += 0.10;
 		effect.previousEffectTotalValue = previousEffectTotalValue;
 		effect.targetCount = targetCount;
+		effect.propagate = propagate;
 
 		// Remove previous effect of the same type (that is not stackable)
 		if (effect.getTurns() != 0) {
@@ -183,7 +184,7 @@ public abstract class Effect {
 				List<Effect> effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
 					Effect e = effects.get(i);
-					if (e.id == id && e.attackID == attack_id) {
+					if (e.id == id && e.attack.getId() == attack.getId()) {
 						target.removeEffect(e);
 						break;
 					}
@@ -196,7 +197,7 @@ public abstract class Effect {
 		// Stack to previous item with the same characteristics
 		if (effect.value > 0) {
 			for (Effect e : target.getEffects()) {
-				if (e.attackID == attack_id && e.id == id && e.turns == turns && e.caster == caster) {
+				if (e.attack.getId() == attack.getId() && e.id == id && e.turns == turns && e.caster == caster) {
 					e.mergeWith(effect);
 					effect.addLog(fight, true);
 					return effect.value; // No need to apply the effect again
@@ -217,7 +218,7 @@ public abstract class Effect {
 		if (turns == 0) {
 			return;
 		}
-		logID = ActionAddEffect.createEffect(fight.getActions(), attackType, attackID, caster, target, id, value, turns, stacked);
+		logID = ActionAddEffect.createEffect(fight.getActions(), attack.getType(), attack.getId(), caster, target, id, value, turns, stacked);
 	}
 
 	public Stats getStats() {
@@ -251,6 +252,9 @@ public abstract class Effect {
 	public void setPower(double power) {
 		this.power = power;
 	}
+	public int getValue() {
+		return value;
+	}
 
 	public double getValue1() {
 		return value1;
@@ -268,6 +272,10 @@ public abstract class Effect {
 		return target;
 	}
 
+	public Attack getAttack() {
+		return attack;
+	}
+
 	public AbstractLeekValue getLeekValue(AI ai) throws Exception {
 
 		ArrayLeekValue retour = new ArrayLeekValue();
@@ -276,7 +284,7 @@ public abstract class Effect {
 		retour.get(ai, 2).set(ai, LeekValueManager.getLeekIntValue(caster.getFId()));
 		retour.get(ai, 3).set(ai, LeekValueManager.getLeekIntValue(turns));
 		retour.get(ai, 4).set(ai, LeekValueManager.getLeekBooleanValue(critical));
-		retour.get(ai, 5).set(ai, LeekValueManager.getLeekIntValue(attackID));
+		retour.get(ai, 5).set(ai, LeekValueManager.getLeekIntValue(attack.getId()));
 		retour.get(ai, 6).set(ai, LeekValueManager.getLeekIntValue(target.getFId()));
 		return retour;
 	}
