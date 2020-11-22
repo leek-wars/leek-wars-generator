@@ -86,54 +86,56 @@ public class EntityInfo {
 	}
 
 	public Entity createEntity(Generator generator, Scenario scenario, Fight fight) {
+
+		Entity entity;
 		try {
-			Entity entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
-			entity.setId(id);
-			entity.setName(name);
-			entity.setLevel(level);
-			entity.setLife(life);
-			entity.setStrength(strength);
-			entity.setAgility(agility);
-			entity.setWisdom(wisdom);
-			entity.setResistance(resistance);
-			entity.setScience(science);
-			entity.setMagic(magic);
-			entity.setFrequency(frequency);
-			entity.setTP(tp);
-			entity.setMP(mp);
-			entity.setStatic(static_);
-			entity.setFarmer(farmer);
-			if (farmer >= 0) {
-				entity.setFarmerName(scenario.getFarmer(farmer).name);
-				entity.setFarmerCountry(scenario.getFarmer(farmer).country);
-			}
-			entity.setAIName(ai);
-			entity.setTeamID(team);
-			if (team > 0) {
-				entity.setTeamName(scenario.teams.get(team).name);
-			}
-			entity.setSkin(skin);
-			entity.setHat(hat);
-
-			for (Object w : weapons) {
-				Weapon weapon = Weapons.getWeapon((Integer) w);
-				if (weapon == null) {
-					Log.e(TAG, "No such weapon: " + w);
-					return null;
-				}
-				entity.addWeapon(weapon);
-			}
-			for (Object c : chips) {
-				Integer chip = (Integer) c;
-				entity.addChip(Chips.getChip(chip));
-			}
-
-			return entity;
+			entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
 			generator.exception(e, fight);
 			return null;
 		}
+		entity.setId(id);
+		entity.setName(name);
+		entity.setLevel(level);
+		entity.setLife(life);
+		entity.setStrength(strength);
+		entity.setAgility(agility);
+		entity.setWisdom(wisdom);
+		entity.setResistance(resistance);
+		entity.setScience(science);
+		entity.setMagic(magic);
+		entity.setFrequency(frequency);
+		entity.setTP(tp);
+		entity.setMP(mp);
+		entity.setStatic(static_);
+		entity.setFarmer(farmer);
+		if (farmer >= 0) {
+			entity.setFarmerName(scenario.getFarmer(farmer).name);
+			entity.setFarmerCountry(scenario.getFarmer(farmer).country);
+		}
+		entity.setAIName(ai);
+		entity.setTeamID(team);
+		if (team > 0) {
+			entity.setTeamName(scenario.teams.get(team).name);
+		}
+		entity.setSkin(skin);
+		entity.setHat(hat);
+
+		for (Object w : weapons) {
+			Weapon weapon = Weapons.getWeapon((Integer) w);
+			if (weapon == null) {
+				Log.e(TAG, "No such weapon: " + w);
+				return null;
+			}
+			entity.addWeapon(weapon);
+		}
+		for (Object c : chips) {
+			Integer chip = (Integer) c;
+			entity.addChip(Chips.getChip(chip));
+		}
+
+		return entity;
 	}
 
 	public JSONObject toJson() {
