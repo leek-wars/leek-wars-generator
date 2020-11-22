@@ -312,4 +312,36 @@ public abstract class Effect {
 	public void apply(Fight fight) {}
 
 	public void applyStartTurn(Fight fight) {}
+
+	public static int getEffectCharacteristic(int type) {
+		switch (type) {
+			case TYPE_DAMAGE:
+				return Leek.CHARAC_STRENGTH;
+			case TYPE_POISON:
+			case TYPE_SHACKLE_MAGIC:
+			case TYPE_SHACKLE_STRENGTH:
+			case TYPE_SHACKLE_MP:
+			case TYPE_SHACKLE_TP:
+				return Leek.CHARAC_MAGIC;
+			case TYPE_LIFE_DAMAGE:
+				return Leek.CHARAC_LIFE;
+			case TYPE_NOVA_DAMAGE:
+			case TYPE_BUFF_AGILITY:
+			case TYPE_BUFF_STRENGTH:
+			case TYPE_BUFF_MP:
+			case TYPE_BUFF_TP:
+			case TYPE_BUFF_RESISTANCE:
+			case TYPE_BUFF_WISDOM:
+				return Leek.CHARAC_SCIENCE;
+			case TYPE_DAMAGE_RETURN:
+				return Leek.CHARAC_AGILITY;
+			case TYPE_HEAL:
+			case TYPE_VITALITY:
+				return Leek.CHARAC_WISDOM;
+			case TYPE_RELATIVE_SHIELD:
+			case TYPE_ABSOLUTE_SHIELD:
+				return Leek.CHARAC_RESISTANCE;
+		}
+		return -1;
+	}
 }
