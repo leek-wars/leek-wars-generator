@@ -69,6 +69,7 @@ public abstract class Effect {
 	public final static int MODIFIER_STACKABLE = 1; // The effect is stackable
 	public final static int MODIFIER_MULTIPLIED_BY_TARGETS = 2; // The effect is multiplied by the number of targets in the area
 	public final static int MODIFIER_ON_CASTER = 4; // The effect is applied on the caster
+	public final static int MODIFIER_NOT_REPLACEABLE = 8; // The effect will not replace the previous one
 
 	// Power in case of critical hit
 	public static final double CRITICAL_FACTOR = 1.4;

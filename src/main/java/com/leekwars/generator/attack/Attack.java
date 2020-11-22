@@ -181,6 +181,7 @@ public class Attack {
 				boolean stackable = (parameters.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
 				int effectTotalValue = 0;
 				boolean multiplied_by_target_count = (parameters.getModifiers() & Effect.MODIFIER_MULTIPLIED_BY_TARGETS) != 0;
+				boolean not_replaceable = (parameters.getModifiers() & Effect.MODIFIER_NOT_REPLACEABLE) != 0;
 				List<Entity> effectTargetEntities = new ArrayList<Entity>();
 
 				for (Entity targetEntity : targetEntities) {
@@ -189,6 +190,10 @@ public class Attack {
 						continue;
 					}
 					if (onCaster && targetEntity == caster) {
+						continue;
+					}
+					// L'effet est déjà sur la cible et pas remplaçable
+					if (not_replaceable && targetEntity.hasEffect(attackID)) {
 						continue;
 					}
 					if (!returnEntities.contains(targetEntity)) {
