@@ -39,7 +39,6 @@ public class Generator {
 	private static final String TAG = Generator.class.getSimpleName();
 
 	private static ErrorManager errorManager = null;
-	private static RegisterManager registerManager = null;
 
 	public boolean nocache = false;
 	private String jar = "generator.jar";
@@ -91,7 +90,7 @@ public class Generator {
 	 * @param scenario the scenario to run.
 	 * @return the fight outcome generated.
 	 */
-	public Outcome runScenario(Scenario scenario, FightListener listener) {
+	public Outcome runScenario(Scenario scenario, FightListener listener, RegisterManager registerManager) {
 
 		Outcome outcome = new Outcome();
 
@@ -99,6 +98,7 @@ public class Generator {
 		if (listener != null) {
 			listener.setFight(fight);
 		}
+		fight.setRegisterManager(registerManager);
 		fight.setId(scenario.fightID);
 		fight.setMaxTurns(scenario.maxTurns);
 		fight.setType(scenario.type);
@@ -140,10 +140,8 @@ public class Generator {
 
 			// Save registers
 			for (Entity entity : fight.getEntities().values()) {
-				if (!entity.isSummon() && entity.getRegisters() != null
-						&& (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
-					getRegisterManager().saveRegisters(entity.getId(), entity.getRegisters().toJSONString(),
-							entity.getRegisters().isNew());
+				if (!entity.isSummon() && entity.getRegisters() != null	&& (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
+					registerManager.saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
 				}
 			}
 			Log.i(TAG, "SHA-1: " + Util.sha1(outcome.toString()));
@@ -239,14 +237,6 @@ public class Generator {
 
 	public void setJar(String jar) {
 		this.jar = jar;
-	}
-
-	public static void setRegisterManager(RegisterManager registerManager) {
-		Generator.registerManager = registerManager;
-	}
-
-	public static RegisterManager getRegisterManager() {
-		return registerManager;
 	}
 
 	/**

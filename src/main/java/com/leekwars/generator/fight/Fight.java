@@ -35,6 +35,7 @@ import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.statistics.FightStatistics;
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
@@ -142,6 +143,8 @@ public class Fight {
 	JSONObject custom_map = null;
 
 	public FightStatistics statistics;
+
+	private RegisterManager registerManager;
 
 	public Fight(Generator generator) {
 
@@ -1058,5 +1061,13 @@ public class Fight {
 	}
 	public RandomGenerator getRandom() {
 		return randomGenerator;
+	}
+
+	public void setRegisterManager(RegisterManager registerManager) {
+		this.registerManager = registerManager;
+	}
+
+	public RegisterManager getRegisterManager() {
+		return this.registerManager;
 	}
 }

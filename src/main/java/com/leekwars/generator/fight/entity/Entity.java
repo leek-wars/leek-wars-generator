@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EffectParameters;
 import com.leekwars.generator.attack.chips.Chip;
@@ -178,7 +177,7 @@ public abstract class Entity {
 		return mRegister;
 	}
 	private void loadRegisters() {
-		String v = Generator.getRegisterManager().getRegisters(getId());
+		String v = fight.getRegisterManager().getRegisters(getId());
 		if (v == null) {
 			mRegister = new Registers(true);
 		} else {
