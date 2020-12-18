@@ -1,6 +1,8 @@
 package com.leekwars.generator.fight.entity;
 
 import java.io.FileNotFoundException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -1275,6 +1277,46 @@ public class EntityAI extends AI {
 		return fight.getTurn();
 	}
 
+	public AbstractLeekValue getTime() {
+		DateFormat df = new SimpleDateFormat("HH:mm:ss");
+		return new StringLeekValue(df.format(fight.getDate()).toString());
+	}
+
+	public AbstractLeekValue getTimestamp() {
+		return LeekValueManager.getLeekIntValue((int) (fight.getDate().getTime() / 1000));
+	}
+
+	public AbstractLeekValue getDate() {
+		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+		return new StringLeekValue(df.format(fight.getDate()).toString());
+	}
+
+	public ArrayLeekValue getAllChips() throws Exception {
+		ArrayLeekValue retour = new ArrayLeekValue();
+		int i = 0;
+		for (Chip chip : Chips.getTemplates().values()) {
+			retour.get(this, i++).set(this, LeekValueManager.getLeekIntValue(chip.getId()));
+		}
+		return retour;
+	}
+
+	public ArrayLeekValue getAllWeapons() throws Exception {
+		ArrayLeekValue retour = new ArrayLeekValue();
+		int i = 0;
+		for (Weapon weapon : Weapons.getTemplates().values()) {
+			retour.get(this, i++).set(this, LeekValueManager.getLeekIntValue(weapon.getId()));
+		}
+		return retour;
+	}
+
+	public ArrayLeekValue getAllEffects() throws Exception {
+		ArrayLeekValue retour = new ArrayLeekValue();
+		for (int i = 0; i < Effect.effects.length; ++i) {
+			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(i + 1));
+		}
+		return retour;
+	}
+
 	public ArrayLeekValue getAliveEnemies() throws Exception {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		short nb = 0;
@@ -1339,6 +1381,24 @@ public class EntityAI extends AI {
 
 	public int getNumEnemies() throws Exception {
 		return fight.getEnemiesEntities(mEntity.getTeam(), true).size();
+	}
+
+	public AbstractLeekValue getAlliedTurret() {
+		if (fight.getType() == Fight.TYPE_TEAM) {
+			for (Entity e : fight.getTeamEntities(mEntity.getTeam(), true)) {
+				if (e.getType() == Entity.TYPE_TURRET) return LeekValueManager.getLeekIntValue(e.getFId());
+			}
+		}
+		return LeekValueManager.NULL;
+	}
+
+	public AbstractLeekValue getEnemyTurret() {
+		if (fight.getType() == Fight.TYPE_TEAM) {
+			for (Entity e : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
+				if (e.getType() == Entity.TYPE_TURRET) return LeekValueManager.getLeekIntValue(e.getFId());
+			}
+		}
+		return LeekValueManager.NULL;
 	}
 
 	public int getNearestAlly() throws Exception {
@@ -2404,6 +2464,11 @@ public class EntityAI extends AI {
 
 		logs.addCell(cel, col, d);
 
+		return LeekValueManager.getLeekBooleanValue(true);
+	}
+
+	public AbstractLeekValue clearMarks() throws LeekRunException {
+		logs.addClearCells();
 		return LeekValueManager.getLeekBooleanValue(true);
 	}
 

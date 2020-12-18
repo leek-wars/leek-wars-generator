@@ -235,6 +235,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) leekIA).getRelativeShield(parameters[0]);
 		}
 	},
+	getDate(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getDate();
+		}
+	},
 	getDamageReturn(0, 1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
@@ -295,6 +301,18 @@ public enum FightFunctions implements ILeekFunction {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return ((EntityAI) leekIA).getTeamName(parameters[0]);
+		}
+	},
+	getTime(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getTime();
+		}
+	},
+	getTimestamp(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getTimestamp();
 		}
 	},
 	getFarmerName(0, 1) {
@@ -891,6 +909,36 @@ public enum FightFunctions implements ILeekFunction {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNumAliveEnemies());
 		}
 	},
+	getAlliedTurret(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getAlliedTurret();
+		}
+	},
+	getAllChips(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getAllChips();
+		}
+	},
+	getAllWeapons(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getAllWeapons();
+		}
+	},
+	getAllEffects(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getAllEffects();
+		}
+	},
+	getEnemyTurret(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).getEnemyTurret();
+		}
+	},
 	getDeadEnemies(0) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
@@ -1120,6 +1168,12 @@ public enum FightFunctions implements ILeekFunction {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFarthestAlly());
 		}
 	},
+	getFightID(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFight().getId());
+		}
+	},
 	getFightType(0) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
@@ -1309,6 +1363,12 @@ public enum FightFunctions implements ILeekFunction {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
 			return ((EntityAI) leekIA).markText(parameters[0], parameters[1], parameters[2], parameters[3]);
+		}
+	},
+	clearMarks(0) {
+		@Override
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+			return ((EntityAI) leekIA).clearMarks();
 		}
 	},
 	show(1, 2) {

@@ -1,6 +1,7 @@
 package com.leekwars.generator.fight;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -131,6 +132,7 @@ public class Fight {
 	private int mStartFarmer = -1;
 	private int max_turns = MAX_TURNS;
 	private int lastTurn = 0;
+	private Date date;
 
 	private Map map;
 	private final Actions actions;
@@ -164,6 +166,8 @@ public class Fight {
 		type = TYPE_SOLO;
 		context = CONTEXT_GARDEN;
 		fullType = TYPE_SOLO_GARDEN;
+
+		date = new Date();
 	}
 
 	public int getFightType() {
@@ -1069,5 +1073,9 @@ public class Fight {
 
 	public RegisterManager getRegisterManager() {
 		return this.registerManager;
+	}
+
+	public Date getDate() {
+		return date;
 	}
 }

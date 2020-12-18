@@ -23,6 +23,7 @@ public class FarmerLog extends AILog {
 	public final static int MARK = 4;
 	public final static int PAUSE = 5;
 	public final static int MARK_TEXT = 9;
+	public final static int CLEAR_CELLS = 10;
 
 	// Clés
 	public static final String NO_WEAPON_EQUIPED = "no_weapon_equipped";
@@ -96,6 +97,17 @@ public class FarmerLog extends AILog {
 		obj.add(cells);
 		obj.add(Util.getHexaColor(color));
 		obj.add(duration);
+		addAction(leek, obj);
+	}
+
+	public void addClearCells(Entity leek) {
+
+		if (!addSize(8)) {
+			return;
+		}
+		JSONArray obj = new JSONArray();
+		obj.add(leek.getFId());
+		obj.add(CLEAR_CELLS);
 		addAction(leek, obj);
 	}
 

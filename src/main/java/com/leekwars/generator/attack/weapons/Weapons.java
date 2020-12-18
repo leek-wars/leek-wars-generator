@@ -17,4 +17,8 @@ public class Weapons {
 	public static Weapon getWeapon(int id) {
 		return weapons.get(id);
 	}
+
+	public static Map<Integer, Weapon> getTemplates() {
+		return weapons;
+	}
 }
