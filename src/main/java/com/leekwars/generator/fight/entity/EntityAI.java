@@ -2474,7 +2474,7 @@ public class EntityAI extends AI {
 
 	public AbstractLeekValue markText(AbstractLeekValue cell, AbstractLeekValue text, AbstractLeekValue color, AbstractLeekValue duration) throws LeekRunException {
 		int d = 1;
-		int col = 1;
+		int col = 0xffffff;
 		int[] cel = null;
 		if (cell.getType() == AbstractLeekValue.NUMBER) {
 			int id = cell.getInt(this);
