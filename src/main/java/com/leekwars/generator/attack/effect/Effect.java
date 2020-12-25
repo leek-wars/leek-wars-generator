@@ -80,7 +80,7 @@ public abstract class Effect {
 	public static final double CRITICAL_FACTOR = 1.3;
 
 	// Array of effect classes
-	private final static Class<?>[] effects = {
+	public final static Class<?>[] effects = {
 		EffectDamage.class, // 1
 		EffectHeal.class, // 2
 		EffectBuffStrength.class, // 3
