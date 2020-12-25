@@ -77,7 +77,7 @@ public abstract class Effect {
 	public final static int MODIFIER_NOT_REPLACEABLE = 8; // The effect will not replace the previous one
 
 	// Power in case of critical hit
-	public static final double CRITICAL_FACTOR = 1.4;
+	public static final double CRITICAL_FACTOR = 1.3;
 
 	// Array of effect classes
 	private final static Class<?>[] effects = {
