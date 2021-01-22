@@ -419,7 +419,7 @@ public class Fight {
 		}
 		mLeekDatas = list.toJSONString();
 
-		int obstacle_count = getRandom().getInt(40, 60);
+		int obstacle_count = getRandom().getInt(30, 80);
 
 		this.map = Map.generateMap(this, context, 18, 18, obstacle_count, teams, custom_map);
 
