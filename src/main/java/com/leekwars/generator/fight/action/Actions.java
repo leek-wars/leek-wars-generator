@@ -109,10 +109,7 @@ public class Actions {
 		for (int i = 0; i < (map.getWidth() * 2 - 1) * map.getHeight(); i++) {
 			Cell c = map.getCell(i);
 			if (c != null && !c.isWalkable() && c.getObstacleSize() > 0) {
-				JSONArray infos = new JSONArray();
-				infos.add(c.getObstacle());
-				infos.add(c.getObstacleSize());
-				obstacles.put(String.valueOf(c.getId()), infos);
+				obstacles.put(String.valueOf(c.getId()), c.getObstacleSize());
 			}
 		}
 		this.map.put("obstacles", obstacles);
