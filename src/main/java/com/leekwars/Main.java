@@ -24,7 +24,7 @@ public class Main {
 		boolean db_resolver = false;
 		boolean verbose = false;
 		boolean analyze = false;
-		int farmer = 0;
+		// int farmer = 0;
 
 		for (String arg : args) {
 			if (arg.startsWith("--")) {
@@ -35,7 +35,7 @@ public class Main {
 					case "analyze": analyze = true; break;
 				}
 				if (arg.startsWith("--farmer=")) {
-					farmer = Integer.parseInt(arg.substring("--farmer=".length()));
+					// farmer = Integer.parseInt(arg.substring("--farmer=".length()));
 				}
 			} else {
 				file = arg;

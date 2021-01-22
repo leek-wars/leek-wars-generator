@@ -31,6 +31,7 @@ public interface Action {
 	public final static int LIFE_DAMAGE = 109;
 	public final static int POISON_DAMAGE = 110;
 	public final static int AFTEREFFECT = 111;
+	public static final int NOVA_VITALITY = 112;
 
 	// "fun" actions
 	public final static int SAY = 200;
@@ -45,6 +46,7 @@ public interface Action {
 	public final static int ADD_STACKED_EFFECT = 305;
 	public final static int REDUCE_EFFECTS = 306; // Action juste pour afficher "Les effets de X sont réduits de Y%"
 	public final static int REMOVE_POISONS = 307; // Action juste pour afficher "Les poisons de X sont neutralisés"
+	public final static int REMOVE_SHACKLES = 308; // Action juste pour afficher "Les entraves de X sont retirées"
 
 	// Other
 	public final static int ERROR = 1000;

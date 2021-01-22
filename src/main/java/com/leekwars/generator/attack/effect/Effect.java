@@ -62,6 +62,12 @@ public abstract class Effect {
 	public final static int TYPE_RAW_BUFF_RESISTANCE = 42;
 	public final static int TYPE_PROPAGATION = 43;
 	public final static int TYPE_RAW_BUFF_WISDOM = 44;
+	public final static int TYPE_NOVA_VITALITY = 45;
+	public final static int TYPE_ATTRACT = 46;
+	public final static int TYPE_PUSH = 47;
+	public final static int TYPE_SHACKLE_AGILITY = 48;
+	public final static int TYPE_SHACKLE_WISDOM = 49;
+	public final static int TYPE_REMOVE_SHACKLES = 50;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -124,7 +130,13 @@ public abstract class Effect {
 		EffectRawBuffAgility.class, // 41
 		EffectRawBuffResistance.class, // 42
 		null, // 43
-		EffectRawBuffWisdom.class // 44
+		EffectRawBuffWisdom.class, // 44
+		EffectNovaVitality.class, // 45
+		EffectAttract.class, // 46
+		EffectPush.class, // 47
+		EffectShackleAgility.class, // 48
+		EffectShackleWisdom.class, // 49
+		EffectRemoveShackles.class, // 50
 	};
 
 	// Effect characteristics

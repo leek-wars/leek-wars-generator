@@ -73,4 +73,18 @@ public class MaskAreaCell {
 		}
 		return retour;
 	}
+
+	public static int[][] generateSquareMask(int radius) {
+
+		int nbCells = (1 + 2 * radius) * (1 + 2 * radius);
+		int[][] retour = new int[nbCells][2];
+
+		int index = 0;
+		for (int x = -radius; x <= radius; x++) {
+			for (int y = -radius; y <= radius; y++) {
+				retour[index++] = new int[] { x, y };
+			}
+		}
+		return retour;
+	}
 }

@@ -171,6 +171,20 @@ public class Attack {
 
 		for (EffectParameters parameters : effects) {
 
+			if (parameters.getId() == Effect.TYPE_ATTRACT) {
+				Entity attractedEntity = Pathfinding.attractEntity(caster.getCell(), target, maxRange);
+				if (attractedEntity != null) {
+					targetEntities.add(attractedEntity);
+					areaFactors.put(attractedEntity.getFId(), 1.0);
+				}
+			} else if (parameters.getId() == Effect.TYPE_PUSH) {
+				Entity pushedEntity = Pathfinding.pushEntity(caster.getCell(), target, minRange, maxRange);
+				if (pushedEntity != null) {
+					targetEntities.add(pushedEntity);
+					areaFactors.put(pushedEntity.getFId(), 1.0);
+				}
+			}
+
 			if (parameters.getId() == Effect.TYPE_TELEPORT) {
 
 				fight.teleportEntity(caster, target);

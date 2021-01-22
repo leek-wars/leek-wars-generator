@@ -11,6 +11,12 @@ import com.leekwars.generator.attack.EffectParameters;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.effect.EffectPoison;
+import com.leekwars.generator.attack.effect.EffectShackleAgility;
+import com.leekwars.generator.attack.effect.EffectShackleMP;
+import com.leekwars.generator.attack.effect.EffectShackleMagic;
+import com.leekwars.generator.attack.effect.EffectShackleStrength;
+import com.leekwars.generator.attack.effect.EffectShackleTP;
+import com.leekwars.generator.attack.effect.EffectShackleWisdom;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionRemoveEffect;
@@ -634,12 +640,20 @@ public abstract class Entity {
 	}
 
 	public void clearPoisons() {
-
 		for (int i = 0; i < effects.size(); ++i) {
-
 			Effect effect = effects.get(i);
-
 			if (effect instanceof EffectPoison) {
+				effect.getCaster().removeLaunchedEffect(effect);
+				removeEffect(effect);
+				i--;
+			}
+		}
+	}
+
+	public void removeShackles() {
+		for (int i = 0; i < effects.size(); ++i) {
+			Effect effect = effects.get(i);
+			if (effect instanceof EffectShackleTP || effect instanceof EffectShackleMP || effect instanceof EffectShackleAgility || effect instanceof EffectShackleMagic || effect instanceof EffectShackleStrength || effect instanceof EffectShackleWisdom) {
 				effect.getCaster().removeLaunchedEffect(effect);
 				removeEffect(effect);
 				i--;

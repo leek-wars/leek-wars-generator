@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 
 public class Pathfinding {
@@ -718,4 +719,11 @@ public class Pathfinding {
 		}
 	}
 
+	public static Entity attractEntity(Cell cell, Cell target, int maxRange) {
+		return null;
+	}
+
+	public static Entity pushEntity(Cell cell, Cell target, int minRange, int maxRange) {
+		return null;
+	}
 }
