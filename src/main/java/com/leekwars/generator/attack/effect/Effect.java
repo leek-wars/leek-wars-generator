@@ -64,10 +64,11 @@ public abstract class Effect {
 	public final static int TYPE_RAW_BUFF_WISDOM = 44;
 	public final static int TYPE_NOVA_VITALITY = 45;
 	public final static int TYPE_ATTRACT = 46;
-	public final static int TYPE_PUSH = 47;
-	public final static int TYPE_SHACKLE_AGILITY = 48;
-	public final static int TYPE_SHACKLE_WISDOM = 49;
-	public final static int TYPE_REMOVE_SHACKLES = 50;
+	public final static int TYPE_SHACKLE_AGILITY = 47;
+	public final static int TYPE_SHACKLE_WISDOM = 48;
+	public final static int TYPE_REMOVE_SHACKLES = 49;
+	public final static int TYPE_MOVED_TO_MP = 50;
+	public final static int TYPE_PUSH = 51;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies

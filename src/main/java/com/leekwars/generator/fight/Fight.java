@@ -667,7 +667,7 @@ public class Fight {
 	}
 
 
-	public void teleportEntity(Entity entity, Cell cell) {
+	public void teleportEntity(Entity entity, Cell cell, Entity caster) {
 
 		Cell start = entity.getCell();
 		entity.setCell(null);
@@ -677,6 +677,10 @@ public class Fight {
 
 		statistics.entityMove(entity, cell);
 		entity.setHasMoved(true);
+
+		if (start != cell) {
+			entity.onMoved(caster);
+		}
 
 		if (start.getComposante() != cell.getComposante()) {
 			statistics.stashed(entity);
@@ -700,6 +704,9 @@ public class Fight {
 
 		end.setCellPlayer(caster);
 		caster.setCell(end);
+
+		target.onMoved(caster);
+		caster.onMoved(caster);
 	}
 
 	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value) {

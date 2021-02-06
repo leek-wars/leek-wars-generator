@@ -430,6 +430,23 @@ public abstract class Entity {
 		}
 	}
 
+	public void onMoved(Entity by) {
+		if (by == this) return; // Déplacement subi uniquement
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnMovedPassiveEffect(effect, weapon.getAttack());
+			}
+		}
+	}
+
+	public void activateOnMovedPassiveEffect(EffectParameters effect, Attack attack) {
+		if (effect.getId() == Effect.TYPE_MOVED_TO_MP) {
+			double value = effect.getValue1();
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MP, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 1, 0);
+		}
+	}
+
 	public void activateOnDamagePassiveEffect(EffectParameters effect, Attack attack, int inputValue) {
 		if (effect.getId() == Effect.TYPE_DAMAGE_TO_ABSOLUTE_SHIELD) {
 			double value = inputValue * (effect.getValue1() / 100);

@@ -9,7 +9,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.leekwars.generator.attack.Attack;
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.attack.area.Area;
 import com.leekwars.generator.fight.entity.EntityAI;
 
 public class Pathfinding {
@@ -173,6 +173,14 @@ public class Pathfinding {
 
 		List<Cell> ignoredCells = new ArrayList<Cell>();
 		ignoredCells.add(leek_cell);
+
+		// Ignore first entity in area for Area first in line
+		if (attack.getArea() == Area.TYPE_FIRST_IN_LINE) {
+			Cell cell = Pathfinding.getFirstEntity(start, end, attack.getMinRange(), attack.getMaxRange());
+			if (cell != null) {
+				ignoredCells.add(cell);
+			}
+		}
 		return verifyLoS(start, end, attack, ignoredCells);
 	}
 
@@ -719,11 +727,38 @@ public class Pathfinding {
 		}
 	}
 
-	public static Entity attractEntity(Cell cell, Cell target, int maxRange) {
+	public static Cell getFirstEntity(Cell from, Cell target, int minRange, int maxRange) {
+		int dx = (int) Math.signum(target.x - from.x);
+		int dy = (int) Math.signum(target.y - from.y);
+		Cell current = from.next(dx, dy);
+		int range = 1;
+		while (current != null && current.isWalkable() && range <= maxRange) {
+			if (range >= minRange && current.getPlayer() != null) {
+				return current;
+			}
+			current = current.next(dx, dy);
+			range++;
+		}
 		return null;
 	}
 
-	public static Entity pushEntity(Cell cell, Cell target, int minRange, int maxRange) {
-		return null;
+	public static Cell getPushLastAvailableCell(Cell entity, Cell target, Cell caster) {
+		// Delta caster --> entity
+		int cdx = (int) Math.signum(entity.x - caster.x);
+		int cdy = (int) Math.signum(entity.y - caster.y);
+		// Delta entity --> target
+		int dx = (int) Math.signum(target.x - entity.x);
+		int dy = (int) Math.signum(target.y - entity.y);
+		// Check deltas (must be pushed in the correct direction)
+		if (cdx != dx || cdy != dy) return entity; // no change
+		Cell current = entity;
+		while (current != target) {
+			Cell next = current.next(dx, dy);
+			if (!next.available()) {
+				return current;
+			}
+			current = next;
+		}
+		return current;
 	}
 }

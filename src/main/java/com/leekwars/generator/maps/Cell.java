@@ -143,6 +143,10 @@ public class Cell {
 		return composante;
 	}
 
+	public Cell next(int dx, int dy) {
+		return map.getCell(this.x + dx, this.y + dy);
+	}
+
 	@Override
 	public String toString() {
 		return "<Cell " + id + ">";

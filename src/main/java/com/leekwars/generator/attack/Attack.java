@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.area.Area;
+import com.leekwars.generator.attack.area.AreaFirstInLine;
 import com.leekwars.generator.attack.area.AreaLaserLine;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.Fight;
@@ -172,22 +173,21 @@ public class Attack {
 		for (EffectParameters parameters : effects) {
 
 			if (parameters.getId() == Effect.TYPE_ATTRACT) {
-				Entity attractedEntity = Pathfinding.attractEntity(caster.getCell(), target, maxRange);
-				if (attractedEntity != null) {
-					targetEntities.add(attractedEntity);
-					areaFactors.put(attractedEntity.getFId(), 1.0);
+				for (Entity entity : targetEntities) {
+					// Attract directly to target cell
+					fight.teleportEntity(entity, target, caster);
 				}
 			} else if (parameters.getId() == Effect.TYPE_PUSH) {
-				Entity pushedEntity = Pathfinding.pushEntity(caster.getCell(), target, minRange, maxRange);
-				if (pushedEntity != null) {
-					targetEntities.add(pushedEntity);
-					areaFactors.put(pushedEntity.getFId(), 1.0);
+				for (Entity entity : targetEntities) {
+					// Find last available position to push
+					Cell destination = Pathfinding.getPushLastAvailableCell(entity.getCell(), target, caster.getCell());
+					fight.teleportEntity(entity, destination, caster);
 				}
 			}
 
 			if (parameters.getId() == Effect.TYPE_TELEPORT) {
 
-				fight.teleportEntity(caster, target);
+				fight.teleportEntity(caster, target, caster);
 				returnEntities.add(caster);
 
 			} else if (parameters.getId() == Effect.TYPE_PROPAGATION) {
