@@ -90,6 +90,14 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_RAW_BUFF_RESISTANCE(Effect.TYPE_RAW_BUFF_RESISTANCE, LeekFunctions.INT),
 	EFFECT_PROPAGATION(Effect.TYPE_PROPAGATION, LeekFunctions.INT),
 	EFFECT_RAW_BUFF_WISDOM(Effect.TYPE_RAW_BUFF_WISDOM, LeekFunctions.INT),
+	EFFECT_NOVA_VITALITY(Effect.TYPE_NOVA_VITALITY, LeekFunctions.INT),
+	EFFECT_SLIDE_TO(Effect.TYPE_ATTRACT, LeekFunctions.INT), // Deprecated
+	EFFECT_ATTRACT(Effect.TYPE_ATTRACT, LeekFunctions.INT),
+	EFFECT_SHACKLE_AGILITY(Effect.TYPE_SHACKLE_AGILITY, LeekFunctions.INT),
+	EFFECT_SHACKLE_WISDOM(Effect.TYPE_SHACKLE_WISDOM, LeekFunctions.INT),
+	EFFECT_REMOVE_SHACKLES(Effect.TYPE_REMOVE_SHACKLES, LeekFunctions.INT),
+	EFFECT_MOVED_TO_MP(Effect.TYPE_MOVED_TO_MP, LeekFunctions.INT),
+	EFFECT_PUSH(Effect.TYPE_PUSH, LeekFunctions.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, LeekFunctions.INT),
@@ -127,6 +135,7 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_REVOKED_M_LASER(119, LeekFunctions.INT),
 	WEAPON_RIFLE(151, LeekFunctions.INT),
 	WEAPON_RHINO(153, LeekFunctions.INT),
+	WEAPON_EXPLORER_RIFLE(175, LeekFunctions.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, LeekFunctions.INT),
@@ -156,6 +165,9 @@ public enum FightConstants implements ILeekConstant {
 	AREA_X_1(8, LeekFunctions.INT),
 	AREA_X_2(9, LeekFunctions.INT),
 	AREA_X_3(10, LeekFunctions.INT),
+	AREA_SQUARE_1(11, LeekFunctions.INT),
+	AREA_SQUARE_2(12, LeekFunctions.INT),
+	AREA_FIRST_INLINE(13, LeekFunctions.INT),
 
 	// Chips
 	CHIP_BANDAGE(3, LeekFunctions.INT),
