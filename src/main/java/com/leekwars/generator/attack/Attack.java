@@ -276,7 +276,7 @@ public class Attack {
 	// Compute the area effect attenuation : 100% at center, 50% on the border
 	public double getPowerForCell(Cell target_cell, Cell current_cell) {
 
-		if (area instanceof AreaLaserLine) {
+		if (area instanceof AreaLaserLine || area instanceof AreaFirstInLine) {
 			return 1.0;
 		}
 

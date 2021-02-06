@@ -21,6 +21,7 @@ public abstract class Area {
 	public final static int TYPE_X_3 = 10;
 	public final static int TYPE_SQUARE_1 = 11;
 	public final static int TYPE_SQUARE_2 = 12;
+	public final static int TYPE_FIRST_IN_LINE = 13;
 
 	protected int mId;
 	protected Attack mAttack;
@@ -64,6 +65,8 @@ public abstract class Area {
 			return new AreaSquare1(attack);
 		else if (type == Area.TYPE_SQUARE_2)
 			return new AreaSquare2(attack);
+		else if (type == Area.TYPE_FIRST_IN_LINE)
+			return new AreaFirstInLine(attack);
 		return null;
 	}
 }
