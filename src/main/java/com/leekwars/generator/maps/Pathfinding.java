@@ -36,7 +36,6 @@ public class Pathfinding {
 			if (attack.getMinRange() > dist || attack.getMaxRange() < dist)
 				return false;
 			return verifyLoS(caster, target, attack, caster);
-
 		}
 		return false;
 	}
@@ -308,7 +307,7 @@ public class Pathfinding {
 		return new Cell[] { getCellByDir(c, SOUTH), getCellByDir(c, WEST), getCellByDir(c, NORTH), getCellByDir(c, EAST) };
 	}
 
-	public static List<Cell> getPathTowardLine(EntityAI ai, Cell start, Cell linecell1, Cell linecell2) throws Exception {
+	public static List<Cell> getPathTowardLine(EntityAI ai, Cell start, Cell linecell1, Cell linecell2) {
 		// Crée un path pour aller plus près de la ligne partant de linecell1 et
 		// passant par linecell2
 
@@ -334,7 +333,7 @@ public class Pathfinding {
 		return getAStarPath(ai, start, line_cell);
 	}
 
-	public static List<Cell> getPathAwayFromLine(EntityAI ai, Cell start, Cell linecell1, Cell linecell2, int max_distance) throws Exception {
+	public static List<Cell> getPathAwayFromLine(EntityAI ai, Cell start, Cell linecell1, Cell linecell2, int max_distance) {
 		// Crée un path pour partir loin de la ligne partant de linecell1 et
 		// passant par linecell2
 
@@ -367,7 +366,7 @@ public class Pathfinding {
 		return cells;
 	}
 
-	public static List<Cell> getPathAway(EntityAI ai, Cell start, List<Cell> bad_cells, int max_distance) throws Exception {
+	public static List<Cell> getPathAway(EntityAI ai, Cell start, List<Cell> bad_cells, int max_distance) {
 		long startt;
 		if (DEBUG)
 			startt = System.currentTimeMillis();
@@ -404,7 +403,7 @@ public class Pathfinding {
 		return path;
 	}
 
-	public static List<Cell> getPathAwayMin(EntityAI ai, Cell start, List<Cell> bad_cells, int max_distance) throws Exception {
+	public static List<Cell> getPathAwayMin(EntityAI ai, Cell start, List<Cell> bad_cells, int max_distance) {
 		long startt;
 		if (DEBUG)
 			startt = System.currentTimeMillis();
@@ -447,19 +446,19 @@ public class Pathfinding {
 		return false;
 	}
 
-	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, Cell[] cell, List<Cell> cells_to_ignore) throws Exception {
+	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, Cell[] cell, List<Cell> cells_to_ignore) {
 		return getAStarPath(ai, c1, Arrays.asList(cell), cells_to_ignore);
 	}
 
-	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, Cell[] cell) throws Exception {
+	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, Cell[] cell) {
 		return getAStarPath(ai, c1, Arrays.asList(cell), null);
 	}
 
-	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, List<Cell> endCells) throws Exception {
+	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, List<Cell> endCells) {
 		return getAStarPath(ai, c1, endCells, null);
 	}
 
-	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, List<Cell> endCells, List<Cell> cells_to_ignore) throws Exception {
+	public static List<Cell> getAStarPath(EntityAI ai, Cell c1, List<Cell> endCells, List<Cell> cells_to_ignore) {
 		if (c1 == null || endCells == null || endCells.isEmpty())
 			return null;
 		if (endCells.contains(c1))

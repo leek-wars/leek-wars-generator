@@ -435,7 +435,7 @@ public class Map {
 //		mPathCache.clear();
 	}
 
-	public List<Cell> getPathAway(EntityAI ai, Cell c, List<Cell> cells, int pm) throws Exception {
+	public List<Cell> getPathAway(EntityAI ai, Cell c, List<Cell> cells, int pm) {
 		if (c == null)
 			return null;
 		/*
@@ -454,7 +454,7 @@ public class Map {
 		return r;
 	}
 
-	public List<Cell> getPathBeetween(EntityAI ai, Cell start, Cell end, List<Cell> cells_to_ignore) throws Exception {
+	public List<Cell> getPathBeetween(EntityAI ai, Cell start, Cell end, List<Cell> cells_to_ignore) {
 		if (start == null || end == null)
 			return null;
 		/*
