@@ -1,5 +1,7 @@
 package test;
+
 import leekscript.runner.AI;
+import leekscript.runner.LeekRunException;
 import leekscript.runner.values.AbstractLeekValue;
 
 public class DefaultUserAI extends AI {
@@ -19,7 +21,7 @@ public class DefaultUserAI extends AI {
 	}
 
 	@Override
-	public AbstractLeekValue runIA() throws Exception {
+	public AbstractLeekValue runIA() throws LeekRunException {
 		return null;
 	}
 
@@ -34,7 +36,7 @@ public class DefaultUserAI extends AI {
 	}
 
 	@Override
-	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws Exception {
+	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws LeekRunException {
 		return null;
 	}
 

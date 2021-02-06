@@ -320,7 +320,7 @@ public class EntityAI extends AI {
 	}
 
 	// setWeapon
-	public boolean setWeapon(int weapon_id) throws Exception {
+	public boolean setWeapon(int weapon_id) throws LeekRunException {
 		boolean success = false;
 		if (mEntity.getTP() > 0) {
 			Weapon w = null;
@@ -452,7 +452,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.NULL;
 	}
 
-	public AbstractLeekValue getBulbChips(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getBulbChips(AbstractLeekValue value) throws LeekRunException {
 		int id = value.getInt(this);
 		if (id > 0) {
 			Chip chip = Chips.getChip(id);
@@ -723,7 +723,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.getLeekBooleanValue(true);
 	}
 
-	public AbstractLeekValue getWeapons(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getWeapons(AbstractLeekValue value) throws LeekRunException {
 		Entity l = null;
 		if (value.getType() == AbstractLeekValue.NULL)
 			l = mEntity;
@@ -739,7 +739,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getChips(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getChips(AbstractLeekValue value) throws LeekRunException {
 		Entity l = null;
 		if (value.getType() == AbstractLeekValue.NULL)
 			l = mEntity;
@@ -755,7 +755,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getSummons(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getSummons(AbstractLeekValue value) throws LeekRunException {
 		Entity l = null;
 		if (value.getType() == AbstractLeekValue.NULL)
 			l = mEntity;
@@ -772,7 +772,7 @@ public class EntityAI extends AI {
 	}
 
 	// ----- Fonctions Weapon -----
-	public int useWeapon(int leek_id) throws Exception {
+	public int useWeapon(int leek_id) throws LeekRunException {
 		int success = -1;
 		Entity target = fight.getEntity(leek_id);
 		if (target != null && target != mEntity && !target.isDead()) {
@@ -785,7 +785,7 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public int useWeaponOnCell(int cell_id) throws Exception {
+	public int useWeaponOnCell(int cell_id) throws LeekRunException {
 		int success = -1;
 		Cell target = fight.getMap().getCell(cell_id);
 		if (target != null && target != mEntity.getCell()) {
@@ -798,7 +798,7 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public boolean canUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2) throws Exception {
+	public boolean canUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2) throws LeekRunException {
 		Entity target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		if (value2.getType() == AbstractLeekValue.NULL) {
@@ -815,7 +815,7 @@ public class EntityAI extends AI {
 		return false;
 	}
 
-	public boolean canUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2) throws Exception {
+	public boolean canUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		if (value2.getType() == AbstractLeekValue.NULL) {
@@ -872,7 +872,7 @@ public class EntityAI extends AI {
 		return template.getName();
 	}
 
-	public AbstractLeekValue getWeaponEffects(int id) throws Exception {
+	public AbstractLeekValue getWeaponEffects(int id) throws LeekRunException {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return LeekValueManager.NULL;
@@ -890,7 +890,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getWeaponPassiveEffects(int id) throws Exception {
+	public AbstractLeekValue getWeaponPassiveEffects(int id) throws LeekRunException {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
 			return LeekValueManager.NULL;
@@ -910,7 +910,7 @@ public class EntityAI extends AI {
 
 	// ---- Fonctions Chip ----
 
-	public int useChip(int chip_id, int leek_id) throws Exception {
+	public int useChip(int chip_id, int leek_id) throws LeekRunException {
 
 		int success = -1;
 		Entity target = fight.getEntity(leek_id);
@@ -932,7 +932,7 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public int useChipOnCell(int chip_id, int cell_id) throws Exception {
+	public int useChipOnCell(int chip_id, int cell_id) throws LeekRunException {
 
 		int success = -1;
 		Cell target = fight.getMap().getCell(cell_id);
@@ -954,7 +954,7 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public boolean canUseChipOnCell(int chip_id, int cell_id) throws Exception {
+	public boolean canUseChipOnCell(int chip_id, int cell_id) throws LeekRunException {
 		Cell target = fight.getMap().getCell(cell_id);
 		Chip template = mEntity.getChip(chip_id);
 		if (target != null && template != null && mEntity.getCell() != null) {
@@ -963,7 +963,7 @@ public class EntityAI extends AI {
 		return false;
 	}
 
-	public boolean canUseChip(int chip_id, int leek_id) throws Exception {
+	public boolean canUseChip(int chip_id, int leek_id) throws LeekRunException {
 		Entity target = fight.getEntity(leek_id);
 		Chip template = mEntity.getChip(chip_id);
 		if (target != null && template != null && target.getCell() != null && mEntity.getCell() != null) {
@@ -972,7 +972,7 @@ public class EntityAI extends AI {
 		return false;
 	}
 
-	public AbstractLeekValue getChipTargets(int chip_id, int cell_id) throws Exception {
+	public AbstractLeekValue getChipTargets(int chip_id, int cell_id) throws LeekRunException {
 
 		Cell target = fight.getMap().getCell(cell_id);
 		Chip template = Chips.getChip(chip_id);
@@ -1061,7 +1061,7 @@ public class EntityAI extends AI {
 		return chip.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
-	public AbstractLeekValue getChipEffects(int id) throws Exception {
+	public AbstractLeekValue getChipEffects(int id) throws LeekRunException {
 		Chip chip = Chips.getChip(id);
 		if (chip == null)
 			return LeekValueManager.NULL;
@@ -1101,7 +1101,7 @@ public class EntityAI extends AI {
 		return Pathfinding.getCaseDistance(cell1, cell2);
 	}
 
-	public AbstractLeekValue getPathLength(EntityAI ai, AbstractLeekValue c1, AbstractLeekValue c2, AbstractLeekValue leeks_to_ignore) throws Exception {
+	public AbstractLeekValue getPathLength(EntityAI ai, AbstractLeekValue c1, AbstractLeekValue c2, AbstractLeekValue leeks_to_ignore) throws LeekRunException {
 
 		Cell cell1 = fight.getMap().getCell(c1.getInt(this));
 		if (cell1 == null)
@@ -1124,7 +1124,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.getLeekIntValue(path.size());
 	}
 
-	public AbstractLeekValue getPath(AbstractLeekValue c1, AbstractLeekValue c2, AbstractLeekValue leeks_to_ignore) throws Exception {
+	public AbstractLeekValue getPath(AbstractLeekValue c1, AbstractLeekValue c2, AbstractLeekValue leeks_to_ignore) throws LeekRunException {
 
 		Cell cell1 = fight.getMap().getCell(c1.getInt(this));
 		if (cell1 == null)
@@ -1229,7 +1229,7 @@ public class EntityAI extends AI {
 		return cell1.getX() == cell2.getX() || cell1.getY() == cell2.getY();
 	}
 
-	public int getNearestEnemy() throws Exception {
+	public int getNearestEnemy() throws LeekRunException {
 		if (mEntity.getCell() == null)
 			return -1;
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
@@ -1248,7 +1248,7 @@ public class EntityAI extends AI {
 		return nearest == null ? -1 : nearest.getFId();
 	}
 
-	public int getFarthestEnemy() throws Exception {
+	public int getFarthestEnemy() throws LeekRunException {
 		if (mEntity.getCell() == null)
 			return -1;
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
@@ -1285,7 +1285,7 @@ public class EntityAI extends AI {
 		return new StringLeekValue(df.format(fight.getDate()).toString());
 	}
 
-	public ArrayLeekValue getAllChips() throws Exception {
+	public ArrayLeekValue getAllChips() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Chip chip : Chips.getTemplates().values()) {
@@ -1294,7 +1294,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public ArrayLeekValue getAllWeapons() throws Exception {
+	public ArrayLeekValue getAllWeapons() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Weapon weapon : Weapons.getTemplates().values()) {
@@ -1303,7 +1303,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public ArrayLeekValue getAllEffects() throws Exception {
+	public ArrayLeekValue getAllEffects() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < Effect.effects.length; ++i) {
 			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(i + 1));
@@ -1311,7 +1311,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public ArrayLeekValue getAliveEnemies() throws Exception {
+	public ArrayLeekValue getAliveEnemies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		short nb = 0;
 		for (Entity e : fight.getAllEntities(false)) {
@@ -1323,7 +1323,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getNumAliveEnemies() throws Exception {
+	public int getNumAliveEnemies() throws LeekRunException {
 		short count = 0;
 		for (Entity e : fight.getAllEntities(false)) {
 			if (e.getTeam() != mEntity.getTeam()) {
@@ -1333,7 +1333,7 @@ public class EntityAI extends AI {
 		return count;
 	}
 
-	public ArrayLeekValue getDeadEnemies() throws Exception {
+	public ArrayLeekValue getDeadEnemies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		short nb = 0;
 		for (Entity e : fight.getAllEntities(true)) {
@@ -1345,7 +1345,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getNumDeadEnemies() throws Exception {
+	public int getNumDeadEnemies() throws LeekRunException {
 		short count = 0;
 		for (Entity e : fight.getAllEntities(true)) {
 			if (e.getTeam() != mEntity.getTeam() && e.isDead()) {
@@ -1355,7 +1355,7 @@ public class EntityAI extends AI {
 		return count;
 	}
 
-	public ArrayLeekValue getEnemies() throws Exception {
+	public ArrayLeekValue getEnemies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		short nb = 0;
 		for (Entity l : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
@@ -1373,7 +1373,7 @@ public class EntityAI extends AI {
 		return life;
 	}
 
-	public int getNumEnemies() throws Exception {
+	public int getNumEnemies() throws LeekRunException {
 		return fight.getEnemiesEntities(mEntity.getTeam(), true).size();
 	}
 
@@ -1395,7 +1395,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.NULL;
 	}
 
-	public int getNearestAlly() throws Exception {
+	public int getNearestAlly() throws LeekRunException {
 		if (mEntity.getCell() == null)
 			return -1;
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
@@ -1413,7 +1413,7 @@ public class EntityAI extends AI {
 		return nearest == null ? -1 : nearest.getFId();
 	}
 
-	public int getFarthestAlly() throws Exception {
+	public int getFarthestAlly() throws LeekRunException {
 		if (mEntity.getCell() == null) return -1;
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
 		int dist = -1;
@@ -1430,7 +1430,7 @@ public class EntityAI extends AI {
 		return farest == null ? -1 : farest.getFId();
 	}
 
-	public ArrayLeekValue getAliveAllies() throws Exception {
+	public ArrayLeekValue getAliveAllies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam())) {
 			retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
@@ -1438,11 +1438,11 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getNumAliveAllies() throws Exception {
+	public int getNumAliveAllies() throws LeekRunException {
 		return fight.getTeamEntities(mEntity.getTeam()).size();
 	}
 
-	public ArrayLeekValue getDeadAllies() throws Exception {
+	public ArrayLeekValue getDeadAllies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
 			if (l.isDead()) {
@@ -1452,7 +1452,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getNumDeadAllies() throws Exception {
+	public int getNumDeadAllies() throws LeekRunException {
 		short nb = 0;
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
 			if (l.isDead())
@@ -1461,7 +1461,7 @@ public class EntityAI extends AI {
 		return nb;
 	}
 
-	public ArrayLeekValue getAllies() throws Exception {
+	public ArrayLeekValue getAllies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
 			retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
@@ -1469,7 +1469,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getNumAllies() throws Exception {
+	public int getNumAllies() throws LeekRunException {
 		return fight.getTeamEntities(mEntity.getTeam(), true).size();
 	}
 
@@ -1489,7 +1489,7 @@ public class EntityAI extends AI {
 		return fight.getOrder().getPreviousPlayer().getFId();
 	}
 
-	public AbstractLeekValue getWeaponTargets(AbstractLeekValue value1, AbstractLeekValue value2) throws Exception {
+	public AbstractLeekValue getWeaponTargets(AbstractLeekValue value1, AbstractLeekValue value2) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
@@ -1525,9 +1525,9 @@ public class EntityAI extends AI {
 	 * @param value3
 	 *            Cellule de départ de l'attaque ou null
 	 * @return Array des cellules affectées
-	 * @throws Exception
+	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getWeaponArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
+	public AbstractLeekValue getWeaponArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
@@ -1564,7 +1564,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getCellToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
+	public int getCellToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
@@ -1601,7 +1601,7 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public int getCellToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
+	public int getCellToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
@@ -1640,7 +1640,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getCellToUseChip(AbstractLeekValue chip, AbstractLeekValue t, AbstractLeekValue value3) throws Exception {
+	public int getCellToUseChip(AbstractLeekValue chip, AbstractLeekValue t, AbstractLeekValue value3) throws LeekRunException {
 
 		Entity target = fight.getEntity(t.getInt(this));
 		int cell = -1;
@@ -1671,7 +1671,7 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public int getCellToUseChipOnCell(AbstractLeekValue chip, AbstractLeekValue cell, AbstractLeekValue value3) throws Exception {
+	public int getCellToUseChipOnCell(AbstractLeekValue chip, AbstractLeekValue cell, AbstractLeekValue value3) throws LeekRunException {
 
 		int retour = -1;
 		Cell target = fight.getMap().getCell(cell.getInt(this));
@@ -1704,7 +1704,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int moveToward(int leek_id, int pm_to_use) throws Exception {
+	public int moveToward(int leek_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP()) {
 			pm = mEntity.getMP();
@@ -1722,7 +1722,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardCell(int cell_id, int pm_to_use) throws Exception {
+	public int moveTowardCell(int cell_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP()) {
 			pm = mEntity.getMP();
@@ -1745,7 +1745,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardLeeks(ArrayLeekValue leeks, int pm_to_use) throws Exception {
+	public int moveTowardLeeks(ArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1768,7 +1768,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardCells(ArrayLeekValue leeks, int pm_to_use) throws Exception {
+	public int moveTowardCells(ArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1791,7 +1791,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFrom(int leek_id, int pm_to_use) throws Exception {
+	public int moveAwayFrom(int leek_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1810,7 +1810,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromCell(int cell_id, int pm_to_use) throws Exception {
+	public int moveAwayFromCell(int cell_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1829,7 +1829,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromLeeks(ArrayLeekValue leeks, int pm_to_use) throws Exception {
+	public int moveAwayFromLeeks(ArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1852,7 +1852,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromCells(ArrayLeekValue leeks, int pm_to_use) throws Exception {
+	public int moveAwayFromCells(ArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1875,7 +1875,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromLine(int cell1, int cell2, int pm_to_use) throws Exception {
+	public int moveAwayFromLine(int cell1, int cell2, int pm_to_use) throws LeekRunException {
 		// Nombre de PM à utiliser au max pour fuir comme un lache
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
@@ -1904,7 +1904,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardLine(int cell1, int cell2, int pm_to_use) throws Exception {
+	public int moveTowardLine(int cell1, int cell2, int pm_to_use) throws LeekRunException {
 		// Nombre de PM à utiliser au max
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
@@ -1965,7 +1965,7 @@ public class EntityAI extends AI {
 		}
 	}
 
-	public AbstractLeekValue getMessages(int target_leek) throws Exception {
+	public AbstractLeekValue getMessages(int target_leek) throws LeekRunException {
 
 		// On récupere le leek ciblé
 		Entity l = mEntity;
@@ -1995,7 +1995,7 @@ public class EntityAI extends AI {
 		return messages;
 	}
 
-	public AbstractLeekValue getEffects(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getEffects(AbstractLeekValue value) throws LeekRunException {
 		Entity l = null;
 		if (value.getType() == AbstractLeekValue.NULL) {
 			l = mEntity;
@@ -2014,7 +2014,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getLaunchedEffects(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getLaunchedEffects(AbstractLeekValue value) throws LeekRunException {
 		Entity l = null;
 		if (value.getType() == AbstractLeekValue.NULL) {
 			l = mEntity;
@@ -2033,7 +2033,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getPassiveEffects(AbstractLeekValue value) throws Exception {
+	public AbstractLeekValue getPassiveEffects(AbstractLeekValue value) throws LeekRunException {
 		Entity l = null;
 		if (value.getType() == AbstractLeekValue.NULL) {
 			l = mEntity;
@@ -2070,9 +2070,9 @@ public class EntityAI extends AI {
 	 * @param target_cell
 	 *            Cellule cible de l'attaque
 	 * @return Array des cellules affectées
-	 * @throws Exception
+	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getChipArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
+	public AbstractLeekValue getChipArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
 
 		Cell start_cell = mEntity.getCell();
 		if (value3.getType() != AbstractLeekValue.NULL) {
@@ -2113,9 +2113,9 @@ public class EntityAI extends AI {
 	 * @param target_leek_id
 	 *            Poireau cible
 	 * @return Liste des cellules
-	 * @throws Exception
+	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
+	public AbstractLeekValue getCellsToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
@@ -2153,9 +2153,9 @@ public class EntityAI extends AI {
 	 * @param target_cell_id
 	 *            Cellule cible
 	 * @return Liste des cellules
-	 * @throws Exception
+	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws Exception {
+	public AbstractLeekValue getCellsToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
@@ -2196,9 +2196,9 @@ public class EntityAI extends AI {
 	 * @param target_leek_id
 	 *            Poireau cible
 	 * @return Liste des cellules
-	 * @throws Exception
+	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseChip(AbstractLeekValue chip_id, AbstractLeekValue target_leek_id, AbstractLeekValue value3) throws Exception {
+	public AbstractLeekValue getCellsToUseChip(AbstractLeekValue chip_id, AbstractLeekValue target_leek_id, AbstractLeekValue value3) throws LeekRunException {
 
 		Entity target = fight.getEntity(target_leek_id.getInt(this));
 		// On récupère le sort
@@ -2232,9 +2232,9 @@ public class EntityAI extends AI {
 	 * @param target_cell_id
 	 *            Cellule cible
 	 * @return Liste des cellules
-	 * @throws Exception
+	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseChipOnCell(AbstractLeekValue chip_id, AbstractLeekValue target_cell_id, AbstractLeekValue value3) throws Exception {
+	public AbstractLeekValue getCellsToUseChipOnCell(AbstractLeekValue chip_id, AbstractLeekValue target_cell_id, AbstractLeekValue value3) throws LeekRunException {
 
 		Cell target = fight.getMap().getCell(target_cell_id.getInt(this));
 		// On récupère le sort
@@ -2415,7 +2415,7 @@ public class EntityAI extends AI {
 		}
 	}
 
-	public AbstractLeekValue getObstacles() throws Exception {
+	public AbstractLeekValue getObstacles() throws LeekRunException {
 		Cell[] cells = fight.getMap().getObstacles();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (cells == null)
@@ -2534,7 +2534,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.getLeekIntValue(((red.getInt(this) & 255) << 16) | ((green.getInt(this) & 255) << 8) | (blue.getInt(this) & 255));
 	}
 
-	public AbstractLeekValue listen() throws Exception {
+	public AbstractLeekValue listen() throws LeekRunException {
 		ArrayLeekValue values = new ArrayLeekValue();
 		for (Entity l : fight.getAllEntities(false)) {
 			if (l == null || l == mEntity || l.getAI() == null)
@@ -2683,7 +2683,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.NULL;
 	}
 
-	public AbstractLeekValue getRegisters() throws LeekRunException, Exception {
+	public AbstractLeekValue getRegisters() throws LeekRunException {
 		Map<String, String> registers;
 		if (mEntity.isSummon()) {
 			registers = mEntity.getSummoner().getAllRegisters();
@@ -2733,7 +2733,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.NULL;
 	}
 
-	public AbstractLeekValue summon(AbstractLeekValue chip, AbstractLeekValue cell, AbstractLeekValue ai) throws Exception {
+	public AbstractLeekValue summon(AbstractLeekValue chip, AbstractLeekValue cell, AbstractLeekValue ai) throws LeekRunException {
 
 		int success = -1;
 
@@ -2774,7 +2774,7 @@ public class EntityAI extends AI {
 		return LeekValueManager.NULL;
 	}
 
-	public AbstractLeekValue reborn(AbstractLeekValue entity, AbstractLeekValue cell) throws Exception {
+	public AbstractLeekValue reborn(AbstractLeekValue entity, AbstractLeekValue cell) throws LeekRunException {
 
 		int success = -1;
 
@@ -2878,7 +2878,7 @@ public class EntityAI extends AI {
 	}
 
 	@Override
-	public AbstractLeekValue runIA() throws Exception {
+	public AbstractLeekValue runIA() throws LeekRunException {
 		return null;
 	}
 
@@ -2893,7 +2893,7 @@ public class EntityAI extends AI {
 	}
 
 	@Override
-	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws Exception {
+	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws LeekRunException {
 		return null;
 	}
 

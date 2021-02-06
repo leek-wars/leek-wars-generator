@@ -1,5 +1,6 @@
 package com.leekwars.generator.fight.entity;
 
+import leekscript.runner.LeekRunException;
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.FunctionLeekValue;
 
@@ -20,7 +21,7 @@ public class BulbAI extends EntityAI {
 	}
 
 	@Override
-	public AbstractLeekValue runIA() throws Exception {
+	public AbstractLeekValue runIA() throws LeekRunException {
 		if (mAIFunction != null) {
 			mOwnerAI.mEntity = mEntity;
 			return mAIFunction.executeFunction(mOwnerAI);

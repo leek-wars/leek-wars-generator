@@ -21,103 +21,103 @@ import leekscript.runner.values.StringLeekValue;
 public enum FightFunctions implements ILeekFunction {
 	getLife(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getLife(parameters[0]);
 		}
 	},
 	getForce(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getStrength(parameters[0]);
 		}
 	},
 	getStrength(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getStrength(parameters[0]);
 		}
 	},
 	getAgility(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAgility(parameters[0]);
 		}
 	},
 	getScience(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getScience(parameters[0]);
 		}
 	},
 	getWisdom(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWisdom(parameters[0]);
 		}
 	},
 	getResistance(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getResistance(parameters[0]);
 		}
 	},
 	getMagic(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getMagic(parameters[0]);
 		}
 	},
 	getCell(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCell(parameters[0]);
 		}
 	},
 	getWeapon(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeapon(parameters[0]);
 		}
 	},
 	getName(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getName(parameters[0]);
 		}
 	},
 	getMP(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getMP(parameters[0]);
 		}
 	},
 	getTP(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTP(parameters[0]);
 		}
 	},
 	getTotalTP(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTotalTP(parameters[0]);
 		}
 	},
 	getTotalMP(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTotalMP(parameters[0]);
 		}
 	},
 	getTotalLife(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTotalLife(parameters[0]);
 		}
 	},
 	setWeapon(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).setWeapon(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -128,7 +128,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	say(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).say(parameters[0].getString(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -139,13 +139,13 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getWeapons(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeapons(parameters[0]);
 		}
 	},
 	isEnemy(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isEnemy(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -156,7 +156,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isAlly(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isAlly(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -167,7 +167,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isDead(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).isDead(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -178,7 +178,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isAlive(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).isAlive(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -189,73 +189,73 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getLeek(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getEntity());
 		}
 	},
 	getEntity(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getEntity());
 		}
 	},
 	getChips(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChips(parameters[0]);
 		}
 	},
 	getEffects(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getEffects(parameters[0]);
 		}
 	},
 	getLaunchedEffects(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getLaunchedEffects(parameters[0]);
 		}
 	},
 	getPassiveEffects(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getPassiveEffects(parameters[0]);
 		}
 	},
 	getAbsoluteShield(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAbsoluteShield(parameters[0]);
 		}
 	},
 	getRelativeShield(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getRelativeShield(parameters[0]);
 		}
 	},
 	getDate(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getDate();
 		}
 	},
 	getDamageReturn(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getDamageReturn(parameters[0]);
 		}
 	},
 	getLevel(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getLevel(parameters[0]);
 		}
 	},
 	getCurrentCooldown(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			((EntityAI) leekIA).addOperations(EntityAI.ERROR_LOG_COST);
 			((EntityAI) leekIA).addSystemLog(FarmerLog.WARNING, FarmerLog.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 			return LeekValueManager.NULL;
@@ -263,97 +263,97 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getCooldown(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCurrentCooldown(parameters[0], parameters[1]);
 		}
 	},
 	getFrequency(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getFrequency(parameters[0]);
 		}
 	},
 	getCores(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCores(parameters[0]);
 		}
 	},
 	listen(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).listen();
 		}
 	},
 	getLeekID(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getLeekID(parameters[0]);
 		}
 	},
 	getEntityID(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getLeekID(parameters[0]);
 		}
 	},
 	getTeamName(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTeamName(parameters[0]);
 		}
 	},
 	getTime(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTime();
 		}
 	},
 	getTimestamp(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTimestamp();
 		}
 	},
 	getFarmerName(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getFarmerName(parameters[0]);
 		}
 	},
 	getFarmerCountry(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getFarmerCountry(parameters[0]);
 		}
 	},
 	getTeamID(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getTeamId(parameters[0]);
 		}
 	},
 	getFarmerID(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getFarmerId(parameters[0]);
 		}
 	},
 	getAIName(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAIName(parameters[0]);
 		}
 	},
 	getAIID(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAIId(parameters[0]);
 		}
 	},
 	useWeaponOnCell(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).useWeaponOnCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -364,67 +364,67 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getWeaponMinScope(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getWeaponMinRange(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	getWeaponMinRange(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getWeaponMinRange(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	getWeaponCost(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getWeaponCost(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	getWeaponEffects(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponEffects(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]));
 		}
 	},
 	getWeaponPassiveEffects(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponPassiveEffects(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]));
 		}
 	},
 	getWeaponMaxScope(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getWeaponMaxRange(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	getWeaponMaxRange(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getWeaponMaxRange(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	getWeaponName(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return new StringLeekValue(((EntityAI) leekIA).getWeaponName(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	isInlineWeapon(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isInlineWeapon(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	weaponNeedLos(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).weaponNeedLos(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	useWeapon(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).useWeapon(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -435,31 +435,31 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	canUseWeapon(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).canUseWeapon(parameters[0], parameters[1]));
 		}
 	},
 	canUseWeaponOnCell(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).canUseWeaponOnCell(parameters[0], parameters[1]));
 		}
 	},
 	getWeaponTargets(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponTargets(parameters[0], parameters[1]);
 		}
 	},
 	getWeaponFailure(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponFail(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]));
 		}
 	},
 	isWeapon(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isWeapon(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -470,37 +470,37 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getWeaponLaunchType(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponLaunchType(parameters[0]);
 		}
 	},
 	getWeaponArea(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponArea(parameters[0]);
 		}
 	},
 	useChip(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).useChip(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 	},
 	useChipOnCell(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).useChipOnCell(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 	},
 	getChipName(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return new StringLeekValue(((EntityAI) leekIA).getChipName(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0])));
 		}
 	},
 	getChipMinScope(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipMinRange(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -511,7 +511,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipMinRange(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipMinRange(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -522,7 +522,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipMaxScope(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipMaxRange(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -533,7 +533,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipMaxRange(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipMaxRange(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -544,7 +544,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipCost(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipCost(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -555,7 +555,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipEffects(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipEffects(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -566,7 +566,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isInlineChip(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isInlineChip(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -577,7 +577,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	chipNeedLos(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).chipNeedLos(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -588,7 +588,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipCooldown(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getChipCooldown(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -599,7 +599,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	canUseChip(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).canUseChip(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -610,7 +610,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	canUseChipOnCell(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).canUseChipOnCell(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -621,7 +621,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipTargets(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipTargets(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -632,7 +632,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipFailure(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipFail(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -643,7 +643,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isChip(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isChip(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -654,19 +654,19 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getChipLaunchType(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipLaunchType(parameters[0]);
 		}
 	},
 	getChipArea(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipArea(parameters[0]);
 		}
 	},
 	resurrect(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).reborn(parameters[0], parameters[1]);
 		}
 
@@ -677,7 +677,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	summon(3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).summon(parameters[0], parameters[1], parameters[2]);
 		}
 
@@ -688,49 +688,49 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getSummons(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getSummons(parameters[0]);
 		}
 	},
 	getType(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getType(parameters[0]);
 		}
 	},
 	isSummon(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).isSummon(parameters[0]);
 		}
 	},
 	getSummoner(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getSummoner(parameters[0]);
 		}
 	},
 	isStatic(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).isStatic(parameters[0]);
 		}
 	},
 	getBirthTurn(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getBirthTurn(parameters[0]);
 		}
 	},
 	getBulbChips(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getBulbChips(parameters[0]);
 		}
 	},
 	getDistance(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return new DoubleLeekValue(((EntityAI) leekIA).getDistance(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -741,7 +741,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getCellDistance(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return new DoubleLeekValue(((EntityAI) leekIA).getCellDistance(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -752,29 +752,29 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getPathLength(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getPathLength(((EntityAI) leekIA), parameters[0], parameters[1], parameters[2]);
 		}
 
 		@Override
-		public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
+		public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws LeekRunException {
 			((EntityAI) leekIA).addOperations(hasVariableOperations() ? mVariableOperations.getOperations(retour.getInt(((EntityAI) leekIA).getUAI())) : 1);
 		}
 	},
 	getPath(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getPath(parameters[0], parameters[1], parameters[2]);
 		}
 
 		@Override
-		public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws Exception {
+		public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], AbstractLeekValue retour, int count) throws LeekRunException {
 			((EntityAI) leekIA).addOperations(hasVariableOperations() ? mVariableOperations.getOperations(retour.isArray() ? retour.getArray().size() : 1) : 1);
 		}
 	},
 	getLeekOnCell(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getLeekOnCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 		@Override
@@ -784,7 +784,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getEntityOnCell(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getLeekOnCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 		@Override
@@ -794,7 +794,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getCellContent(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getCellContent(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -805,7 +805,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isEmptyCell(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isEmpty(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -816,7 +816,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isObstacle(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isObstacle(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -827,7 +827,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isOnSameLine(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isOnSameLine(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -838,7 +838,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isLeek(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isLeekCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
@@ -849,7 +849,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	isEntity(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).isLeekCell(parameters[0].getInt(((EntityAI) leekIA).getUAI())));
 		}
 		@Override
@@ -859,7 +859,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getCellX(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellX(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -870,7 +870,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getCellY(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellY(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -881,187 +881,187 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getNearestEnemy(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNearestEnemy());
 		}
 	},
 	getFarestEnemy(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFarthestEnemy());
 		}
 	},
 	getTurn(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getTurn());
 		}
 	},
 	getAliveEnemies(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAliveEnemies();
 		}
 	},
 	getAliveEnemiesCount(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNumAliveEnemies());
 		}
 	},
 	getAlliedTurret(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAlliedTurret();
 		}
 	},
 	getAllChips(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAllChips();
 		}
 	},
 	getAllWeapons(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAllWeapons();
 		}
 	},
 	getAllEffects(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAllEffects();
 		}
 	},
 	getEnemyTurret(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getEnemyTurret();
 		}
 	},
 	getDeadEnemies(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getDeadEnemies();
 		}
 	},
 	getDeadEnemiesCount(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNumDeadEnemies());
 		}
 	},
 	getEnemies(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getEnemies();
 		}
 	},
 	getAllies(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAllies();
 		}
 	},
 	getEnemiesCount(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNumEnemies());
 		}
 	},
 	getNearestAlly(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNearestAlly());
 		}
 	},
 	getFarestAlly(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFarthestAlly());
 		}
 	},
 	getAliveAllies(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getAliveAllies();
 		}
 	},
 	getDeadAllies(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getDeadAllies();
 		}
 	},
 	getAlliesCount(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNumAllies());
 		}
 	},
 	getNextPlayer(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getNextPlayer());
 		}
 	},
 	getPreviousPlayer(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getPreviousPlayer());
 		}
 	},
 	getCellToUseWeapon(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getCellToUseWeapon(parameters[0], parameters[1], parameters[2]));
 		}
 	},
 	getCellToUseWeaponOnCell(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getCellToUseWeaponOnCell(parameters[0], parameters[1], parameters[2]));
 		}
 	},
 	getCellToUseChip(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getCellToUseChip(parameters[0], parameters[1], parameters[2]));
 		}
 	},
 	getCellToUseChipOnCell(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getCellToUseChipOnCell(parameters[0], parameters[1], parameters[2]));
 		}
 	},
 	getEnemiesLife(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getEnemiesLife());
 		}
 	},
 	getAlliesLife(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getAlliesLife());
 		}
 	},
 	moveToward(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveToward(parameters[0].getInt(((EntityAI) leekIA).getUAI()), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 	},
 	moveTowardCell(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardCell(parameters[0].getInt(((EntityAI) leekIA).getUAI()), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 	},
 	moveTowardLeeks(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 		@Override
@@ -1071,7 +1071,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	moveTowardEntities(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 		@Override
@@ -1081,7 +1081,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	moveTowardCells(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardCells(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 
@@ -1092,19 +1092,19 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	moveAwayFrom(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFrom(parameters[0].getInt(((EntityAI) leekIA).getUAI()), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 	},
 	moveAwayFromCell(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromCell(parameters[0].getInt(((EntityAI) leekIA).getUAI()), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 	},
 	moveAwayFromCells(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromCells(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 
@@ -1115,7 +1115,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	moveAwayFromLeeks(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 		@Override
@@ -1125,7 +1125,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	moveAwayFromEntities(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromLeeks(parameters[0].getArray(), intOrNull(((EntityAI) leekIA).getUAI(), parameters[1])));
 		}
 		@Override
@@ -1135,19 +1135,19 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	moveAwayFromLine(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveAwayFromLine(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI()), intOrNull(((EntityAI) leekIA).getUAI(), parameters[2])));
 		}
 	},
 	moveTowardLine(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).moveTowardLine(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI()), intOrNull(((EntityAI) leekIA).getUAI(), parameters[2])));
 		}
 	},
 	getCellFromXY(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellFromXY(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -1158,61 +1158,61 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getFarthestEnemy(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFarthestEnemy());
 		}
 	},
 	getFarthestAlly(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFarthestAlly());
 		}
 	},
 	getFightID(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFight().getId());
 		}
 	},
 	getFightType(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFight().getFightType());
 		}
 	},
 	getFightContext(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getFight().getFightContext());
 		}
 	},
 	getCellsToUseWeapon(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellsToUseWeapon(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	getCellsToUseWeaponOnCell(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellsToUseWeaponOnCell(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	getCellsToUseChip(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellsToUseChip(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	getCellsToUseChipOnCell(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getCellsToUseChipOnCell(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	getNearestEnemyTo(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getNearestEnemyTo(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -1223,7 +1223,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getNearestEnemyToCell(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getNearestEnemyToCell(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -1234,7 +1234,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getNearestAllyToCell(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getNearestAllyToCell(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -1245,7 +1245,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getNearestAllyTo(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getNearestAllyTo(parameters[0].getInt(((EntityAI) leekIA).getUAI()));
 		}
 
@@ -1256,31 +1256,31 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getWeaponEffectiveArea(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getWeaponArea(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	getChipEffectiveArea(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getChipArea(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	lineOfSight(2, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).lineOfSight(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	getObstacles(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getObstacles();
 		}
 	},
 	sendTo(3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekBooleanValue(((EntityAI) leekIA).sendTo(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI()), parameters[2]));
 		}
 
@@ -1291,7 +1291,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	sendAll(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			((EntityAI) leekIA).sendAll(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1]);
 			return LeekValueManager.NULL;
 		}
@@ -1303,13 +1303,13 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getMessages(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getMessages(intOrNull(((EntityAI) leekIA).getUAI(), parameters[0]));
 		}
 	},
 	getMessageAuthor(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			if (parameters[0].getArray().size() == 3)
 				return parameters[0].getArray().get(((EntityAI) leekIA).getUAI(), 0);
 			return LeekValueManager.NULL;
@@ -1322,7 +1322,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getMessageType(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			if (parameters[0].getArray().size() == 3)
 				return parameters[0].getArray().get(((EntityAI) leekIA).getUAI(), 1);
 			return LeekValueManager.NULL;
@@ -1335,7 +1335,7 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	getMessageParams(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			if (parameters[0].getArray().size() == 3)
 				return parameters[0].getArray().get(((EntityAI) leekIA).getUAI(), 2);
 			return LeekValueManager.NULL;
@@ -1348,75 +1348,75 @@ public enum FightFunctions implements ILeekFunction {
 	},
 	lama(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			((EntityAI) leekIA).lama();
 			return LeekValueManager.NULL;
 		}
 	},
 	mark(1, 3) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).mark(parameters[0], parameters[1], parameters[2]);
 		}
 	},
 	markText(2, 4) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).markText(parameters[0], parameters[1], parameters[2], parameters[3]);
 		}
 	},
 	clearMarks(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).clearMarks();
 		}
 	},
 	show(1, 2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).show(parameters[0], parameters[1]);
 		}
 	},
 	getMapType(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return LeekValueManager.getLeekIntValue(((EntityAI) leekIA).getMapType());
 		}
 	},
 	pause(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			((EntityAI) leekIA).pause();
 			return LeekValueManager.NULL;
 		}
 	},
 	getRegisters(0) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getRegisters();
 		}
 	},
 	getRegister(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getRegister(parameters[0]);
 		}
 	},
 	setRegister(2) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).setRegister(parameters[0], parameters[1]);
 		}
 	},
 	deleteRegister(1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).deleteRegister(parameters[0]);
 		}
 	},
 	getEntityTurnOrder(0, 1) {
 		@Override
-		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws Exception {
+		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
 			return ((EntityAI) leekIA).getEntityTurnOrder(parameters[0]);
 		}
 	};
@@ -1461,7 +1461,7 @@ public enum FightFunctions implements ILeekFunction {
 	}
 
 	@Override
-	public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, AbstractLeekValue retour, int count) throws Exception {
+	public void addOperations(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, AbstractLeekValue retour, int count) throws LeekRunException {
 		leekIA.addOperations(getOperations());
 	}
 
@@ -1493,7 +1493,7 @@ public enum FightFunctions implements ILeekFunction {
 	/*
 	 * Lancer la fonction
 	 */
-	public abstract AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], int count) throws Exception;
+	public abstract AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue parameters[], int count) throws LeekRunException;
 
 	public int[] parameters() {
 		return null;
@@ -1507,7 +1507,7 @@ public enum FightFunctions implements ILeekFunction {
 		mOperations = operations;
 	}
 
-	public static AbstractLeekValue executeFunction(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], int count) throws Exception {
+	public static AbstractLeekValue executeFunction(EntityAI leekIA, ILeekFunction function, AbstractLeekValue parameters[], int count) throws LeekRunException {
 
 		// Vérification parametres
 		int[] types = function.parameters();

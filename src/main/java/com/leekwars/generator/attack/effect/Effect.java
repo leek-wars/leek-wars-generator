@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import leekscript.runner.AI;
+import leekscript.runner.LeekRunException;
 import leekscript.runner.LeekValueManager;
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
@@ -288,7 +289,7 @@ public abstract class Effect {
 		return attack;
 	}
 
-	public AbstractLeekValue getLeekValue(AI ai) throws Exception {
+	public AbstractLeekValue getLeekValue(AI ai) throws LeekRunException {
 
 		ArrayLeekValue retour = new ArrayLeekValue();
 		retour.get(ai, 0).set(ai, LeekValueManager.getLeekIntValue(id));
