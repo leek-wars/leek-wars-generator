@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.chips.Chip;
 import com.leekwars.generator.attack.chips.Chips;
@@ -64,23 +65,36 @@ public class Generator {
 	 */
 	public AnalyzeResult analyzeAI(String file, ResolverContext context) {
 		Log.i(TAG, "Analyze AI " + file + "...");
+		AIFile<?> ai = null;
 		try {
-			AIFile<?> ai = LeekScript.getResolver().resolve(file, context);
+			ai = LeekScript.getResolver().resolve(file, context);
 			long t = System.currentTimeMillis();
 			AnalyzeResult result = new IACompiler().analyze(ai);
 			long time = System.currentTimeMillis() - t;
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			Log.s(TAG, "Analyze success!");
 			return result;
-		} catch (Exception e1) {
-			System.out.println(e1);
-			e1.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
 			Log.e(TAG, "AI " + file + " not compiled");
-			if (e1.getMessage() != null) {
-				Log.e(TAG, e1.getMessage());
+			if (e.getMessage() != null) {
+				Log.e(TAG, e.getMessage());
 			}
 			Log.e(TAG, "Compile failed!");
-			return null;
+			errorManager.exception(e, 0);
+			// Create a result with internal error
+			AnalyzeResult result = new AnalyzeResult();
+			result.success = false;
+			result.informations = new JSONArray();
+			JSONArray error = new JSONArray();
+			error.add(0);
+			error.add(ai.getId());
+			error.add(1);
+			error.add(0);
+			error.add("?");
+			error.add("internal_error");
+			result.informations.add(error);
+			return result;
 		}
 	}
 
