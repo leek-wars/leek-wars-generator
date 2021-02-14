@@ -42,7 +42,6 @@ public class Generator {
 	private static ErrorManager errorManager = null;
 
 	public boolean nocache = false;
-	private String jar = "generator.jar";
 
 	public Generator() {
 		new File("ai/").mkdir();
@@ -243,14 +242,6 @@ public class Generator {
 
 	public void setNocache(boolean nocache) {
 		this.nocache = nocache;
-	}
-
-	public String getJar() {
-		return jar;
-	}
-
-	public void setJar(String jar) {
-		this.jar = jar;
 	}
 
 	/**
