@@ -18,7 +18,7 @@ public class ActionSay implements Action {
 		JSONArray retour = new JSONArray();
 		retour.add(Action.SAY);
 		retour.add(leek);
-		retour.add(message);
+		retour.add(message.replaceAll("\t", "    "));
 		return retour;
 	}
 }
