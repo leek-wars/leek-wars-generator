@@ -13,7 +13,6 @@ import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionAddEffect;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Stats;
-import com.leekwars.leek.Leek;
 
 public abstract class Effect {
 
@@ -329,15 +328,15 @@ public abstract class Effect {
 	public static int getEffectCharacteristic(int type) {
 		switch (type) {
 			case TYPE_DAMAGE:
-				return Leek.CHARAC_STRENGTH;
+				return Entity.CHARAC_STRENGTH;
 			case TYPE_POISON:
 			case TYPE_SHACKLE_MAGIC:
 			case TYPE_SHACKLE_STRENGTH:
 			case TYPE_SHACKLE_MP:
 			case TYPE_SHACKLE_TP:
-				return Leek.CHARAC_MAGIC;
+				return Entity.CHARAC_MAGIC;
 			case TYPE_LIFE_DAMAGE:
-				return Leek.CHARAC_LIFE;
+				return Entity.CHARAC_LIFE;
 			case TYPE_NOVA_DAMAGE:
 			case TYPE_BUFF_AGILITY:
 			case TYPE_BUFF_STRENGTH:
@@ -345,15 +344,15 @@ public abstract class Effect {
 			case TYPE_BUFF_TP:
 			case TYPE_BUFF_RESISTANCE:
 			case TYPE_BUFF_WISDOM:
-				return Leek.CHARAC_SCIENCE;
+				return Entity.CHARAC_SCIENCE;
 			case TYPE_DAMAGE_RETURN:
-				return Leek.CHARAC_AGILITY;
+				return Entity.CHARAC_AGILITY;
 			case TYPE_HEAL:
 			case TYPE_VITALITY:
-				return Leek.CHARAC_WISDOM;
+				return Entity.CHARAC_WISDOM;
 			case TYPE_RELATIVE_SHIELD:
 			case TYPE_ABSOLUTE_SHIELD:
-				return Leek.CHARAC_RESISTANCE;
+				return Entity.CHARAC_RESISTANCE;
 		}
 		return -1;
 	}
