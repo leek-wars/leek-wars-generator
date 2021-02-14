@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,14 +44,10 @@ import leekscript.runner.AI;
 import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.LeekValueManager;
-import leekscript.runner.PhpArray;
-import leekscript.runner.PhpArray.Element;
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.ArrayLeekValue.ArrayIterator;
 import leekscript.runner.values.FunctionLeekValue;
 import leekscript.runner.values.StringLeekValue;
-import leekscript.runner.values.VariableLeekValue;
 
 public class EntityAI extends AI {
 
@@ -2735,159 +2729,6 @@ public class EntityAI extends AI {
 			mEntity.getSummoner().deleteRegister(keyString);
 		} else {
 			mEntity.deleteRegister(keyString);
-		}
-		return LeekValueManager.NULL;
-	}
-
-	public void arrayFlatten(ArrayLeekValue array, ArrayLeekValue retour, int depth) throws Exception {
-		for (AbstractLeekValue value : array) {
-			if (value.getValue() instanceof ArrayLeekValue && depth > 0) {
-				arrayFlatten(value.getArray(), retour, depth - 1);
-			} else
-				retour.push(this, LeekOperations.clone(this, value));
-		}
-	}
-
-	public AbstractLeekValue arrayFoldLeft(ArrayLeekValue array, AbstractLeekValue function, AbstractLeekValue start_value) throws Exception {
-		AbstractLeekValue result = LeekOperations.clone(this, start_value);
-		// AbstractLeekValue prev = null;
-		for (AbstractLeekValue value : array) {
-			result = function.executeFunction(this, new AbstractLeekValue[] { result, value });
-		}
-		return result;
-	}
-
-	public AbstractLeekValue arrayFoldRight(ArrayLeekValue array, AbstractLeekValue function, AbstractLeekValue start_value) throws Exception {
-		AbstractLeekValue result = LeekOperations.clone(this, start_value);
-		// AbstractLeekValue prev = null;
-		Iterator<AbstractLeekValue> it = array.getReversedIterator();
-		while (it.hasNext()) {
-			result = function.executeFunction(this, new AbstractLeekValue[] { it.next(), result });
-		}
-		return result;
-	}
-
-	public AbstractLeekValue arrayPartition(ArrayLeekValue array, AbstractLeekValue function) throws Exception {
-		ArrayLeekValue list1 = new ArrayLeekValue();
-		ArrayLeekValue list2 = new ArrayLeekValue();
-		int nb = function.getArgumentsCount(this);
-		if (nb != 1 && nb != 2)
-			return new ArrayLeekValue();
-		VariableLeekValue value = new VariableLeekValue(this, LeekValueManager.NULL);
-		ArrayIterator iterator = array.getArrayIterator();
-		boolean b;
-		while (!iterator.ended()) {
-			value.set(this, iterator.getValueReference());
-			if (nb == 1)
-				b = function.executeFunction(this, new AbstractLeekValue[] { value }).getBoolean();
-			else
-				b = function.executeFunction(this, new AbstractLeekValue[] { iterator.getKey(this), value }).getBoolean();
-			iterator.setValue(this, value);
-			(b ? list1 : list2).getOrCreate(this, iterator.getKey(this)).set(this, iterator.getValue(this));
-			iterator.next();
-		}
-		return new ArrayLeekValue(this, new AbstractLeekValue[] { list1, list2 }, false);
-	}
-
-	public ArrayLeekValue arrayMap(ArrayLeekValue array, AbstractLeekValue function) throws LeekRunException, Exception {
-		ArrayLeekValue retour = new ArrayLeekValue();
-		ArrayIterator iterator = array.getArrayIterator();
-		int nb = function.getArgumentsCount(this);
-		if (nb != 1 && nb != 2)
-			return retour;
-		VariableLeekValue value = new VariableLeekValue(this, LeekValueManager.NULL);
-		while (!iterator.ended()) {
-			value.set(this, iterator.getValueReference());
-			if (nb == 1)
-				retour.getOrCreate(this, iterator.getKey(this).getValue()).set(this, function.executeFunction(this, new AbstractLeekValue[] { value }));
-			else
-				retour.getOrCreate(this, iterator.getKey(this).getValue()).set(this, function.executeFunction(this, new AbstractLeekValue[] { iterator.getKey(this), value }));
-			iterator.setValue(this, value);
-			iterator.next();
-		}
-		return retour;
-	}
-
-	public ArrayLeekValue arrayFilter(ArrayLeekValue array, AbstractLeekValue function) throws LeekRunException, Exception {
-		ArrayLeekValue retour = new ArrayLeekValue();
-		ArrayIterator iterator = array.getArrayIterator();
-		int nb = function.getArgumentsCount(this);
-		if (nb != 1 && nb != 2)
-			return retour;
-		boolean b;
-		VariableLeekValue value = new VariableLeekValue(this, LeekValueManager.NULL);
-		while (!iterator.ended()) {
-			value.set(this, iterator.getValueReference());
-			if (nb == 1) {
-				b = function.executeFunction(this, new AbstractLeekValue[] { value }).getBoolean();
-				iterator.setValue(this, value);
-				if (b)
-					retour.getOrCreate(this, iterator.getKey(this).getValue()).set(this, iterator.getValue(this).getValue());
-
-			} else {
-				b = function.executeFunction(this, new AbstractLeekValue[] { iterator.getKey(this), value }).getBoolean();
-				iterator.setValue(this, value);
-				if (b)
-					retour.getOrCreate(this, iterator.getKey(this).getValue()).set(this, iterator.getValue(this).getValue());
-
-			}
-			iterator.next();
-		}
-		return retour;
-	}
-
-	public AbstractLeekValue arrayIter(ArrayLeekValue array, AbstractLeekValue function) throws LeekRunException, Exception {
-		ArrayIterator iterator = array.getArrayIterator();
-		int nb = function.getArgumentsCount(this);
-		if (nb != 1 && nb != 2)
-			return LeekValueManager.NULL;
-		VariableLeekValue value = new VariableLeekValue(this, LeekValueManager.NULL);
-		while (!iterator.ended()) {
-			value.set(this, iterator.getValueReference());
-			if (nb == 1)
-				function.executeFunction(this, new AbstractLeekValue[] { value });
-			else
-				function.executeFunction(this, new AbstractLeekValue[] { iterator.getKey(this), value });
-			iterator.setValue(this, value);
-			iterator.next();
-		}
-		return LeekValueManager.NULL;
-	}
-
-	public AbstractLeekValue arraySort(ArrayLeekValue origin, final AbstractLeekValue function) throws Exception {
-		try {
-			int nb = function.getArgumentsCount(this);
-			if (nb == 2) {
-				ArrayLeekValue array = LeekOperations.clone(this, origin).getArray();
-				array.sort(this, new Comparator<PhpArray.Element>() {
-					@Override
-					public int compare(Element o1, Element o2) {
-						try {
-							return function.executeFunction(EntityAI.this, new AbstractLeekValue[] { o1.value(), o2.value() }).getInt(EntityAI.this);
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-					}
-				});
-				return array;
-			} else if (nb == 4) {
-				ArrayLeekValue array = LeekOperations.clone(this, origin).getArray();
-				array.sort(this, new Comparator<PhpArray.Element>() {
-					@Override
-					public int compare(Element o1, Element o2) {
-						try {
-							return function.executeFunction(EntityAI.this, new AbstractLeekValue[] { o1.key(), o1.value(), o2.key(), o2.value() }).getInt(EntityAI.this);
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-					}
-				});
-				return array;
-			}
-		} catch (RuntimeException e) {
-			if (e.getCause() instanceof LeekRunException) {
-				throw (LeekRunException) e.getCause();
-			}
 		}
 		return LeekValueManager.NULL;
 	}
