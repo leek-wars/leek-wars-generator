@@ -48,4 +48,9 @@ public class DefaultUserAI extends AI {
 		return null;
 	}
 
+	@Override
+	public int getVersion() {
+		return 10;
+	}
+
 }

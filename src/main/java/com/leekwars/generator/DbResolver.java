@@ -40,7 +40,7 @@ public class DbResolver implements Resolver<DbContext> {
 			String code = Util.readFile("../ai/" + aiID + ".leek");
 
 			DbContext newContext = new DbContext(context.getFarmer(), folderID);
-			return new AIFile<DbContext>(path, code, timestamp, newContext, aiID);
+			return new AIFile<DbContext>(path, code, timestamp, 11, newContext, aiID);
 		}
 	}
 

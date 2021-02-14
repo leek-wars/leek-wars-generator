@@ -2906,4 +2906,9 @@ public class EntityAI extends AI {
 	public boolean[] anonymousFunctionReference(int id) {
 		return null;
 	}
+
+	@Override
+	public int getVersion() {
+		return 10;
+	}
 }
