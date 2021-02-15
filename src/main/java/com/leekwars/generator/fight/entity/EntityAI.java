@@ -252,7 +252,7 @@ public class EntityAI extends AI {
 
 		} catch (StackOverflowError e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
-			e.printStackTrace(System.out);
+			// e.printStackTrace(System.out);
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, LeekLog.AI_INTERRUPTED, new String[] { "Stack Overflow" }, e.getStackTrace());
 			fight.statistics.addStackOverflow(mEntity);
