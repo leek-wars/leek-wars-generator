@@ -4,7 +4,8 @@ import java.io.File;
 
 import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Data;
-import com.leekwars.generator.DbResolver;
+import com.leekwars.generator.DbContext;
+import com.leekwars.generator.LocalDbResolver;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
@@ -24,7 +25,8 @@ public class Main {
 		boolean db_resolver = false;
 		boolean verbose = false;
 		boolean analyze = false;
-		// int farmer = 0;
+		int farmer = 0;
+		int folder = 0;
 
 		for (String arg : args) {
 			if (arg.startsWith("--")) {
@@ -35,7 +37,9 @@ public class Main {
 					case "analyze": analyze = true; break;
 				}
 				if (arg.startsWith("--farmer=")) {
-					// farmer = Integer.parseInt(arg.substring("--farmer=".length()));
+					farmer = Integer.parseInt(arg.substring("--farmer=".length()));
+				} else if (arg.startsWith("--folder=")) {
+					folder = Integer.parseInt(arg.substring("--folder=".length()));
 				}
 			} else {
 				file = arg;
@@ -43,6 +47,7 @@ public class Main {
 		}
 		Log.enable(verbose);
 		Log.i(TAG, "Generator v1");
+		// System.out.println("db_resolver " + db_resolver + " folder=" + folder + " farmer=" + farmer);
 		if (file == null) {
 			Log.i(TAG, "No scenario/ai file passed!");
 			return;
@@ -50,13 +55,14 @@ public class Main {
 
 		Data.checkData("https://leekwars.com/api/");
 		if (db_resolver) {
-			DbResolver dbResolver = new DbResolver("../resolver.php");
+			LocalDbResolver dbResolver = new LocalDbResolver();
 			LeekScript.setResolver(dbResolver);
 		}
 		Generator generator = new Generator();
 		generator.setNocache(nocache);
 		if (analyze) {
-			AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
+			// AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
+			AnalyzeResult result = generator.analyzeAI(file, new DbContext(farmer, folder));
 			System.out.println(result.informations);
 		} else {
 			Scenario scenario = Scenario.fromFile(new File(file));

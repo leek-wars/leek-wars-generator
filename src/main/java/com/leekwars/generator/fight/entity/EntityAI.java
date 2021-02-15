@@ -98,7 +98,7 @@ public class EntityAI extends AI {
 	 * Build an entity AI from parameters
 	 * Add the correct errors in farmer logs
 	 */
-	public static EntityAI build(Generator generator, String path, int farmer, int aiOwner, Entity entity, LeekLog logs) {
+	public static EntityAI build(Generator generator, String path, int farmer, int aiOwner, int aiFolder, Entity entity, LeekLog logs) {
 
 		// No AI equipped : user error
 		if (path == null) {
@@ -107,7 +107,7 @@ public class EntityAI extends AI {
 		}
 
 		// Resolve first
-		ResolverContext context = LeekScript.getResolver().createContext(farmer, aiOwner);
+		ResolverContext context = LeekScript.getResolver().createContext(farmer, aiOwner, aiFolder);
 		AIFile<?> file;
 		try {
 			file = LeekScript.getResolver().resolve(path, context);
@@ -120,7 +120,7 @@ public class EntityAI extends AI {
 
 		Log.i(TAG, "Compile AI " + path + "...");
 		try {
-			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", generator.getJar(), generator.nocache);
+			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", generator.nocache);
 
 			Log.i(TAG, "AI " + path + " compiled!");
 			ai.valid = true;

@@ -122,7 +122,7 @@ public class Generator {
 
 				// Create AI
 				LeekLog logs = new LeekLog(outcome.logs.get(aiOwner), entity);
-				entity.setAI(EntityAI.build(this, entityInfo.ai, entity.getFarmer(), aiOwner, entity, logs));
+				entity.setAI(EntityAI.build(this, entityInfo.ai, entity.getFarmer(), aiOwner, entityInfo.ai_folder, entity, logs));
 			}
 			t++;
 		}
@@ -245,7 +245,7 @@ public class Generator {
 	public String compileAI(String file, ResolverContext context) {
 		Log.i(TAG, "Compile AI " + file + "...");
 		try {
-			AI ai = LeekScript.compileFileContext(file, "com.leekwars.generator.fight.entity.EntityAI", getJar(), context, true);
+			AI ai = LeekScript.compileFileContext(file, "com.leekwars.generator.fight.entity.EntityAI", context, true);
 			return ai != null ? "success" : "failure";
 		} catch (LeekScriptException e) {
 			System.out.println("LeekScriptException " + e.getType());
