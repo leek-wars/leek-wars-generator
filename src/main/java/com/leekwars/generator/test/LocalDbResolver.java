@@ -1,4 +1,4 @@
-package com.leekwars.generator;
+package com.leekwars.generator.test;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.leekwars.generator.Log;
+
 import leekscript.compiler.AIFile;
 import leekscript.compiler.resolver.Resolver;
 import leekscript.compiler.resolver.ResolverContext;
@@ -15,7 +17,6 @@ import leekscript.compiler.resolver.ResolverContext;
 public class LocalDbResolver implements Resolver<DbContext> {
 
 	private static final String TAG = LocalDbResolver.class.getSimpleName();
-	private static Connection db;
 
 	private static class AIFolder {
 		public int id;
@@ -26,19 +27,6 @@ public class LocalDbResolver implements Resolver<DbContext> {
 			this.id = id;
 			this.name = name;
 			this.folder = folder;
-		}
-	}
-
-	public LocalDbResolver() {
-		try {
-			long t = System.currentTimeMillis();
-			Class.forName("org.postgresql.Driver").getDeclaredConstructor().newInstance();
-			db = DriverManager.getConnection("jdbc:postgresql://localhost:5432/leekwars", "leekwars", "local");
-			// System.out.println("Connection OK");
-			System.out.println("connect time = " + (System.currentTimeMillis() - t));
-		} catch (SQLException | InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -81,7 +69,7 @@ public class LocalDbResolver implements Resolver<DbContext> {
 		String name = path.substring(j).replaceAll("\\\\/", "/"); // On convertit les \/ en / à nouveau
 
 		try {
-			PreparedStatement statement = db.prepareStatement("SELECT * FROM ai WHERE owner=? AND name=? AND deleted = 0 AND folder=? ORDER BY id LIMIT 1");
+			PreparedStatement statement = LocalDB.getDB().prepareStatement("SELECT * FROM ai WHERE owner=? AND name=? AND deleted = 0 AND folder=? ORDER BY id LIMIT 1");
 			statement.setInt(1, owner);
 			statement.setString(2, name);
 			statement.setInt(3, cwd.id);
@@ -103,7 +91,7 @@ public class LocalDbResolver implements Resolver<DbContext> {
 			return getAIFolder(parent, owner);
 		}
 		try {
-			PreparedStatement statement = db.prepareStatement("SELECT * FROM ai_folder WHERE deleted = 0 AND name = ? AND folder = ? AND owner = ?");
+			PreparedStatement statement = LocalDB.getDB().prepareStatement("SELECT * FROM ai_folder WHERE deleted = 0 AND name = ? AND folder = ? AND owner = ?");
 			statement.setString(1, name);
 			statement.setInt(2, cwd);
 			statement.setInt(3, owner);
@@ -125,7 +113,7 @@ public class LocalDbResolver implements Resolver<DbContext> {
 			return new AIFolder(0, "/", 0);
 		}
 		try {
-			PreparedStatement statement = db.prepareStatement("SELECT * FROM ai_folder WHERE deleted = 0 AND id = ? AND owner = ?");
+			PreparedStatement statement = LocalDB.getDB().prepareStatement("SELECT * FROM ai_folder WHERE deleted = 0 AND id = ? AND owner = ?");
 			statement.setInt(1, id);
 			statement.setInt(2, owner);
 			ResultSet result = statement.executeQuery();

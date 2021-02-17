@@ -1,4 +1,4 @@
-package com.leekwars.generator;
+package com.leekwars.generator.test;
 
 import leekscript.compiler.resolver.ResolverContext;
 

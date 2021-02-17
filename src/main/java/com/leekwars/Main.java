@@ -4,12 +4,13 @@ import java.io.File;
 
 import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Data;
-import com.leekwars.generator.DbContext;
-import com.leekwars.generator.LocalDbResolver;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.Scenario;
+import com.leekwars.generator.test.DbContext;
+import com.leekwars.generator.test.LocalDbRegisterManager;
+import com.leekwars.generator.test.LocalDbResolver;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
@@ -70,7 +71,7 @@ public class Main {
 				Log.e(TAG, "Failed to parse scenario!");
 				return;
 			}
-			Outcome outcome = generator.runScenario(scenario, null, null);
+			Outcome outcome = generator.runScenario(scenario, null, new LocalDbRegisterManager());
 			System.out.println(JSON.toJSONString(outcome.toJson(), false));
 		}
 	}
