@@ -14,7 +14,6 @@ import com.leekwars.generator.test.LocalDbResolver;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
-import leekscript.compiler.resolver.FileSystemContext;
 
 public class Main {
 

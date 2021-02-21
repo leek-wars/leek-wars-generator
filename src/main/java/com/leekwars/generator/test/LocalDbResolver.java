@@ -1,9 +1,6 @@
 package com.leekwars.generator.test;
 
 import java.io.FileNotFoundException;
-import java.lang.reflect.InvocationTargetException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
