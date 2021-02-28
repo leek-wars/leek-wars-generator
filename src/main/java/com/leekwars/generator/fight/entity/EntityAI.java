@@ -2912,4 +2912,9 @@ public class EntityAI extends AI {
 	public int getVersion() {
 		return 10;
 	}
+
+	@Override
+	protected String[] getErrorFiles() {
+		return new String[] {};
+	}
 }

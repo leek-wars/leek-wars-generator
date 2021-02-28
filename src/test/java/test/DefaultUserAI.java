@@ -55,4 +55,9 @@ public class DefaultUserAI extends AI {
 		return 10;
 	}
 
+	@Override
+	protected String[] getErrorFiles() {
+		return null;
+	}
+
 }
