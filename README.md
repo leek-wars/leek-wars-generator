@@ -1,4 +1,4 @@
-# Leek Wars Generator v1
+# Leek Wars Generator
 Leek Wars fight generator first version using [leekscript](https://github.com/leek-wars/leekscript) language.
 
 ## Build
