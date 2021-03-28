@@ -17,6 +17,7 @@ import leekscript.runner.values.FunctionLeekValue;
 import leekscript.runner.values.IntLeekValue;
 import leekscript.runner.values.NullLeekValue;
 import leekscript.runner.values.StringLeekValue;
+import leekscript.common.Error;
 
 public enum FightFunctions implements ILeekFunction {
 	getLife(0, 1) {
@@ -256,7 +257,7 @@ public enum FightFunctions implements ILeekFunction {
 	getCurrentCooldown(1) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
-			((EntityAI) leekIA).addSystemLog(FarmerLog.WARNING, FarmerLog.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
+			((EntityAI) leekIA).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 			return LeekValueManager.NULL;
 		}
 	},
@@ -1517,7 +1518,7 @@ public enum FightFunctions implements ILeekFunction {
 		} else {
 			// Message d'erreur
 			String ret = AbstractLeekValue.getParamString(parameters);
-			((EntityAI) leekIA).addSystemLog(FarmerLog.ERROR, FarmerLog.UNKNOWN_FUNCTION, new String[] { function + "(" + ret + ")" });
+			((EntityAI) leekIA).addSystemLog(FarmerLog.ERROR, Error.UNKNOWN_FUNCTION, new String[] { function + "(" + ret + ")" });
 			return LeekValueManager.NULL;
 		}
 		// throw new LeekRunException(LeekRunException.UNKNOWN_FUNCTION);

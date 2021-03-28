@@ -25,23 +25,9 @@ public class FarmerLog extends AILog {
 	public final static int MARK_TEXT = 9;
 	public final static int CLEAR_CELLS = 10;
 
-	// Clés
-	public static final String NO_WEAPON_EQUIPED = "no_weapon_equipped";
-	public static final String CHIP_NOT_EQUIPED = "chip_not_equipped";
-	public static final String CHIP_NOT_EXISTS = "chip_not_exists";
-	public static final String DEPRECATED_FUNCTION = "deprecated_function";
-	public static final String UNKNOWN_FUNCTION = "unknown_function";
-	public static final String DIVISION_BY_ZERO = "division_by_zero";
-	public static final String CAN_NOT_EXECUTE_VALUE = "can_not_execute_value";
-	public static final String CAN_NOT_EXECUTE_WITH_ARGUMENTS = "can_not_execute_with_arguments";
-	public static final String NO_AI_EQUIPPED = "no_ai_equipped";
-	public static final String CAN_NOT_COMPILE_AI = "can_not_compile_ai";
-	public static final String AI_DISABLED = "ai_disabled";
-	public static final String AI_INTERRUPTED = "ai_interrupted";
-	public static final String AI_TIMEOUT = "ai_timeout";
-	public static final String CODE_TOO_LARGE = "code_too_large";
-	public static final String CODE_TOO_LARGE_FUNCTION = "code_too_large_function";
-	public static final String NUMBER_OF_OPERATIONS = "number_of_operations";
+	public static final int NO_WEAPON_EQUIPED = 1000;
+	public static final int CHIP_NOT_EQUIPED = 1001;
+	public static final int CHIP_NOT_EXISTS = 1002;
 
 	public FarmerLog() {
 		super();
@@ -64,7 +50,7 @@ public class FarmerLog extends AILog {
 		mCurArray.add(action);
 	}
 
-	public void addSystemLog(Entity leek, int type, String trace, String key, String[] parameters) {
+	public void addSystemLog(Entity leek, int type, String error, int key, String[] parameters) {
 		int paramSize = 0;
 		if (parameters != null) {
 			for (String p : parameters) {
@@ -73,13 +59,13 @@ public class FarmerLog extends AILog {
 				}
 			}
 		}
-		if (!addSize(20 + trace.length() + key.length() + paramSize)) {
+		if (!addSize(20 + paramSize)) {
 			return;
 		}
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(type);
-		obj.add(trace);
+		obj.add(error);
 		obj.add(key);
 		if (parameters != null)
 			obj.add(parameters);

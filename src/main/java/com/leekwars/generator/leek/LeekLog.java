@@ -3,6 +3,7 @@ package com.leekwars.generator.leek;
 import com.alibaba.fastjson.JSONArray;
 import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.entity.Entity;
+import leekscript.common.Error;
 
 import leekscript.AILog;
 
@@ -26,8 +27,16 @@ public class LeekLog extends AILog {
 		farmerLogs.addLog(entity, warning, string);
 	}
 
-	public void addSystemLog(int type, String errorMessage, String key, String[] parameters) {
-		farmerLogs.addSystemLog(entity, type, errorMessage, key, parameters);
+	public void addSystemLog(int type, Error error) {
+		addSystemLog(type, "", error.ordinal(), null);
+	}
+
+	public void addSystemLog(int type, Error error, String[] parameters) {
+		addSystemLog(type, "", error.ordinal(), parameters);
+	}
+
+	public void addSystemLog(int type, String trace, int key, String[] parameters) {
+		farmerLogs.addSystemLog(entity, type, trace, key, parameters);
 	}
 
 	public void setLogs(Actions actions) {

@@ -34,6 +34,7 @@ import leekscript.functions.Functions;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
+import leekscript.common.Error;
 
 public class Generator {
 
@@ -91,7 +92,7 @@ public class Generator {
 			error.add(1);
 			error.add(0);
 			error.add("?");
-			error.add("internal_error");
+			error.add(Error.INTERNAL_ERROR.ordinal());
 			result.informations.add(error);
 			return result;
 		}
