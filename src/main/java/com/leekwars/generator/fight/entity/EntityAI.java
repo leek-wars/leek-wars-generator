@@ -180,7 +180,7 @@ public class EntityAI extends AI {
 	}
 
 	public void addSystemLog(int type, String key, String[] parameters, StackTraceElement[] elements) {
-
+		addOperationsNoCheck(AI.ERROR_LOG_COST);
 		if (type == FarmerLog.WARNING)
 			type = FarmerLog.SWARNING;
 		else if (type == FarmerLog.ERROR)
