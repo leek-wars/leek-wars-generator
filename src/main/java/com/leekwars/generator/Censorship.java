@@ -1,8 +1,7 @@
 package com.leekwars.generator;
 
-import java.text.Normalizer;
+
 import java.util.HashSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.leekwars.generator.fight.Fight;
