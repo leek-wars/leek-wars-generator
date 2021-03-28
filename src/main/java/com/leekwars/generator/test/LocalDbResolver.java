@@ -17,12 +17,12 @@ public class LocalDbResolver implements Resolver<DbContext> {
 
 	private static class AIFolder {
 		public int id;
-		public String name;
+		// public String name;
 		public int folder;
 
 		public AIFolder(int id, String name, int folder) {
 			this.id = id;
-			this.name = name;
+			// this.name = name;
 			this.folder = folder;
 		}
 	}
