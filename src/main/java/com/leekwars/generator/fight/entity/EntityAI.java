@@ -714,7 +714,7 @@ public class EntityAI extends AI {
 		mEntity.useTP(1);
 		if (message.length() > 500)
 			message = message.substring(0, 500);
-		message = Censorship.checkString(message);
+		message = Censorship.checkString(fight, message);
 		fight.log(new ActionSay(mEntity, message));
 		fight.log(new ActionLoseTP(mEntity, 1));
 		mSays.add(message);
