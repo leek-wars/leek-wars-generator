@@ -174,7 +174,7 @@ public class Pathfinding {
 		ignoredCells.add(leek_cell);
 
 		// Ignore first entity in area for Area first in line
-		if (attack.getArea() == Area.TYPE_FIRST_IN_LINE) {
+		if (attack.getArea() == Area.TYPE_FIRST_IN_LINE && !attack.needLos()) {
 			Cell cell = Pathfinding.getFirstEntity(start, end, attack.getMinRange(), attack.getMaxRange());
 			if (cell != null) {
 				ignoredCells.add(cell);
