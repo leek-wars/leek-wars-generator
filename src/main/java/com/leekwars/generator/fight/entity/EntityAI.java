@@ -51,7 +51,6 @@ import leekscript.runner.values.StringLeekValue;
 
 public class EntityAI extends AI {
 
-	public static final int ERROR_LOG_COST = 1000;
 	private static final String TAG = EntityAI.class.getSimpleName();
 
 	protected static class LeekMessage {
@@ -778,7 +777,6 @@ public class EntityAI extends AI {
 		Entity target = fight.getEntity(leek_id);
 		if (target != null && target != mEntity && !target.isDead()) {
 			if (mEntity.getWeapon() == null) {
-				this.addOperations(EntityAI.ERROR_LOG_COST);
 				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPED);
 			}
 			success = fight.useWeapon(mEntity, target.getCell());
@@ -791,7 +789,6 @@ public class EntityAI extends AI {
 		Cell target = fight.getMap().getCell(cell_id);
 		if (target != null && target != mEntity.getCell()) {
 			if (mEntity.getWeapon() == null) {
-				this.addOperations(EntityAI.ERROR_LOG_COST);
 				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPED);
 			}
 			success = fight.useWeapon(mEntity, target);
@@ -919,8 +916,6 @@ public class EntityAI extends AI {
 
 		if (chip == null) {
 			Chip ct = Chips.getChip(chip_id);
-
-			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null) {
 				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
@@ -941,8 +936,6 @@ public class EntityAI extends AI {
 
 		if (template == null) {
 			Chip ct = Chips.getChip(chip_id);
-
-			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null) {
 				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
@@ -2748,8 +2741,6 @@ public class EntityAI extends AI {
 		Chip template = mEntity.getChip(chip.getInt(this));
 		if (template == null) {
 			Chip ct = Chips.getChip(chip.getInt(this));
-
-			this.addOperations(EntityAI.ERROR_LOG_COST);
 			if (ct == null)
 				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)) });
 			else
@@ -2794,7 +2785,6 @@ public class EntityAI extends AI {
 
 			Chip ct = Chips.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
 
-			addOperations(ERROR_LOG_COST);
 			if (ct == null)
 				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
 			else
