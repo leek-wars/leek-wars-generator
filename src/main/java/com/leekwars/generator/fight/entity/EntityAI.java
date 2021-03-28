@@ -1138,7 +1138,7 @@ public class EntityAI extends AI {
 			}
 		} else if (leeks_to_ignore.getType() == AbstractLeekValue.NUMBER) {
 			logs.addLog(FarmerLog.WARNING,
-					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désorthiss utiliser un tableau de cellules à ignorer.");
+					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désormais utiliser un tableau de cellules à ignorer.");
 			Entity l = fight.getEntity(leeks_to_ignore.getInt(this));
 			if (l != null && l.getCell() != null) {
 				ignore.add(l.getCell());
