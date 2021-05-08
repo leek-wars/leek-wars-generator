@@ -14,6 +14,7 @@ import com.leekwars.generator.test.LocalDbResolver;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
+import leekscript.compiler.resolver.FileSystemContext;
 
 public class Main {
 
@@ -61,8 +62,8 @@ public class Main {
 		Generator generator = new Generator();
 		generator.setNocache(nocache);
 		if (analyze) {
-			// AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
-			AnalyzeResult result = generator.analyzeAI(file, new DbContext(farmer, folder));
+			AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
+			// AnalyzeResult result = generator.analyzeAI(file, new DbContext(farmer, folder));
 			System.out.println(result.informations);
 		} else {
 			Scenario scenario = Scenario.fromFile(new File(file));
