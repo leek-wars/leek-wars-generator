@@ -1,37 +1,37 @@
 apply plugin: 'java'
 
 sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java', 'leekscript-v1/src/main/java']
-        }
-    }
+	main {
+		java {
+			srcDirs = ['src/main/java', 'leekscript-v1/src/main/java']
+		}
+	}
 }
 
 test {
-    testLogging {
-        events "passed", "skipped", "failed"
-    }
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
 }
 
 jar {
 	baseName = 'generator'
 	manifest {
-        attributes "Main-Class": "com.leekwars.Main"
-    }
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+		attributes "Main-Class": "com.leekwars.Main"
+	}
+	from {
+		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	}
 }
 
 libsDirName = '..'
 
 repositories {
-    jcenter()
+	jcenter()
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
-    compile group: 'com.alibaba', name: 'fastjson', version: '1.1.25'
-	compile group: 'org.postgresql', name: 'postgresql', version: '42.2.5'
+	testImplementation 'junit:junit:4.12'
+	implementation group: 'com.alibaba', name: 'fastjson', version: '1.1.25'
+	implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.5'
 }
