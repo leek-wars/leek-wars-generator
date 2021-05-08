@@ -1,4 +1,7 @@
 # Leek Wars Generator
+
+[![CI](https://github.com/leek-wars/leek-wars-generator/actions/workflows/build.yml/badge.svg)](https://github.com/leek-wars/leek-wars-generator/actions/workflows/build.yml)
+
 Leek Wars fight generator using [leekscript](https://github.com/leek-wars/leekscript) language.
 
 ## Build
