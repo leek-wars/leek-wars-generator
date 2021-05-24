@@ -1006,8 +1006,10 @@ public class Fight {
 
 	public JSONObject getDeadReport() {
 		JSONObject dead = new JSONObject();
-		for (Entity entity : mEntities.values()) {
-			dead.put(String.valueOf(entity.getId()), entity.isDead());
+		for (Team team : teams) {
+			for (Entity entity : team.getEntities()) {
+				dead.put(String.valueOf(entity.getId()), entity.isDead());
+			}
 		}
 		return dead;
 	}
