@@ -78,7 +78,6 @@ public class TestMap {
 		}
 		// On teste différents chemins
 		map = Map.generateMap(fight, 0, 18, 18, 50, new ArrayList<Team>(), null);
-		Map.ConnexeMap cm = new Map.ConnexeMap(map);
 
 		for (int i = 1; i < map.getNbCell(); i += 10) {
 			for (int j = 600; j >= 0; j -= 10) {
@@ -87,9 +86,9 @@ public class TestMap {
 				List<Cell> path = Pathfinding.getAStarPath(null, c1, new Cell[] { c2 });
 				if (!c2.isWalkable() || !c1.isWalkable())
 					continue;
-				if (c1 == c2 || cm.getComposante(c1) != cm.getComposante(c2)) {
+				if (c1 == c2 || c1.getComposante() != c2.getComposante()) {
 					if (path != null) {
-						System.out.println(i + "," + j + " -- " + cm.getComposante(c1) + "," + cm.getComposante(c2));
+						System.out.println(i + "," + j + " -- " + c1.getComposante() + "," + c2.getComposante());
 						System.out.println(c1.getX() + "," + c1.getY() + " -- " + c2.getX() + "," + c2.getY());
 //						map.drawMap(path);
 						for (Cell c : path) {

@@ -82,6 +82,7 @@ public class Map {
 					}
 				} catch (Exception e) {}
 			}
+			map.computeComposantes();
 
 		} else {
 
@@ -109,7 +110,7 @@ public class Map {
 						c.setObstacle(type, size);
 					}
 				}
-				ConnexeMap cm = new ConnexeMap(map);
+				map.computeComposantes();
 				ArrayList<Entity> leeks = new ArrayList<Entity>();
 
 				// Set entities positions
@@ -142,9 +143,9 @@ public class Map {
 				// Check paths
 				valid = true;
 				if (leeks.size() > 0) {
-					int connexe = cm.getComposante(leeks.get(0).getCell().getX(), leeks.get(0).getCell().getY());
+					int composante = leeks.get(0).getCell().getComposante();
 					for (int i = 1; i < leeks.size(); i++) {
-						if (connexe != cm.getComposante(leeks.get(i).getCell().getX(), leeks.get(i).getCell().getY())) {
+						if (composante != leeks.get(i).getCell().getComposante()) {
 							valid = false;
 							break;
 						}
@@ -162,7 +163,7 @@ public class Map {
 		} else if (context == Fight.CONTEXT_TOURNAMENT) {
 			map.setType(5); // Arena
 		}
-
+		// map.drawMap();
 		return map;
 	}
 
@@ -276,6 +277,55 @@ public class Map {
 		return retour;
 	}
 
+	public void computeComposantes() {
+		var connexe = new int[this.coord.length][this.coord[0].length];
+		int x, y, x2, y2, ni = 1;
+		for (x = 0; x < connexe.length; x++) {
+			for (y = 0; y < connexe[x].length; y++)
+				connexe[x][y] = -1;
+		}
+
+		// On cherche les composantes connexes
+		for (x = 0; x < connexe.length; x++) {
+			for (y = 0; y < connexe[x].length; y++) {
+				Cell c = this.coord[x][y];
+				if (c == null) {
+					continue;
+				}
+				int cur_number = 0;
+				if (x > 0 && this.coord[x - 1][y] != null && this.coord[x - 1][y].isWalkable() == c.isWalkable())
+					cur_number = connexe[x - 1][y];
+
+				if (y > 0 && this.coord[x][y - 1] != null && this.coord[x][y - 1].isWalkable() == c.isWalkable()) {
+					if (cur_number == 0)
+						cur_number = connexe[x][y - 1];
+					else if (cur_number != connexe[x][y - 1]) {
+						int target_number = connexe[x][y - 1];
+						for (x2 = 0; x2 < connexe.length; x2++) {
+							for (y2 = 0; y2 <= y; y2++) {
+								if (connexe[x2][y2] == target_number)
+									connexe[x2][y2] = cur_number;
+							}
+						}
+					}
+				}
+
+				// On regarde si y'a un numéro de composante
+				if (cur_number == 0) {
+					// Si y'en a pas on lui en donen un
+					connexe[x][y] = ni;
+					ni++;
+				} else {
+					// Si y'en a un on le met
+					connexe[x][y] = cur_number;
+				}
+			}
+		}
+		for (var cell : this.cells) {
+			cell.composante = connexe[cell.getX() - this.min_x][cell.getY() - this.min_y];
+		}
+	}
+
 	public void drawMap() {
 		drawMap(new ArrayList<Cell>());
 	}
@@ -284,7 +334,6 @@ public class Map {
 
 		BufferedImage img = new BufferedImage(1600, 1200, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2d = (Graphics2D) img.getGraphics();
-		ConnexeMap connexe = new ConnexeMap(this);
 
 		int larg = 1600 / (max_x - min_x + 1);
 		int lng = 1200 / (max_y - min_y + 1);
@@ -311,11 +360,11 @@ public class Map {
 					g2d.fillRect(x * larg + 1, y * lng + 1, larg - 1, lng - 1);
 
 					g2d.setColor(Color.WHITE);
-					g2d.drawString((c.getX() - 17) + "," + c.getY(), x * larg + 2, y * lng + 15);
+					// g2d.drawString((c.getX() - 17) + "," + c.getY(), x * larg + 2, y * lng + 15);
 					g2d.drawString(c.getId() + " ", x * larg + 2, y * lng + 15);
-					g2d.drawString(connexe.getComposante(x + min_x, y + min_y) + "", x * larg + 2, y * lng + 30);
+
+					g2d.drawString(c.getComposante() + "", x * larg + 2, y * lng + 30);
 				}
-				g2d.drawString(connexe.getComposante(x + min_x, y + min_y) + "", x * larg + 2, y * lng + 30);
 			}
 		}
 
@@ -355,76 +404,6 @@ public class Map {
 				}
 			}
 			System.out.println("");
-		}
-	}
-
-	public static class ConnexeMap {
-
-		private final int connexe[][];
-		private final Map map;
-
-		public ConnexeMap(Map map) {
-			this.map = map;
-			connexe = new int[map.coord.length][map.coord[0].length];
-			int x, y, x2, y2, ni = 1;
-			for (x = 0; x < connexe.length; x++) {
-				for (y = 0; y < connexe[x].length; y++)
-					connexe[x][y] = -1;
-			}
-
-			// On cherche les composantes connexes
-			for (x = 0; x < connexe.length; x++) {
-				for (y = 0; y < connexe[x].length; y++) {
-					Cell c = map.coord[x][y];
-					if (c == null) {
-						continue;
-					}
-					int cur_number = 0;
-					if (x > 0 && map.coord[x - 1][y] != null && map.coord[x - 1][y].available() == c.available())
-						cur_number = connexe[x - 1][y];
-
-					if (y > 0 && map.coord[x][y - 1] != null && map.coord[x][y - 1].available() == c.available()) {
-						if (cur_number == 0)
-							cur_number = connexe[x][y - 1];
-						else if (cur_number != connexe[x][y - 1]) {
-							int target_number = connexe[x][y - 1];
-							for (x2 = 0; x2 < connexe.length; x2++) {
-								for (y2 = 0; y2 <= y; y2++) {
-									if (connexe[x2][y2] == target_number)
-										connexe[x2][y2] = cur_number;
-								}
-							}
-						}
-					}
-
-					// On regarde si y'a un numéro de composante
-					if (cur_number == 0) {
-						// Si y'en a pas on lui en donen un
-						connexe[x][y] = ni;
-						ni++;
-					} else {
-						// Si y'en a un on le met
-						connexe[x][y] = cur_number;
-					}
-					c.composante = connexe[x][y];
-				}
-			}
-		}
-
-		public int getComposante(Cell c) {
-			try {
-				return connexe[c.getX() - map.min_x][c.getY() - map.min_y];
-			} catch (ArrayIndexOutOfBoundsException e) {
-				return -1;
-			}
-		}
-
-		public int getComposante(int x, int y) {
-			try {
-				return connexe[x - map.min_x][y - map.min_y];
-			} catch (ArrayIndexOutOfBoundsException e) {
-				return -1;
-			}
 		}
 	}
 

@@ -175,7 +175,6 @@ public class FarmerStatistics {
 
 	public JSONArray toDBJson() {
 		JSONArray array = new JSONArray();
-		array.add(stashed); // 0
 		array.add(stashed); // 1
 		array.add(summons); // 2
 		array.add(roxxor); // 3
