@@ -134,10 +134,11 @@ public abstract class Effect {
 		EffectRawBuffWisdom.class, // 44
 		EffectNovaVitality.class, // 45
 		EffectAttract.class, // 46
-		EffectPush.class, // 47
-		EffectShackleAgility.class, // 48
-		EffectShackleWisdom.class, // 49
-		EffectRemoveShackles.class, // 50
+		EffectShackleAgility.class, // 47
+		EffectShackleWisdom.class, // 48
+		EffectRemoveShackles.class, // 49
+		null, // 50
+		EffectPush.class, // 51
 	};
 
 	// Effect characteristics
