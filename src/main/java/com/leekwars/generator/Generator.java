@@ -88,7 +88,7 @@ public class Generator {
 			result.informations = new JSONArray();
 			JSONArray error = new JSONArray();
 			error.add(0);
-			error.add(ai.getId());
+			error.add(ai != null ? ai.getId() : 0);
 			error.add(1);
 			error.add(0);
 			error.add("?");
