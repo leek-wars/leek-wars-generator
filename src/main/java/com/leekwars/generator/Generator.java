@@ -136,7 +136,7 @@ public class Generator {
 
 				// Create AI
 				LeekLog logs = new LeekLog(outcome.logs.get(aiOwner), entity);
-				entity.setAI(EntityAI.build(this, entityInfo.ai, entity.getFarmer(), aiOwner, entityInfo.ai_folder, entity, logs));
+				entity.setAI(EntityAI.build(this, entityInfo, entity, logs));
 				outcome.analyzeTime += entity.getAI().getAnalyzeTime();
 				outcome.compilationTime += entity.getAI().getCompileTime();
 			}

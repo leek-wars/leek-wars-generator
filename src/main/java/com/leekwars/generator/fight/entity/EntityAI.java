@@ -34,6 +34,7 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.scenario.EntityInfo;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
@@ -102,19 +103,24 @@ public class EntityAI extends AI {
 	 * Build an entity AI from parameters
 	 * Add the correct errors in farmer logs
 	 */
-	public static EntityAI build(Generator generator, String path, int farmer, int aiOwner, int aiFolder, Entity entity, LeekLog logs) {
+	public static EntityAI build(Generator generator, EntityInfo entityInfo, Entity entity, LeekLog logs) {
 
 		// No AI equipped : user error
-		if (path == null) {
+		if (entityInfo.ai == null && entityInfo.ai_path == null) {
 			logs.addSystemLog(LeekLog.SERROR, Error.NO_AI_EQUIPPED);
 			return new EntityAI(entity, logs);
 		}
 
 		// Resolve first
-		ResolverContext context = LeekScript.getResolver().createContext(farmer, aiOwner, aiFolder);
 		AIFile<?> file;
 		try {
-			file = LeekScript.getResolver().resolve(path, context);
+			if (entityInfo.ai_path != null) {
+				file = LeekScript.getFileSystemResolver().resolve(entityInfo.ai_path, null);
+			} else {
+
+				var context = LeekScript.getResolver().createContext(entityInfo.farmer, entityInfo.aiOwner, entityInfo.ai_folder);
+				file = LeekScript.getResolver().resolve(entityInfo.ai, context);
+			}
 		} catch (FileNotFoundException e) {
 			// Failed to resolve, not normal
 			generator.exception(e, entity.fight);
@@ -122,11 +128,11 @@ public class EntityAI extends AI {
 			return new EntityAI(entity, logs);
 		}
 
-		Log.i(TAG, "Compile AI " + path + "...");
+		Log.i(TAG, "Compile AI " + file.getPath() + "...");
 		try {
 			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", !generator.nocache);
 
-			Log.i(TAG, "AI " + path + " compiled!");
+			Log.i(TAG, "AI " + file.getPath() + " compiled!");
 			ai.valid = true;
 			ai.setEntity(entity);
 			ai.setLogs(logs);

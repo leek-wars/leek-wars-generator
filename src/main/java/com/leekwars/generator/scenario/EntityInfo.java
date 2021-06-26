@@ -27,6 +27,7 @@ public class EntityInfo {
 	public String name;
 	public String ai;
 	public int ai_folder;
+	public String ai_path;
 	public int aiOwner;
 	public int type;
 	public int farmer;
@@ -57,6 +58,7 @@ public class EntityInfo {
 		name = e.getString("name");
 		ai = e.getString("ai");
 		ai_folder = e.getIntValue("ai_folder");
+		ai_path = e.getString("ai_path");
 		farmer = e.getIntValue("farmer");
 		team = e.getIntValue("team");
 		level = e.getIntValue("level");
