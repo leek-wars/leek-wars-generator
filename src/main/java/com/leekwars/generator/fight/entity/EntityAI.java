@@ -46,6 +46,7 @@ import leekscript.runner.LeekRunException;
 import leekscript.runner.LeekValueManager;
 import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
+import leekscript.runner.values.DoubleLeekValue;
 import leekscript.runner.values.FunctionLeekValue;
 import leekscript.runner.values.StringLeekValue;
 import leekscript.common.Error;
@@ -889,8 +890,8 @@ public class EntityAI extends AI {
 		for (EffectParameters e : template.getAttack().getEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
+			effect.push(this, new DoubleLeekValue(e.getValue1()));
+			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
@@ -907,8 +908,8 @@ public class EntityAI extends AI {
 		for (EffectParameters e : template.getPassiveEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
+			effect.push(this, new DoubleLeekValue(e.getValue1()));
+			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
@@ -1074,8 +1075,8 @@ public class EntityAI extends AI {
 		for (EffectParameters e : chip.getAttack().getEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
+			effect.push(this, new DoubleLeekValue(e.getValue1()));
+			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
@@ -2052,8 +2053,8 @@ public class EntityAI extends AI {
 		for (EffectParameters e : l.getPassiveEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1()));
-			effect.push(this, LeekValueManager.getLeekDoubleValue(e.getValue1() + e.getValue2()));
+			effect.push(this, new DoubleLeekValue(e.getValue1()));
+			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
 			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
