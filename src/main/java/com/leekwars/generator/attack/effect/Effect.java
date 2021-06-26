@@ -5,8 +5,6 @@ import java.util.Map;
 
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;
-import leekscript.runner.LeekValueManager;
-import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
 
 import com.leekwars.generator.attack.Attack;
@@ -290,16 +288,16 @@ public abstract class Effect {
 		return attack;
 	}
 
-	public AbstractLeekValue getLeekValue(AI ai) throws LeekRunException {
+	public ArrayLeekValue getLeekValue(AI ai) throws LeekRunException {
 
 		ArrayLeekValue retour = new ArrayLeekValue();
-		retour.put(ai, 0, LeekValueManager.getLeekIntValue(id));
-		retour.put(ai, 1, LeekValueManager.getLeekIntValue(value));
-		retour.put(ai, 2, LeekValueManager.getLeekIntValue(caster.getFId()));
-		retour.put(ai, 3, LeekValueManager.getLeekIntValue(turns));
-		retour.put(ai, 4, LeekValueManager.getLeekBooleanValue(critical));
-		retour.put(ai, 5, LeekValueManager.getLeekIntValue(attack.getId()));
-		retour.put(ai, 6, LeekValueManager.getLeekIntValue(target.getFId()));
+		retour.put(ai, 0, id);
+		retour.put(ai, 1, value);
+		retour.put(ai, 2, caster.getFId());
+		retour.put(ai, 3, turns);
+		retour.put(ai, 4, critical);
+		retour.put(ai, 5, attack.getId());
+		retour.put(ai, 6, target.getFId());
 		return retour;
 	}
 

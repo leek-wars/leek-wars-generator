@@ -17,13 +17,7 @@ import com.leekwars.generator.maps.Map;
 import leekscript.LSException;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
-import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.BooleanLeekValue;
-import leekscript.runner.values.DoubleLeekValue;
-import leekscript.runner.values.IntLeekValue;
-import leekscript.runner.values.NullLeekValue;
-import leekscript.runner.values.StringLeekValue;
 
 public class TestFightFunctions {
 
@@ -497,25 +491,13 @@ public class TestFightFunctions {
 
 	private boolean testAI(Leek l, List<String> mCodes, List<Object> mValues) throws Exception {
 		String leekscript = "return [";
-		AbstractLeekValue[] values = new AbstractLeekValue[mValues.size()];
+		Object[] values = new Object[mValues.size()];
 
 		for (int i = 0; i < mValues.size(); i++) {
 			if (i != 0)
 				leekscript += ",";
 			leekscript += mCodes.get(i);
-			Object c = mValues.get(i);
-			if (c instanceof Integer)
-				values[i] = new IntLeekValue(((Integer) mValues.get(i)));
-			else if (c instanceof Double)
-				values[i] = new DoubleLeekValue(((Double) mValues.get(i)));
-			else if (c instanceof String)
-				values[i] = new StringLeekValue(((String) mValues.get(i)));
-			else if (c instanceof Boolean)
-				values[i] = new BooleanLeekValue(((Boolean) mValues.get(i)));
-			else if (c instanceof AbstractLeekValue)
-				values[i] = (AbstractLeekValue) mValues.get(i);
-			else
-				values[i] = new NullLeekValue();
+			values[i] = mValues.get(i);
 		}
 
 		leekscript += "];";
@@ -523,8 +505,8 @@ public class TestFightFunctions {
 			return GeneratorCompilation.testScriptGenerator(l, mFight, leekscript, new ArrayLeekValue(ai, values));
 		} catch (LSException e) {
 			System.err.println("Erreur :\n" + leekscript);
-			System.err.println("Valeur attendue :\n" + e.getThe().getString(ai));
-			System.err.println("Valeur renvoyée :\n" + e.getRun().getString(ai));
+			System.err.println("Valeur attendue :\n" + ai.string(e.getThe()));
+			System.err.println("Valeur renvoyée :\n" + ai.string(e.getRun()));
 			return false;
 		}
 	}

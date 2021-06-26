@@ -18,7 +18,7 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 
-public class TestMap {
+public class TestFightMap {
 
 	private Generator generator;
 	private Fight fight;

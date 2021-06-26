@@ -2,6 +2,7 @@ package com.leekwars.generator.fight;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -122,7 +123,7 @@ public class Fight {
 	private int mWinteam = -1;
 
 	private final java.util.Map<Integer, Entity> mEntities;
-	private final TreeMap<Integer, Entity> mEntitiesById;
+	private final HashMap<Integer, Entity> mEntitiesById;
 
 	public Generator generator;
 	private int mId;
@@ -160,8 +161,8 @@ public class Fight {
 
 		actions = new Actions();
 
-		mEntitiesById = new TreeMap<Integer, Entity>();
-		mEntities = new TreeMap<Integer, Entity>();
+		mEntitiesById = new HashMap<Integer, Entity>();
+		mEntities = new HashMap<Integer, Entity>();
 
 		statistics = new FightStatistics();
 
@@ -490,7 +491,7 @@ public class Fight {
 				current.getAI().runTurn();
 				long endTime = System.nanoTime();
 
-				statistics.addTimes(current, endTime - startTime, current.getAI().getOperations());
+				statistics.addTimes(current, endTime - startTime, current.getAI().operations());
 				executionTime += endTime - startTime;
 			} else {
 				// Add 'crash' action if AI is invalid

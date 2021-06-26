@@ -5,13 +5,7 @@ import java.util.List;
 
 import leekscript.LSException;
 import leekscript.runner.AI;
-import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.BooleanLeekValue;
-import leekscript.runner.values.DoubleLeekValue;
-import leekscript.runner.values.IntLeekValue;
-import leekscript.runner.values.NullLeekValue;
-import leekscript.runner.values.StringLeekValue;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -274,10 +268,10 @@ public class TestLeekFunctions {
 		values.add(null);
 
 		// Test getAIName
-		codes.add("getAIID()");
-		values.add(mLeek1.getAI().getId());
-		codes.add("getAIID(" + mLeek2.getFId() + ")");
-		values.add(mLeek2.getAI().getId());
+		// codes.add("getAIID()");
+		// values.add(mLeek1.getAI().getId());
+		// codes.add("getAIID(" + mLeek2.getFId() + ")");
+		// values.add(mLeek2.getAI().getId());
 		codes.add("getAIID(-1)");
 		values.add(null);
 
@@ -288,25 +282,13 @@ public class TestLeekFunctions {
 
 	private boolean testAI(Leek l, List<String> mCodes, List<Object> mValues) throws Exception {
 		String leekscript = "return [";
-		AbstractLeekValue[] values = new AbstractLeekValue[mValues.size()];
+		Object[] values = new Object[mValues.size()];
 
 		for (int i = 0; i < mValues.size(); i++) {
 			if (i != 0)
 				leekscript += ",";
 			leekscript += mCodes.get(i);
-			Object c = mValues.get(i);
-			if (c == null)
-				values[i] = new NullLeekValue();
-			else if (c instanceof Integer)
-				values[i] = new IntLeekValue(((Integer) mValues.get(i)));
-			else if (c instanceof Double)
-				values[i] = new DoubleLeekValue(((Double) mValues.get(i)));
-			else if (c instanceof String)
-				values[i] = new StringLeekValue(((String) mValues.get(i)));
-			else if (c instanceof Boolean)
-				values[i] = new BooleanLeekValue(((Boolean) mValues.get(i)));
-			else if (c instanceof AbstractLeekValue)
-				values[i] = (AbstractLeekValue) mValues.get(i);
+			values[i] = mValues.get(i);
 		}
 		leekscript += "];";
 		try {
@@ -314,8 +296,8 @@ public class TestLeekFunctions {
 		} catch (LSException e) {
 			int i = e.getIndex();
 			System.err.println("Erreur :\n" + mCodes.get(i));
-			System.err.println("Valeur attendue :\n" + e.getThe().getString(ai));
-			System.err.println("Valeur renvoyée :\n" + e.getRun().getString(ai));
+			System.err.println("Valeur attendue :\n" + ai.string(e.getThe()));
+			System.err.println("Valeur renvoyée :\n" + ai.string(e.getRun()));
 			return false;
 		}
 	}

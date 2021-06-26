@@ -8,7 +8,6 @@ import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.Scenario;
-import com.leekwars.generator.test.DbContext;
 import com.leekwars.generator.test.LocalDbRegisterManager;
 import com.leekwars.generator.test.LocalDbResolver;
 

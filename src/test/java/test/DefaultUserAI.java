@@ -2,62 +2,21 @@ package test;
 
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;
-import leekscript.runner.values.AbstractLeekValue;
 
 public class DefaultUserAI extends AI {
 
 	public DefaultUserAI() throws Exception {
-		super();
+		super(0, 11);
+	}
+
+	@Override
+	public Object runIA() throws LeekRunException {
+		return null;
 	}
 
 	@Override
 	protected String[] getErrorString() {
+		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	protected String getAItring() {
-		return null;
-	}
-
-	@Override
-	public AbstractLeekValue runIA() throws LeekRunException {
-		return null;
-	}
-
-	@Override
-	public int userFunctionCount(int id) {
-		return 0;
-	}
-
-	@Override
-	public boolean[] userFunctionReference(int id) {
-		return null;
-	}
-
-	@Override
-	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws LeekRunException {
-		return null;
-	}
-
-	@Override
-	public int anonymousFunctionCount(int id) {
-		return 0;
-	}
-
-	@Override
-	public boolean[] anonymousFunctionReference(int id) {
-		return null;
-	}
-
-	@Override
-	public int getVersion() {
-		return 10;
-	}
-
-	@Override
-	protected String[] getErrorFiles() {
-		return null;
-	}
-
 }

@@ -5,7 +5,6 @@ import com.leekwars.generator.fight.Fight;
 
 import leekscript.common.Type;
 import leekscript.runner.ILeekConstant;
-import leekscript.runner.LeekFunctions;
 
 public enum FightConstants implements ILeekConstant {
 

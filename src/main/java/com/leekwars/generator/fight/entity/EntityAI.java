@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Censorship;
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.Generator;
@@ -40,16 +39,11 @@ import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.exceptions.LeekCompilerException;
-import leekscript.compiler.resolver.ResolverContext;
 import leekscript.runner.AI;
 import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
-import leekscript.runner.LeekValueManager;
-import leekscript.runner.values.AbstractLeekValue;
 import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.DoubleLeekValue;
 import leekscript.runner.values.FunctionLeekValue;
-import leekscript.runner.values.StringLeekValue;
 import leekscript.common.Error;
 
 public class EntityAI extends AI {
@@ -59,9 +53,9 @@ public class EntityAI extends AI {
 	protected static class LeekMessage {
 		private final int mAuthor;
 		private final int mType;
-		private final AbstractLeekValue mMessage;
+		private final Object mMessage;
 
-		public LeekMessage(int author, int type, AbstractLeekValue message) {
+		public LeekMessage(int author, int type, Object message) {
 			mAuthor = author;
 			mType = type;
 			mMessage = message;
@@ -69,8 +63,7 @@ public class EntityAI extends AI {
 	}
 
 	// Un IARunner => égale plus ou moins à une fonction, une partie de code
-	// Le LeekIA s'occuper de gérer les liens entre le code utilisateur et les
-	// fonctions du combat
+	// Le LeekIA s'occuper de gérer les liens entre le code utilisateur et les fonctions du combat
 
 	protected Entity mInitialEntity;
 	protected Entity mEntity;
@@ -117,7 +110,6 @@ public class EntityAI extends AI {
 			if (entityInfo.ai_path != null) {
 				file = LeekScript.getFileSystemResolver().resolve(entityInfo.ai_path, null);
 			} else {
-
 				var context = LeekScript.getResolver().createContext(entityInfo.farmer, entityInfo.aiOwner, entityInfo.ai_folder);
 				file = LeekScript.getResolver().resolve(entityInfo.ai, context);
 			}
@@ -211,9 +203,9 @@ public class EntityAI extends AI {
 		}
 	}
 
-	private void putCells(List<Cell> ignore, AbstractLeekValue leeks_to_ignore) throws LeekRunException {
-		for (AbstractLeekValue value : leeks_to_ignore.getArray()) {
-			Cell l = fight.getMap().getCell(value.getInt(this));
+	private void putCells(List<Cell> ignore, ArrayLeekValue leeks_to_ignore) throws LeekRunException {
+		for (Object value : leeks_to_ignore) {
+			Cell l = fight.getMap().getCell(integer(value));
 			if (l == null)
 				continue;
 			ignore.add(l);
@@ -285,6 +277,7 @@ public class EntityAI extends AI {
 
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
+			// e.printStackTrace(System.out);
 			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
@@ -307,6 +300,7 @@ public class EntityAI extends AI {
 
 		} catch (RuntimeException e) { // Autre erreur, là c'est pas l'utilisateur
 
+			e.printStackTrace(System.out);
 			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
@@ -317,6 +311,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) { // Autre erreur, là c'est pas l'utilisateur
 
+			e.printStackTrace(System.out);
 			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
@@ -327,7 +322,7 @@ public class EntityAI extends AI {
 
 		} finally {
 			if (this != null) {
-				fight.statistics.addOperations(this.getOperations());
+				fight.statistics.addOperations(this.operations());
 			}
 		}
 
@@ -372,106 +367,106 @@ public class EntityAI extends AI {
 	 * @return Nombre de PM du leek ou Null si le leek est invalide
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getMP(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getMP());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getMP(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getMP();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getMP());
+				return l.getMP();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getTP(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getTP());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getTP(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getTP();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getTP());
+				return l.getTP();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getTotalMP(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getTotalMP());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getTotalMP(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getTotalMP();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getTotalMP());
+				return l.getTotalMP();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getTotalTP(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getTotalTP());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getTotalTP(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getTotalTP();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getTotalTP());
+				return l.getTotalTP();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getFrequency(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_FREQUENCY));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getFrequency(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_FREQUENCY);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_FREQUENCY));
+				return l.getStat(Entity.CHARAC_FREQUENCY);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
 	// Deprecated function in LeekScript
-	public AbstractLeekValue getCores(AbstractLeekValue value) {
-		return LeekValueManager.NULL;
+	public Object getCores(Object value) {
+		return null;
 	}
 
-	public AbstractLeekValue getStrength(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_STRENGTH));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getStrength(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_STRENGTH);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_STRENGTH));
+				return l.getStat(Entity.CHARAC_STRENGTH);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue isSummon(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekBooleanValue(mEntity.isSummon());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object isSummon(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.isSummon();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekBooleanValue(l.isSummon());
+				return l.isSummon();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getBirthTurn(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mBirthTurn);
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getBirthTurn(Object value) throws LeekRunException {
+		if (value == null)
+			return mBirthTurn;
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && l.getAI() != null)
-				return LeekValueManager.getLeekIntValue(l.getAI().mBirthTurn);
+				return l.getAI().mBirthTurn;
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getBulbChips(AbstractLeekValue value) throws LeekRunException {
-		int id = value.getInt(this);
+	public Object getBulbChips(Object value) throws LeekRunException {
+		int id = integer(value);
 		if (id > 0) {
 			Chip chip = Chips.getChip(id);
 			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
@@ -480,222 +475,222 @@ public class EntityAI extends AI {
 					List<Chip> chips = template.getChips();
 					ArrayLeekValue retour = new ArrayLeekValue();
 					for (int i = 0; i < chips.size(); i++) {
-						retour.put(this, i, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
+						retour.put(this, i, chips.get(i).getId());
 					}
 					return retour;
 				}
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getType(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL) {
-			return LeekValueManager.getLeekIntValue(mEntity.getType() + 1);
+	public Object getType(Object value) throws LeekRunException {
+		if (value == null) {
+			return mEntity.getType() + 1;
 		}
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getType() + 1);
+				return l.getType() + 1;
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getSummoner(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.isSummon() ? mEntity.getSummoner().getFId(): -1);
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getSummoner(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.isSummon() ? mEntity.getSummoner().getFId(): -1;
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.isSummon() ? l.getSummoner().getFId(): -1);
+				return l.isSummon() ? l.getSummoner().getFId(): -1;
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue isStatic(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekBooleanValue(mEntity.isStatic());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public boolean isStatic(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.isStatic();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekBooleanValue(l.isStatic());
+				return l.isStatic();
 		}
-		return LeekValueManager.FALSE;
+		return false;
 	}
 
-	public AbstractLeekValue getAgility(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_AGILITY));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getAgility(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_AGILITY);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_AGILITY));
+				return l.getStat(Entity.CHARAC_AGILITY);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getResistance(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_RESISTANCE));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getResistance(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_RESISTANCE);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_RESISTANCE));
+				return l.getStat(Entity.CHARAC_RESISTANCE);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getScience(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_SCIENCE));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getScience(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_SCIENCE);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_SCIENCE));
+				return l.getStat(Entity.CHARAC_SCIENCE);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getMagic(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_MAGIC));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getMagic(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_MAGIC);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_MAGIC));
+				return l.getStat(Entity.CHARAC_MAGIC);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getWisdom(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_WISDOM));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getWisdom(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_WISDOM);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_WISDOM));
+				return l.getStat(Entity.CHARAC_WISDOM);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getLeekID(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getId());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getLeekID(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getId();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getId());
+				return l.getId();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getAbsoluteShield(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_ABSOLUTE_SHIELD));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getAbsoluteShield(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_ABSOLUTE_SHIELD));
+				return l.getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getRelativeShield(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_RELATIVE_SHIELD));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getRelativeShield(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_RELATIVE_SHIELD);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_RELATIVE_SHIELD));
+				return l.getStat(Entity.CHARAC_RELATIVE_SHIELD);
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getDamageReturn(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getStat(Entity.CHARAC_DAMAGE_RETURN));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getDamageReturn(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getStat(Entity.CHARAC_DAMAGE_RETURN);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getStat(Entity.CHARAC_DAMAGE_RETURN));
+				return l.getStat(Entity.CHARAC_DAMAGE_RETURN);
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getTotalLife(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getTotalLife());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getTotalLife(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getTotalLife();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getTotalLife());
+				return l.getTotalLife();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getLevel(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getLevel());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getLevel(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getLevel();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getLevel());
+				return l.getLevel();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getName(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return new StringLeekValue(mEntity.getName());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getName(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getName();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return new StringLeekValue(l.getName());
+				return l.getName();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getCell(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL) {
+	public Object getCell(Object value) throws LeekRunException {
+		if (value == null) {
 			if (mEntity.getCell() != null)
-				return LeekValueManager.getLeekIntValue(mEntity.getCell().getId());
+				return mEntity.getCell().getId();
 		}
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && l.getCell() != null)
-				return LeekValueManager.getLeekIntValue(l.getCell().getId());
+				return l.getCell().getId();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getWeapon(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL) {
+	public Object getWeapon(Object value) throws LeekRunException {
+		if (value == null) {
 			if (mEntity.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(mEntity.getWeapon().getId());
+				return mEntity.getWeapon().getId();
 		}
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && l.getWeapon() != null)
-				return LeekValueManager.getLeekIntValue(l.getWeapon().getId());
+				return l.getWeapon().getId();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getLife(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getLife());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getLife(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getLife();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getLife());
+				return l.getLife();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
 	public boolean isEnemy(int id) {
@@ -712,23 +707,23 @@ public class EntityAI extends AI {
 		return mEntity.getTeam() == l.getTeam();
 	}
 
-	public AbstractLeekValue isAlive(int id) {
+	public boolean isAlive(int id) {
 		Entity l = fight.getEntity(id);
 		if (l == null)
-			return LeekValueManager.getLeekBooleanValue(false);
-		return LeekValueManager.getLeekBooleanValue(!l.isDead());
+			return false;
+		return !l.isDead();
 	}
 
-	public AbstractLeekValue isDead(int id) {
+	public boolean isDead(int id) {
 		Entity l = fight.getEntity(id);
 		if (l == null)
-			return LeekValueManager.getLeekBooleanValue(false);
-		return LeekValueManager.getLeekBooleanValue(l.isDead());
+			return false;
+		return l.isDead();
 	}
 
-	public AbstractLeekValue say(String message) {
+	public boolean say(String message) {
 		if (mEntity.getTP() < 1)
-			return LeekValueManager.getLeekBooleanValue(false);
+			return false;
 		mEntity.useTP(1);
 		if (message.length() > 500)
 			message = message.substring(0, 500);
@@ -738,53 +733,53 @@ public class EntityAI extends AI {
 		mSays.add(message);
 		fight.statistics.addSays(1);
 		fight.statistics.addSaysLength(message.length());
-		return LeekValueManager.getLeekBooleanValue(true);
+		return true;
 	}
 
-	public AbstractLeekValue getWeapons(AbstractLeekValue value) throws LeekRunException {
+	public ArrayLeekValue getWeapons(Object value) throws LeekRunException {
 		Entity l = null;
-		if (value.getType() == AbstractLeekValue.NULL)
+		if (value == null)
 			l = mEntity;
-		else if (value.getType() == AbstractLeekValue.NUMBER)
-			l = fight.getEntity(value.getInt(this));
+		else if (value instanceof Number)
+			l = fight.getEntity(((Number) value).intValue());
 		if (l == null)
-			return LeekValueManager.NULL;
+			return null;
 		List<Weapon> weapons = l.getWeapons();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < weapons.size(); i++) {
-			retour.put(this, i, LeekValueManager.getLeekIntValue(weapons.get(i).getId()));
+			retour.put(this, i, weapons.get(i).getId());
 		}
 		return retour;
 	}
 
-	public AbstractLeekValue getChips(AbstractLeekValue value) throws LeekRunException {
+	public ArrayLeekValue getChips(Object value) throws LeekRunException {
 		Entity l = null;
-		if (value.getType() == AbstractLeekValue.NULL)
+		if (value == null)
 			l = mEntity;
-		else if (value.getType() == AbstractLeekValue.NUMBER)
-			l = fight.getEntity(value.getInt(this));
+		else if (value instanceof Number)
+			l = fight.getEntity(((Number) value).intValue());
 		if (l == null)
-			return LeekValueManager.NULL;
+			return null;
 		List<Chip> chips = l.getChips();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < chips.size(); i++) {
-			retour.put(this, i, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
+			retour.put(this, i, chips.get(i).getId());
 		}
 		return retour;
 	}
 
-	public AbstractLeekValue getSummons(AbstractLeekValue value) throws LeekRunException {
+	public ArrayLeekValue getSummons(Object value) throws LeekRunException {
 		Entity l = null;
-		if (value.getType() == AbstractLeekValue.NULL)
+		if (value == null)
 			l = mEntity;
-		else if (value.getType() == AbstractLeekValue.NUMBER)
-			l = fight.getEntity(value.getInt(this));
+		else if (value instanceof Number)
+			l = fight.getEntity(((Number) value).intValue());
 		if (l == null)
-			return LeekValueManager.NULL;
+			return null;
 		List<Entity> summons = l.getSummons();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < summons.size(); i++) {
-			retour.put(this, i, LeekValueManager.getLeekIntValue(summons.get(i).getFId()));
+			retour.put(this, i, summons.get(i).getFId());
 		}
 		return retour;
 	}
@@ -814,14 +809,14 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public boolean canUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2) throws LeekRunException {
+	public boolean canUseWeapon(Object value1, Object value2) throws LeekRunException {
 		Entity target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getEntity(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getEntity(integer(value1));
 		} else {
-			target = fight.getEntity(value2.getInt(this));
-			weapon = Weapons.getWeapon(value1.getInt(this));
+			target = fight.getEntity(integer(value2));
+			weapon = Weapons.getWeapon(integer(value1));
 		}
 		if (weapon == null)
 			return false;
@@ -831,14 +826,14 @@ public class EntityAI extends AI {
 		return false;
 	}
 
-	public boolean canUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2) throws LeekRunException {
+	public boolean canUseWeaponOnCell(Object value1, Object value2) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getMap().getCell(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getMap().getCell(integer(value1));
 		} else {
-			target = fight.getMap().getCell(value2.getInt(this));
-			weapon = Weapons.getWeapon(value1.getInt(this));
+			target = fight.getMap().getCell(integer(value2));
+			weapon = Weapons.getWeapon(integer(value1));
 		}
 		if (weapon == null)
 			return false;
@@ -856,8 +851,8 @@ public class EntityAI extends AI {
 	}
 
 	// Deprecated : always 0
-	public AbstractLeekValue getWeaponFail(int id) {
-		return LeekValueManager.getLeekIntValue(0);
+	public int getWeaponFail(int id) {
+		return 0;
 	}
 
 	public int getWeaponMaxRange(int id) {
@@ -888,37 +883,37 @@ public class EntityAI extends AI {
 		return template.getName();
 	}
 
-	public AbstractLeekValue getWeaponEffects(int id) throws LeekRunException {
+	public ArrayLeekValue getWeaponEffects(int id) throws LeekRunException {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
-			return LeekValueManager.NULL;
+			return null;
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (EffectParameters e : template.getAttack().getEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, new DoubleLeekValue(e.getValue1()));
-			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
+			effect.push(this, e.getId());
+			effect.push(this, e.getValue1());
+			effect.push(this, e.getValue1() + e.getValue2());
+			effect.push(this, e.getTurns());
+			effect.push(this, e.getTargets());
+			effect.push(this, e.getModifiers());
 			retour.push(this, effect);
 		}
 		return retour;
 	}
 
-	public AbstractLeekValue getWeaponPassiveEffects(int id) throws LeekRunException {
+	public ArrayLeekValue getWeaponPassiveEffects(int id) throws LeekRunException {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
-			return LeekValueManager.NULL;
+			return null;
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (EffectParameters e : template.getPassiveEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, new DoubleLeekValue(e.getValue1()));
-			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
+			effect.push(this, e.getId());
+			effect.push(this, e.getValue1());
+			effect.push(this, e.getValue1() + e.getValue2());
+			effect.push(this, e.getTurns());
+			effect.push(this, e.getTargets());
+			effect.push(this, e.getModifiers());
 			retour.push(this, effect);
 		}
 		return retour;
@@ -984,7 +979,7 @@ public class EntityAI extends AI {
 		return false;
 	}
 
-	public AbstractLeekValue getChipTargets(int chip_id, int cell_id) throws LeekRunException {
+	public Object getChipTargets(int chip_id, int cell_id) throws LeekRunException {
 
 		Cell target = fight.getMap().getCell(cell_id);
 		Chip template = Chips.getChip(chip_id);
@@ -992,27 +987,26 @@ public class EntityAI extends AI {
 			ArrayLeekValue retour = new ArrayLeekValue();
 			List<Entity> entities = template.getAttack().getWeaponTargets(fight, mEntity, fight.getMap().getCell(cell_id));
 			for (Entity l : entities) {
-				retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
+				retour.push(this, l.getFId());
 			}
 			return retour;
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getCurrentCooldown(AbstractLeekValue chip_id, AbstractLeekValue v) throws LeekRunException {
-
-		if (v.getType() == AbstractLeekValue.NULL) {
-			Chip chipTemplate = Chips.getChip(chip_id.getInt(this));
-			return LeekValueManager.getLeekIntValue(fight.getCooldown(mEntity, chipTemplate));
+	public Object getCurrentCooldown(Object chip_id, Object v) throws LeekRunException {
+		if (v == null) {
+			Chip chipTemplate = Chips.getChip(integer(chip_id));
+			return fight.getCooldown(mEntity, chipTemplate);
 		}
-		if (v.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(v.getInt(this));
+		if (v instanceof Number) {
+			var l = fight.getEntity(((Number) v).intValue());
 			if (l != null) {
-				Chip chipTemplate = Chips.getChip(chip_id.getInt(this));
-				return LeekValueManager.getLeekIntValue(fight.getCooldown(l, chipTemplate));
+				Chip chipTemplate = Chips.getChip(integer(chip_id));
+				return fight.getCooldown(l, chipTemplate);
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
 	public String getChipName(int id) {
@@ -1029,41 +1023,41 @@ public class EntityAI extends AI {
 		return chip.getCooldown();
 	}
 
-	public AbstractLeekValue getChipMinRange(int id) {
+	public Object getChipMinRange(int id) {
 		Chip chip = Chips.getChip(id);
 		if (chip == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
-		return LeekValueManager.getLeekIntValue(chip.getAttack().getMinRange());
+		return chip.getAttack().getMinRange();
 	}
 
-	public AbstractLeekValue getChipMaxRange(int id) {
+	public Object getChipMaxRange(int id) {
 		Chip chip = Chips.getChip(id);
 		if (chip == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
-		return LeekValueManager.getLeekIntValue(chip.getAttack().getMaxRange());
+		return chip.getAttack().getMaxRange();
 	}
 
 	// Deprecated : always 0
-	public AbstractLeekValue getChipFail(int id) {
-		return LeekValueManager.getLeekIntValue(0);
+	public int getChipFail(int id) {
+		return 0;
 	}
 
-	public AbstractLeekValue getChipCost(int id) {
+	public Object getChipCost(int id) {
 		Chip chip = Chips.getChip(id);
 		if (chip == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
-		return LeekValueManager.getLeekIntValue(chip.getCost());
+		return chip.getCost();
 	}
 
-	public AbstractLeekValue getC(int id) {
+	public Object getC(int id) {
 		Chip chip = Chips.getChip(id);
 		if (chip == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
-		return LeekValueManager.getLeekIntValue(chip.getCost());
+		return chip.getCost();
 	}
 
 	public boolean isInlineChip(int id) {
@@ -1073,19 +1067,19 @@ public class EntityAI extends AI {
 		return chip.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
-	public AbstractLeekValue getChipEffects(int id) throws LeekRunException {
+	public ArrayLeekValue getChipEffects(int id) throws LeekRunException {
 		Chip chip = Chips.getChip(id);
 		if (chip == null)
-			return LeekValueManager.NULL;
+			return null;
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (EffectParameters e : chip.getAttack().getEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, new DoubleLeekValue(e.getValue1()));
-			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
+			effect.push(this, e.getId());
+			effect.push(this, e.getValue1());
+			effect.push(this, e.getValue1() + e.getValue2());
+			effect.push(this, e.getTurns());
+			effect.push(this, e.getTargets());
+			effect.push(this, e.getModifiers());
 			retour.push(this, effect);
 		}
 		return retour;
@@ -1113,51 +1107,51 @@ public class EntityAI extends AI {
 		return Pathfinding.getCaseDistance(cell1, cell2);
 	}
 
-	public AbstractLeekValue getPathLength(EntityAI ai, AbstractLeekValue c1, AbstractLeekValue c2, AbstractLeekValue leeks_to_ignore) throws LeekRunException {
+	public Object getPathLength(Object c1, Object c2, Object leeks_to_ignore) throws LeekRunException {
 
-		Cell cell1 = fight.getMap().getCell(c1.getInt(this));
+		Cell cell1 = fight.getMap().getCell(integer(c1));
 		if (cell1 == null)
-			return LeekValueManager.NULL;
-		Cell cell2 = fight.getMap().getCell(c2.getInt(this));
+			return null;
+		Cell cell2 = fight.getMap().getCell(integer(c2));
 		if (cell2 == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		List<Cell> ignore = new ArrayList<Cell>();
 
-		if (leeks_to_ignore.getType() == AbstractLeekValue.ARRAY) {
-			putCells(ignore, leeks_to_ignore);
+		if (leeks_to_ignore instanceof ArrayLeekValue) {
+			putCells(ignore, (ArrayLeekValue) leeks_to_ignore);
 		}
 		if (cell1 == cell2)
-			return LeekValueManager.getLeekIntValue(0);
+			return 0;
 
-		List<Cell> path = fight.getMap().getPathBeetween(ai, cell1, cell2, ignore);
+		List<Cell> path = fight.getMap().getPathBeetween(this, cell1, cell2, ignore);
 		if (path == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekIntValue(path.size());
+			return null;
+		return path.size();
 	}
 
-	public AbstractLeekValue getPath(AbstractLeekValue c1, AbstractLeekValue c2, AbstractLeekValue leeks_to_ignore) throws LeekRunException {
+	public Object getPath(Object c1, Object c2, Object leeks_to_ignore) throws LeekRunException {
 
-		Cell cell1 = fight.getMap().getCell(c1.getInt(this));
+		Cell cell1 = fight.getMap().getCell(integer(c1));
 		if (cell1 == null)
-			return LeekValueManager.NULL;
-		Cell cell2 = fight.getMap().getCell(c2.getInt(this));
+			return null;
+		Cell cell2 = fight.getMap().getCell(integer(c2));
 		if (cell2 == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		List<Cell> ignore = new ArrayList<Cell>();
 
-		if (leeks_to_ignore.getType() == AbstractLeekValue.ARRAY) {
-			for (AbstractLeekValue value : leeks_to_ignore.getArray()) {
-				Cell l = fight.getMap().getCell(value.getInt(this));
+		if (leeks_to_ignore instanceof ArrayLeekValue) {
+			for (var value : (ArrayLeekValue) leeks_to_ignore) {
+				Cell l = fight.getMap().getCell(integer(value));
 				if (l == null)
 					continue;
 				ignore.add(l);
 			}
-		} else if (leeks_to_ignore.getType() == AbstractLeekValue.NUMBER) {
+		} else if (leeks_to_ignore instanceof Number) {
 			logs.addLog(FarmerLog.WARNING,
 					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désormais utiliser un tableau de cellules à ignorer.");
-			Entity l = fight.getEntity(leeks_to_ignore.getInt(this));
+			Entity l = fight.getEntity(integer(leeks_to_ignore));
 			if (l != null && l.getCell() != null) {
 				ignore.add(l.getCell());
 			}
@@ -1167,10 +1161,10 @@ public class EntityAI extends AI {
 
 		List<Cell> path = fight.getMap().getPathBeetween(this, cell1, cell2, ignore);
 		if (path == null)
-			return LeekValueManager.NULL;
+			return null;
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < path.size(); i++) {
-			retour.put(this, i, LeekValueManager.getLeekIntValue(path.get(i).getId()));
+			retour.put(this, i, path.get(i).getId());
 		}
 		return retour;
 	}
@@ -1189,25 +1183,25 @@ public class EntityAI extends AI {
 		return !cell.isWalkable() ? 2 : (cell.getPlayer() != null ? 1 : 0);
 	}
 
-	public AbstractLeekValue getCellFromXY(int x, int y) {
+	public Object getCellFromXY(int x, int y) {
 		Cell cell = fight.getMap().getCell(x + fight.getMap().getWidth() - 1, y);
 		if (cell == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekIntValue(cell.getId());
+			return null;
+		return cell.getId();
 	}
 
-	public AbstractLeekValue getCellX(int c) {
+	public Object getCellX(int c) {
 		Cell cell = fight.getMap().getCell(c);
 		if (cell == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekIntValue(cell.getX() - fight.getMap().getWidth() + 1);
+			return null;
+		return cell.getX() - fight.getMap().getWidth() + 1;
 	}
 
-	public AbstractLeekValue getCellY(int c) {
+	public Object getCellY(int c) {
 		Cell cell = fight.getMap().getCell(c);
 		if (cell == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekIntValue(cell.getY());
+			return null;
+		return cell.getY();
 	}
 
 	public boolean isEmpty(int c) {
@@ -1283,25 +1277,25 @@ public class EntityAI extends AI {
 		return fight.getTurn();
 	}
 
-	public AbstractLeekValue getTime() {
+	public String getTime() {
 		DateFormat df = new SimpleDateFormat("HH:mm:ss");
-		return new StringLeekValue(df.format(fight.getDate()).toString());
+		return df.format(fight.getDate()).toString();
 	}
 
-	public AbstractLeekValue getTimestamp() {
-		return LeekValueManager.getLeekIntValue((int) (fight.getDate().getTime() / 1000));
+	public int getTimestamp() {
+		return (int) (fight.getDate().getTime() / 1000);
 	}
 
-	public AbstractLeekValue getDate() {
+	public String getDate() {
 		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-		return new StringLeekValue(df.format(fight.getDate()).toString());
+		return df.format(fight.getDate()).toString();
 	}
 
 	public ArrayLeekValue getAllChips() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Chip chip : Chips.getTemplates().values()) {
-			retour.put(this, i++, LeekValueManager.getLeekIntValue(chip.getId()));
+			retour.put(this, i++, chip.getId());
 		}
 		return retour;
 	}
@@ -1310,7 +1304,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Weapon weapon : Weapons.getTemplates().values()) {
-			retour.put(this, i++, LeekValueManager.getLeekIntValue(weapon.getId()));
+			retour.put(this, i++, weapon.getId());
 		}
 		return retour;
 	}
@@ -1318,7 +1312,7 @@ public class EntityAI extends AI {
 	public ArrayLeekValue getAllEffects() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < Effect.effects.length; ++i) {
-			retour.put(this, i, LeekValueManager.getLeekIntValue(i + 1));
+			retour.put(this, i, i + 1);
 		}
 		return retour;
 	}
@@ -1328,7 +1322,7 @@ public class EntityAI extends AI {
 		int nb = 0;
 		for (Entity e : fight.getAllEntities(false)) {
 			if (e.getTeam() != mEntity.getTeam()) {
-				retour.put(this, nb, LeekValueManager.getLeekIntValue(e.getFId()));
+				retour.put(this, nb, e.getFId());
 				nb++;
 			}
 		}
@@ -1350,7 +1344,7 @@ public class EntityAI extends AI {
 		int nb = 0;
 		for (Entity e : fight.getAllEntities(true)) {
 			if (e.getTeam() != mEntity.getTeam() && e.isDead()) {
-				retour.put(this, nb, LeekValueManager.getLeekIntValue(e.getFId()));
+				retour.put(this, nb, e.getFId());
 				nb++;
 			}
 		}
@@ -1371,7 +1365,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int nb = 0;
 		for (Entity l : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
-			retour.put(this, nb, LeekValueManager.getLeekIntValue(l.getFId()));
+			retour.put(this, nb, l.getFId());
 			nb++;
 		}
 		return retour;
@@ -1389,22 +1383,22 @@ public class EntityAI extends AI {
 		return fight.getEnemiesEntities(mEntity.getTeam(), true).size();
 	}
 
-	public AbstractLeekValue getAlliedTurret() {
+	public Object getAlliedTurret() {
 		if (fight.getType() == Fight.TYPE_TEAM) {
 			for (Entity e : fight.getTeamEntities(mEntity.getTeam(), true)) {
-				if (e.getType() == Entity.TYPE_TURRET) return LeekValueManager.getLeekIntValue(e.getFId());
+				if (e.getType() == Entity.TYPE_TURRET) return e.getFId();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getEnemyTurret() {
+	public Object getEnemyTurret() {
 		if (fight.getType() == Fight.TYPE_TEAM) {
 			for (Entity e : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
-				if (e.getType() == Entity.TYPE_TURRET) return LeekValueManager.getLeekIntValue(e.getFId());
+				if (e.getType() == Entity.TYPE_TURRET) return e.getFId();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
 	public int getNearestAlly() throws LeekRunException {
@@ -1445,7 +1439,7 @@ public class EntityAI extends AI {
 	public ArrayLeekValue getAliveAllies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam())) {
-			retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
+			retour.push(this, l.getFId());
 		}
 		return retour;
 	}
@@ -1458,7 +1452,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
 			if (l.isDead()) {
-				retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
+				retour.push(this, l.getFId());
 			}
 		}
 		return retour;
@@ -1476,7 +1470,7 @@ public class EntityAI extends AI {
 	public ArrayLeekValue getAllies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
-			retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
+			retour.push(this, l.getFId());
 		}
 		return retour;
 	}
@@ -1501,29 +1495,29 @@ public class EntityAI extends AI {
 		return fight.getOrder().getPreviousPlayer().getFId();
 	}
 
-	public AbstractLeekValue getWeaponTargets(AbstractLeekValue value1, AbstractLeekValue value2) throws LeekRunException {
+	public Object getWeaponTargets(Object value1, Object value2) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getMap().getCell(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getMap().getCell(integer(value1));
 		} else {
-			weapon = Weapons.getWeapon(value1.getInt(this));
-			target = fight.getMap().getCell(value2.getInt(this));
+			weapon = Weapons.getWeapon(integer(value1));
+			target = fight.getMap().getCell(integer(value2));
 		}
 
 		if (weapon == null)
-			return LeekValueManager.NULL;
+			return null;
 		if (target != null && mEntity.getCell() != null) {
 			ArrayLeekValue retour = new ArrayLeekValue();
 			List<Entity> leeks = weapon.getAttack().getWeaponTargets(fight, mEntity, target);
 			for (Entity l : leeks) {
-				retour.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
+				retour.push(this, l.getFId());
 			}
 			return retour;
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
 	/**
@@ -1539,30 +1533,30 @@ public class EntityAI extends AI {
 	 * @return Array des cellules affectées
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getWeaponArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
+	public Object getWeaponArea(Object value1, Object value2, Object value3) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getMap().getCell(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getMap().getCell(integer(value1));
 		} else {
-			weapon = Weapons.getWeapon(value1.getInt(this));
-			target = fight.getMap().getCell(value2.getInt(this));
+			weapon = Weapons.getWeapon(integer(value1));
+			target = fight.getMap().getCell(integer(value2));
 		}
 
 		Cell start_cell = mEntity.getCell();
-		if (value3.getType() != AbstractLeekValue.NULL) {
-			start_cell = fight.getMap().getCell(value3.getInt(this));
+		if (value3 != null) {
+			start_cell = fight.getMap().getCell(integer(value3));
 		}
 
 		if (target == null)
-			return LeekValueManager.NULL;
+			return null;
 		// On récupère l'arme
 		if (weapon == null)
-			return LeekValueManager.NULL;
+			return null;
 		// On vérifie que la cellule de départ existe
 		if (start_cell == null)
-			return LeekValueManager.NULL;
+			return null;
 		ArrayLeekValue retour = new ArrayLeekValue();
 
 		if (Pathfinding.verifyRange(start_cell, target, weapon.getAttack())) {
@@ -1570,28 +1564,28 @@ public class EntityAI extends AI {
 			List<Cell> cells = weapon.getAttack().getTargetCells(start_cell, target);
 			// On les met dans le tableau
 			for (Cell cell : cells) {
-				retour.push(this, LeekValueManager.getLeekIntValue(cell.getId()));
+				retour.push(this, cell.getId());
 			}
 		}
 		return retour;
 	}
 
-	public int getCellToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
+	public int getCellToUseWeapon(Object value1, Object value2, Object value3) throws LeekRunException {
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getEntity(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getEntity(integer(value1));
 		} else {
-			weapon = Weapons.getWeapon(value1.getInt(this));
-			target = fight.getEntity(value2.getInt(this));
+			weapon = Weapons.getWeapon(integer(value1));
+			target = fight.getEntity(integer(value2));
 		}
 		int cell = -1;
 		if (target != null && target.getCell() != null && weapon != null) {
 
 			ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-			if (value3.getType() == AbstractLeekValue.ARRAY) {
-				putCells(cells_to_ignore, value3);
+			if (value3 instanceof ArrayLeekValue) {
+				putCells(cells_to_ignore, (ArrayLeekValue) value3);
 			} else
 				cells_to_ignore.add(mEntity.getCell());
 			List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
@@ -1613,23 +1607,23 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public int getCellToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
+	public int getCellToUseWeaponOnCell(Object value1, Object value2, Object value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getMap().getCell(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getMap().getCell(integer(value1));
 		} else {
-			weapon = Weapons.getWeapon(value1.getInt(this));
-			target = fight.getMap().getCell(value2.getInt(this));
+			weapon = Weapons.getWeapon(integer(value1));
+			target = fight.getMap().getCell(integer(value2));
 		}
 		int retour = -1;
 		if (target != null && weapon != null) {
 
 			ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-			if (value3.getType() == AbstractLeekValue.ARRAY) {
-				putCells(cells_to_ignore, value3);
+			if (value3 instanceof ArrayLeekValue) {
+				putCells(cells_to_ignore, (ArrayLeekValue) value3);
 			} else
 				cells_to_ignore.add(mEntity.getCell());
 
@@ -1652,18 +1646,18 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getCellToUseChip(AbstractLeekValue chip, AbstractLeekValue t, AbstractLeekValue value3) throws LeekRunException {
+	public int getCellToUseChip(Object chip, Object t, Object value3) throws LeekRunException {
 
-		Entity target = fight.getEntity(t.getInt(this));
+		Entity target = fight.getEntity(integer(t));
 		int cell = -1;
 		if (target == null)
 			return cell;
-		Chip template = Chips.getChip(chip.getInt(this));
+		Chip template = Chips.getChip(integer(chip));
 		if (template == null)
 			return cell;
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-		if (value3.getType() == AbstractLeekValue.ARRAY) {
-			putCells(cells_to_ignore, value3);
+		if (value3 instanceof ArrayLeekValue) {
+			putCells(cells_to_ignore, (ArrayLeekValue) value3);
 		} else
 			cells_to_ignore.add(mEntity.getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target.getCell(), cells_to_ignore);
@@ -1683,19 +1677,19 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public int getCellToUseChipOnCell(AbstractLeekValue chip, AbstractLeekValue cell, AbstractLeekValue value3) throws LeekRunException {
+	public int getCellToUseChipOnCell(Object chip, Object cell, Object value3) throws LeekRunException {
 
 		int retour = -1;
-		Cell target = fight.getMap().getCell(cell.getInt(this));
+		Cell target = fight.getMap().getCell(integer(cell));
 		if (target == null)
-			return cell.getInt(this);
-		Chip template = Chips.getChip(chip.getInt(this));
+			return integer(cell);
+		Chip template = Chips.getChip(integer(chip));
 		if (template == null)
-			return cell.getInt(this);
+			return integer(cell);
 
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-		if (value3.getType() == AbstractLeekValue.ARRAY) {
-			putCells(cells_to_ignore, value3);
+		if (value3 instanceof ArrayLeekValue) {
+			putCells(cells_to_ignore, (ArrayLeekValue) value3);
 		} else
 			cells_to_ignore.add(mEntity.getCell());
 
@@ -1765,7 +1759,7 @@ public class EntityAI extends AI {
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
 			for (int i = 0; i < leeks.size(); i++) {
-				int value = leeks.get(this, i).getValue().getInt(this);
+				int value = integer(leeks.get(this, i));
 				Entity l = fight.getEntity(value);
 				if (l != null && !l.isDead())
 					targets.add(l.getCell());
@@ -1780,15 +1774,15 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardCells(ArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
+	public int moveTowardCells(ArrayLeekValue cells, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
 		int used_pm = 0;
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
-			for (int i = 0; i < leeks.size(); i++) {
-				int value = leeks.get(this, i).getValue().getInt(this);
+			for (int i = 0; i < cells.size(); i++) {
+				int value = integer(cells.get(this, i).getValue());
 				Cell c = fight.getMap().getCell(value);
 				if (c != null)
 					targets.add(c);
@@ -1849,7 +1843,7 @@ public class EntityAI extends AI {
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
 			for (int i = 0; i < leeks.size(); i++) {
-				int value = leeks.get(this, i).getValue().getInt(this);
+				int value = integer(leeks.get(this, i).getValue());
 				Entity l = fight.getEntity(value);
 				if (l != null && !l.isDead())
 					targets.add(l.getCell());
@@ -1872,7 +1866,7 @@ public class EntityAI extends AI {
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
 			for (int i = 0; i < leeks.size(); i++) {
-				int value = leeks.get(this, i).getValue().getInt(this);
+				int value = integer(leeks.get(this, i).getValue());
 				Cell c = fight.getMap().getCell(value);
 				if (c != null)
 					targets.add(c);
@@ -1955,7 +1949,7 @@ public class EntityAI extends AI {
 		fight.statistics.lama(mEntity);
 	}
 
-	public boolean sendTo(int target, int type, AbstractLeekValue message) {
+	public boolean sendTo(int target, int type, Object message) {
 		if (target == mEntity.getId()) {
 			return false;
 		}
@@ -1968,7 +1962,7 @@ public class EntityAI extends AI {
 		return true;
 	}
 
-	public void sendAll(int type, AbstractLeekValue message) {
+	public void sendAll(int type, Object message) {
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam())) {
 			if (l.getId() == mEntity.getId())
 				continue;
@@ -1977,14 +1971,14 @@ public class EntityAI extends AI {
 		}
 	}
 
-	public AbstractLeekValue getMessages(int target_leek) throws LeekRunException {
+	public Object getMessages(int target_leek) throws LeekRunException {
 
 		// On récupere le leek ciblé
 		Entity l = mEntity;
 		if (target_leek != -1 && target_leek != l.getFId()) {
 			l = fight.getEntity(target_leek);
 			if (mEntity.getTP() < 1) {
-				return LeekValueManager.NULL;
+				return null;
 			}
 			mEntity.useTP(1);
 			fight.log(new ActionLoseTP(mEntity, 1));
@@ -1998,8 +1992,8 @@ public class EntityAI extends AI {
 		if (lia != null) {
 			for (LeekMessage message : lia.mMessages) {
 				ArrayLeekValue m = new ArrayLeekValue();
-				m.put(this, 0, LeekValueManager.getLeekIntValue(message.mAuthor));
-				m.put(this, 1, LeekValueManager.getLeekIntValue(message.mType));
+				m.put(this, 0, message.mAuthor);
+				m.put(this, 1, message.mType);
 				m.put(this, 2, LeekOperations.clone(this, message.mMessage));
 				messages.push(this, m);
 			}
@@ -2007,15 +2001,15 @@ public class EntityAI extends AI {
 		return messages;
 	}
 
-	public AbstractLeekValue getEffects(AbstractLeekValue value) throws LeekRunException {
+	public Object getEffects(Object value) throws LeekRunException {
 		Entity l = null;
-		if (value.getType() == AbstractLeekValue.NULL) {
+		if (value == null) {
 			l = mEntity;
-		} else if (value.getType() == AbstractLeekValue.NUMBER) {
-			l = fight.getEntity(value.getInt(this));
+		} else if (value instanceof Number) {
+			l = fight.getEntity(integer(value));
 		}
 		if (l == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
@@ -2026,15 +2020,15 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getLaunchedEffects(AbstractLeekValue value) throws LeekRunException {
+	public Object getLaunchedEffects(Object value) throws LeekRunException {
 		Entity l = null;
-		if (value.getType() == AbstractLeekValue.NULL) {
+		if (value == null) {
 			l = mEntity;
-		} else if (value.getType() == AbstractLeekValue.NUMBER) {
-			l = fight.getEntity(value.getInt(this));
+		} else if (value instanceof Number) {
+			l = fight.getEntity(integer(value));
 		}
 		if (l == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
@@ -2045,25 +2039,25 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public AbstractLeekValue getPassiveEffects(AbstractLeekValue value) throws LeekRunException {
+	public Object getPassiveEffects(Object value) throws LeekRunException {
 		Entity l = null;
-		if (value.getType() == AbstractLeekValue.NULL) {
+		if (value == null) {
 			l = mEntity;
-		} else if (value.getType() == AbstractLeekValue.NUMBER) {
-			l = fight.getEntity(value.getInt(this));
+		} else if (value instanceof Number) {
+			l = fight.getEntity(integer(value));
 		}
 		if (l == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (EffectParameters e : l.getPassiveEffects()) {
 			ArrayLeekValue effect = new ArrayLeekValue();
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getId()));
-			effect.push(this, new DoubleLeekValue(e.getValue1()));
-			effect.push(this, new DoubleLeekValue(e.getValue1() + e.getValue2()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTurns()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getTargets()));
-			effect.push(this, LeekValueManager.getLeekIntValue(e.getModifiers()));
+			effect.push(this, e.getId());
+			effect.push(this, e.getValue1());
+			effect.push(this, e.getValue1() + e.getValue2());
+			effect.push(this, e.getTurns());
+			effect.push(this, e.getTargets());
+			effect.push(this, e.getModifiers());
 			retour.push(this, effect);
 		}
 		return retour;
@@ -2084,25 +2078,25 @@ public class EntityAI extends AI {
 	 * @return Array des cellules affectées
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getChipArea(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
+	public Object getChipArea(Object value1, Object value2, Object value3) throws LeekRunException {
 
 		Cell start_cell = mEntity.getCell();
-		if (value3.getType() != AbstractLeekValue.NULL) {
-			start_cell = fight.getMap().getCell(value3.getInt(this));
+		if (value3 != null) {
+			start_cell = fight.getMap().getCell(integer(value3));
 		}
 		// On vérifie que la cellule de départ existe
 
 		if (start_cell == null)
-			return LeekValueManager.NULL;
+			return null;
 		// On récupère la cellule
-		Cell c = fight.getMap().getCell(value2.getInt(this));
+		Cell c = fight.getMap().getCell(integer(value2));
 		if (c == null || mEntity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 		// On récupère le sort
-		Chip template = Chips.getChip(value1.getInt(this));
+		Chip template = Chips.getChip(integer(value1));
 
 		if (template == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (Pathfinding.verifyRange(start_cell, c, template.getAttack())) {
@@ -2111,7 +2105,7 @@ public class EntityAI extends AI {
 			// On les met dans le tableau
 			if (cells != null) {
 				for (Cell cell : cells) {
-					retour.push(this, LeekValueManager.getLeekIntValue(cell.getId()));
+					retour.push(this, cell.getId());
 				}
 			}
 		}
@@ -2127,23 +2121,23 @@ public class EntityAI extends AI {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseWeapon(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
+	public Object getCellsToUseWeapon(Object value1, Object value2, Object value3) throws LeekRunException {
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getEntity(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getEntity(integer(value1));
 		} else {
-			weapon = Weapons.getWeapon(value1.getInt(this));
-			target = fight.getEntity(value2.getInt(this));
+			weapon = Weapons.getWeapon(integer(value1));
+			target = fight.getEntity(integer(value2));
 		}
 
 		if (target == null || target.getCell() == null || weapon == null || mEntity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-		if (value3.getType() == AbstractLeekValue.ARRAY) {
-			putCells(cells_to_ignore, value3);
+		if (value3 instanceof ArrayLeekValue) {
+			putCells(cells_to_ignore, (ArrayLeekValue) value3);
 		} else
 			cells_to_ignore.add(mEntity.getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
@@ -2151,7 +2145,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, LeekValueManager.getLeekIntValue(cell.getId()));
+				retour.push(this, cell.getId());
 			}
 		}
 
@@ -2167,24 +2161,24 @@ public class EntityAI extends AI {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseWeaponOnCell(AbstractLeekValue value1, AbstractLeekValue value2, AbstractLeekValue value3) throws LeekRunException {
+	public Object getCellsToUseWeaponOnCell(Object value1, Object value2, Object value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 
-		if (value2.getType() == AbstractLeekValue.NULL) {
-			target = fight.getMap().getCell(value1.getInt(this));
+		if (value2 == null) {
+			target = fight.getMap().getCell(integer(value1));
 		} else {
-			weapon = Weapons.getWeapon(value1.getInt(this));
-			target = fight.getMap().getCell(value2.getInt(this));
+			weapon = Weapons.getWeapon(integer(value1));
+			target = fight.getMap().getCell(integer(value2));
 		}
 
 		if (target == null || weapon == null || mEntity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-		if (value3.getType() == AbstractLeekValue.ARRAY) {
-			putCells(cells_to_ignore, value3);
+		if (value3 instanceof ArrayLeekValue) {
+			putCells(cells_to_ignore, (ArrayLeekValue) value3);
 		} else
 			cells_to_ignore.add(mEntity.getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target, cells_to_ignore);
@@ -2192,7 +2186,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, LeekValueManager.getLeekIntValue(cell.getId()));
+				retour.push(this, cell.getId());
 			}
 		}
 
@@ -2210,17 +2204,17 @@ public class EntityAI extends AI {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseChip(AbstractLeekValue chip_id, AbstractLeekValue target_leek_id, AbstractLeekValue value3) throws LeekRunException {
+	public Object getCellsToUseChip(Object chip_id, Object target_leek_id, Object value3) throws LeekRunException {
 
-		Entity target = fight.getEntity(target_leek_id.getInt(this));
+		Entity target = fight.getEntity(integer(target_leek_id));
 		// On récupère le sort
-		Chip template = Chips.getChip(chip_id.getInt(this));
+		Chip template = Chips.getChip(integer(chip_id));
 		if (target == null || target.getCell() == null || template == null || mEntity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-		if (value3.getType() == AbstractLeekValue.ARRAY) {
-			putCells(cells_to_ignore, value3);
+		if (value3 instanceof ArrayLeekValue) {
+			putCells(cells_to_ignore, (ArrayLeekValue) value3);
 		} else
 			cells_to_ignore.add(mEntity.getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target.getCell(), cells_to_ignore);
@@ -2228,7 +2222,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, LeekValueManager.getLeekIntValue(cell.getId()));
+				retour.push(this, cell.getId());
 			}
 		}
 
@@ -2246,17 +2240,17 @@ public class EntityAI extends AI {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public AbstractLeekValue getCellsToUseChipOnCell(AbstractLeekValue chip_id, AbstractLeekValue target_cell_id, AbstractLeekValue value3) throws LeekRunException {
+	public Object getCellsToUseChipOnCell(Object chip_id, Object target_cell_id, Object value3) throws LeekRunException {
 
-		Cell target = fight.getMap().getCell(target_cell_id.getInt(this));
+		Cell target = fight.getMap().getCell(integer(target_cell_id));
 		// On récupère le sort
-		Chip template = Chips.getChip(chip_id.getInt(this));
+		Chip template = Chips.getChip(integer(chip_id));
 		if (target == null || template == null || mEntity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
-		if (value3.getType() == AbstractLeekValue.ARRAY) {
-			putCells(cells_to_ignore, value3);
+		if (value3 instanceof ArrayLeekValue) {
+			putCells(cells_to_ignore, (ArrayLeekValue) value3);
 		} else
 			cells_to_ignore.add(mEntity.getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target, cells_to_ignore);
@@ -2264,7 +2258,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, LeekValueManager.getLeekIntValue(cell.getId()));
+				retour.push(this, cell.getId());
 			}
 		}
 
@@ -2278,13 +2272,13 @@ public class EntityAI extends AI {
 	 *            Leek cible
 	 * @return Ennemi le plus proche
 	 */
-	public AbstractLeekValue getNearestEnemyTo(int leek_id) {
+	public Object getNearestEnemyTo(int leek_id) {
 
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
 
 		Entity entity = fight.getEntity(leek_id);
 		if (entity == null || entity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
@@ -2300,7 +2294,7 @@ public class EntityAI extends AI {
 				nearest = l;
 			}
 		}
-		return nearest == null ? LeekValueManager.NULL : LeekValueManager.getLeekIntValue(nearest.getFId());
+		return nearest == null ? null : nearest.getFId();
 	}
 
 	/**
@@ -2310,13 +2304,13 @@ public class EntityAI extends AI {
 	 *            Cellule cible
 	 * @return Ennemi le plus proche
 	 */
-	public AbstractLeekValue getNearestEnemyToCell(int cell_id) {
+	public Object getNearestEnemyToCell(int cell_id) {
 
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
 
 		Cell cell = fight.getMap().getCell(cell_id);
 		if (cell == null)
-			return LeekValueManager.NULL;
+			return null;
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
@@ -2328,21 +2322,21 @@ public class EntityAI extends AI {
 				nearest = l;
 			}
 		}
-		return nearest == null ? LeekValueManager.NULL : LeekValueManager.getLeekIntValue(nearest.getFId());
+		return nearest == null ? null : nearest.getFId();
 	}
 
 	/**
-	 * Retourne l'alli� le plus proche du leek fournis en paramètre
+	 * Retourne l'allié le plus proche du leek fournis en paramètre
 	 *
 	 * @param leek_id
 	 *            Leek cible
-	 * @return Alli� le plus proche
+	 * @return Allié le plus proche
 	 */
-	public AbstractLeekValue getNearestAllyTo(int leek_id) {
+	public Object getNearestAllyTo(int leek_id) {
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam() == 2 ? 2 : 1);
 		Entity entity = fight.getEntity(leek_id);
 		if (entity == null || entity.getCell() == null)
-			return LeekValueManager.NULL;
+			return null;
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
@@ -2356,7 +2350,7 @@ public class EntityAI extends AI {
 				nearest = l;
 			}
 		}
-		return nearest == null ? LeekValueManager.NULL : LeekValueManager.getLeekIntValue(nearest.getFId());
+		return nearest == null ? null : nearest.getFId();
 	}
 
 	/**
@@ -2366,11 +2360,11 @@ public class EntityAI extends AI {
 	 *            Cellule cible
 	 * @return C le plus proche
 	 */
-	public AbstractLeekValue getNearestAllyToCell(int cell_id) {
+	public Object getNearestAllyToCell(int cell_id) {
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam() == 2 ? 2 : 1);
 		Cell cell = fight.getMap().getCell(cell_id);
 		if (cell == null)
-			return LeekValueManager.NULL;
+			return null;
 		int dist = -1;
 		Entity nearest = null;
 		for (Entity l : entities) {
@@ -2385,49 +2379,49 @@ public class EntityAI extends AI {
 			}
 		}
 
-		return nearest == null ? LeekValueManager.NULL : LeekValueManager.getLeekIntValue(nearest.getFId());
+		return nearest == null ? null : nearest.getFId();
 	}
 
-	public AbstractLeekValue lineOfSight(AbstractLeekValue start, AbstractLeekValue end, AbstractLeekValue ignore) throws LeekRunException {
+	public Object lineOfSight(Object start, Object end, Object ignore) throws LeekRunException {
 
-		Cell s = fight.getMap().getCell(start.getInt(this));
-		Cell e = fight.getMap().getCell(end.getInt(this));
+		Cell s = fight.getMap().getCell(integer(start));
+		Cell e = fight.getMap().getCell(integer(end));
 
 		if (s == null || e == null)
-			return LeekValueManager.NULL;
+			return null;
 
-		if (ignore.getType() == AbstractLeekValue.NUMBER) {
+		if (ignore instanceof Number) {
 
-			Entity l = fight.getEntity(ignore.getInt(this));
+			Entity l = fight.getEntity(integer(ignore));
 			List<Cell> cells = new ArrayList<Cell>();
 			if (l != null && l.getCell() != null)
 				cells.add(l.getCell());
-			return LeekValueManager.getLeekBooleanValue(Pathfinding.verifyLoS(s, e, null, cells));
+			return Pathfinding.verifyLoS(s, e, null, cells);
 
-		} else if (ignore.getType() == AbstractLeekValue.ARRAY) {
+		} else if (ignore instanceof ArrayLeekValue) {
 
 			List<Cell> cells = new ArrayList<Cell>();
 			if (mEntity.getCell() != null)
 				cells.add(mEntity.getCell());
-			for (AbstractLeekValue value : ignore.getArray()) {
-				if (value.getType() == AbstractLeekValue.NUMBER) {
-					Entity l = fight.getEntity(value.getInt(this));
+			for (var value : (ArrayLeekValue) ignore) {
+				if (value.getValue() instanceof Number) {
+					Entity l = fight.getEntity(integer(value));
 					if (l != null && l.getCell() != null) {
 						cells.add(l.getCell());
 					}
 				}
 			}
-			return LeekValueManager.getLeekBooleanValue(Pathfinding.verifyLoS(s, e, null, cells));
+			return Pathfinding.verifyLoS(s, e, null, cells);
 
 		} else {
 
 			List<Cell> cells = new ArrayList<Cell>();
 			cells.add(mEntity.getCell());
-			return LeekValueManager.getLeekBooleanValue(Pathfinding.verifyLoS(s, e, null, cells));
+			return Pathfinding.verifyLoS(s, e, null, cells);
 		}
 	}
 
-	public AbstractLeekValue getObstacles() throws LeekRunException {
+	public Object getObstacles() throws LeekRunException {
 		Cell[] cells = fight.getMap().getObstacles();
 		ArrayLeekValue retour = new ArrayLeekValue();
 		if (cells == null)
@@ -2435,126 +2429,125 @@ public class EntityAI extends AI {
 
 		// On ajoute les caces
 		for (Cell c : cells)
-			retour.push(this, LeekValueManager.getLeekIntValue(c.getId()));
+			retour.push(this, c.getId());
 
 		return retour;
 	}
 
-	public AbstractLeekValue mark(AbstractLeekValue cell, AbstractLeekValue color, AbstractLeekValue duration) throws LeekRunException {
+	public Object mark(Object cell, Object color, Object duration) throws LeekRunException {
 		int d = 1;
 		int col = 1;
 		int[] cel = null;
-		if (cell.getType() == AbstractLeekValue.NUMBER) {
-			int id = cell.getInt(this);
+		if (cell instanceof Number) {
+			int id = integer(cell);
 			if (fight.getMap().getCell(id) == null)
-				return LeekValueManager.getLeekBooleanValue(false);
-			cel = new int[] { cell.getInt(this) };
-		} else if (cell.getType() == AbstractLeekValue.ARRAY) {
-			cel = new int[cell.getArray().size()];
+				return false;
+			cel = new int[] { integer(cell) };
+		} else if (cell instanceof ArrayLeekValue) {
+			cel = new int[((ArrayLeekValue) cell).size()];
 			int i = 0;
-			for (AbstractLeekValue value : cell.getArray()) {
-				if (fight.getMap().getCell(value.getInt(this)) == null)
+			for (var value : (ArrayLeekValue) cell) {
+				if (fight.getMap().getCell(integer(value)) == null)
 					continue;
-				cel[i] = value.getInt(this);
+				cel[i] = integer(value);
 				i++;
 			}
 			if (i == 0)
-				return LeekValueManager.getLeekBooleanValue(false);
+				return false;
 		} else
-			return LeekValueManager.getLeekBooleanValue(false);
+			return false;
 
-		if (color.getType() == AbstractLeekValue.NUMBER)
-			col = color.getInt(this);
-		if (duration.getType() == AbstractLeekValue.NUMBER)
-			d = duration.getInt(this);
+		if (color instanceof Number)
+			col = integer(color);
+		if (duration instanceof Number)
+			d = integer(duration);
 
 		logs.addCell(cel, col, d);
 
-		return LeekValueManager.getLeekBooleanValue(true);
+		return true;
 	}
 
-	public AbstractLeekValue clearMarks() throws LeekRunException {
+	public void clearMarks() throws LeekRunException {
 		logs.addClearCells();
-		return LeekValueManager.getLeekBooleanValue(true);
 	}
 
-	public AbstractLeekValue markText(AbstractLeekValue cell, AbstractLeekValue text, AbstractLeekValue color, AbstractLeekValue duration) throws LeekRunException {
+	public Object markText(Object cell, Object text, Object color, Object duration) throws LeekRunException {
 		int d = 1;
 		int col = 0xffffff;
 		int[] cel = null;
-		if (cell.getType() == AbstractLeekValue.NUMBER) {
-			int id = cell.getInt(this);
+		if (cell instanceof Number) {
+			int id = integer(cell);
 			if (fight.getMap().getCell(id) == null)
-				return LeekValueManager.getLeekBooleanValue(false);
-			cel = new int[] { cell.getInt(this) };
-		} else if (cell.getType() == AbstractLeekValue.ARRAY) {
-			cel = new int[cell.getArray().size()];
+				return false;
+			cel = new int[] { integer(cell) };
+		} else if (cell instanceof ArrayLeekValue) {
+			cel = new int[((ArrayLeekValue) cell).size()];
 			int i = 0;
-			for (AbstractLeekValue value : cell.getArray()) {
-				if (fight.getMap().getCell(value.getInt(this)) == null)
+			for (var value : (ArrayLeekValue) cell) {
+				if (fight.getMap().getCell(integer(value)) == null)
 					continue;
-				cel[i] = value.getInt(this);
+				cel[i] = integer(value);
 				i++;
 			}
 			if (i == 0)
-				return LeekValueManager.getLeekBooleanValue(false);
+				return false;
 		} else
-			return LeekValueManager.getLeekBooleanValue(false);
+			return false;
 
-		if (color.getType() == AbstractLeekValue.NUMBER)
-			col = color.getInt(this);
-		if (duration.getType() == AbstractLeekValue.NUMBER)
-			d = duration.getInt(this);
+		if (color instanceof Number)
+			col = integer(color);
+		if (duration instanceof Number)
+			d = integer(duration);
 
-		String userText = text.getString(this);
+		String userText = string(text);
 		String finalText = userText.substring(0, Math.min(userText.length(), 10));
 
 		logs.addCellText(cel, finalText, col, d);
 
-		return LeekValueManager.getLeekBooleanValue(true);
+		return true;
 	}
 
 	public void pause() {
 		logs.addPause();
 	}
 
-	public AbstractLeekValue show(AbstractLeekValue cell, AbstractLeekValue color) throws LeekRunException {
+	public Object show(Object cell, Object color) throws LeekRunException {
 		int cell_id = 1;
 		int col = 0xFFFFFF;
-		if (cell.getType() == AbstractLeekValue.NUMBER)
-			cell_id = cell.getInt(this);
+		if (cell instanceof Number)
+			cell_id = ((Number) cell).intValue();
 		else
-			return LeekValueManager.getLeekBooleanValue(false);
+			return false;
 		if (fight.getMap().getCell(cell_id) == null)
-			return LeekValueManager.getLeekBooleanValue(false);
+			return false;
 
-		if (color.getType() == AbstractLeekValue.NUMBER)
-			col = color.getInt(this);
+		if (color instanceof Number)
+			col = ((Number) color).intValue();
 
 		if (mEntity.getTP() < 1) {
-			return LeekValueManager.getLeekBooleanValue(false);
+			return false;
 		}
 		mEntity.useTP(1);
 		fight.log(new ActionLoseTP(mEntity, 1));
 
 		fight.log(new ActionShowCell(mEntity, cell_id, col));
 
-		return LeekValueManager.getLeekBooleanValue(true);
+		return true;
 	}
 
-	public AbstractLeekValue color(AbstractLeekValue red, AbstractLeekValue green, AbstractLeekValue blue) throws LeekRunException {
-		return LeekValueManager.getLeekIntValue(((red.getInt(this) & 255) << 16) | ((green.getInt(this) & 255) << 8) | (blue.getInt(this) & 255));
+	public int color(Object red, Object green, Object blue) throws LeekRunException {
+		return ((integer(red) & 255) << 16) | ((integer(green) & 255) << 8) | (integer(blue) & 255);
 	}
 
-	public AbstractLeekValue listen() throws LeekRunException {
+	public Object listen() throws LeekRunException {
 		ArrayLeekValue values = new ArrayLeekValue();
 		for (Entity l : fight.getAllEntities(false)) {
 			if (l == null || l == mEntity || l.getAI() == null)
 				continue;
 			for (String say : l.getAI().getSays()) {
 				ArrayLeekValue s = new ArrayLeekValue();
-				s.push(this, LeekValueManager.getLeekIntValue(l.getFId()));
-				s.push(this, new StringLeekValue(say));
+				s.push(this, l.getFId());
+				s.push(this, say);
 				values.push(this, s);
 			}
 		}
@@ -2577,125 +2570,125 @@ public class EntityAI extends AI {
 		return Items.getType(id) == Items.TYPE_CHIP;
 	}
 
-	public AbstractLeekValue getWeaponLaunchType(AbstractLeekValue weapon_id) throws LeekRunException {
+	public Object getWeaponLaunchType(Object weapon_id) throws LeekRunException {
 		Weapon template = null;
-		if (weapon_id.getType() == AbstractLeekValue.NULL) {
+		if (weapon_id == null) {
 			template = mEntity.getWeapon();
 		} else {
-			template = Weapons.getWeapon(weapon_id.getInt(this));
+			template = Weapons.getWeapon(integer(weapon_id));
 		}
 		if (template == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekIntValue(template.getAttack().getLaunchType());
+			return null;
+		return template.getAttack().getLaunchType();
 	}
 
-	public AbstractLeekValue getChipLaunchType(AbstractLeekValue chip_id) throws LeekRunException {
-		Chip template = Chips.getChip(chip_id.getInt(this));
+	public Object getChipLaunchType(Object chip_id) throws LeekRunException {
+		Chip template = Chips.getChip(integer(chip_id));
 		if (template == null)
-			return LeekValueManager.NULL;
-		return LeekValueManager.getLeekIntValue(template.getAttack().getLaunchType());
+			return null;
+		return template.getAttack().getLaunchType();
 	}
 
-	public AbstractLeekValue getAIName(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL) {
-			return LeekValueManager.getStringOrNullValue(mEntity.getAIName());
+	public Object getAIName(Object value) throws LeekRunException {
+		if (value == null) {
+			return mEntity.getAIName();
 		}
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(integer(value));
 			if (l != null)
-				return LeekValueManager.getStringOrNullValue(l.getAIName());
+				return l.getAIName();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getTeamName(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return new StringLeekValue(mEntity.getTeamName());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getTeamName(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getTeamName();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(integer(value));
 			if (l != null && l.getTeamName() != null)
-				return new StringLeekValue(l.getTeamName());
+				return l.getTeamName();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getFarmerName(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return new StringLeekValue(mEntity.getFarmerName());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getFarmerName(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getFarmerName();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(integer(value));
 			if (l != null)
-				return new StringLeekValue(l.getFarmerName());
+				return l.getFarmerName();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getFarmerCountry(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL) {
-			return new StringLeekValue(mEntity.getFarmerCountry());
+	public Object getFarmerCountry(Object value) throws LeekRunException {
+		if (value == null) {
+			return mEntity.getFarmerCountry();
 		}
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return new StringLeekValue(l.getFarmerCountry());
+				return l.getFarmerCountry();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getFarmerId(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getFarmer());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getFarmerId(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getFarmer();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getFarmer());
+				return l.getFarmer();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getTeamId(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(mEntity.getTeamId());
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getTeamId(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getTeamId();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getTeamId());
+				return l.getTeamId();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getWeaponArea(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Weapon weapon = Weapons.getWeapon(value.getInt(this));
+	public Object getWeaponArea(Object value) throws LeekRunException {
+		if (value instanceof Number) {
+			Weapon weapon = Weapons.getWeapon(integer(value));
 			if (weapon != null) {
-				return LeekValueManager.getLeekIntValue(weapon.getAttack().getArea());
+				return weapon.getAttack().getArea();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getChipArea(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Chip template = Chips.getChip(value.getInt(this));
+	public Object getChipArea(Object value) throws LeekRunException {
+		if (value instanceof Number) {
+			Chip template = Chips.getChip(integer(value));
 			if (template != null) {
-				return LeekValueManager.getLeekIntValue(template.getAttack().getArea());
+				return template.getAttack().getArea();
 			}
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getAIId(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(id);
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getAIId(Object value) throws LeekRunException {
+		if (value == null)
+			return id;
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return LeekValueManager.getLeekIntValue(l.getAI().getId());
+				return l.getAI().getId();
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue getRegisters() throws LeekRunException {
+	public ArrayLeekValue getRegisters() throws LeekRunException {
 		Map<String, String> registers;
 		if (mEntity.isSummon()) {
 			registers = mEntity.getSummoner().getAllRegisters();
@@ -2704,13 +2697,13 @@ public class EntityAI extends AI {
 		}
 		ArrayLeekValue array = new ArrayLeekValue();
 		for (Entry<String, String> e : registers.entrySet()) {
-			array.put(this, e.getKey(), new StringLeekValue(e.getValue()));
+			array.put(this, e.getKey(), e.getValue());
 		}
 		return array;
 	}
 
-	public AbstractLeekValue getRegister(AbstractLeekValue key) throws LeekRunException {
-		String keyString = key.getString(this);
+	public Object getRegister(Object key) throws LeekRunException {
+		String keyString = string(key);
 		String register;
 		if (mEntity.isSummon()) {
 			register = mEntity.getSummoner().getRegister(keyString);
@@ -2718,84 +2711,82 @@ public class EntityAI extends AI {
 			register = mEntity.getRegister(keyString);
 		}
 		if (register == null) {
-			return LeekValueManager.NULL;
+			return null;
 		}
-		return new StringLeekValue(register);
+		return register;
 	}
 
-	public AbstractLeekValue setRegister(AbstractLeekValue key, AbstractLeekValue value) throws LeekRunException {
-		String keyString = key.getString(this);
-		String valueString = value.getString(this);
+	public boolean setRegister(Object key, Object value) throws LeekRunException {
+		String keyString = string(key);
+		String valueString = string(value);
 		boolean r;
 		if (mEntity.isSummon()) {
 			r = mEntity.getSummoner().setRegister(keyString, valueString);
 		} else {
 			r = mEntity.setRegister(keyString, valueString);
 		}
-		return LeekValueManager.getLeekBooleanValue(r);
+		return r;
 	}
 
-	public AbstractLeekValue deleteRegister(AbstractLeekValue key) throws LeekRunException {
-		String keyString = key.getString(this);
+	public void deleteRegister(Object key) throws LeekRunException {
+		String keyString = string(key);
 		if (mEntity.isSummon()) {
 			mEntity.getSummoner().deleteRegister(keyString);
 		} else {
 			mEntity.deleteRegister(keyString);
 		}
-		return LeekValueManager.NULL;
 	}
 
-	public AbstractLeekValue summon(AbstractLeekValue chip, AbstractLeekValue cell, AbstractLeekValue ai) throws LeekRunException {
+	public int summon(Object chip, Object cell, Object ai) throws LeekRunException {
 
 		int success = -1;
 
-		Cell target = fight.getMap().getCell(cell.getInt(this));
+		Cell target = fight.getMap().getCell(integer(cell));
 		if (target == null)
-			return LeekValueManager.getLeekIntValue(-1);
+			return -1;
 
-		if (ai.getType() != AbstractLeekValue.FUNCTION)
-			return LeekValueManager.getLeekIntValue(-1);
+		if (!(ai instanceof FunctionLeekValue))
+			return -1;
 
-		Chip template = mEntity.getChip(chip.getInt(this));
+		Chip template = mEntity.getChip(integer(chip));
 		if (template == null) {
-			Chip ct = Chips.getChip(chip.getInt(this));
+			Chip ct = Chips.getChip(integer(chip));
 			if (ct == null)
-				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)) });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(integer(chip)) });
 			else
-				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip.getInt(this)), ct.getName() });
-			return LeekValueManager.getLeekIntValue(-1);
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(integer(chip)), ct.getName() });
+			return -1;
 		}
 
 		if (target != null && template != null) {
 			success = fight.summonEntity(mEntity, target, template, (FunctionLeekValue) ai);
 		}
-		return LeekValueManager.getLeekIntValue(success);
-
+		return success;
 	}
 
-	public AbstractLeekValue getEntityTurnOrder(AbstractLeekValue value) throws LeekRunException {
-		if (value.getType() == AbstractLeekValue.NULL)
-			return LeekValueManager.getLeekIntValue(fight.getOrder().getEntityTurnOrder(mEntity));
-		if (value.getType() == AbstractLeekValue.NUMBER) {
-			Entity l = fight.getEntity(value.getInt(this));
+	public Object getEntityTurnOrder(Object value) throws LeekRunException {
+		if (value == null)
+			return fight.getOrder().getEntityTurnOrder(mEntity);
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && !l.isDead())
-				return LeekValueManager.getLeekIntValue(fight.getOrder().getEntityTurnOrder(l));
+				return fight.getOrder().getEntityTurnOrder(l);
 		}
-		return LeekValueManager.NULL;
+		return null;
 	}
 
-	public AbstractLeekValue reborn(AbstractLeekValue entity, AbstractLeekValue cell) throws LeekRunException {
+	public int reborn(Object entity, Object cell) throws LeekRunException {
 
 		int success = -1;
 
-		Cell target = fight.getMap().getCell(cell.getInt(this));
+		Cell target = fight.getMap().getCell(integer(cell));
 		if (target == null) {
-			return LeekValueManager.getLeekIntValue(-1);
+			return -1;
 		}
 
-		Entity l = fight.getEntity(entity.getInt(this));
+		Entity l = fight.getEntity(integer(entity));
 		if (l == null || !l.isDead()) {
-			return LeekValueManager.getLeekIntValue(FightConstants.USE_RESURRECT_INVALID_ENTIITY.getIntValue());
+			return FightConstants.USE_RESURRECT_INVALID_ENTIITY.getIntValue();
 		}
 
 		Chip template = mEntity.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
@@ -2807,14 +2798,13 @@ public class EntityAI extends AI {
 				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
 			else
 				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
-			return LeekValueManager.getLeekIntValue(-1);
+			return -1;
 		}
 
 		if (target != null && template != null) {
 			success = fight.resurrectEntity(mEntity, target, template, l);
 		}
-		return LeekValueManager.getLeekIntValue(success);
-
+		return success;
 	}
 
 	public int getMapType() {
@@ -2840,89 +2830,13 @@ public class EntityAI extends AI {
 		return chip.getAttack().needLos();
 	}
 
-	public AbstractLeekValue jsonEncode(AI ai, AbstractLeekValue object) {
-
-		try {
-
-			String json = JSON.toJSONString(object.toJSON(ai));
-			addOperations(json.length() * 10);
-			return new StringLeekValue(json);
-
-		} catch (Exception e) {
-
-			getLogs().addLog(LeekLog.ERROR, "Cannot encode object \"" + object.toString() + "\"");
-			try {
-				addOperations(100);
-			} catch (Exception e1) {}
-			return LeekValueManager.NULL;
-		}
-	}
-
-	public AbstractLeekValue jsonDecode(String json) {
-
-		try {
-
-			AbstractLeekValue obj = LeekValueManager.parseJSON(JSON.parse(json), this);
-			addOperations(json.length() * 10);
-			return obj;
-
-		} catch (Exception e) {
-
-			getLogs().addLog(LeekLog.ERROR, "Cannot parse json \"" + json + "\"");
-			try {
-				addOperations(100);
-			} catch (Exception e1) {}
-			return LeekValueManager.NULL;
-		}
+	@Override
+	public Object runIA() throws LeekRunException {
+		return null;
 	}
 
 	@Override
 	protected String[] getErrorString() {
-		return new String[] {};
-	}
-
-	@Override
-	protected String getAIString() {
 		return null;
-	}
-
-	@Override
-	public AbstractLeekValue runIA() throws LeekRunException {
-		return null;
-	}
-
-	@Override
-	public int userFunctionCount(int id) {
-		return 0;
-	}
-
-	@Override
-	public boolean[] userFunctionReference(int id) {
-		return null;
-	}
-
-	@Override
-	public AbstractLeekValue userFunctionExecute(int id, AbstractLeekValue[] value) throws LeekRunException {
-		return null;
-	}
-
-	@Override
-	public int anonymousFunctionCount(int id) {
-		return 0;
-	}
-
-	@Override
-	public boolean[] anonymousFunctionReference(int id) {
-		return null;
-	}
-
-	@Override
-	public int getVersion() {
-		return 10;
-	}
-
-	@Override
-	protected String[] getErrorFiles() {
-		return new String[] {};
 	}
 }

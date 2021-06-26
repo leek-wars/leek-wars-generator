@@ -255,7 +255,7 @@ public class Generator {
 	public String compileAI(String file, ResolverContext context) {
 		Log.i(TAG, "Compile AI " + file + "...");
 		try {
-			AI ai = LeekScript.compileFileContext(file, "com.leekwars.generator.fight.entity.EntityAI", context, true);
+			AI ai = LeekScript.compileFileContext(file, "com.leekwars.generator.fight.entity.EntityAI", context, false);
 			return ai != null ? "success" : "failure";
 		} catch (LeekScriptException e) {
 			System.out.println("LeekScriptException " + e.getType());
