@@ -271,6 +271,17 @@ public class Generator {
 		}
 	}
 
+	public String downloadAI(String file, ResolverContext context) {
+		Log.i(TAG, "Download AI " + file + "...");
+		try {
+			return LeekScript.mergeFile(file, context);
+		} catch (Exception e) {
+			System.out.println("Exception " + e.getMessage());
+			e.printStackTrace(System.out);
+			return e.getMessage();
+		}
+	}
+
 	public static void setErrorManager(ErrorManager manager) {
 		errorManager = manager;
 	}
