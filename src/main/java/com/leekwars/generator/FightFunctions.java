@@ -6,6 +6,7 @@ import com.leekwars.generator.leek.FarmerLog;
 import leekscript.functions.Functions;
 import leekscript.functions.VariableOperations;
 import leekscript.runner.AI;
+import leekscript.runner.CallableVersion;
 import leekscript.runner.ILeekFunction;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.LeekValueManager;
@@ -18,6 +19,7 @@ import leekscript.runner.values.IntLeekValue;
 import leekscript.runner.values.NullLeekValue;
 import leekscript.runner.values.StringLeekValue;
 import leekscript.common.Error;
+import leekscript.common.Type;
 
 public enum FightFunctions implements ILeekFunction {
 	getLife(0, 1) {
@@ -1425,6 +1427,7 @@ public enum FightFunctions implements ILeekFunction {
 	private int mArgumentsMin;
 	private int mOperations = 1;
 	protected VariableOperations mVariableOperations = null;
+	private int[] parameters;
 
 	public static final int DOUBLE = 1;
 	public static final int INT = 2;
@@ -1438,11 +1441,13 @@ public enum FightFunctions implements ILeekFunction {
 	FightFunctions(int arguments) {
 		mArgumentsMin = arguments;
 		mArguments = arguments;
+		this.parameters = new int[0];
 	}
 
 	FightFunctions(int arguments, int arguments_max) {
 		mArgumentsMin = arguments;
 		mArguments = arguments_max;
+		this.parameters = new int[0];
 	}
 
 	@Override
@@ -1566,5 +1571,15 @@ public enum FightFunctions implements ILeekFunction {
 		if (type == NUMBER && !(value instanceof IntLeekValue) && !(value instanceof DoubleLeekValue))
 			return false;
 		return true;
+	}
+
+	@Override
+	public Type getReturnType() {
+		return Type.ANY;
+	}
+
+	@Override
+	public CallableVersion[] getVersions() {
+		return null;
 	}
 }

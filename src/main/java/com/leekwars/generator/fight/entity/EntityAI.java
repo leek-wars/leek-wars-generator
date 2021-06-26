@@ -87,9 +87,12 @@ public class EntityAI extends AI {
 
 	protected boolean valid = false;
 
-	public EntityAI() {} // Empty constructor for reflection
+	public EntityAI(int instructions, int version) {
+		super(instructions, version);
+	}
 
 	public EntityAI(Entity entity, LeekLog logs) {
+		super(0, 11);
 		setEntity(entity);
 		this.logs = logs;
 	}
@@ -120,7 +123,7 @@ public class EntityAI extends AI {
 
 		Log.i(TAG, "Compile AI " + path + "...");
 		try {
-			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", generator.nocache);
+			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", !generator.nocache);
 
 			Log.i(TAG, "AI " + path + " compiled!");
 			ai.valid = true;
@@ -2872,7 +2875,7 @@ public class EntityAI extends AI {
 	}
 
 	@Override
-	protected String getAItring() {
+	protected String getAIString() {
 		return null;
 	}
 
