@@ -43,7 +43,7 @@ public class Generator {
 
 	private static ErrorManager errorManager = null;
 
-	public boolean nocache = false;
+	public boolean use_leekscript_cache = true;
 
 	public Generator() {
 		new File("ai/").mkdir();
@@ -245,8 +245,8 @@ public class Generator {
 		}
 	}
 
-	public void setNocache(boolean nocache) {
-		this.nocache = nocache;
+	public void setCache(boolean cache) {
+		this.use_leekscript_cache = cache;
 	}
 
 	/**

@@ -59,7 +59,7 @@ public class Main {
 			LeekScript.setResolver(dbResolver);
 		}
 		Generator generator = new Generator();
-		generator.setNocache(nocache);
+		generator.setCache(!nocache);
 		if (analyze) {
 			AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
 			// AnalyzeResult result = generator.analyzeAI(file, new DbContext(farmer, folder));

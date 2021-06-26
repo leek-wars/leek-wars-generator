@@ -122,7 +122,7 @@ public class EntityAI extends AI {
 
 		Log.i(TAG, "Compile AI " + file.getPath() + "...");
 		try {
-			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", !generator.nocache);
+			EntityAI ai = (EntityAI) LeekScript.compile(file, "com.leekwars.generator.fight.entity.EntityAI", generator.use_leekscript_cache);
 
 			Log.i(TAG, "AI " + file.getPath() + " compiled!");
 			ai.valid = true;
