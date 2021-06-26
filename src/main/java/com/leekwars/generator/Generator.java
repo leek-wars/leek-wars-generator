@@ -29,6 +29,7 @@ import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.exceptions.LeekCompilerException;
+import leekscript.compiler.resolver.FileSystemContext;
 import leekscript.compiler.resolver.ResolverContext;
 import leekscript.functions.Functions;
 import leekscript.runner.AI;
@@ -67,7 +68,7 @@ public class Generator {
 		Log.i(TAG, "Analyze AI " + file + "...");
 		AIFile<?> ai = null;
 		try {
-			ai = LeekScript.getResolver().resolve(file, context);
+			ai = context instanceof FileSystemContext ? LeekScript.getFileSystemResolver().resolve(file, context) : LeekScript.getResolver().resolve(file, context);
 			long t = System.currentTimeMillis();
 			AnalyzeResult result = new IACompiler().analyze(ai);
 			long time = System.currentTimeMillis() - t;
