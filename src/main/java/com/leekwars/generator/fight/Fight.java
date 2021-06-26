@@ -148,6 +148,8 @@ public class Fight {
 
 	private RegisterManager registerManager;
 
+	public long executionTime = 0;
+
 	public Fight(Generator generator) {
 
 		this.generator = generator;
@@ -489,6 +491,7 @@ public class Fight {
 				long endTime = System.nanoTime();
 
 				statistics.addTimes(current, endTime - startTime, current.getAI().getOperations());
+				executionTime += endTime - startTime;
 			} else {
 				// Add 'crash' action if AI is invalid
 				log(new ActionAIError(current));

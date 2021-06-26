@@ -34,6 +34,12 @@ public class Outcome {
 	 */
 	public Exception exception = null;
 
+	public long analyzeTime = 0;
+
+	public long compilationTime = 0;
+
+	public long executionTime = 0;
+
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
 		JSONObject logsJSON = new JSONObject();
@@ -45,6 +51,9 @@ public class Outcome {
 		json.put("winner", winner);
 		json.put("duration", duration);
 		json.put("statistics", statistics.toJson());
+		json.put("analyze_time", analyzeTime);
+		json.put("compilation_time", compilationTime);
+		json.put("execution_time", executionTime);
 		return json;
 	}
 

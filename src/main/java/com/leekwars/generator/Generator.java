@@ -137,6 +137,8 @@ public class Generator {
 				// Create AI
 				LeekLog logs = new LeekLog(outcome.logs.get(aiOwner), entity);
 				entity.setAI(EntityAI.build(this, entityInfo.ai, entity.getFarmer(), aiOwner, entityInfo.ai_folder, entity, logs));
+				outcome.analyzeTime += entity.getAI().getAnalyzeTime();
+				outcome.compilationTime += entity.getAI().getCompileTime();
 			}
 			t++;
 		}
@@ -151,6 +153,7 @@ public class Generator {
 			outcome.winner = fight.getWinner();
 			outcome.duration = fight.getOrder().getTurn();
 			outcome.statistics = fight.statistics;
+			outcome.executionTime = fight.executionTime;
 
 			// Save registers
 			for (Entity entity : fight.getEntities().values()) {
