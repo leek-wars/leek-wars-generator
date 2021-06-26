@@ -1977,7 +1977,7 @@ public class EntityAI extends AI {
 		Entity l = mEntity;
 		if (target_leek != -1 && target_leek != l.getFId()) {
 			l = fight.getEntity(target_leek);
-			if (mEntity.getTP() < 1) {
+			if (l == null || mEntity.getTP() < 1) {
 				return null;
 			}
 			mEntity.useTP(1);
