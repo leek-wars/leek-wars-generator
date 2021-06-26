@@ -472,8 +472,8 @@ public class EntityAI extends AI {
 				if (template != null) {
 					List<Chip> chips = template.getChips();
 					ArrayLeekValue retour = new ArrayLeekValue();
-					for (short i = 0; i < chips.size(); i++) {
-						retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
+					for (int i = 0; i < chips.size(); i++) {
+						retour.put(this, i, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
 					}
 					return retour;
 				}
@@ -744,8 +744,8 @@ public class EntityAI extends AI {
 			return LeekValueManager.NULL;
 		List<Weapon> weapons = l.getWeapons();
 		ArrayLeekValue retour = new ArrayLeekValue();
-		for (short i = 0; i < weapons.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(weapons.get(i).getId()));
+		for (int i = 0; i < weapons.size(); i++) {
+			retour.put(this, i, LeekValueManager.getLeekIntValue(weapons.get(i).getId()));
 		}
 		return retour;
 	}
@@ -760,8 +760,8 @@ public class EntityAI extends AI {
 			return LeekValueManager.NULL;
 		List<Chip> chips = l.getChips();
 		ArrayLeekValue retour = new ArrayLeekValue();
-		for (short i = 0; i < chips.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
+		for (int i = 0; i < chips.size(); i++) {
+			retour.put(this, i, LeekValueManager.getLeekIntValue(chips.get(i).getId()));
 		}
 		return retour;
 	}
@@ -776,8 +776,8 @@ public class EntityAI extends AI {
 			return LeekValueManager.NULL;
 		List<Entity> summons = l.getSummons();
 		ArrayLeekValue retour = new ArrayLeekValue();
-		for (short i = 0; i < summons.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(summons.get(i).getFId()));
+		for (int i = 0; i < summons.size(); i++) {
+			retour.put(this, i, LeekValueManager.getLeekIntValue(summons.get(i).getFId()));
 		}
 		return retour;
 	}
@@ -1162,8 +1162,8 @@ public class EntityAI extends AI {
 		if (path == null)
 			return LeekValueManager.NULL;
 		ArrayLeekValue retour = new ArrayLeekValue();
-		for (short i = 0; i < path.size(); i++) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(path.get(i).getId()));
+		for (int i = 0; i < path.size(); i++) {
+			retour.put(this, i, LeekValueManager.getLeekIntValue(path.get(i).getId()));
 		}
 		return retour;
 	}
@@ -1294,7 +1294,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Chip chip : Chips.getTemplates().values()) {
-			retour.get(this, i++).set(this, LeekValueManager.getLeekIntValue(chip.getId()));
+			retour.put(this, i++, LeekValueManager.getLeekIntValue(chip.getId()));
 		}
 		return retour;
 	}
@@ -1303,7 +1303,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Weapon weapon : Weapons.getTemplates().values()) {
-			retour.get(this, i++).set(this, LeekValueManager.getLeekIntValue(weapon.getId()));
+			retour.put(this, i++, LeekValueManager.getLeekIntValue(weapon.getId()));
 		}
 		return retour;
 	}
@@ -1311,17 +1311,17 @@ public class EntityAI extends AI {
 	public ArrayLeekValue getAllEffects() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < Effect.effects.length; ++i) {
-			retour.get(this, i).set(this, LeekValueManager.getLeekIntValue(i + 1));
+			retour.put(this, i, LeekValueManager.getLeekIntValue(i + 1));
 		}
 		return retour;
 	}
 
 	public ArrayLeekValue getAliveEnemies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
-		short nb = 0;
+		int nb = 0;
 		for (Entity e : fight.getAllEntities(false)) {
 			if (e.getTeam() != mEntity.getTeam()) {
-				retour.get(this, nb).set(this, LeekValueManager.getLeekIntValue(e.getFId()));
+				retour.put(this, nb, LeekValueManager.getLeekIntValue(e.getFId()));
 				nb++;
 			}
 		}
@@ -1340,10 +1340,10 @@ public class EntityAI extends AI {
 
 	public ArrayLeekValue getDeadEnemies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
-		short nb = 0;
+		int nb = 0;
 		for (Entity e : fight.getAllEntities(true)) {
 			if (e.getTeam() != mEntity.getTeam() && e.isDead()) {
-				retour.get(this, nb).set(this, LeekValueManager.getLeekIntValue(e.getFId()));
+				retour.put(this, nb, LeekValueManager.getLeekIntValue(e.getFId()));
 				nb++;
 			}
 		}
@@ -1362,9 +1362,9 @@ public class EntityAI extends AI {
 
 	public ArrayLeekValue getEnemies() throws LeekRunException {
 		ArrayLeekValue retour = new ArrayLeekValue();
-		short nb = 0;
+		int nb = 0;
 		for (Entity l : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
-			retour.get(this, nb).set(this, LeekValueManager.getLeekIntValue(l.getFId()));
+			retour.put(this, nb, LeekValueManager.getLeekIntValue(l.getFId()));
 			nb++;
 		}
 		return retour;
@@ -1757,7 +1757,7 @@ public class EntityAI extends AI {
 		int used_pm = 0;
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
-			for (short i = 0; i < leeks.size(); i++) {
+			for (int i = 0; i < leeks.size(); i++) {
 				int value = leeks.get(this, i).getValue().getInt(this);
 				Entity l = fight.getEntity(value);
 				if (l != null && !l.isDead())
@@ -1780,7 +1780,7 @@ public class EntityAI extends AI {
 		int used_pm = 0;
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
-			for (short i = 0; i < leeks.size(); i++) {
+			for (int i = 0; i < leeks.size(); i++) {
 				int value = leeks.get(this, i).getValue().getInt(this);
 				Cell c = fight.getMap().getCell(value);
 				if (c != null)
@@ -1841,7 +1841,7 @@ public class EntityAI extends AI {
 		int used_pm = 0;
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
-			for (short i = 0; i < leeks.size(); i++) {
+			for (int i = 0; i < leeks.size(); i++) {
 				int value = leeks.get(this, i).getValue().getInt(this);
 				Entity l = fight.getEntity(value);
 				if (l != null && !l.isDead())
@@ -1864,7 +1864,7 @@ public class EntityAI extends AI {
 		int used_pm = 0;
 		if (pm > 0) {
 			List<Cell> targets = new ArrayList<Cell>();
-			for (short i = 0; i < leeks.size(); i++) {
+			for (int i = 0; i < leeks.size(); i++) {
 				int value = leeks.get(this, i).getValue().getInt(this);
 				Cell c = fight.getMap().getCell(value);
 				if (c != null)
@@ -1991,9 +1991,9 @@ public class EntityAI extends AI {
 		if (lia != null) {
 			for (LeekMessage message : lia.mMessages) {
 				ArrayLeekValue m = new ArrayLeekValue();
-				m.get(this, 0).set(this, LeekValueManager.getLeekIntValue(message.mAuthor));
-				m.get(this, 1).set(this, LeekValueManager.getLeekIntValue(message.mType));
-				m.get(this, 2).set(this, LeekOperations.clone(this, message.mMessage));
+				m.put(this, 0, LeekValueManager.getLeekIntValue(message.mAuthor));
+				m.put(this, 1, LeekValueManager.getLeekIntValue(message.mType));
+				m.put(this, 2, LeekOperations.clone(this, message.mMessage));
 				messages.push(this, m);
 			}
 		}
@@ -2013,7 +2013,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Effect effect : l.getEffects()) {
-			retour.get(this, i).set(this, effect.getLeekValue(this));
+			retour.put(this, i, effect.getLeekValue(this));
 			i++;
 		}
 		return retour;
@@ -2032,7 +2032,7 @@ public class EntityAI extends AI {
 		ArrayLeekValue retour = new ArrayLeekValue();
 		int i = 0;
 		for (Effect effect : l.getLaunchedEffects()) {
-			retour.get(this, i).set(this, effect.getLeekValue(this));
+			retour.put(this, i, effect.getLeekValue(this));
 			i++;
 		}
 		return retour;
@@ -2697,7 +2697,7 @@ public class EntityAI extends AI {
 		}
 		ArrayLeekValue array = new ArrayLeekValue();
 		for (Entry<String, String> e : registers.entrySet()) {
-			array.getOrCreate(this, new StringLeekValue( e.getKey())).set(this, new StringLeekValue(e.getValue()));
+			array.put(this, e.getKey(), new StringLeekValue(e.getValue()));
 		}
 		return array;
 	}

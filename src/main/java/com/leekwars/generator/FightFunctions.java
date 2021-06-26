@@ -744,7 +744,7 @@ public enum FightFunctions implements ILeekFunction {
 	getCellDistance(2) {
 		@Override
 		public AbstractLeekValue run(AI leekIA, ILeekFunction function, AbstractLeekValue[] parameters, int count) throws LeekRunException {
-			return new DoubleLeekValue(((EntityAI) leekIA).getCellDistance(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
+			return new IntLeekValue(((EntityAI) leekIA).getCellDistance(parameters[0].getInt(((EntityAI) leekIA).getUAI()), parameters[1].getInt(((EntityAI) leekIA).getUAI())));
 		}
 
 		@Override

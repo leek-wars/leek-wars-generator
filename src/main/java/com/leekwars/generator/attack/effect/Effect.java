@@ -293,13 +293,13 @@ public abstract class Effect {
 	public AbstractLeekValue getLeekValue(AI ai) throws LeekRunException {
 
 		ArrayLeekValue retour = new ArrayLeekValue();
-		retour.get(ai, 0).set(ai, LeekValueManager.getLeekIntValue(id));
-		retour.get(ai, 1).set(ai, LeekValueManager.getLeekIntValue(value));
-		retour.get(ai, 2).set(ai, LeekValueManager.getLeekIntValue(caster.getFId()));
-		retour.get(ai, 3).set(ai, LeekValueManager.getLeekIntValue(turns));
-		retour.get(ai, 4).set(ai, LeekValueManager.getLeekBooleanValue(critical));
-		retour.get(ai, 5).set(ai, LeekValueManager.getLeekIntValue(attack.getId()));
-		retour.get(ai, 6).set(ai, LeekValueManager.getLeekIntValue(target.getFId()));
+		retour.put(ai, 0, LeekValueManager.getLeekIntValue(id));
+		retour.put(ai, 1, LeekValueManager.getLeekIntValue(value));
+		retour.put(ai, 2, LeekValueManager.getLeekIntValue(caster.getFId()));
+		retour.put(ai, 3, LeekValueManager.getLeekIntValue(turns));
+		retour.put(ai, 4, LeekValueManager.getLeekBooleanValue(critical));
+		retour.put(ai, 5, LeekValueManager.getLeekIntValue(attack.getId()));
+		retour.put(ai, 6, LeekValueManager.getLeekIntValue(target.getFId()));
 		return retour;
 	}
 
