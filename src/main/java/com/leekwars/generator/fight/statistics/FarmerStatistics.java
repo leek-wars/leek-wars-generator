@@ -13,12 +13,8 @@ import com.alibaba.fastjson.JSONObject;
  */
 public class FarmerStatistics {
 
-    public int stashed = 0;
+    public int teleportations = 0;
     public int summons = 0;
-    public int roxxor = 0;
-    public int maxEntityLife = 0;
-    public int maxEntityTP = 0;
-    public int maxEntityMP = 0;
 	public int weaponShot = 0;
 	public int usedChips = 0;
 	public int suicides = 0;
@@ -30,8 +26,6 @@ public class FarmerStatistics {
 	public int maxKilledEnemies = 0;
 	public int walkedDistance = 0;
 	public long damage = 0;
-	public int snipers = 0;
-	public int lamas = 0;
 	public int tooMuchOperations = 0;
 	public int stackOverflows = 0;
 	public LeekSet weaponsUsed = new LeekSet();
@@ -140,12 +134,8 @@ public class FarmerStatistics {
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
-		json.put("stashed", stashed);
+		json.put("teleporatations", teleportations);
 		json.put("summons", summons);
-		json.put("roxxor", roxxor);
-		json.put("maxEntityLife", maxEntityLife);
-		json.put("maxEntityTP", maxEntityTP);
-		json.put("maxEntityMP", maxEntityMP);
 		json.put("weaponShot", weaponShot);
 		json.put("usedChips", usedChips);
 		json.put("suicides", suicides);
@@ -157,8 +147,6 @@ public class FarmerStatistics {
 		json.put("maxKilledEnemies", maxKilledEnemies);
 		json.put("walkedDistance", walkedDistance);
 		json.put("damage", damage);
-		json.put("snipers", snipers);
-		json.put("lamas", lamas);
 		json.put("tooMuchOperations", tooMuchOperations);
 		json.put("stackOverflows", stackOverflows);
 		json.put("weaponsUsed", weaponsUsed.toJson());
@@ -175,12 +163,8 @@ public class FarmerStatistics {
 
 	public JSONArray toDBJson() {
 		JSONArray array = new JSONArray();
-		array.add(stashed); // 1
+		array.add(teleportations); // 1
 		array.add(summons); // 2
-		array.add(roxxor); // 3
-		array.add(maxEntityLife); // 4
-		array.add(maxEntityTP); // 5
-		array.add(maxEntityMP); // 6
 		array.add(weaponShot); // 7
 		array.add(usedChips); // 8
 		array.add(suicides); // 9
@@ -192,8 +176,6 @@ public class FarmerStatistics {
 		array.add(maxKilledEnemies); // 15
 		array.add(walkedDistance); // 16
 		array.add(damage); // 17
-		array.add(snipers); // 18
-		array.add(lamas); // 19
 		array.add(tooMuchOperations); // 20
 		array.add(stackOverflows); // 21
 		array.add(weaponsUsed.toJson()); // 22

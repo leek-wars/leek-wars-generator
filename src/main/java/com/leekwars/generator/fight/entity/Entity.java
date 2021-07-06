@@ -392,15 +392,11 @@ public abstract class Entity {
 		}
 		life -= pv;
 		fight.statistics.addDamage(attacker, pv, this.team != attacker.team);
+		fight.trophyManager.damage(this, attacker, pv, direct_attack);
 
 		// Add erosion
 		mTotalLife -= erosion;
 		if (mTotalLife < 1) mTotalLife = 1;
-
-		// Sniper : attack from 10 cells+ distance
-		if (this.team != attacker.team && direct_attack && this.cell != null && attacker.getCell() != null && Pathfinding.getCaseDistance(this.cell, attacker.getCell()) > 10) {
-			fight.statistics.sniper(attacker);
-		}
 
 		if (life <= 0) {
 			fight.onPlayerDie(this, attacker);
@@ -481,7 +477,7 @@ public abstract class Entity {
 			pv = getTotalLife() - life;
 		fight.statistics.addHeal(pv);
 		life += pv;
-		fight.statistics.checkCharacteristics(this);
+		fight.trophyManager.characteristics(this);
 	}
 
 	public void setCell(Cell cell) {
@@ -599,7 +595,7 @@ public abstract class Entity {
 
 	public void updateBuffStats(int id, int delta) {
 		mBuffStats.updateStat(id, delta);
-		fight.statistics.checkCharacteristics(this);
+		fight.trophyManager.characteristics(this);
 	}
 
 	public void addEffect(Effect effect) {

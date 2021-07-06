@@ -144,11 +144,9 @@ public class Fight {
 	private int type;
 
 	JSONObject custom_map = null;
-
 	public FightStatistics statistics;
-
 	private RegisterManager registerManager;
-
+	public TrophyManager trophyManager;
 	public long executionTime = 0;
 
 	public Fight(Generator generator) {
@@ -335,7 +333,7 @@ public class Fight {
 
 		// Check all entities characteristics
 		for (Entity entity : mEntities.values()) {
-			statistics.checkCharacteristics(entity);
+			trophyManager.characteristics(entity);
 		}
 
 		mState = Fight.STATE_RUNNING;
@@ -686,9 +684,7 @@ public class Fight {
 			entity.onMoved(caster);
 		}
 
-		if (start.getComposante() != cell.getComposante()) {
-			statistics.stashed(entity);
-		}
+		trophyManager.teleportation(entity, caster, start, cell);
 	}
 
 	public void invertEntities(Entity caster, Entity target) {
@@ -744,6 +740,7 @@ public class Fight {
 		// On invoque
 		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel(), critical);
 		statistics.summon(caster, summon);
+		trophyManager.summon(caster, summon);
 
 		// On balance l'action
 		actions.log(new ActionInvocation(summon, result));
@@ -1090,5 +1087,9 @@ public class Fight {
 
 	public Date getDate() {
 		return date;
+	}
+
+	public void setTrophyManager(TrophyManager trophyManager) {
+		this.trophyManager = trophyManager;
 	}
 }

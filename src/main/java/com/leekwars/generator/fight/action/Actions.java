@@ -41,6 +41,10 @@ public class Actions {
 		return actions.size();
 	}
 
+	public int currentID() {
+		return actions.size() - 1;
+	}
+
 	public JSONObject toJSON() {
 
 		JSONArray json = new JSONArray();

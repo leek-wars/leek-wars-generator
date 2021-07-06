@@ -29,11 +29,6 @@ public class EffectLifeDamage extends Effect {
 			value = target.getLife();
 		}
 
-		// One shoot
-		if (target.getTotalLife() == value && caster != target) {
-			fight.statistics.roxxor(caster);
-		}
-
 		int erosion = (int) Math.round(value * erosionRate);
 
 		fight.log(new ActionDamage(DamageType.LIFE, target, value, erosion));

@@ -10,6 +10,7 @@ import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.Scenario;
 import com.leekwars.generator.test.LocalDbRegisterManager;
 import com.leekwars.generator.test.LocalDbResolver;
+import com.leekwars.generator.test.LocalTrophyManager;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
@@ -70,7 +71,7 @@ public class Main {
 				Log.e(TAG, "Failed to parse scenario!");
 				return;
 			}
-			Outcome outcome = generator.runScenario(scenario, null, new LocalDbRegisterManager());
+			Outcome outcome = generator.runScenario(scenario, null, new LocalDbRegisterManager(), new LocalTrophyManager());
 			System.out.println(JSON.toJSONString(outcome.toJson(), false));
 		}
 	}

@@ -16,7 +16,6 @@ public class DefaultUserAI extends AI {
 
 	@Override
 	protected String[] getErrorString() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

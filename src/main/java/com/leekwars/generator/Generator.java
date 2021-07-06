@@ -12,6 +12,7 @@ import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.FightListener;
+import com.leekwars.generator.fight.TrophyManager;
 import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
@@ -105,7 +106,7 @@ public class Generator {
 	 * @param scenario the scenario to run.
 	 * @return the fight outcome generated.
 	 */
-	public Outcome runScenario(Scenario scenario, FightListener listener, RegisterManager registerManager) {
+	public Outcome runScenario(Scenario scenario, FightListener listener, RegisterManager registerManager, TrophyManager trophyManager) {
 
 		Outcome outcome = new Outcome();
 
@@ -114,6 +115,7 @@ public class Generator {
 			listener.setFight(fight);
 		}
 		fight.setRegisterManager(registerManager);
+		fight.setTrophyManager(trophyManager);
 		fight.setId(scenario.fightID);
 		fight.setMaxTurns(scenario.maxTurns);
 		fight.setType(scenario.type);

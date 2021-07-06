@@ -266,6 +266,7 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, Error.STACKOVERFLOW, e.getStackTrace());
 			fight.statistics.addStackOverflow(mEntity);
 			fight.statistics.addErrors(1);
+			fight.trophyManager.stackOverflow(mEntity);
 			// Pas de rethrow
 
 		} catch (ArithmeticException e) { // On suppose que c'est normal, ça vient de l'utilisateur
@@ -284,6 +285,7 @@ public class EntityAI extends AI {
 
 			if (e.getError() == LeekRunException.TOO_MUCH_OPERATIONS) {
 				fight.statistics.tooMuchOperations(mEntity);
+				fight.trophyManager.tooMuchOperations(mEntity);
 			}
 			// Pas de rethrow
 
@@ -733,6 +735,7 @@ public class EntityAI extends AI {
 		mSays.add(message);
 		fight.statistics.addSays(1);
 		fight.statistics.addSaysLength(message.length());
+		fight.trophyManager.say(mEntity, message);
 		return true;
 	}
 
@@ -1946,7 +1949,7 @@ public class EntityAI extends AI {
 		mEntity.useTP(1);
 		fight.log(new ActionLoseTP(mEntity, 1));
 		fight.log(new ActionLama(mEntity));
-		fight.statistics.lama(mEntity);
+		fight.trophyManager.lama(mEntity);
 	}
 
 	public boolean sendTo(int target, int type, Object message) {

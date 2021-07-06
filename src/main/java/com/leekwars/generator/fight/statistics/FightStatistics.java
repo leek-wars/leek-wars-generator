@@ -194,26 +194,10 @@ public class FightStatistics {
 		this.sSaysLength += saysLength;
 	}
 
-	public void stashed(Entity caster) {
-		this.farmers.get(caster.getFarmer()).stashed++;
+	public void teleportation(Entity caster) {
+		this.farmers.get(caster.getFarmer()).teleportations++;
 	}
 
-	public void roxxor(Entity caster) {
-		this.farmers.get(caster.getFarmer()).roxxor++;
-	}
-
-	public void checkCharacteristics(Entity entity) {
-		FarmerStatistics stats = this.farmers.get(entity.getFarmer());
-		if (entity.getLife() > stats.maxEntityLife) {
-			stats.maxEntityLife = entity.getLife();
-		}
-		if (entity.getTP() > stats.maxEntityTP) {
-			stats.maxEntityTP = entity.getTP();
-		}
-		if (entity.getLife() > stats.maxEntityMP) {
-			stats.maxEntityMP = entity.getMP();
-		}
-	}
 	public void entityMove(Entity entity, Cell cell) {
 		List<Cell> list = new ArrayList<Cell>();
 		list.add(cell);
@@ -320,14 +304,6 @@ public class FightStatistics {
 		if (isEnemy) {
 			this.farmers.get(attacker.getFarmer()).damage += amount;
 		}
-	}
-
-	public void sniper(Entity attacker) {
-		this.farmers.get(attacker.getFarmer()).snipers++;
-	}
-
-	public void lama(Entity entity) {
-		this.farmers.get(entity.getFarmer()).lamas++;
 	}
 
 	public void tooMuchOperations(Entity entity) {
