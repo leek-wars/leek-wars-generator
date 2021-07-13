@@ -5,7 +5,7 @@ import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.fight.action.Actions;
-import com.leekwars.generator.fight.statistics.FightStatistics;
+import com.leekwars.generator.fight.statistics.StatisticsManager;
 import com.leekwars.generator.leek.FarmerLog;
 
 public class Outcome {
@@ -28,7 +28,7 @@ public class Outcome {
     /**
      * Fight statistics
      */
-	public FightStatistics statistics;
+	public StatisticsManager statistics;
 	/**
 	 * Exception
 	 */
@@ -50,7 +50,6 @@ public class Outcome {
 		json.put("logs", logsJSON);
 		json.put("winner", winner);
 		json.put("duration", duration);
-		json.put("statistics", statistics.toJson());
 		json.put("analyze_time", analyzeTime);
 		json.put("compilation_time", compilationTime);
 		json.put("execution_time", executionTime);

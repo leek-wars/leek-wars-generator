@@ -175,13 +175,13 @@ public class Attack {
 			if (parameters.getId() == Effect.TYPE_ATTRACT) {
 				for (Entity entity : targetEntities) {
 					// Attract directly to target cell
-					fight.teleportEntity(entity, target, caster);
+					fight.slideEntity(entity, target, caster);
 				}
 			} else if (parameters.getId() == Effect.TYPE_PUSH) {
 				for (Entity entity : targetEntities) {
 					// Find last available position to push
 					Cell destination = Pathfinding.getPushLastAvailableCell(entity.getCell(), target, caster.getCell());
-					fight.teleportEntity(entity, destination, caster);
+					fight.slideEntity(entity, destination, caster);
 				}
 			}
 
@@ -327,5 +327,13 @@ public class Attack {
 	}
 	public int getType() {
 		return attackType;
+	}
+
+	public boolean needsEmptyCell() {
+		for (EffectParameters ep : effects) {
+			if (ep.getId() == Effect.TYPE_TELEPORT || ep.getId() == Effect.TYPE_SUMMON)
+				return true;
+		}
+		return false;
 	}
 }

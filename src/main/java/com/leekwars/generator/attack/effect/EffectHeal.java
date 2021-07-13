@@ -15,7 +15,7 @@ public class EffectHeal extends Effect {
 				value = target.getTotalLife() - target.getLife();
 			}
 			fight.log(new ActionHeal(target, value));
-			target.addLife(value);
+			target.addLife(caster, value);
 		}
 	}
 
@@ -27,6 +27,6 @@ public class EffectHeal extends Effect {
 			life = target.getTotalLife() - target.getLife();
 		}
 		fight.log(new ActionHeal(target, life));
-		target.addLife(life);
+		target.addLife(caster, life);
 	}
 }

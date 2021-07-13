@@ -51,7 +51,7 @@ public class EffectDamage extends Effect {
 			}
 			if (lifeSteal > 0) {
 				fight.log(new ActionHeal(caster, lifeSteal));
-				caster.addLife(lifeSteal);
+				caster.addLife(caster, lifeSteal);
 			}
 		}
 
@@ -67,7 +67,7 @@ public class EffectDamage extends Effect {
 			if (returnDamage > 0) {
 				fight.log(new ActionDamage(DamageType.RETURN, caster, returnDamage, returnErosion));
 				caster.removeLife(returnDamage, returnErosion, target, false);
-				fight.statistics.addDamageReturn(returnDamage);
+				fight.statistics.damageReturn(target, caster, returnDamage);
 				caster.onNovaDamage(returnErosion);
 			}
 		}

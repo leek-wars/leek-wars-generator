@@ -48,7 +48,7 @@ public class EffectLifeDamage extends Effect {
 			if (returnDamage > 0) {
 				fight.log(new ActionDamage(DamageType.RETURN, caster, returnDamage, returnErosion));
 				caster.removeLife(returnDamage, returnErosion, target, false);
-				fight.statistics.addDamageReturn(returnDamage);
+				fight.statistics.damageReturn(target, caster, returnDamage);
 			}
 		}
 	}

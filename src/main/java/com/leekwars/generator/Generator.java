@@ -12,11 +12,11 @@ import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.FightListener;
-import com.leekwars.generator.fight.TrophyManager;
 import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.fight.statistics.StatisticsManager;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
@@ -106,7 +106,7 @@ public class Generator {
 	 * @param scenario the scenario to run.
 	 * @return the fight outcome generated.
 	 */
-	public Outcome runScenario(Scenario scenario, FightListener listener, RegisterManager registerManager, TrophyManager trophyManager) {
+	public Outcome runScenario(Scenario scenario, FightListener listener, RegisterManager registerManager, StatisticsManager statisticsManager) {
 
 		Outcome outcome = new Outcome();
 
@@ -115,7 +115,7 @@ public class Generator {
 			listener.setFight(fight);
 		}
 		fight.setRegisterManager(registerManager);
-		fight.setTrophyManager(trophyManager);
+		fight.setStatisticsManager(statisticsManager);
 		fight.setId(scenario.fightID);
 		fight.setMaxTurns(scenario.maxTurns);
 		fight.setType(scenario.type);
@@ -131,7 +131,7 @@ public class Generator {
 				// Create farmer logs
 				int aiOwner = entityInfo.aiOwner;
 				if (!outcome.logs.containsKey(aiOwner)) {
-					outcome.logs.put(aiOwner, new FarmerLog());
+					outcome.logs.put(aiOwner, new FarmerLog(fight, entityInfo.farmer));
 				}
 				// Create entity
 				Entity entity = entityInfo.createEntity(this, scenario, fight);
@@ -155,7 +155,7 @@ public class Generator {
 			outcome.fight.dead = fight.getDeadReport();
 			outcome.winner = fight.getWinner();
 			outcome.duration = fight.getOrder().getTurn();
-			outcome.statistics = fight.statistics;
+			outcome.statistics = statisticsManager;
 			outcome.executionTime = fight.executionTime;
 
 			// Save registers

@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.Util;
+import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.entity.Entity;
 
@@ -12,13 +13,16 @@ import leekscript.AILog;
 
 public class FarmerLog extends AILog {
 
+	private final static int MAX_LENGTH = 500000;
+
 	private final JSONObject mObject;
 	private Actions mLogs;
 	private int mAction = -1;
 	private int mNb = 0;
 	private JSONArray mCurArray;
 	private int mSize = 0;
-	private final static int MAX_LENGTH = 500000;
+	private Fight fight;
+	private int farmer;
 
 	public final static int MARK = 4;
 	public final static int PAUSE = 5;
@@ -29,9 +33,11 @@ public class FarmerLog extends AILog {
 	public static final int CHIP_NOT_EQUIPED = 1001;
 	public static final int CHIP_NOT_EXISTS = 1002;
 
-	public FarmerLog() {
+	public FarmerLog(Fight fight, int farmer) {
 		super();
 		mObject = new JSONObject();
+		this.fight = fight;
+		this.farmer = farmer;
 	}
 
 	public void setLogs(Actions logs) {
@@ -134,6 +140,7 @@ public class FarmerLog extends AILog {
 
 	public boolean addSize(int size) {
 		if (mSize + size > MAX_LENGTH) {
+			fight.statistics.tooMuchDebug(farmer);
 			return false;
 		}
 		mSize += size;

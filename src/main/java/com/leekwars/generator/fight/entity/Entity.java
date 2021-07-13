@@ -66,6 +66,8 @@ public abstract class Entity {
 	protected int mAIId;
 	protected int mTotalLife;
 	protected boolean mStatic;
+	protected int resurrected = 0;
+	protected long totalOperations = 0;
 
 	// Current effects on the entity
 	protected final ArrayList<Effect> effects = new ArrayList<Effect>();
@@ -391,8 +393,7 @@ public abstract class Entity {
 			pv = life;
 		}
 		life -= pv;
-		fight.statistics.addDamage(attacker, pv, this.team != attacker.team);
-		fight.trophyManager.damage(this, attacker, pv, direct_attack);
+		fight.statistics.damage(this, attacker, pv, direct_attack);
 
 		// Add erosion
 		mTotalLife -= erosion;
@@ -472,12 +473,13 @@ public abstract class Entity {
 		}
 	}
 
-	public void addLife(int pv) {
-		if (pv > getTotalLife() - life)
+	public void addLife(Entity healer, int pv) {
+		if (pv > getTotalLife() - life) {
 			pv = getTotalLife() - life;
-		fight.statistics.addHeal(pv);
+		}
 		life += pv;
-		fight.trophyManager.characteristics(this);
+		fight.statistics.heal(healer, pv);
+		fight.statistics.characteristics(this);
 	}
 
 	public void setCell(Cell cell) {
@@ -539,6 +541,10 @@ public abstract class Entity {
 		usedMP = 0;
 		usedTP = 0;
 
+		if (mEntityAI != null) {
+			totalOperations += mEntityAI.operations();
+		}
+
 		// Propagation des effets
 		for (Effect effect : effects) {
 			if (effect.propagate > 0) {
@@ -595,7 +601,7 @@ public abstract class Entity {
 
 	public void updateBuffStats(int id, int delta) {
 		mBuffStats.updateStat(id, delta);
-		fight.trophyManager.characteristics(this);
+		fight.statistics.characteristics(this);
 	}
 
 	public void addEffect(Effect effect) {
@@ -751,17 +757,18 @@ public abstract class Entity {
 		mTotalLife = Math.max(10, (int) Math.round(mTotalLife * 0.5 * factor));
 		life = mTotalLife / 2;
 		dead = false;
+		resurrected++;
 		endTurn();
 	}
 
 	public void useTP(int tp) {
-		fight.statistics.addTPUsed(tp);
 		usedTP += tp;
+		fight.statistics.useTP(tp);
 	}
 
 	public void useMP(int mp) {
-		fight.statistics.addMPUsed(mp);
 		usedMP += mp;
+		fight.statistics.useTP(mp);
 	}
 
 	@Override
@@ -871,5 +878,13 @@ public abstract class Entity {
 	public int getDistance(Entity entity) {
 		if (dead || entity.dead) return 999;
 		return Pathfinding.getCaseDistance(getCell(), entity.getCell());
+	}
+
+	public int getResurrected() {
+		return this.resurrected;
+	}
+
+	public long getTotalOperations() {
+		return this.totalOperations;
 	}
 }

@@ -264,35 +264,33 @@ public class EntityAI extends AI {
 			// e.printStackTrace(System.out);
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.STACKOVERFLOW, e.getStackTrace());
-			fight.statistics.addStackOverflow(mEntity);
-			fight.statistics.addErrors(1);
-			fight.trophyManager.stackOverflow(mEntity);
+			fight.statistics.stackOverflow(mEntity);
+			fight.statistics.error(mEntity);
 			// Pas de rethrow
 
 		} catch (ArithmeticException e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
-			fight.statistics.addErrors(1);
+			fight.statistics.error(mEntity);
 			// Pas de rethrow
 
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
 			// e.printStackTrace(System.out);
-			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
+			fight.statistics.error(mEntity);
 
 			if (e.getError() == LeekRunException.TOO_MUCH_OPERATIONS) {
 				fight.statistics.tooMuchOperations(mEntity);
-				fight.trophyManager.tooMuchOperations(mEntity);
 			}
 			// Pas de rethrow
 
 		} catch (OutOfMemoryError e) { // Plus de RAM, Erreur critique, on tente de sauver les meubles
 
-			fight.statistics.addErrors(1);
 			fight.log(new ActionAIError(mEntity));
+			fight.statistics.error(mEntity);
 			// Premierement on coupe l'IA incriminée
 			valid = false;
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Out Of Memory" }, e.getStackTrace());
@@ -303,7 +301,7 @@ public class EntityAI extends AI {
 		} catch (RuntimeException e) { // Autre erreur, là c'est pas l'utilisateur
 
 			e.printStackTrace(System.out);
-			fight.statistics.addErrors(1);
+			fight.statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
 			e.printStackTrace();
@@ -314,18 +312,13 @@ public class EntityAI extends AI {
 		} catch (Exception e) { // Autre erreur, là c'est pas l'utilisateur
 
 			e.printStackTrace(System.out);
-			fight.statistics.addErrors(1);
+			fight.statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
 			e.printStackTrace();
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
 			fight.generator.exception(e, fight, id);
 			throw new RuntimeException("Erreur importante dans l'IA " + id + "  " + e.getMessage(), e);
-
-		} finally {
-			if (this != null) {
-				fight.statistics.addOperations(this.operations());
-			}
 		}
 
 		mMessages.clear();
@@ -733,9 +726,7 @@ public class EntityAI extends AI {
 		fight.log(new ActionSay(mEntity, message));
 		fight.log(new ActionLoseTP(mEntity, 1));
 		mSays.add(message);
-		fight.statistics.addSays(1);
-		fight.statistics.addSaysLength(message.length());
-		fight.trophyManager.say(mEntity, message);
+		fight.statistics.say(mEntity, message);
 		return true;
 	}
 
@@ -1949,7 +1940,7 @@ public class EntityAI extends AI {
 		mEntity.useTP(1);
 		fight.log(new ActionLoseTP(mEntity, 1));
 		fight.log(new ActionLama(mEntity));
-		fight.trophyManager.lama(mEntity);
+		fight.statistics.lama(mEntity);
 	}
 
 	public boolean sendTo(int target, int type, Object message) {
@@ -2534,6 +2525,7 @@ public class EntityAI extends AI {
 		fight.log(new ActionLoseTP(mEntity, 1));
 
 		fight.log(new ActionShowCell(mEntity, cell_id, col));
+		fight.statistics.show(mEntity, cell_id);
 
 		return true;
 	}

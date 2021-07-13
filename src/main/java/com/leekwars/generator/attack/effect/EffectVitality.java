@@ -12,6 +12,6 @@ public class EffectVitality extends Effect {
 
 		fight.log(new ActionVitality(target, value));
 		target.addTotalLife(value);
-		target.addLife(value);
+		target.addLife(caster, value);
 	}
 }

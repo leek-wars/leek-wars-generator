@@ -2,13 +2,11 @@ package com.leekwars.generator.fight.action;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.statistics.FarmerStatistics;
-import com.leekwars.generator.fight.statistics.FightStatistics;
+import com.leekwars.generator.fight.statistics.StatisticsManager;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 
@@ -62,11 +60,9 @@ public class Actions {
 		return retour;
 	}
 
-	public void addOpsAndTimes(FightStatistics statistics) {
-		for (Entry<Integer, FarmerStatistics> farmer : statistics.farmers.entrySet()) {
-			for (Entry<Integer, Long> entity : farmer.getValue().aiOperations.entrySet()) {
-				ops.put(String.valueOf(entity.getKey()), entity.getValue());
-			}
+	public void addOpsAndTimes(StatisticsManager statistics) {
+		for (var entry : statistics.getOperationsByEntity().entrySet()) {
+			ops.put(String.valueOf(entry.getKey()), entry.getValue());
 		}
 	}
 

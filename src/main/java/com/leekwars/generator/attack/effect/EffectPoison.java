@@ -23,7 +23,7 @@ public class EffectPoison extends Effect {
 
 			fight.log(new ActionDamage(DamageType.POISON, target, damages, erosion));
 			target.removeLife(damages, erosion, caster, false);
-			fight.statistics.addDamagePoison(damages);
+			fight.statistics.poison(caster, target, damages);
 			target.onPoisonDamage(damages);
 			target.onNovaDamage(erosion);
 		}
