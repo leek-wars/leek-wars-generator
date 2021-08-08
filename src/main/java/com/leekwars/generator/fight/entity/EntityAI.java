@@ -116,7 +116,7 @@ public class EntityAI extends AI {
 		} catch (FileNotFoundException e) {
 			// Failed to resolve, not normal
 			generator.exception(e, entity.fight);
-			logs.addSystemLog(LeekLog.SERROR, Error.CAN_NOT_COMPILE_AI, new String[] { "Failed to resolve AI" });
+			logs.addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { "Failed to resolve AI" });
 			return new EntityAI(entity, logs);
 		}
 
@@ -133,12 +133,12 @@ public class EntityAI extends AI {
 		} catch (LeekScriptException e) {
 			// Java compilation error : server error
 			generator.exception(e, entity.fight, file.getId());
-			if (e.getType() == LeekScriptException.CODE_TOO_LARGE) {
+			if (e.getType() == Error.CODE_TOO_LARGE) {
 				logs.addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE, new String[] { e.getMessage() });
-			} else if (e.getType() == LeekScriptException.CODE_TOO_LARGE_FUNCTION) {
+			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
 				logs.addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
 			} else {
-				logs.addSystemLog(LeekLog.SERROR, Error.CAN_NOT_COMPILE_AI, new String[] { e.getMessage() });
+				logs.addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			}
 			return new EntityAI(entity, logs);
 
@@ -150,7 +150,7 @@ public class EntityAI extends AI {
 		} catch (Exception e) {
 			// Other error : server error
 			generator.exception(e, entity.fight, file.getId());
-			logs.addSystemLog(LeekLog.SERROR, Error.CAN_NOT_COMPILE_AI, new String[] { e.getMessage() });
+			logs.addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			return new EntityAI(entity, logs);
 		}
 	}
