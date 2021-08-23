@@ -197,7 +197,7 @@ public class Generator {
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
 			Log.e(TAG, "Error loading weapons!");
-			e.printStackTrace();
+			exception(e);
 		}
 	}
 
@@ -215,7 +215,7 @@ public class Generator {
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
-			e.printStackTrace();
+			exception(e);
 		}
 	}
 
@@ -230,7 +230,7 @@ public class Generator {
 			}
 			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
-			e.printStackTrace();
+			exception(e);
 		}
 	}
 
@@ -244,7 +244,7 @@ public class Generator {
 			}
 			Log.end(functions.size() + " functions loaded.");
 		} catch (Exception e) {
-			e.printStackTrace();
+			exception(e);
 		}
 	}
 
@@ -290,6 +290,11 @@ public class Generator {
 		errorManager = manager;
 	}
 
+	public void exception(Throwable e) {
+		if (errorManager != null) {
+			errorManager.exception(e, -1);
+		}
+	}
 	public void exception(Throwable e, Fight fight) {
 		if (errorManager != null) {
 			errorManager.exception(e, fight.getId());
