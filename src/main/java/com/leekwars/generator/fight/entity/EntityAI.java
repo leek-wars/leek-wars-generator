@@ -629,6 +629,17 @@ public class EntityAI extends AI {
 		return null;
 	}
 
+	public Object getPower(Object value) throws LeekRunException {
+		if (value == null)
+			return mEntity.getPower();
+		if (value instanceof Number) {
+			Entity l = fight.getEntity(((Number) value).intValue());
+			if (l != null)
+				return l.getPower();
+		}
+		return null;
+	}
+
 	public Object getLevel(Object value) throws LeekRunException {
 		if (value == null)
 			return mEntity.getLevel();

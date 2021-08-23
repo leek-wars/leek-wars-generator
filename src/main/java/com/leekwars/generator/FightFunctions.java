@@ -110,6 +110,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) ai).getTotalLife(parameters[0]);
 		}
 	},
+	getPower(0, 1) {
+		@Override
+		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
+			return ((EntityAI) ai).getPower(parameters[0]);
+		}
+	},
 	setWeapon(1, new int[] { AI.NUMBER }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
