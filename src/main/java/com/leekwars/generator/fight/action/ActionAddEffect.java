@@ -14,16 +14,17 @@ public class ActionAddEffect implements Action {
 	private final int effectID;
 	private final int value;
 	private final int turns;
+	private final int modifiers;
 
-	public static int createEffect(Actions logs, int type, int itemID, Entity caster, Entity target, int effectID, int value, int turns, boolean stacked) {
+	public static int createEffect(Actions logs, int type, int itemID, Entity caster, Entity target, int effectID, int value, int turns, boolean stacked, int modifiers) {
 
 		int r = logs.getEffectId();
-		ActionAddEffect effect = new ActionAddEffect(type, itemID, r, caster.getFId(), target.getFId(), effectID, value, turns, stacked);
+		ActionAddEffect effect = new ActionAddEffect(type, itemID, r, caster.getFId(), target.getFId(), effectID, value, turns, stacked, modifiers);
 		logs.log(effect);
 		return r;
 	}
 
-	public ActionAddEffect(int type, int itemID, int id, int caster, int target, int effectID, int value, int turns, boolean stacked) {
+	public ActionAddEffect(int type, int itemID, int id, int caster, int target, int effectID, int value, int turns, boolean stacked, int modifiers) {
 
 		if (type == Attack.TYPE_CHIP) {
 			if (stacked) {
@@ -47,6 +48,7 @@ public class ActionAddEffect implements Action {
 		this.effectID = effectID;
 		this.value = value;
 		this.turns = turns;
+		this.modifiers = modifiers;
 	}
 
 	@Override
@@ -59,7 +61,8 @@ public class ActionAddEffect implements Action {
 		retour.add(target);
 		retour.add(effectID);
 		retour.add(value);
-		retour.add(this.turns);
+		retour.add(turns);
+		retour.add(modifiers);
 		return retour;
 	}
 }

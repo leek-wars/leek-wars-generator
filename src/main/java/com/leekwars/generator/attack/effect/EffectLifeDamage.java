@@ -12,7 +12,7 @@ public class EffectLifeDamage extends Effect {
 	public void apply(Fight fight) {
 
 		// Base damages
-		double d = ((value1 + jet * value2) / 100) * caster.getLife() * power * criticalPower;
+		double d = ((value1 + jet * value2) / 100) * caster.getLife() * aoe * criticalPower * (1 + caster.getPower() / 100);
 
 		// Return damage
 		if (target != caster) {

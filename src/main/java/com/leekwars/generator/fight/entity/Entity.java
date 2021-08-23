@@ -48,6 +48,7 @@ public abstract class Entity {
 	public final static int CHARAC_SCIENCE = 12;
 	public final static int CHARAC_MAGIC = 13;
 	public final static int CHARAC_DAMAGE_RETURN = 14;
+	public final static int CHARAC_POWER = 15;
 
 	// Characteristics
 	protected Cell cell;
@@ -373,6 +374,10 @@ public abstract class Entity {
 		return getTotalTP() - usedTP;
 	}
 
+	public int getPower() {
+		return getStat(Entity.CHARAC_POWER);
+	}
+
 	public int getTeam() {
 		return team;
 	}
@@ -452,7 +457,7 @@ public abstract class Entity {
 		if (effect.getId() == Effect.TYPE_MOVED_TO_MP) {
 			double value = effect.getValue1();
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MP, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 1, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MP, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 1, 0, effect.getModifiers());
 		}
 	}
 
@@ -460,12 +465,12 @@ public abstract class Entity {
 		if (effect.getId() == Effect.TYPE_DAMAGE_TO_ABSOLUTE_SHIELD) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_ABSOLUTE_SHIELD, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_ABSOLUTE_SHIELD, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
 		}
 		else if (effect.getId() == Effect.TYPE_DAMAGE_TO_STRENGTH) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_STRENGTH, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_STRENGTH, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
 		}
 	}
 
@@ -473,7 +478,7 @@ public abstract class Entity {
 		if (effect.getId() == Effect.TYPE_NOVA_DAMAGE_TO_MAGIC) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MAGIC, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_MAGIC, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
 		}
 	}
 
@@ -481,7 +486,7 @@ public abstract class Entity {
 		if (effect.getId() == Effect.TYPE_POISON_TO_SCIENCE) {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
-			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_SCIENCE, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0);
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_SCIENCE, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
 		}
 	}
 
@@ -566,7 +571,7 @@ public abstract class Entity {
 					if ((propagation.getModifiers() & Effect.MODIFIER_NOT_REPLACEABLE) != 0 && target.hasEffect(attack.getItemId())) {
 						continue; // La cible a déjà l'effet et il n'est pas remplacable
 					}
-					Effect.createEffect(fight, effect.getID(), original.getTurns(), 1, original.getValue1(), original.getValue2(), effect.isCritical(), target, effect.getCaster(), attack, jet, (propagation.getModifiers() & Effect.MODIFIER_STACKABLE) != 0, 0, 0, effect.propagate);
+					Effect.createEffect(fight, effect.getID(), original.getTurns(), 1, original.getValue1(), original.getValue2(), effect.isCritical(), target, effect.getCaster(), attack, jet, (propagation.getModifiers() & Effect.MODIFIER_STACKABLE) != 0, 0, 0, effect.propagate, effect.modifiers);
 				}
 			}
 		}
@@ -660,8 +665,12 @@ public abstract class Entity {
 
 	public void reduceEffects(double percent, Entity caster) {
 		for (int i = 0; i < effects.size(); ++i) {
-			effects.get(i).reduce(percent, caster);
-			if (effects.get(i).value == 0) {
+			var effect = effects.get(i);
+			// Irreductible effect? skip
+			if ((effect.getModifiers() & Effect.MODIFIER_IRREDUCTIBLE) != 0) continue;
+
+			effect.reduce(percent, caster);
+			if (effect.value == 0) {
 				removeEffect(effects.get(i));
 				i--;
 			} else {

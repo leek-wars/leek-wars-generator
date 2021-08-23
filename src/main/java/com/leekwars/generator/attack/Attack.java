@@ -198,11 +198,12 @@ public class Attack {
 
 			} else {
 
-				boolean onCaster = (parameters.getModifiers() & Effect.MODIFIER_ON_CASTER) != 0;
-				boolean stackable = (parameters.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+				int modifiers = parameters.getModifiers();
+				boolean onCaster = (modifiers & Effect.MODIFIER_ON_CASTER) != 0;
+				boolean stackable = (modifiers & Effect.MODIFIER_STACKABLE) != 0;
 				int effectTotalValue = 0;
-				boolean multiplied_by_target_count = (parameters.getModifiers() & Effect.MODIFIER_MULTIPLIED_BY_TARGETS) != 0;
-				boolean not_replaceable = (parameters.getModifiers() & Effect.MODIFIER_NOT_REPLACEABLE) != 0;
+				boolean multiplied_by_target_count = (modifiers & Effect.MODIFIER_MULTIPLIED_BY_TARGETS) != 0;
+				boolean not_replaceable = (modifiers & Effect.MODIFIER_NOT_REPLACEABLE) != 0;
 				List<Entity> effectTargetEntities = new ArrayList<Entity>();
 
 				for (Entity targetEntity : targetEntities) {
@@ -227,16 +228,16 @@ public class Attack {
 				if (!onCaster) { // If the effect is on caster, we only count the targets, not apply the effect
 					for (Entity targetEntity : effectTargetEntities) {
 
-						double power = areaFactors.get(targetEntity.getFId());
+						double aoe = areaFactors.get(targetEntity.getFId());
 
-						effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), power, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate);
+						effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), aoe, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate, modifiers);
 					}
 				}
 
 				// Always caster
 				if (onCaster) {
 					returnEntities.add(caster);
-					Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate);
+					Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate, modifiers);
 				}
 
 				previousEffectTotalValue = effectTotalValue;

@@ -14,7 +14,7 @@ public class EffectDamage extends Effect {
 	public void apply(Fight fight) {
 
 		// Base damages
-		double d = (value1 + jet * value2) * (1 + Math.max(0, caster.getStrength()) / 100.0) * power * criticalPower * targetCount;
+		double d = (value1 + jet * value2) * (1 + Math.max(0, caster.getStrength()) / 100.0) * aoe * criticalPower * targetCount * (1 + caster.getPower() / 100);
 
 		// Return damage
 		if (target != caster) {

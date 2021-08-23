@@ -67,6 +67,7 @@ public abstract class Effect {
 	public final static int TYPE_REMOVE_SHACKLES = 49;
 	public final static int TYPE_MOVED_TO_MP = 50;
 	public final static int TYPE_PUSH = 51;
+	public final static int TYPE_RAW_BUFF_POWER = 52;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -80,6 +81,7 @@ public abstract class Effect {
 	public final static int MODIFIER_MULTIPLIED_BY_TARGETS = 2; // The effect is multiplied by the number of targets in the area
 	public final static int MODIFIER_ON_CASTER = 4; // The effect is applied on the caster
 	public final static int MODIFIER_NOT_REPLACEABLE = 8; // The effect will not replace the previous one
+	public final static int MODIFIER_IRREDUCTIBLE = 16; // The effect is not reductible (by EFFECT_DEBUFF)
 
 	// Power in case of critical hit
 	public static final double CRITICAL_FACTOR = 1.3;
@@ -142,7 +144,7 @@ public abstract class Effect {
 	// Effect characteristics
 	protected int id;
 	protected int turns = 0;
-	protected double power = 1.0;
+	protected double aoe = 1.0;
 	protected double value1;
 	protected double value2;
 	protected boolean critical = false;
@@ -158,8 +160,9 @@ public abstract class Effect {
 	public int previousEffectTotalValue;
 	public int targetCount;
 	public int propagate = 0; // Distance de propagation
+	public int modifiers = 0;
 
-	public static int createEffect(Fight fight, int id, int turns, double power, double value1, double value2, boolean critical, Entity target, Entity caster, Attack attack, double jet, boolean stackable, int previousEffectTotalValue, int targetCount, int propagate) {
+	public static int createEffect(Fight fight, int id, int turns, double aoe, double value1, double value2, boolean critical, Entity target, Entity caster, Attack attack, double jet, boolean stackable, int previousEffectTotalValue, int targetCount, int propagate, int modifiers) {
 
 		// Invalid effect id
 		if (id < 0 || id > effects.length) {
@@ -175,7 +178,7 @@ public abstract class Effect {
 		}
 		effect.id = id;
 		effect.turns = turns;
-		effect.power = power;
+		effect.aoe = aoe;
 		effect.value1 = value1;
 		effect.value2 = value2;
 		effect.critical = critical;
@@ -189,6 +192,7 @@ public abstract class Effect {
 		effect.previousEffectTotalValue = previousEffectTotalValue;
 		effect.targetCount = targetCount;
 		effect.propagate = propagate;
+		effect.modifiers = modifiers;
 
 		// Remove previous effect of the same type (that is not stackable)
 		if (effect.getTurns() != 0) {
@@ -196,7 +200,7 @@ public abstract class Effect {
 				List<Effect> effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
 					Effect e = effects.get(i);
-					if (e.id == id && e.attack.getItemId() == attack.getItemId()) {
+					if (e.id == id && ((e.attack == null && attack == null) || (e.attack.getItemId() == attack.getItemId()))) {
 						target.removeEffect(e);
 						break;
 					}
@@ -209,7 +213,7 @@ public abstract class Effect {
 		// Stack to previous item with the same characteristics
 		if (effect.value > 0) {
 			for (Effect e : target.getEffects()) {
-				if (e.attack.getItemId() == attack.getItemId() && e.id == id && e.turns == turns && e.caster == caster) {
+				if (((e.attack == null && attack == null) || (e.attack.getItemId() == attack.getItemId())) && e.id == id && e.turns == turns && e.caster == caster) {
 					e.mergeWith(effect);
 					effect.addLog(fight, true);
 					return effect.value; // No need to apply the effect again
@@ -231,7 +235,7 @@ public abstract class Effect {
 		if (turns == 0) {
 			return;
 		}
-		logID = ActionAddEffect.createEffect(fight.getActions(), attack.getType(), attack.getItemId(), caster, target, id, value, turns, stacked);
+		logID = ActionAddEffect.createEffect(fight.getActions(), attack.getType(), attack.getItemId(), caster, target, id, value, turns, stacked, modifiers);
 	}
 
 	public Stats getStats() {
@@ -258,13 +262,10 @@ public abstract class Effect {
 		this.turns = turns;
 	}
 
-	public double getPower() {
-		return power;
+	public double getAOE() {
+		return aoe;
 	}
 
-	public void setPower(double power) {
-		this.power = power;
-	}
 	public int getValue() {
 		return value;
 	}
@@ -289,6 +290,10 @@ public abstract class Effect {
 		return attack;
 	}
 
+	public int getModifiers() {
+		return modifiers;
+	}
+
 	public ArrayLeekValue getLeekValue(AI ai) throws LeekRunException {
 
 		ArrayLeekValue retour = new ArrayLeekValue();
@@ -299,6 +304,7 @@ public abstract class Effect {
 		retour.put(ai, 4, critical);
 		retour.put(ai, 5, attack.getItemId());
 		retour.put(ai, 6, target.getFId());
+		retour.put(ai, 7, modifiers);
 		return retour;
 	}
 
