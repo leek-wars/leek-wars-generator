@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.attack.chips.Chip;
+import com.leekwars.generator.attack.chips.ChipType;
 import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
@@ -210,7 +211,7 @@ public class Generator {
 						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"),
 						chip.getByte("area"), chip.getBoolean("los"), chip.getInteger("cooldown"),
 						chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"),
-						chip.getInteger("template"), chip.getString("name")));
+						chip.getInteger("template"), chip.getString("name"), ChipType.values()[chip.getInteger("type")]));
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {

@@ -14,8 +14,9 @@ public class Chip {
 	private final int template;
 	private final String name;
 	private final int level;
+	private final ChipType chipType; // Type in market
 
-	public Chip(int id, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name) {
+	public Chip(int id, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name, ChipType chipType) {
 
 		this.id = id;
 		this.cost = cost;
@@ -25,6 +26,7 @@ public class Chip {
 		this.template = template;
 		this.name = name;
 		this.level = level;
+		this.chipType = chipType;
 		attack = new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, id);
 	}
 
@@ -62,5 +64,9 @@ public class Chip {
 
 	public int getLevel() {
 		return level;
+	}
+
+	public ChipType getChipType() {
+		return chipType;
 	}
 }
