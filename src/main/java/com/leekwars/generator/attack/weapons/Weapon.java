@@ -67,4 +67,8 @@ public class Weapon {
 	public List<EffectParameters> getPassiveEffects() {
 		return passiveEffects;
 	}
+
+	public boolean isHandToHandWeapon() {
+		return attack.getMinRange() == 1 && attack.getMaxRange() == 1;
+	}
 }
