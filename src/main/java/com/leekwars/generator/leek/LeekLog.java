@@ -18,7 +18,8 @@ public class LeekLog extends AILog {
 		stream = new AILog.Stream() {
 			@Override
 			public void write(JSONArray array) {
-				farmerLogs.addAction(entity, array);
+				array.set(0, entity.getFId());
+				farmerLogs.addAction(array);
 			}
 		};
 	}

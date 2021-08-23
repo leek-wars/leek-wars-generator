@@ -28,10 +28,13 @@ public class FarmerLog extends AILog {
 	public final static int PAUSE = 5;
 	public final static int MARK_TEXT = 9;
 	public final static int CLEAR_CELLS = 10;
+	public final static int TOO_MUCH_DEBUG = 11;
 
 	public static final int NO_WEAPON_EQUIPED = 1000;
 	public static final int CHIP_NOT_EQUIPED = 1001;
 	public static final int CHIP_NOT_EXISTS = 1002;
+
+	private boolean tooMuchDebug = false;
 
 	public FarmerLog(Fight fight, int farmer) {
 		super();
@@ -44,8 +47,7 @@ public class FarmerLog extends AILog {
 		mLogs = logs;
 	}
 
-	public void addAction(Entity entity, JSONArray action) {
-		action.set(0, entity.getFId());
+	public void addAction(JSONArray action) {
 		int id = mLogs == null ? 0 : Math.max(0, mLogs.getNextId() - 1);
 		if (mAction < id) {
 			mCurArray = new JSONArray();
@@ -75,7 +77,7 @@ public class FarmerLog extends AILog {
 		obj.add(key);
 		if (parameters != null)
 			obj.add(parameters);
-		addAction(leek, obj);
+		addAction(obj);
 	}
 
 	public void addCell(Entity leek, int[] cells, int color, int duration) {
@@ -89,7 +91,7 @@ public class FarmerLog extends AILog {
 		obj.add(cells);
 		obj.add(Util.getHexaColor(color));
 		obj.add(duration);
-		addAction(leek, obj);
+		addAction(obj);
 	}
 
 	public void addClearCells(Entity leek) {
@@ -100,7 +102,7 @@ public class FarmerLog extends AILog {
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(CLEAR_CELLS);
-		addAction(leek, obj);
+		addAction(obj);
 	}
 
 	public void addCellText(Entity leek, int[] cells, String text, int color, int duration) {
@@ -115,7 +117,7 @@ public class FarmerLog extends AILog {
 		obj.add(text);
 		obj.add(Util.getHexaColor(color));
 		obj.add(duration);
-		addAction(leek, obj);
+		addAction(obj);
 	}
 
 	public void addLog(Entity leek, int type, String message) {
@@ -125,7 +127,13 @@ public class FarmerLog extends AILog {
 
 	public void addLog(Entity leek, int type, String message, int color) {
 
-		if (message == null || !addSize(20 + message.length())) {
+		if (message == null) return;
+
+		if (!tooMuchDebug && mSize != MAX_LENGTH && mSize + 20 + message.length() > MAX_LENGTH) {
+			// On peut couper le message pour le faire tenir dans la limite restante
+			message = message.substring(0, Math.max(0, MAX_LENGTH - (mSize + 20 + 6))) + " [...]";
+		}
+		if (!addSize(20 + message.length())) {
 			return;
 		}
 		JSONArray obj = new JSONArray();
@@ -135,12 +143,23 @@ public class FarmerLog extends AILog {
 		if (color != 0) {
 			obj.add(color);
 		}
-		addAction(leek, obj);
+		addAction(obj);
 	}
 
 	public boolean addSize(int size) {
 		if (mSize + size > MAX_LENGTH) {
-			fight.statistics.tooMuchDebug(farmer);
+			if (!tooMuchDebug) {
+				fight.statistics.tooMuchDebug(farmer);
+
+				// Message : trop de logs
+				JSONArray obj = new JSONArray();
+				obj.add(0);
+				obj.add(TOO_MUCH_DEBUG);
+				addAction(obj);
+
+				tooMuchDebug = true;
+				mSize = MAX_LENGTH;
+			}
 			return false;
 		}
 		mSize += size;
@@ -162,6 +181,6 @@ public class FarmerLog extends AILog {
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(PAUSE);
-		addAction(leek, obj);
+		addAction(obj);
 	}
 }
