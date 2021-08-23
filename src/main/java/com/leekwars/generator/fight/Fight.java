@@ -518,6 +518,14 @@ public class Fight {
 
 		actions.log(new ActionEntityDie(entity, killer));
 		statistics.kill(killer, entity);
+
+		// BR : give 10 (or 2 for bulb) power + 50% of power to the killer
+		var effect = entity.getEffects().stream().filter(e -> e.getAttack() == null && e.getID() == Effect.TYPE_RAW_BUFF_POWER).findAny().orElse(null);
+		if (effect != null) {
+			int baseAmount = entity.isSummon() ? 2 : 10;
+			int amount = baseAmount + (int) (effect.value / 2);
+			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, entity, entity, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+		}
 	}
 
 	/*
@@ -549,12 +557,24 @@ public class Fight {
 					actions.log(new ActionNewTurn(order.getTurn()));
 					lastTurn = order.getTurn();
 					Log.i(TAG, "Turn " + order.getTurn());
+
+					// Battle Royale powers
+					if (type == Fight.TYPE_BATTLE_ROYALE) {
+						giveBRPower();
+					}
 				}
 
 				for (Team t : teams) {
 					t.applyCoolDown();
 				}
 			}
+		}
+	}
+
+	public void giveBRPower() {
+		for (var entity : getAllEntities(false)) {
+			// 5 power, infinite duration
+			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, 5, 0, false, entity, entity, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 		}
 	}
 
