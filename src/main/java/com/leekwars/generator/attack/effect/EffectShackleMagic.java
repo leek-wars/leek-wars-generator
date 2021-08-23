@@ -12,7 +12,7 @@ public class EffectShackleMagic extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * (1.0 + Math.max(0, caster.getMagic()) / 100.0) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_MAGIC, -value);
-			target.updateBuffStats(Entity.CHARAC_MAGIC, -value);
+			target.updateBuffStats(Entity.CHARAC_MAGIC, -value, caster);
 		}
 	}
 }

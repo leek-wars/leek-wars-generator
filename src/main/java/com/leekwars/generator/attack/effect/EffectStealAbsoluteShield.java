@@ -11,7 +11,7 @@ public class EffectStealAbsoluteShield extends Effect {
 		value = previousEffectTotalValue;
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_ABSOLUTE_SHIELD, value);
-			target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD, value);
+			target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD, value, caster);
 		}
 	}
 }

@@ -11,7 +11,7 @@ public class EffectRawBuffWisdom extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_WISDOM, value);
-			target.updateBuffStats(Entity.CHARAC_WISDOM, value);
+			target.updateBuffStats(Entity.CHARAC_WISDOM, value, caster);
 		}
 	}
 }

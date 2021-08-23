@@ -22,8 +22,7 @@ public class EffectPoison extends Effect {
 			int erosion = (int) Math.round(damages * erosionRate);
 
 			fight.log(new ActionDamage(DamageType.POISON, target, damages, erosion));
-			target.removeLife(damages, erosion, caster, false);
-			fight.statistics.poison(caster, target, damages);
+			target.removeLife(damages, erosion, caster, DamageType.POISON, this);
 			target.onPoisonDamage(damages);
 			target.onNovaDamage(erosion);
 		}

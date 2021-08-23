@@ -11,7 +11,7 @@ public class EffectRawAbsoluteShield extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_ABSOLUTE_SHIELD, value);
-			target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD, value);
+			target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD, value, caster);
 		}
 	}
 }

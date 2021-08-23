@@ -11,7 +11,7 @@ public class EffectRawBuffAgility extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_AGILITY, value);
-			target.updateBuffStats(Entity.CHARAC_AGILITY, value);
+			target.updateBuffStats(Entity.CHARAC_AGILITY, value, caster);
 		}
 	}
 }

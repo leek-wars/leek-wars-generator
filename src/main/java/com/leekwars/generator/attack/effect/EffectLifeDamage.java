@@ -32,7 +32,7 @@ public class EffectLifeDamage extends Effect {
 		int erosion = (int) Math.round(value * erosionRate);
 
 		fight.log(new ActionDamage(DamageType.LIFE, target, value, erosion));
-		target.removeLife(value, erosion, caster, true);
+		target.removeLife(value, erosion, caster, DamageType.LIFE, this);
 		target.onDirectDamage(value);
 		target.onNovaDamage(erosion);
 
@@ -47,8 +47,7 @@ public class EffectLifeDamage extends Effect {
 
 			if (returnDamage > 0) {
 				fight.log(new ActionDamage(DamageType.RETURN, caster, returnDamage, returnErosion));
-				caster.removeLife(returnDamage, returnErosion, target, false);
-				fight.statistics.damageReturn(target, caster, returnDamage);
+				caster.removeLife(returnDamage, returnErosion, target, DamageType.RETURN, this);
 			}
 		}
 	}

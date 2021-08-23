@@ -18,7 +18,7 @@ public class EffectAftereffect extends Effect {
 		int erosion = (int) Math.round(value * erosionRate);
 
 		fight.log(new ActionDamage(DamageType.AFTEREFFECT, target, value, erosion));
-		target.removeLife(value, erosion, caster, false);
+		target.removeLife(value, erosion, caster, DamageType.AFTEREFFECT, this);
 	}
 
 	@Override
@@ -30,6 +30,6 @@ public class EffectAftereffect extends Effect {
 		int erosion = (int) Math.round(value * erosionRate);
 
 		fight.log(new ActionDamage(DamageType.AFTEREFFECT, target, value, erosion));
-		target.removeLife(value, erosion, caster, false);
+		target.removeLife(value, erosion, caster, DamageType.AFTEREFFECT, this);
 	}
 }

@@ -11,7 +11,7 @@ public class EffectDamageReturn extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * (1 + caster.getAgility() / 100.0) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_DAMAGE_RETURN, value);
-			target.updateBuffStats(Entity.CHARAC_DAMAGE_RETURN, value);
+			target.updateBuffStats(Entity.CHARAC_DAMAGE_RETURN, value, caster);
 		}
 	}
 }

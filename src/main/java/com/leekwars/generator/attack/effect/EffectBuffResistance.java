@@ -11,7 +11,7 @@ public class EffectBuffResistance extends Effect {
 		value = (int) Math.round((value1 + value2 * jet) * (1 + (double) caster.getScience() / 100) * power * criticalPower);
 		if (value > 0) {
 			stats.setStat(Entity.CHARAC_RESISTANCE, value);
-			target.updateBuffStats(Entity.CHARAC_RESISTANCE, value);
+			target.updateBuffStats(Entity.CHARAC_RESISTANCE, value, caster);
 		}
 	}
 }

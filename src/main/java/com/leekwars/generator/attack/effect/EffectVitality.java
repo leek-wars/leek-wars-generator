@@ -11,7 +11,7 @@ public class EffectVitality extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * (1 + caster.getWisdom() / 100.0) * power * criticalPower);
 
 		fight.log(new ActionVitality(target, value));
-		target.addTotalLife(value);
+		target.addTotalLife(value, caster);
 		target.addLife(caster, value);
 	}
 }

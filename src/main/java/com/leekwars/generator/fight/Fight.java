@@ -284,6 +284,17 @@ public class Fight {
 		return enemies;
 	}
 
+	public List<Entity> getTeamLeeks(int team) {
+		List<Entity> leeks = new ArrayList<Entity>();
+		if (team < teams.size()) {
+			for (Entity e : teams.get(team).getEntities()) {
+				if (!e.isDead() && e.getType() == Entity.TYPE_LEEK)
+					leeks.add(e);
+			}
+		}
+		return leeks;
+	}
+
 	public List<Entity> getTeamEntities(int team) {
 		return getTeamEntities(team, false);
 	}
@@ -331,6 +342,7 @@ public class Fight {
 
 		// Check all entities characteristics
 		for (Entity entity : mEntities.values()) {
+			statistics.init(entity);
 			statistics.characteristics(entity);
 		}
 
@@ -436,9 +448,6 @@ public class Fight {
 			actions.addEntity(e, false);
 			initialOrder.add(e);
 		}
-
-		// Initialize statistics
-		statistics.initializeEntities(mEntities.values());
 
 		// On ajoute la map
 		actions.addMap(map);
@@ -576,7 +585,7 @@ public class Fight {
 		actions.log(log_use);
 		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
 		log_use.setEntities(target_leeks);
-		statistics.useWeapon(launcher, weapon, target_leeks);
+		statistics.useWeapon(launcher, weapon, target, target_leeks);
 		if (critical) statistics.critical(launcher);
 
 		launcher.useTP(weapon.getCost());
@@ -622,7 +631,7 @@ public class Fight {
 		actions.log(log);
 		List<Entity> targets = template.getAttack().applyOnCell(this, caster, target, critical);
 		log.setEntities(targets);
-		statistics.useChip(caster, template, targets);
+		statistics.useChip(caster, template, target, targets);
 		if (critical) statistics.critical(caster);
 
 		if (template.getCooldown() != 0) {
@@ -688,13 +697,13 @@ public class Fight {
 		cell.setPlayer(entity);
 
 		statistics.move(caster, entity, start, Pathfinding.getAStarPath(entity.getAI(), start, new Cell[] { cell }));
+		statistics.slide(entity, caster, start, cell);
+
 		entity.setHasMoved(true);
 
 		if (start != cell) {
 			entity.onMoved(caster);
 		}
-
-		statistics.slide(entity, caster, start, cell);
 	}
 
 	public void invertEntities(Entity caster, Entity target) {
@@ -751,11 +760,11 @@ public class Fight {
 
 		// On invoque
 		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel(), critical);
-		statistics.summon(caster, summon);
 
 		// On balance l'action
 		actions.log(new ActionInvocation(summon, result));
-		statistics.useChip(caster, template, new ArrayList<>());
+		statistics.summon(caster, summon);
+		statistics.useChip(caster, template, target, new ArrayList<>());
 
 		if (template.getCooldown() != 0) {
 			addCooldown(caster, template);
@@ -801,7 +810,7 @@ public class Fight {
 
 		// Resurrect
 		resurrect(caster, target_entity, target, critical);
-		statistics.useChip(caster, template, new ArrayList<>());
+		statistics.useChip(caster, template, target, new ArrayList<>());
 		statistics.resurrect(caster, target_entity);
 
 		if (template.getCooldown() != 0) {
@@ -1103,5 +1112,9 @@ public class Fight {
 	public void setStatisticsManager(StatisticsManager statisticsManager) {
 		this.statistics = statisticsManager;
 		statisticsManager.setGeneratorFight(this);
+	}
+
+	public int getDuration() {
+		return order.getTurn();
 	}
 }

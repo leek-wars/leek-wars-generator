@@ -21,6 +21,7 @@ import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionRemoveEffect;
 import com.leekwars.generator.fight.action.ActionUpdateEffect;
+import com.leekwars.generator.fight.action.DamageType;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.Registers;
 import com.leekwars.generator.leek.Stats;
@@ -65,6 +66,7 @@ public abstract class Entity {
 	protected int mTeamId;
 	protected int mAIId;
 	protected int mTotalLife;
+	protected int mInitialLife;
 	protected boolean mStatic;
 	protected int resurrected = 0;
 	protected long totalOperations = 0;
@@ -128,6 +130,7 @@ public abstract class Entity {
 		mBaseStats.setStat(CHARAC_MAGIC, magic);
 
 		mTotalLife = mBaseStats.getStat(CHARAC_LIFE);
+		mInitialLife = mTotalLife;
 		this.life = mTotalLife;
 
 		mWeapons = new ArrayList<Weapon>();
@@ -209,6 +212,7 @@ public abstract class Entity {
 		if (mRegister == null) {
 			loadRegisters();
 		}
+		fight.statistics.registerWrite(this, key, value);
 		return mRegister.set(key, value);
 	}
 	public void deleteRegister(String key) {
@@ -291,13 +295,19 @@ public abstract class Entity {
 		return mTotalLife;
 	}
 
-	public void addTotalLife(int vitality) {
+	public void addTotalLife(int vitality, Entity caster) {
 		mTotalLife += vitality;
+		fight.statistics.vitality(this, caster, vitality);
 	}
 
 	public void setTotalLife(int vitality) {
 		mTotalLife = vitality;
 	}
+
+	public int getInitialLife() {
+		return mInitialLife;
+	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -388,12 +398,12 @@ public abstract class Entity {
 		return dead;
 	}
 
-	public void removeLife(int pv, int erosion, Entity attacker, boolean direct_attack) {
+	public void removeLife(int pv, int erosion, Entity attacker, DamageType type, Effect effect) {
 		if (pv > life) {
 			pv = life;
 		}
 		life -= pv;
-		fight.statistics.damage(this, attacker, pv, direct_attack);
+		fight.statistics.damage(this, attacker, pv, type, effect);
 
 		// Add erosion
 		mTotalLife -= erosion;
@@ -478,7 +488,7 @@ public abstract class Entity {
 			pv = getTotalLife() - life;
 		}
 		life += pv;
-		fight.statistics.heal(healer, pv);
+		fight.statistics.heal(healer, this, pv);
 		fight.statistics.characteristics(this);
 	}
 
@@ -509,6 +519,8 @@ public abstract class Entity {
 	// and apply effects that affects the entity at the beginning of his turn
 	// (poisons, ...)
 	public void startTurn() {
+
+		fight.statistics.entityTurn(this);
 
 		ArrayList<Effect> effectsCopy = new ArrayList<Effect>(this.effects);
 		for (Effect effect : effectsCopy) {
@@ -553,7 +565,7 @@ public abstract class Entity {
 				EffectParameters original = attack.getEffects().get(1); // Second effect is the actual effect
 				double jet = fight.getRandom().getDouble();
 				for (Entity target : getEntitiesAround(effect.propagate)) {
-					if ((propagation.getModifiers() & Effect.MODIFIER_NOT_REPLACEABLE) != 0 && target.hasEffect(attack.getId())) {
+					if ((propagation.getModifiers() & Effect.MODIFIER_NOT_REPLACEABLE) != 0 && target.hasEffect(attack.getItemId())) {
 						continue; // La cible a déjà l'effet et il n'est pas remplacable
 					}
 					Effect.createEffect(fight, effect.getID(), original.getTurns(), 1, original.getValue1(), original.getValue2(), effect.isCritical(), target, effect.getCaster(), attack, jet, (propagation.getModifiers() & Effect.MODIFIER_STACKABLE) != 0, 0, 0, effect.propagate);
@@ -564,7 +576,7 @@ public abstract class Entity {
 
 	public boolean hasEffect(int attackID) {
 		for (Effect target_effect : effects) {
-			if (target_effect.getAttack().getId() == attackID) return true;
+			if (target_effect.getAttack().getItemId() == attackID) return true;
 		}
 		return false;
 	}
@@ -599,9 +611,10 @@ public abstract class Entity {
 		}
 	}
 
-	public void updateBuffStats(int id, int delta) {
+	public void updateBuffStats(int id, int delta, Entity caster) {
 		mBuffStats.updateStat(id, delta);
 		fight.statistics.characteristics(this);
+		fight.statistics.updateCharacteristic(this, id, delta, caster);
 	}
 
 	public void addEffect(Effect effect) {
@@ -645,9 +658,9 @@ public abstract class Entity {
 		effects.clear();
 	}
 
-	public void reduceEffects(double percent) {
+	public void reduceEffects(double percent, Entity caster) {
 		for (int i = 0; i < effects.size(); ++i) {
-			effects.get(i).reduce(percent);
+			effects.get(i).reduce(percent, caster);
 			if (effects.get(i).value == 0) {
 				removeEffect(effects.get(i));
 				i--;
@@ -658,15 +671,18 @@ public abstract class Entity {
 		updateBuffStats();
 	}
 
-	public void clearPoisons() {
+	public void clearPoisons(Entity caster) {
+		int poisonsRemoved = 0;
 		for (int i = 0; i < effects.size(); ++i) {
 			Effect effect = effects.get(i);
 			if (effect instanceof EffectPoison) {
 				effect.getCaster().removeLaunchedEffect(effect);
 				removeEffect(effect);
 				i--;
+				poisonsRemoved += effect.getValue();
 			}
 		}
+		fight.statistics.antidote(this, caster, poisonsRemoved);
 	}
 
 	public void removeShackles() {

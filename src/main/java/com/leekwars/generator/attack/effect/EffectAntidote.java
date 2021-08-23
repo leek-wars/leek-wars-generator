@@ -7,7 +7,8 @@ public class EffectAntidote extends Effect {
 
 	@Override
 	public void apply(Fight fight) {
-		target.clearPoisons();
+
+		target.clearPoisons(caster);
 
 		// "Les poisons de X sont neutralisés"
 		fight.log(new ActionRemovePoisons(target));

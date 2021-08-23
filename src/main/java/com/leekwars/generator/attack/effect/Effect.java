@@ -222,6 +222,7 @@ public abstract class Effect {
 			target.addEffect(effect);
 			caster.addLaunchedEffect(effect);
 			effect.addLog(fight, false);
+			fight.statistics.effect(target, caster, effect);
 		}
 		return effect.value;
 	}
@@ -301,14 +302,14 @@ public abstract class Effect {
 		return retour;
 	}
 
-	public void reduce(double percent) {
+	public void reduce(double percent, Entity caster) {
 		double reduction = 1 - percent;
 		value = (int) Math.round((double) value * reduction);
 		for (Map.Entry<Integer, Integer> stat : stats.stats.entrySet()) {
 			int newValue = (int) Math.round((double) stat.getValue() * reduction);
 			int delta = newValue - stat.getValue();
 			stats.updateStat(stat.getKey(), delta);
-			target.updateBuffStats(stat.getKey(), delta);
+			target.updateBuffStats(stat.getKey(), delta, caster);
 		}
 	}
 

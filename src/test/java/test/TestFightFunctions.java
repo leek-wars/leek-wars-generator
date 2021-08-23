@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.DamageType;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
@@ -62,7 +63,7 @@ public class TestFightFunctions {
 		map.getCell(203).setPlayer(leek2);
 		map.getCell(306).setPlayer(leek1);
 
-		leek2.removeLife(leek2.getLife(), 0, leek1, true);
+		leek2.removeLife(leek2.getLife(), 0, leek1, DamageType.DIRECT, null);
 
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();

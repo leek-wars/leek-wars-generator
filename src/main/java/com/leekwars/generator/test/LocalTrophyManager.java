@@ -6,8 +6,10 @@ import java.util.Map;
 
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.chips.Chip;
+import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.DamageType;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.statistics.StatisticsManager;
 import com.leekwars.generator.maps.Cell;
@@ -34,7 +36,7 @@ public class LocalTrophyManager implements StatisticsManager {
 	public void stackOverflow(Entity entity) {}
 
 	@Override
-	public void damage(Entity entity, Entity attacker, int damage, boolean direct) {}
+	public void damage(Entity entity, Entity attacker, int damage, DamageType type, Effect effect) {}
 
 	@Override
 	public void summon(Entity entity, Entity summon) {}
@@ -46,19 +48,7 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void heal(Entity healer, int pv) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void damageReturn(Entity returner, Entity attacker, int returnDamage) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void poison(Entity caster, Entity target, int damages) {
+	public void heal(Entity healer, Entity entity, int pv) {
 		// TODO Auto-generated method stub
 
 	}
@@ -70,13 +60,13 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void useChip(Entity caster, Chip template, List<Entity> targets) {
+	public void useChip(Entity caster, Chip template, Cell cell, List<Entity> targets) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void useWeapon(Entity caster, Weapon weapon, List<Entity> targets) {
+	public void useWeapon(Entity caster, Weapon weapon, Cell cell, List<Entity> targets) {
 		// TODO Auto-generated method stub
 
 	}
@@ -95,12 +85,6 @@ public class LocalTrophyManager implements StatisticsManager {
 
 	@Override
 	public void endFight(Collection<Entity> values) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void initializeEntities(Collection<Entity> values) {
 		// TODO Auto-generated method stub
 
 	}
@@ -263,6 +247,48 @@ public class LocalTrophyManager implements StatisticsManager {
 
 	@Override
 	public void useInvalidPosition(Entity caster, Attack attack, Cell target) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void updateCharacteristic(Entity entity, int characteristic, int delta, Entity caster) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void init(Entity entity) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void effect(Entity entity, Entity caster, Effect effect) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void entityTurn(Entity entity) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void antidote(Entity entity, Entity caster, int poisonsRemoved) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void vitality(Entity entity, Entity caster, int vitality) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void registerWrite(Entity entity, String key, String value) {
 		// TODO Auto-generated method stub
 
 	}

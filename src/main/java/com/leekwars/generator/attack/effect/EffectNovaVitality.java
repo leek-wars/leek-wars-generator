@@ -11,6 +11,6 @@ public class EffectNovaVitality extends Effect {
 		value = (int) Math.round((value1 + jet * value2) * (1 + caster.getScience() / 100.0) * power * criticalPower);
 
 		fight.log(new ActionNovaVitality(target, value));
-		target.addTotalLife(value);
+		target.addTotalLife(value, caster);
 	}
 }
