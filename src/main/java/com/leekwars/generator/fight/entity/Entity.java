@@ -92,7 +92,6 @@ public abstract class Entity {
 
 	private List<Weapon> mWeapons = null;
 	private Weapon weapon = null;
-	private boolean dead;
 
 	private int usedTP;
 	private int usedMP;
@@ -395,10 +394,13 @@ public abstract class Entity {
 	}
 
 	public boolean isDead() {
-		return dead;
+		return life <= 0;
 	}
 
 	public void removeLife(int pv, int erosion, Entity attacker, DamageType type, Effect effect) {
+
+		if (isDead()) return;
+
 		if (pv > life) {
 			pv = life;
 		}
@@ -496,10 +498,6 @@ public abstract class Entity {
 		this.cell = cell;
 	}
 
-	public void setDead(boolean dead) {
-		this.dead = dead;
-	}
-
 	public void setFight(Fight fight, int fight_id) {
 		this.fight = fight;
 		if (mEntityAI != null)
@@ -525,7 +523,7 @@ public abstract class Entity {
 		ArrayList<Effect> effectsCopy = new ArrayList<Effect>(this.effects);
 		for (Effect effect : effectsCopy) {
 			effect.applyStartTurn(fight);
-			if (dead) {
+			if (isDead()) {
 				return;
 			}
 		}
@@ -583,6 +581,8 @@ public abstract class Entity {
 
 	// When entity dies
 	public void die() {
+
+		life = 0;
 
 		// Remove launched effects
 		while (launchedEffects.size() > 0) {
@@ -772,7 +772,6 @@ public abstract class Entity {
 		clearEffects();
 		mTotalLife = Math.max(10, (int) Math.round(mTotalLife * 0.5 * factor));
 		life = mTotalLife / 2;
-		dead = false;
 		resurrected++;
 		endTurn();
 	}
@@ -892,7 +891,7 @@ public abstract class Entity {
 	}
 
 	public int getDistance(Entity entity) {
-		if (dead || entity.dead) return 999;
+		if (isDead() || entity.isDead()) return 999;
 		return Pathfinding.getCaseDistance(getCell(), entity.getCell());
 	}
 

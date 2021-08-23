@@ -172,6 +172,8 @@ public class Attack {
 
 		for (EffectParameters parameters : effects) {
 
+			if (caster.isDead()) continue;
+
 			if (parameters.getId() == Effect.TYPE_ATTRACT) {
 				for (Entity entity : targetEntities) {
 					// Attract directly to target cell

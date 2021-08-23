@@ -44,7 +44,7 @@ public class EffectDamage extends Effect {
 		target.onNovaDamage(erosion);
 
 		// Life steal
-		if (lifeSteal > 0) {
+		if (!caster.isDead() && lifeSteal > 0) {
 
 			if (caster.getLife() + lifeSteal > caster.getTotalLife()) {
 				lifeSteal = caster.getTotalLife() - caster.getLife();

@@ -510,10 +510,6 @@ public class Fight {
 
 	public void onPlayerDie(Entity entity, Entity killer) {
 
-		if (entity.isDead())
-			return;
-
-		entity.setDead(true);
 		order.removeEntity(entity);
 		if (entity.getCell() != null) {
 			entity.getCell().setPlayer(null);
