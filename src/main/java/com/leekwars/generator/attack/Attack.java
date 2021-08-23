@@ -331,7 +331,7 @@ public class Attack {
 
 	public boolean needsEmptyCell() {
 		for (EffectParameters ep : effects) {
-			if (ep.getId() == Effect.TYPE_TELEPORT || ep.getId() == Effect.TYPE_SUMMON)
+			if (ep.getId() == Effect.TYPE_TELEPORT || ep.getId() == Effect.TYPE_SUMMON || ep.getId() == Effect.TYPE_RESURRECT)
 				return true;
 		}
 		return false;
