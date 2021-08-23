@@ -7,7 +7,7 @@ import com.leekwars.generator.fight.entity.Entity;
 public class ActionAddEffect implements Action {
 
 	private final int type;
-	private final int attackID;
+	private final int itemID;
 	private final int id;
 	private final int caster;
 	private final int target;
@@ -15,15 +15,15 @@ public class ActionAddEffect implements Action {
 	private final int value;
 	private final int turns;
 
-	public static int createEffect(Actions logs, int type, int attackID, Entity caster, Entity target, int effectID, int value, int turns, boolean stacked) {
+	public static int createEffect(Actions logs, int type, int itemID, Entity caster, Entity target, int effectID, int value, int turns, boolean stacked) {
 
 		int r = logs.getEffectId();
-		ActionAddEffect effect = new ActionAddEffect(type, attackID, r, caster.getFId(), target.getFId(), effectID, value, turns, stacked);
+		ActionAddEffect effect = new ActionAddEffect(type, itemID, r, caster.getFId(), target.getFId(), effectID, value, turns, stacked);
 		logs.log(effect);
 		return r;
 	}
 
-	public ActionAddEffect(int type, int attackID, int id, int caster, int target, int effectID, int value, int turns, boolean stacked) {
+	public ActionAddEffect(int type, int itemID, int id, int caster, int target, int effectID, int value, int turns, boolean stacked) {
 
 		if (type == Attack.TYPE_CHIP) {
 			if (stacked) {
@@ -40,7 +40,7 @@ public class ActionAddEffect implements Action {
 		} else {
 			this.type = type;
 		}
-		this.attackID = attackID;
+		this.itemID = itemID;
 		this.id = id;
 		this.caster = caster;
 		this.target = target;
@@ -53,7 +53,7 @@ public class ActionAddEffect implements Action {
 	public JSONArray getJSON() {
 		JSONArray retour = new JSONArray();
 		retour.add(type);
-		retour.add(attackID);
+		retour.add(itemID);
 		retour.add(id);
 		retour.add(caster);
 		retour.add(target);

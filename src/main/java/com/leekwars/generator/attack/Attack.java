@@ -47,18 +47,18 @@ public class Attack {
 	private int healAttack = 0;
 	private int dammageAttack = 0;
 	private final int attackType;
-	private final int attackID;
+	private final int itemID;
 	private final int areaID;
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 
-	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, JSONArray effects, int attackType, int attackID) {
+	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, JSONArray effects, int attackType, int itemID) {
 
 		this.minRange = minRange;
 		this.maxRange = maxRange;
 		this.launchType = launchType;
 		this.los = los;
 		this.attackType = attackType;
-		this.attackID = attackID;
+		this.itemID = itemID;
 
 		areaID = area;
 		this.area = Area.getArea(this, area);
@@ -212,7 +212,7 @@ public class Attack {
 						continue;
 					}
 					// L'effet est déjà sur la cible et pas remplaçable
-					if (not_replaceable && targetEntity.hasEffect(attackID)) {
+					if (not_replaceable && targetEntity.hasEffect(itemID)) {
 						continue;
 					}
 					if (!returnEntities.contains(targetEntity)) {
@@ -322,8 +322,8 @@ public class Attack {
 		return (dammageAttack & target) != 0;
 	}
 
-	public int getId() {
-		return attackID;
+	public int getItemId() {
+		return itemID;
 	}
 	public int getType() {
 		return attackType;
