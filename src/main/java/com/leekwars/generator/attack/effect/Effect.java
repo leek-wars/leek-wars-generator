@@ -139,6 +139,7 @@ public abstract class Effect {
 		EffectRemoveShackles.class, // 49
 		null, // 50
 		EffectPush.class, // 51
+		EffectRawBuffPower.class, // 52
 	};
 
 	// Effect characteristics
@@ -200,7 +201,7 @@ public abstract class Effect {
 				List<Effect> effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
 					Effect e = effects.get(i);
-					if (e.id == id && ((e.attack == null && attack == null) || (e.attack.getItemId() == attack.getItemId()))) {
+					if (e.id == id && (e.attack == null ? attack == null : attack != null && e.attack.getItemId() == attack.getItemId())) {
 						target.removeEffect(e);
 						break;
 					}
@@ -213,7 +214,7 @@ public abstract class Effect {
 		// Stack to previous item with the same characteristics
 		if (effect.value > 0) {
 			for (Effect e : target.getEffects()) {
-				if (((e.attack == null && attack == null) || (e.attack.getItemId() == attack.getItemId())) && e.id == id && e.turns == turns && e.caster == caster) {
+				if ((e.attack == null ? attack == null : attack != null && e.attack.getItemId() == attack.getItemId()) && e.id == id && e.turns == turns && e.caster == caster) {
 					e.mergeWith(effect);
 					effect.addLog(fight, true);
 					return effect.value; // No need to apply the effect again
@@ -235,7 +236,7 @@ public abstract class Effect {
 		if (turns == 0) {
 			return;
 		}
-		logID = ActionAddEffect.createEffect(fight.getActions(), attack.getType(), attack.getItemId(), caster, target, id, value, turns, stacked, modifiers);
+		logID = ActionAddEffect.createEffect(fight.getActions(), attack == null ? Attack.TYPE_CHIP : attack.getType(), attack == null ? 0 : attack.getItemId(), caster, target, id, value, turns, stacked, modifiers);
 	}
 
 	public Stats getStats() {
@@ -302,7 +303,7 @@ public abstract class Effect {
 		retour.put(ai, 2, caster.getFId());
 		retour.put(ai, 3, turns);
 		retour.put(ai, 4, critical);
-		retour.put(ai, 5, attack.getItemId());
+		retour.put(ai, 5, attack == null ? 0 : attack.getItemId());
 		retour.put(ai, 6, target.getFId());
 		retour.put(ai, 7, modifiers);
 		return retour;

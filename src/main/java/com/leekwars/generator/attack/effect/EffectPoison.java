@@ -8,7 +8,7 @@ public class EffectPoison extends Effect {
 
 	@Override
 	public void apply(Fight fight) {
-		value = (int) Math.round(((value1 + jet * value2)) * (1 + (double) Math.max(0, caster.getMagic()) / 100) * aoe * criticalPower * (1 + caster.getPower() / 100));
+		value = (int) Math.round(((value1 + jet * value2)) * (1 + (double) Math.max(0, caster.getMagic()) / 100) * aoe * criticalPower * (1 + caster.getPower() / 100.0));
 	}
 
 	@Override

@@ -520,11 +520,13 @@ public class Fight {
 		statistics.kill(killer, entity);
 
 		// BR : give 10 (or 2 for bulb) power + 50% of power to the killer
-		var effect = entity.getEffects().stream().filter(e -> e.getAttack() == null && e.getID() == Effect.TYPE_RAW_BUFF_POWER).findAny().orElse(null);
-		if (effect != null) {
-			int baseAmount = entity.isSummon() ? 2 : 10;
-			int amount = baseAmount + (int) (effect.value / 2);
-			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, entity, entity, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+		if (killer != null) {
+			int amount = entity.isSummon() ? 2 : 10;
+			var effect = entity.getEffects().stream().filter(e -> e.getAttack() == null && e.getID() == Effect.TYPE_RAW_BUFF_POWER).findAny().orElse(null);
+			if (effect != null) {
+				amount += (int) (effect.value / 2);
+			}
+			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, killer, killer, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 		}
 	}
 
@@ -572,9 +574,10 @@ public class Fight {
 	}
 
 	public void giveBRPower() {
+		// X power, infinite duration
+		int power = 2;
 		for (var entity : getAllEntities(false)) {
-			// 5 power, infinite duration
-			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, 5, 0, false, entity, entity, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, power, 0, false, entity, entity, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 		}
 	}
 
