@@ -28,6 +28,11 @@ public class LeekLog extends AILog {
 		farmerLogs.addLog(entity, warning, string);
 	}
 
+
+	public void addLog(int type, String message, int color) {
+		farmerLogs.addLog(entity, AILog.STANDARD, message, color);
+	}
+
 	public void addSystemLog(int type, Error error) {
 		addSystemLog(type, "", error.ordinal(), null);
 	}
