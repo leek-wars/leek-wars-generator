@@ -884,9 +884,9 @@ public abstract class Entity {
 		mHat = hat;
 	}
 
-	public List<Entity> getSummons() {
+	public List<Entity> getSummons(boolean get_dead) {
 		List<Entity> summons = new ArrayList<Entity>();
-		for (Entity e : fight.getTeamEntities(getTeam())) {
+		for (Entity e : fight.getTeamEntities(getTeam(), get_dead)) {
 			if (e.isSummon() && e.getSummoner().getFId() == getFId()) {
 				summons.add(e);
 			}

@@ -781,7 +781,7 @@ public class EntityAI extends AI {
 			l = fight.getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
-		List<Entity> summons = l.getSummons();
+		List<Entity> summons = l.getSummons(true);
 		ArrayLeekValue retour = new ArrayLeekValue();
 		for (int i = 0; i < summons.size(); i++) {
 			retour.put(this, i, summons.get(i).getFId());
