@@ -29,8 +29,8 @@ public interface StatisticsManager {
 	public void useTP(int tp);
 	public void heal(Entity healer, Entity entity, int pv);
 	public void error(Entity entity);
-	public void useChip(Entity caster, Chip chip, Cell cell, List<Entity> targets);
-	public void useWeapon(Entity caster, Weapon weapon, Cell cell, List<Entity> targets);
+	public void useChip(Entity caster, Chip chip, Cell cell, List<Entity> targets, Entity cellEntity);
+	public void useWeapon(Entity caster, Weapon weapon, Cell cell, List<Entity> targets, Entity cellEntity);
 	public void kill(Entity killer, Entity entity);
 	public void critical(Entity launcher);
 	public void endFight(Collection<Entity> values);

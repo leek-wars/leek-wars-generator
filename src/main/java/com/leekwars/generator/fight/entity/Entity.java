@@ -410,7 +410,12 @@ public abstract class Entity {
 			pv = life;
 		}
 		life -= pv;
-		fight.statistics.damage(this, attacker, pv, type, effect);
+		if (pv > 0) {
+			fight.statistics.damage(this, attacker, pv, type, effect);
+		}
+		if (erosion > 0) {
+			fight.statistics.damage(this, attacker, erosion, DamageType.NOVA, effect);
+		}
 
 		// Add erosion
 		mTotalLife -= erosion;
@@ -579,7 +584,7 @@ public abstract class Entity {
 
 	public boolean hasEffect(int attackID) {
 		for (Effect target_effect : effects) {
-			if (target_effect.getAttack().getItemId() == attackID) return true;
+			if (target_effect.getAttack() != null && target_effect.getAttack().getItemId() == attackID) return true;
 		}
 		return false;
 	}

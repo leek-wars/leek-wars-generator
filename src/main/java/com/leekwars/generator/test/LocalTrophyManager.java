@@ -60,13 +60,13 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void useChip(Entity caster, Chip template, Cell cell, List<Entity> targets) {
+	public void useChip(Entity caster, Chip template, Cell cell, List<Entity> targets, Entity cellEntity) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void useWeapon(Entity caster, Weapon weapon, Cell cell, List<Entity> targets) {
+	public void useWeapon(Entity caster, Weapon weapon, Cell cell, List<Entity> targets, Entity cellEntity) {
 		// TODO Auto-generated method stub
 
 	}

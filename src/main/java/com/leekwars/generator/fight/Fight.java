@@ -520,7 +520,7 @@ public class Fight {
 		statistics.kill(killer, entity);
 
 		// BR : give 10 (or 2 for bulb) power + 50% of power to the killer
-		if (killer != null) {
+		if (this.type == Fight.TYPE_BATTLE_ROYALE && killer != null) {
 			int amount = entity.isSummon() ? 2 : 10;
 			var effect = entity.getEffects().stream().filter(e -> e.getAttack() == null && e.getID() == Effect.TYPE_RAW_BUFF_POWER).findAny().orElse(null);
 			if (effect != null) {
@@ -600,11 +600,12 @@ public class Fight {
 		boolean critical = generateCritical(launcher);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
+		var cellEntity = target.getPlayer();
 		ActionUseWeapon log_use = new ActionUseWeapon(launcher, target, weapon, result);
 		actions.log(log_use);
 		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
 		log_use.setEntities(target_leeks);
-		statistics.useWeapon(launcher, weapon, target, target_leeks);
+		statistics.useWeapon(launcher, weapon, target, target_leeks, cellEntity);
 		if (critical) statistics.critical(launcher);
 
 		launcher.useTP(weapon.getCost());
@@ -621,12 +622,12 @@ public class Fight {
 		if (template.getCost() > caster.getTP()) {
 			return Attack.USE_NOT_ENOUGH_TP;
 		}
-		if (!Pathfinding.canUseAttack(caster.getCell(), target, template.getAttack())) {
-			statistics.useInvalidPosition(caster, template.getAttack(), target);
-			return Attack.USE_INVALID_POSITION;
-		}
 		if (hasCooldown(caster, template)) {
 			return Attack.USE_INVALID_COOLDOWN;
+		}
+		if (!target.isWalkable() || !Pathfinding.canUseAttack(caster.getCell(), target, template.getAttack())) {
+			statistics.useInvalidPosition(caster, template.getAttack(), target);
+			return Attack.USE_INVALID_POSITION;
 		}
 		if (template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON) != null) {
 			return summonEntity(caster, target, template, null);
@@ -646,11 +647,12 @@ public class Fight {
 		boolean critical = generateCritical(caster);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
+		var cellEntity = target.getPlayer();
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
 		List<Entity> targets = template.getAttack().applyOnCell(this, caster, target, critical);
 		log.setEntities(targets);
-		statistics.useChip(caster, template, target, targets);
+		statistics.useChip(caster, template, target, targets, cellEntity);
 		if (critical) statistics.critical(caster);
 
 		if (template.getCooldown() != 0) {
@@ -710,17 +712,16 @@ public class Fight {
 	public void slideEntity(Entity entity, Cell cell, Entity caster) {
 
 		Cell start = entity.getCell();
-		entity.setCell(null);
 
-		start.setPlayer(null);
-		cell.setPlayer(entity);
+		if (cell != start) {
+			entity.setCell(null);
 
-		statistics.move(caster, entity, start, Pathfinding.getAStarPath(entity.getAI(), start, new Cell[] { cell }));
-		statistics.slide(entity, caster, start, cell);
+			start.setPlayer(null);
+			cell.setPlayer(entity);
 
-		entity.setHasMoved(true);
-
-		if (start != cell) {
+			statistics.move(caster, entity, start, Pathfinding.getAStarPath(entity.getAI(), start, new Cell[] { cell }, Arrays.asList(cell, start)));
+			statistics.slide(entity, caster, start, cell);
+			entity.setHasMoved(true);
 			entity.onMoved(caster);
 		}
 	}
@@ -783,7 +784,7 @@ public class Fight {
 		// On balance l'action
 		actions.log(new ActionInvocation(summon, result));
 		statistics.summon(caster, summon);
-		statistics.useChip(caster, template, target, new ArrayList<>());
+		statistics.useChip(caster, template, target, new ArrayList<>(), null);
 
 		if (template.getCooldown() != 0) {
 			addCooldown(caster, template);
@@ -829,7 +830,7 @@ public class Fight {
 
 		// Resurrect
 		resurrect(caster, target_entity, target, critical);
-		statistics.useChip(caster, template, target, new ArrayList<>());
+		statistics.useChip(caster, template, target, new ArrayList<>(), null);
 		statistics.resurrect(caster, target_entity);
 
 		if (template.getCooldown() != 0) {
