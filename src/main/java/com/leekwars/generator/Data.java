@@ -9,6 +9,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +54,9 @@ public class Data {
 			Log.i(TAG, "Load fullmoon from API...");
 			var f = JSON.parseArray(get(api + "fight/fullmoon", ""));
 			for (var d : f) {
-				fullmoon.add(LocalDateTime.parse((String) d).toLocalDate());
+				var dateUTC = ZonedDateTime.of(LocalDateTime.parse((String) d), ZoneOffset.UTC);
+				var dateLocal = dateUTC.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate();
+				fullmoon.add(dateLocal);
 			}
 			// System.out.println("full moon = " + fullmoon);
 			Util.writeFile(f.toJSONString(), "data/fullmoon.json");
