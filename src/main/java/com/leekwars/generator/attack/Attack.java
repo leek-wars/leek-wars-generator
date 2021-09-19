@@ -31,8 +31,13 @@ public class Attack {
 	public final static int USE_RESURRECT_INVALID_ENTIITY = -6;
 
 	// Launch types
-	public final static int LAUNCH_TYPE_LINE = 0;
-	public final static int LAUNCH_TYPE_CIRCLE = 1;
+	public final static int LAUNCH_TYPE_LINE = 1;
+	public final static int LAUNCH_TYPE_DIAGONAL = 2;
+	public final static int LAUNCH_TYPE_STAR = 3;
+	public final static int LAUNCH_TYPE_STAR_INVERTED = 4;
+	public final static int LAUNCH_TYPE_DIAGONAL_INVERTED = 5;
+	public final static int LAUNCH_TYPE_LINE_INVERTED = 6;
+	public final static int LAUNCH_TYPE_CIRCLE = 7;
 
 	// Attack types
 	public final static int TYPE_WEAPON = 1;

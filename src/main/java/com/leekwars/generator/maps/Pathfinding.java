@@ -22,41 +22,33 @@ public class Pathfinding {
 	private final static boolean DEBUG = false;
 
 	public static boolean canUseAttack(Cell caster, Cell target, Attack attack) {
-		if (target == null || caster == null)
+		// Portée
+		if (!verifyRange(caster, target, attack)) {
 			return false;
-		if (attack.getLaunchType() == Attack.LAUNCH_TYPE_CIRCLE) {
-			int dist = getCaseDistance(caster, target);
-			if (attack.getMinRange() > dist || attack.getMaxRange() < dist)
-				return false;
-			return verifyLoS(caster, target, attack, caster);
-		} else if (attack.getLaunchType() == Attack.LAUNCH_TYPE_LINE) {
-			if (caster.getX() != target.getX() && caster.getY() != target.getY())
-				return false;
-			int dist = getCaseDistance(caster, target);
-			if (attack.getMinRange() > dist || attack.getMaxRange() < dist)
-				return false;
-			return verifyLoS(caster, target, attack, caster);
 		}
-		return false;
+		// Ligne de vue
+		return verifyLoS(caster, target, attack, caster);
 	}
 
 	public static boolean verifyRange(Cell caster, Cell target, Attack attack) {
-		if (target == null || caster == null)
-			return true;
-		if (attack.getLaunchType() == Attack.LAUNCH_TYPE_CIRCLE) {
-			int dist = getCaseDistance(caster, target);
-			if (attack.getMinRange() > dist || attack.getMaxRange() < dist)
-				return false;
-			return true;
-		} else if (attack.getLaunchType() == Attack.LAUNCH_TYPE_LINE) {
-			if (caster.getX() != target.getX() && caster.getY() != target.getY())
-				return false;
-			int dist = getCaseDistance(caster, target);
-			if (attack.getMinRange() > dist || attack.getMaxRange() < dist)
-				return false;
-			return true;
 
+		if (target == null || caster == null) {
+			return false;
 		}
+		int dx = caster.getX() - target.getX();
+		int dy = caster.getY() - target.getY();
+		int distance = Math.abs(dx) + Math.abs(dy);
+
+		// Pour tous les types : vérification de la distance
+		if (distance > attack.getMaxRange() || distance < attack.getMinRange()) {
+			return false;
+		}
+
+		// Vérification de chaque type de lancé
+		if ((attack.getLaunchType() & 1) == 0 && (dx == 0 || dy == 0)) return false; // Ligne
+		if ((attack.getLaunchType() & 2) == 0 && Math.abs(dx) == Math.abs(dy)) return false; // Diagonale
+		if ((attack.getLaunchType() & 4) == 0 && Math.abs(dx) != Math.abs(dy) && dx != 0 && dy != 0) return false; // Reste
+
 		return true;
 	}
 
