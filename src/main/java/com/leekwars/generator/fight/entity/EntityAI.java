@@ -92,20 +92,16 @@ public class EntityAI extends AI {
 		this.logs = logs;
 	}
 
-	/**
-	 * Build an entity AI from parameters
-	 * Add the correct errors in farmer logs
-	 */
-	public static EntityAI build(Generator generator, EntityInfo entityInfo, Entity entity, LeekLog logs) {
+	public static AIFile<?> resolve(Generator generator, EntityInfo entityInfo, Entity entity) {
 
 		// No AI equipped : user error
 		if (entityInfo.ai == null && entityInfo.ai_path == null) {
-			logs.addSystemLog(LeekLog.SERROR, Error.NO_AI_EQUIPPED);
-			return new EntityAI(entity, logs);
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.NO_AI_EQUIPPED);
+			return null;
 		}
 
 		// Resolve first
-		AIFile<?> file;
+		AIFile<?> file = null;
 		try {
 			if (entityInfo.ai_path != null) {
 				file = LeekScript.getFileSystemResolver().resolve(entityInfo.ai_path, null);
@@ -116,8 +112,19 @@ public class EntityAI extends AI {
 		} catch (FileNotFoundException e) {
 			// Failed to resolve, not normal
 			generator.exception(e, entity.fight);
-			logs.addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { "Failed to resolve AI" });
-			return new EntityAI(entity, logs);
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { "Failed to resolve AI" });
+		}
+		return file;
+	}
+
+	/**
+	 * Build an entity AI from parameters
+	 * Add the correct errors in farmer logs
+	 */
+	public static EntityAI build(Generator generator, AIFile<?> file, Entity entity) {
+
+		if (file == null) {
+			return new EntityAI(entity, entity.getLogs());
 		}
 
 		Log.i(TAG, "Compile AI " + file.getPath() + "...");
@@ -127,31 +134,31 @@ public class EntityAI extends AI {
 			Log.i(TAG, "AI " + file.getPath() + " compiled!");
 			ai.valid = true;
 			ai.setEntity(entity);
-			ai.setLogs(logs);
+			ai.setLogs(entity.getLogs());
 			return ai;
 
 		} catch (LeekScriptException e) {
 			// Java compilation error : server error
 			generator.exception(e, entity.fight, file.getId());
 			if (e.getType() == Error.CODE_TOO_LARGE) {
-				logs.addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE, new String[] { e.getMessage() });
+				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE, new String[] { e.getMessage() });
 			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
-				logs.addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
+				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
 			} else {
-				logs.addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
+				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			}
-			return new EntityAI(entity, logs);
+			return new EntityAI(entity, entity.getLogs());
 
 		} catch (LeekCompilerException e) {
 			// Analyze error : AI is not valid, user error, no need to log it
-			logs.addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
-			return new EntityAI(entity, logs);
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
+			return new EntityAI(entity, entity.getLogs());
 
 		} catch (Exception e) {
 			// Other error : server error
 			generator.exception(e, entity.fight, file.getId());
-			logs.addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
-			return new EntityAI(entity, logs);
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
+			return new EntityAI(entity, entity.getLogs());
 		}
 	}
 

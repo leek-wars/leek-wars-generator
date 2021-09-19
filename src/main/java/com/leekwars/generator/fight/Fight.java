@@ -36,6 +36,7 @@ import com.leekwars.generator.fight.action.ActionUseWeapon;
 import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.fight.statistics.StatisticsManager;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.RegisterManager;
@@ -340,8 +341,14 @@ public class Fight {
 
 		initFight();
 
-		// Check all entities characteristics
 		for (Entity entity : mEntities.values()) {
+
+			// Build AI after the fight is ready (static init)
+			var ai = EntityAI.build(this.generator, entity.getAIFile(), entity);
+			entity.setAI(ai);
+			ai.staticInit();
+
+			// Check all entities characteristics
 			statistics.init(entity);
 			statistics.characteristics(entity);
 		}
@@ -466,6 +473,18 @@ public class Fight {
 
 		// Puis on ajoute le startfight
 		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
+	}
+
+	public void staticInit() {
+		for (Entity entity : mEntities.values()) {
+			if (entity.getAI() != null) {
+				try {
+					entity.getAI().staticInit();
+				} catch (Exception e) {
+					// Not handled, user error
+				}
+			}
+		}
 	}
 
 	public void finishFight() {

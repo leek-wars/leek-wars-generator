@@ -23,10 +23,13 @@ import com.leekwars.generator.fight.action.ActionRemoveEffect;
 import com.leekwars.generator.fight.action.ActionUpdateEffect;
 import com.leekwars.generator.fight.action.DamageType;
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.Registers;
 import com.leekwars.generator.leek.Stats;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
+
+import leekscript.compiler.AIFile;
 
 public abstract class Entity {
 
@@ -87,6 +90,8 @@ public abstract class Entity {
 	protected int team;
 
 	protected Fight fight;
+	protected AIFile<?> aiFile;
+	private LeekLog logs;
 	protected EntityAI mEntityAI;
 
 	private final TreeMap<Integer, Chip> mChips = new TreeMap<Integer, Chip>();
@@ -253,6 +258,14 @@ public abstract class Entity {
 	public void setHasMoved(boolean moved) {
 		mHasMoved = moved;
 	}
+
+	public void setAIFile(AIFile<?> file) {
+		this.aiFile = file;
+	}
+	public AIFile<?> getAIFile() {
+		return this.aiFile;
+	}
+
 	public void setAI(EntityAI ai) {
 		this.mEntityAI = ai;
 		ai.setFight(fight);
@@ -915,5 +928,13 @@ public abstract class Entity {
 
 	public long getTotalOperations() {
 		return this.totalOperations;
+	}
+
+	public void setLogs(LeekLog logs) {
+		this.logs = logs;
+	}
+
+	public LeekLog getLogs() {
+		return logs;
 	}
 }
