@@ -10,7 +10,7 @@ public class EffectNovaDamage extends Effect {
 	public void apply(Fight fight) {
 
 		// Base damages
-		double d = (value1 + jet * value2) * (1 + Math.max(0, caster.getScience()) / 100.0) * aoe * criticalPower * (1 + caster.getPower() / 100);
+		double d = (value1 + jet * value2) * (1 + Math.max(0, caster.getScience()) / 100.0) * aoe * criticalPower * (1 + caster.getPower() / 100.0);
 
 		value = (int) Math.round(d);
 
