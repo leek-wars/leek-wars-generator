@@ -1936,7 +1936,7 @@ public class EntityAI extends AI {
 			Cell target = fight.getMap().getCell(cell1);
 			Cell target2 = fight.getMap().getCell(cell2);
 			// Si il est trouvé on calcule le path
-			if (target != null && target2 != null) {
+			if (target != null && target2 != null && mEntity.getCell() != null) {
 				List<Cell> path = Pathfinding.getPathTowardLine(this, mEntity.getCell(), target, target2);
 				// Si un path a été trouvé on y va
 				if (path != null) {
