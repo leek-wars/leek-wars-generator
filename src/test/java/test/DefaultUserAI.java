@@ -13,9 +13,4 @@ public class DefaultUserAI extends AI {
 	public Object runIA() throws LeekRunException {
 		return null;
 	}
-
-	@Override
-	protected String[] getErrorString() {
-		return null;
-	}
 }
