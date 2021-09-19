@@ -403,7 +403,10 @@ public class Fight {
 			return;
 		}
 
-		if (teams.size() > 0 && (teams.get(0).size() == 0 || teams.get(1).size() == 0)) {
+		if (teams.size() < 2) {
+			throw new FightException(FightException.NOT_ENOUGHT_PLAYERS);
+		}
+		if (teams.get(0).size() == 0 || teams.get(1).size() == 0) {
 			if (Fight.getFightContext(fullType) == Fight.CONTEXT_TOURNAMENT) {
 				// Si c'est un tournoi faut un gagnant
 				if (teams.get(0).size() == 0) {
