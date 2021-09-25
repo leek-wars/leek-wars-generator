@@ -8,16 +8,12 @@ public class ActionEndTurn implements Action {
 	private final int target;
 	private final int pt;
 	private final int pm;
-	private final int strength;
-	private final int magic;
 
 	public ActionEndTurn(Entity target) {
 
 		this.target = target.getFId();
 		this.pt = target.getTP();
 		this.pm = target.getMP();
-		this.strength = target.getStrength();
-		this.magic = target.getMagic();
 	}
 
 	@Override
@@ -28,8 +24,6 @@ public class ActionEndTurn implements Action {
 		json.add(target);
 		json.add(pt);
 		json.add(pm);
-		json.add(strength);
-		json.add(magic);
 		return json;
 	}
 }

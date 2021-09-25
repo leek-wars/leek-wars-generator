@@ -501,15 +501,11 @@ public class Fight {
 			return;
 		}
 
-		ActionEntityTurn lt;
-		actions.log(lt = new ActionEntityTurn(current));
+		actions.log(new ActionEntityTurn(current));
 		Log.i(TAG, "Start turn of " + current.getName());
 
 		current.applyCoolDown();
 		current.startTurn();
-
-		lt.setPM(current.getMP());
-		lt.setTP(current.getTP());
 
 		if (!current.isDead()) {
 
