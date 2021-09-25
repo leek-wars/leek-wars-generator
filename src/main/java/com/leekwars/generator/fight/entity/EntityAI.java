@@ -1575,16 +1575,16 @@ public class EntityAI extends AI {
 		// On vérifie que la cellule de départ existe
 		if (start_cell == null)
 			return null;
-		ArrayLeekValue retour = new ArrayLeekValue();
 
-		if (Pathfinding.verifyRange(start_cell, target, weapon.getAttack())) {
-			// On récupère les cellules touchées
-			List<Cell> cells = weapon.getAttack().getTargetCells(start_cell, target);
-			// On les met dans le tableau
-			for (Cell cell : cells) {
-				retour.push(this, cell.getId());
-			}
+		var retour = new ArrayLeekValue();
+
+		// On récupère les cellules touchées
+		List<Cell> cells = weapon.getAttack().getTargetCells(start_cell, target);
+		// On les met dans le tableau
+		for (Cell cell : cells) {
+			retour.push(this, cell.getId());
 		}
+
 		return retour;
 	}
 
@@ -1657,7 +1657,6 @@ public class EntityAI extends AI {
 						else
 							retour = -1;
 					}
-
 				}
 			}
 		}
@@ -2116,15 +2115,13 @@ public class EntityAI extends AI {
 		if (template == null)
 			return null;
 
-		ArrayLeekValue retour = new ArrayLeekValue();
-		if (Pathfinding.verifyRange(start_cell, c, template.getAttack())) {
-			// On récupère les cellules touchées
-			List<Cell> cells = template.getAttack().getTargetCells(start_cell, c);
-			// On les met dans le tableau
-			if (cells != null) {
-				for (Cell cell : cells) {
-					retour.push(this, cell.getId());
-				}
+		var retour = new ArrayLeekValue();
+		// On récupère les cellules touchées
+		List<Cell> cells = template.getAttack().getTargetCells(start_cell, c);
+		// On les met dans le tableau
+		if (cells != null) {
+			for (Cell cell : cells) {
+				retour.push(this, cell.getId());
 			}
 		}
 		return retour;
