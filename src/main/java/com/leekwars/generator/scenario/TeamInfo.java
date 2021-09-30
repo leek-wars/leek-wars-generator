@@ -6,6 +6,7 @@ public class TeamInfo {
 	public int id;
 	public String name = "";
 	public int level;
+	public int turretAI;
 
 	public JSONObject toJson() {
 		JSONObject json = new JSONObject();
