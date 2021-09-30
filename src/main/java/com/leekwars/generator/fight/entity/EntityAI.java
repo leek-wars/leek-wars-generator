@@ -735,11 +735,17 @@ public class EntityAI extends AI {
 	}
 
 	public boolean say(String message) {
-		if (mEntity.getTP() < 1)
+		if (mEntity.getTP() < 1) {
 			return false;
+		}
 		mEntity.useTP(1);
-		if (message.length() > 500)
-			message = message.substring(0, 500);
+		if (mEntity.saysTurn >= Entity.SAY_LIMIT_TURN) {
+			return false;
+		}
+		mEntity.saysTurn++;
+		if (message.length() > 200) {
+			message = message.substring(0, 200);
+		}
 		message = Censorship.checkString(fight, message);
 		fight.log(new ActionSay(mEntity, message));
 		fight.log(new ActionLoseTP(mEntity, 1));
@@ -2539,7 +2545,11 @@ public class EntityAI extends AI {
 		if (mEntity.getTP() < 1) {
 			return false;
 		}
+		if (mEntity.showsTurn >= Entity.SHOW_LIMIT_TURN) {
+			return false;
+		}
 		mEntity.useTP(1);
+		mEntity.showsTurn++;
 		fight.log(new ActionLoseTP(mEntity, 1));
 
 		fight.log(new ActionShowCell(mEntity, cell_id, col));

@@ -33,6 +33,9 @@ import leekscript.compiler.AIFile;
 
 public abstract class Entity {
 
+	public static final int SAY_LIMIT_TURN = 2;
+	public static final int SHOW_LIMIT_TURN = 5;
+
 	public static final int TYPE_LEEK = 0;
 	public static final int TYPE_BULB = 1;
 	public static final int TYPE_TURRET = 2;
@@ -74,6 +77,8 @@ public abstract class Entity {
 	protected boolean mStatic;
 	protected int resurrected = 0;
 	protected long totalOperations = 0;
+	public int saysTurn = 0;
+	public int showsTurn = 0;
 
 	// Current effects on the entity
 	protected final ArrayList<Effect> effects = new ArrayList<Effect>();
@@ -573,6 +578,9 @@ public abstract class Entity {
 
 		usedMP = 0;
 		usedTP = 0;
+
+		saysTurn = 0;
+		showsTurn = 0;
 
 		if (mEntityAI != null) {
 			totalOperations += mEntityAI.operations();
