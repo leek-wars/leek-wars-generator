@@ -130,9 +130,9 @@ public class EntityInfo {
 			Weapon weapon = Weapons.getWeapon((Integer) w);
 			if (weapon == null) {
 				Log.e(TAG, "No such weapon: " + w);
-				return null;
+			} else {
+				entity.addWeapon(weapon);
 			}
-			entity.addWeapon(weapon);
 		}
 		for (Object c : chips) {
 			Integer chip = (Integer) c;
