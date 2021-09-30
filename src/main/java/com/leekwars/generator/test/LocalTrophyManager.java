@@ -3,6 +3,7 @@ package com.leekwars.generator.test;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.chips.Chip;
@@ -109,8 +110,7 @@ public class LocalTrophyManager implements StatisticsManager {
 
 	@Override
 	public Map<Integer, Long> getOperationsByEntity() {
-		// TODO Auto-generated method stub
-		return null;
+		return new TreeMap<Integer, Long>();
 	}
 
 	@Override

@@ -15,6 +15,7 @@ import com.leekwars.generator.test.LocalTrophyManager;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.resolver.FileSystemContext;
+import leekscript.compiler.resolver.FileSystemResolver;
 
 public class Main {
 
@@ -56,8 +57,9 @@ public class Main {
 
 		Data.checkData("https://leekwars.com/api/");
 		if (db_resolver) {
-			LocalDbResolver dbResolver = new LocalDbResolver();
-			LeekScript.setResolver(dbResolver);
+			LeekScript.setResolver(new LocalDbResolver());
+		} else {
+			LeekScript.setResolver(new FileSystemResolver());
 		}
 		Generator generator = new Generator();
 		generator.setCache(!nocache);
