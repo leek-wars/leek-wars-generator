@@ -68,6 +68,9 @@ public abstract class Effect {
 	public final static int TYPE_MOVED_TO_MP = 50;
 	public final static int TYPE_PUSH = 51;
 	public final static int TYPE_RAW_BUFF_POWER = 52;
+	public final static int TYPE_REPEL = 53;
+	public final static int TYPE_RAW_RELATIVE_SHIELD = 54;
+	public final static int TYPE_ALLY_KILLED_TO_AGILITY = 55;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -140,6 +143,9 @@ public abstract class Effect {
 		null, // 50
 		EffectPush.class, // 51
 		EffectRawBuffPower.class, // 52
+		EffectRepel.class, // 53
+		EffectRawRelativeShield.class, // 54
+		null, // 55
 	};
 
 	// Effect characteristics

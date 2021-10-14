@@ -1,5 +1,6 @@
 package com.leekwars.generator;
 
+import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.Fight;
 
@@ -99,6 +100,10 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_REMOVE_SHACKLES(Effect.TYPE_REMOVE_SHACKLES, Type.INT),
 	EFFECT_MOVED_TO_MP(Effect.TYPE_MOVED_TO_MP, Type.INT),
 	EFFECT_PUSH(Effect.TYPE_PUSH, Type.INT),
+	EFFECT_RAW_BUFF_POWER(Effect.TYPE_RAW_BUFF_POWER, Type.INT),
+	EFFECT_REPEL(Effect.TYPE_REPEL, Type.INT),
+	EFFECT_RAW_RELATIVE_SHIELD(Effect.TYPE_RAW_RELATIVE_SHIELD, Type.INT),
+	EFFECT_ALLY_KILLED_TO_AGILITY(Effect.TYPE_ALLY_KILLED_TO_AGILITY, Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
@@ -137,6 +142,14 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_RIFLE(151, Type.INT),
 	WEAPON_RHINO(153, Type.INT),
 	WEAPON_EXPLORER_RIFLE(175, Type.INT),
+	WEAPON_LIGHTNINGER(180, Type.INT),
+	WEAPON_PROTON_CANON(181, Type.INT),
+	WEAPON_NEUTRINO(182, Type.INT),
+	WEAPON_TASER(183, Type.INT),
+	WEAPON_BAZOOKA(184, Type.INT),
+	WEAPON_SWORD(185, Type.INT),
+	WEAPON_HEAVY_SWORD(186, Type.INT),
+	WEAPON_DARK_KATANA(187, Type.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, Type.INT),

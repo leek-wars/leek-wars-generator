@@ -550,6 +550,12 @@ public class Fight {
 			}
 			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, killer, killer, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 		}
+
+		// Passive effect ally killed
+		for (var ally : getTeamEntities(entity.getTeam())) {
+			if (ally == entity) continue;
+			ally.onAllyKilled();
+		}
 	}
 
 	/*

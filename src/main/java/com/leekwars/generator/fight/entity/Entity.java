@@ -476,6 +476,14 @@ public abstract class Entity {
 		}
 	}
 
+	public void onAllyKilled() {
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnAllyKilledPassiveEffect(effect, weapon.getAttack());
+			}
+		}
+	}
+
 	public void activateOnMovedPassiveEffect(EffectParameters effect, Attack attack) {
 		if (effect.getId() == Effect.TYPE_MOVED_TO_MP) {
 			double value = effect.getValue1();
@@ -510,6 +518,14 @@ public abstract class Entity {
 			double value = inputValue * (effect.getValue1() / 100);
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
 			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_SCIENCE, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
+		}
+	}
+
+	public void activateOnAllyKilledPassiveEffect(EffectParameters effect, Attack attack) {
+		if (effect.getId() == Effect.TYPE_ALLY_KILLED_TO_AGILITY) {
+			double value = effect.getValue1();
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_AGILITY, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
 		}
 	}
 
