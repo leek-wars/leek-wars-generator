@@ -339,6 +339,12 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) ai).getWeaponMinRange(ai.intOrNull(parameters[0]));
 		}
 	},
+	getWeaponLaunchType(0, 1) {
+		@Override
+		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
+			return ((EntityAI) ai).getWeaponLaunchType(ai.intOrNull(parameters[0]));
+		}
+	},
 	getWeaponCost(0, 1) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
@@ -421,12 +427,6 @@ public enum FightFunctions implements ILeekFunction {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
 			return ((EntityAI) ai).isWeapon(ai.integer(parameters[0]));
-		}
-	},
-	getWeaponLaunchType(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponLaunchType(parameters[0]);
 		}
 	},
 	getWeaponArea(1) {

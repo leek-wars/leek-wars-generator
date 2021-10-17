@@ -52,13 +52,6 @@ public class Pathfinding {
 		return true;
 	}
 
-	// Fonction qui sort la liste des cellules à partir desquelles on peut se
-	// placer pour attaquer "target" avec "attack"
-	// public static List<Cell> getPossibleCastCellsForTarget(Attack attack,
-	// Cell target) {
-	// return getPossibleCastCellsForTarget(attack, target, null);
-	// }
-
 	public static List<Cell> getValidCellsAroundObstacle(Cell cell) {
 		Map map = cell.getMap();
 		List<Cell> retour = new ArrayList<Cell>();
@@ -77,7 +70,6 @@ public class Pathfinding {
 			if (!stop && size < 5)
 				size++;
 		}
-
 		return retour;
 	}
 
@@ -140,12 +132,12 @@ public class Pathfinding {
 					}
 				}
 			} else {
-				int[][] mask = MaskAreaCell.generateCircleMask(attack.getMinRange(), attack.getMaxRange());
+				var mask = MaskAreaCell.generateMask(attack.getLaunchType(), attack.getMinRange(), attack.getMaxRange());
 				int x = target.getX();
 				int y = target.getY();
 				Cell cell;
-				for (int i = 0; i < mask.length; i++) {
-					cell = target.getMap().getCell(x + mask[i][0], y + mask[i][1]);
+				for (var mask_cell : mask) {
+					cell = target.getMap().getCell(x + mask_cell[0], y + mask_cell[1]);
 					if (cell == null || !available(cell, cells_to_ignore))
 						continue;
 					if (!verifyLoS(cell, target, attack, cells_to_ignore))

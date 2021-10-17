@@ -1604,8 +1604,9 @@ public class EntityAI extends AI {
 			ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
 			if (value3 instanceof ArrayLeekValue) {
 				putCells(cells_to_ignore, (ArrayLeekValue) value3);
-			} else
+			} else {
 				cells_to_ignore.add(mEntity.getCell());
+			}
 			List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
 			if (possible != null && possible.size() > 0) {
 				if (possible.contains(mEntity.getCell())) {
@@ -1618,7 +1619,6 @@ public class EntityAI extends AI {
 						else
 							cell = -1;
 					}
-
 				}
 			}
 		}
@@ -2593,23 +2593,23 @@ public class EntityAI extends AI {
 		return Items.getType(id) == Items.TYPE_CHIP;
 	}
 
-	public Object getWeaponLaunchType(Object weapon_id) throws LeekRunException {
+	public Object getWeaponLaunchType(int weapon_id) throws LeekRunException {
 		Weapon template = null;
-		if (weapon_id == null) {
+		if (weapon_id == -1) {
 			template = mEntity.getWeapon();
 		} else {
 			template = Weapons.getWeapon(integer(weapon_id));
 		}
 		if (template == null)
 			return null;
-		return template.getAttack().getLaunchType();
+		return (int) template.getAttack().getLaunchType();
 	}
 
 	public Object getChipLaunchType(Object chip_id) throws LeekRunException {
 		Chip template = Chips.getChip(integer(chip_id));
 		if (template == null)
 			return null;
-		return template.getAttack().getLaunchType();
+		return (int) template.getAttack().getLaunchType();
 	}
 
 	public Object getAIName(Object value) throws LeekRunException {

@@ -1,6 +1,31 @@
 package com.leekwars.generator.maps;
 
+import java.util.ArrayList;
+
 public class MaskAreaCell {
+
+	public static ArrayList<int[]> generateMask(int launchType, int min, int max) {
+
+		if (min > max)
+			return new ArrayList<>();
+
+		var cells = new ArrayList<int[]>();
+		int len = (launchType == 9 || launchType == 10) ? max : ((launchType & 1) != 0 ? max : ((launchType & 4) != 0 ? max - 1 : max / 2));
+		for (int i = 0; i < len * 2 + 1; ++i) {
+			for (int j = 0; j < len * 2 + 1; ++j) {
+				int x = i - len;
+				int y = j - len;
+				boolean in_range = Math.abs(x) + Math.abs(y) <= max && Math.abs(x) + Math.abs(y) >= min;
+				boolean condition = (((launchType & 1) != 0) && (x == 0 || y == 0))
+					|| (((launchType & 2) != 0) && Math.abs(x) == Math.abs(y))
+					|| (((launchType & 4) != 0) && (Math.abs(x) != Math.abs(y) && x != 0 && y != 0));
+				if (in_range && condition) {
+					cells.add(new int[] { x, y });
+				}
+			}
+		}
+		return cells;
+	}
 
 	public static int[][] generateCircleMask(int min, int max) {
 
