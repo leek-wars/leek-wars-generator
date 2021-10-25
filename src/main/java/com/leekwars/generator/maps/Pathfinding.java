@@ -43,6 +43,8 @@ public class Pathfinding {
 		if (distance > attack.getMaxRange() || distance < attack.getMinRange()) {
 			return false;
 		}
+		// Même cellule, OK
+		if (caster == target) return true;
 
 		// Vérification de chaque type de lancé
 		if ((attack.getLaunchType() & 1) == 0 && (dx == 0 || dy == 0)) return false; // Ligne
