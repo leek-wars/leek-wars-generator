@@ -548,9 +548,11 @@ public class Fight {
 		}
 
 		// Passive effect ally killed
-		for (var ally : getTeamEntities(entity.getTeam())) {
-			if (ally == entity) continue;
-			ally.onAllyKilled();
+		if (!entity.isSummon()) {
+			for (var ally : getTeamEntities(entity.getTeam())) {
+				if (ally == entity) continue;
+				ally.onAllyKilled();
+			}
 		}
 	}
 
