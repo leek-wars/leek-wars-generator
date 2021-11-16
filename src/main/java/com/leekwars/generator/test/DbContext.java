@@ -1,5 +1,7 @@
 package com.leekwars.generator.test;
 
+import com.alibaba.fastjson.JSONObject;
+
 import leekscript.compiler.resolver.ResolverContext;
 
 public class DbContext extends ResolverContext {
@@ -22,5 +24,10 @@ public class DbContext extends ResolverContext {
 	@Override
 	public String toString() {
 		return String.valueOf(folder);
+	}
+
+	@Override
+	public void toJson(JSONObject json) {
+
 	}
 }
