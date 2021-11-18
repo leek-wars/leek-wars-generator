@@ -111,10 +111,7 @@ public class Generator {
 
 		Outcome outcome = new Outcome();
 
-		Fight fight = new Fight(this);
-		if (listener != null) {
-			listener.setFight(fight);
-		}
+		Fight fight = new Fight(this, listener);
 		fight.setRegisterManager(registerManager);
 		fight.setStatisticsManager(statisticsManager);
 		fight.setId(scenario.fightID);

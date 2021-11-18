@@ -149,10 +149,17 @@ public class Fight {
 	public StatisticsManager statistics;
 	private RegisterManager registerManager;
 	public long executionTime = 0;
+	FightListener listener;
+
 
 	public Fight(Generator generator) {
+		this(generator, null);
+	}
+
+	public Fight(Generator generator, FightListener listener) {
 
 		this.generator = generator;
+		this.listener = listener;
 		teams = new ArrayList<Team>();
 		initialOrder = new ArrayList<Entity>();
 
@@ -393,7 +400,9 @@ public class Fight {
 			mWinteam = -1;
 		}
 		statistics.endFight(mEntities.values());
-
+		if (listener != null) {
+			listener.newTurn(this);
+		}
 		actions.addOpsAndTimes(statistics);
 	}
 
@@ -583,6 +592,9 @@ public class Fight {
 
 				if (lastTurn != order.getTurn() && order.getTurn() <= Fight.MAX_TURNS) {
 					actions.log(new ActionNewTurn(order.getTurn()));
+					if (listener != null) {
+						listener.newTurn(this);
+					}
 					lastTurn = order.getTurn();
 					Log.i(TAG, "Turn " + order.getTurn());
 
@@ -1129,7 +1141,7 @@ public class Fight {
 		// Nombre d'entités mortes
 		double d = getMaxDeadRatio();
 		// Nombre de "tours d'entité", racine carrée
-		double t = Math.pow((double) (this.getTurn() * entityCount + this.order.getPosition()) / (MAX_TURNS * entityCount), 0.5);
+		double t = Math.min(1, Math.pow((double) (this.getTurn() * entityCount + this.order.getPosition()) / (MAX_TURNS * entityCount), 0.5));
 		// Ratio de vie restante
 		double l = getMaxLifeRatio();
 
