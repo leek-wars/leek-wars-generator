@@ -1,0 +1,5 @@
+rootProject.name = 'generator'
+
+include ":leekscript"
+project(":leekscript").projectDir = file('leekscript')
+
