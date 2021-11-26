@@ -15,7 +15,6 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.util.Logger;
 
 public class Data {
 
@@ -24,7 +23,7 @@ public class Data {
 	public static List<LocalDate> fullmoon = new ArrayList<>();
 
 	public static void checkData(String api) {
-		Logger.log(TAG, "Check api: " + api);
+		Log.i(TAG, "Check api: " + api);
 		// File weaponsFile = new File("data/weapons.json");
 		Log.i(TAG, "Load weapons from API...");
 		JSONObject weapons = JSON.parseObject(get(api + "weapon/get-all", "")).getJSONObject("weapons");
@@ -58,7 +57,7 @@ public class Data {
 	}
 
     private static String get(String url, String urlParameters) {
-		Logger.log(TAG, "get " + url);
+		Log.i(TAG, "get " + url);
 
 		var client = HttpClient.newHttpClient();
 
