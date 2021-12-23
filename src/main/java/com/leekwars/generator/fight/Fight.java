@@ -749,6 +749,8 @@ public class Fight {
 
 	public void slideEntity(Entity entity, Cell cell, Entity caster) {
 
+		if (entity.isStatic()) return;
+
 		Cell start = entity.getCell();
 
 		if (cell != start) {
@@ -765,6 +767,8 @@ public class Fight {
 	}
 
 	public void invertEntities(Entity caster, Entity target) {
+
+		if (target.isStatic()) return;
 
 		Cell start = caster.getCell();
 		Cell end = target.getCell();
