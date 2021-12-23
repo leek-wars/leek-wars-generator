@@ -300,6 +300,7 @@ public enum FightConstants implements ILeekConstant {
 	MAP_FOREST(4, Type.INT),
 	MAP_GLACIER(5, Type.INT),
 	MAP_BEACH(6, Type.INT),
+	MAP_TEMPLE(7, Type.INT),
 
 	FIGHT_TYPE_SOLO(Fight.TYPE_SOLO, Type.INT),
 	FIGHT_TYPE_FARMER(Fight.TYPE_FARMER, Type.INT),
