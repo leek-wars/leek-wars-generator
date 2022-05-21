@@ -150,6 +150,7 @@ public class Fight {
 	private RegisterManager registerManager;
 	public long executionTime = 0;
 	FightListener listener;
+	private int seed = 0;
 
 
 	public Fight(Generator generator) {
@@ -353,6 +354,7 @@ public class Fight {
 			// Build AI after the fight is ready (static init)
 			var ai = EntityAI.build(this.generator, entity.getAIFile(), entity);
 			entity.setAI(ai);
+			ai.getRandom().seed(this.seed);
 			ai.staticInit();
 
 			// Check all entities characteristics
@@ -1153,6 +1155,7 @@ public class Fight {
 	}
 
 	public void seed(int seed) {
+		this.seed = seed;
 		randomGenerator.seed(seed);
 	}
 	public RandomGenerator getRandom() {

@@ -178,7 +178,6 @@ public class EntityAI extends AI {
 		mEntity = entity;
 		mInitialEntity = entity;
 		this.fight = entity.fight;
-		this.randomGenerator = entity.fight.getRandom();
 	}
 
 	public void addSystemLog(int type, Error error, String[] parameters) {
