@@ -633,12 +633,18 @@ public abstract class Entity {
 
 		// Remove launched effects
 		while (launchedEffects.size() > 0) {
-
 			Effect effect = launchedEffects.get(0);
-
 			effect.getTarget().removeEffect(effect);
 			launchedEffects.remove(0);
 		}
+
+		// Remove effects
+		while (effects.size() > 0) {
+			var effect = effects.get(0);
+			effect.getCaster().removeLaunchedEffect(effect);
+			effects.remove(0); // Don't send remove effect action, the client will remove the effects itself
+		}
+		updateBuffStats(); // Update target stats
 
 		// Kill summons
 		List<Entity> entities = new ArrayList<Entity>(fight.getTeamEntities(getTeam()));
@@ -820,7 +826,6 @@ public abstract class Entity {
 	}
 
 	public void resurrect(Entity entity, double factor) {
-		clearEffects();
 		mTotalLife = Math.max(10, (int) Math.round(mTotalLife * 0.5 * factor));
 		life = mTotalLife / 2;
 		resurrected++;
