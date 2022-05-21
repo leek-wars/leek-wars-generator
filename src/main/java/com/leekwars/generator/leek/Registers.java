@@ -39,11 +39,11 @@ public class Registers {
 	}
 
 	public boolean set(String key, String value) {
-		if (mValues.size() >= MAX_ENTRIES)
+		if (mValues.size() > MAX_ENTRIES)
 			return false;
-		if (key.length() >= MAX_KEY_LENGTH)
+		if (key.length() > MAX_KEY_LENGTH)
 			return false;
-		if (value.length() >= MAX_DATA_LENGTH)
+		if (value.length() > MAX_DATA_LENGTH)
 			return false;
 		String val = mValues.get(key);
 		if (val != null) {
