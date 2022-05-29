@@ -104,6 +104,8 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_REPEL(Effect.TYPE_REPEL, Type.INT),
 	EFFECT_RAW_RELATIVE_SHIELD(Effect.TYPE_RAW_RELATIVE_SHIELD, Type.INT),
 	EFFECT_ALLY_KILLED_TO_AGILITY(Effect.TYPE_ALLY_KILLED_TO_AGILITY, Type.INT),
+	EFFECT_KILL_TO_TP(Effect.TYPE_KILL_TO_TP, Type.INT),
+	EFFECT_RAW_HEAL(Effect.TYPE_RAW_HEAL, Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
@@ -150,6 +152,8 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_SWORD(185, Type.INT),
 	WEAPON_HEAVY_SWORD(186, Type.INT),
 	WEAPON_DARK_KATANA(187, Type.INT),
+	WEAPON_ENHANCED_LIGHTNINGER(225, Type.INT),
+	WEAPON_UNSTABLE_DESTROYER(226, Type.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, Type.INT),

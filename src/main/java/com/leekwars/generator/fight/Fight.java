@@ -145,7 +145,7 @@ public class Fight {
 	private int context;
 	private int type;
 
-	JSONObject custom_map = null;
+	public JSONObject custom_map = null;
 	public StatisticsManager statistics;
 	private RegisterManager registerManager;
 	public long executionTime = 0;
@@ -565,6 +565,11 @@ public class Fight {
 				ally.onAllyKilled();
 			}
 		}
+
+		// Passive effect kill
+		if (killer != null) {
+			killer.onKill();
+		}
 	}
 
 	/*
@@ -643,6 +648,7 @@ public class Fight {
 		var cellEntity = target.getPlayer();
 		ActionUseWeapon log_use = new ActionUseWeapon(launcher, target, weapon, result);
 		actions.log(log_use);
+		if (critical) launcher.onCritical();
 		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
 		log_use.setEntities(target_leeks);
 		statistics.useWeapon(launcher, weapon, target, target_leeks, cellEntity);
@@ -690,6 +696,7 @@ public class Fight {
 		var cellEntity = target.getPlayer();
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
+		if (critical) caster.onCritical();
 		List<Entity> targets = template.getAttack().applyOnCell(this, caster, target, critical);
 		log.setEntities(targets);
 		statistics.useChip(caster, template, target, targets, cellEntity);
@@ -821,6 +828,7 @@ public class Fight {
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
+		if (critical) caster.onCritical();
 
 		// On invoque
 		Entity summon = createSummon(caster, (int) params.getValue1(), target, value, template.getLevel(), critical);
@@ -871,6 +879,7 @@ public class Fight {
 
 		ActionUseChip log = new ActionUseChip(caster, target, template, result);
 		actions.log(log);
+		if (critical) caster.onCritical();
 
 		// Resurrect
 		resurrect(caster, target_entity, target, critical);

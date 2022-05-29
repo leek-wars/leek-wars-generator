@@ -484,6 +484,22 @@ public abstract class Entity {
 		}
 	}
 
+	public void onCritical() {
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnCriticalPassiveEffect(effect, weapon.getAttack());
+			}
+		}
+	}
+
+	public void onKill() {
+		for (Weapon weapon : mWeapons) {
+			for (EffectParameters effect : weapon.getPassiveEffects()) {
+				activateOnKillPassiveEffect(effect, weapon.getAttack());
+			}
+		}
+	}
+
 	public void activateOnMovedPassiveEffect(EffectParameters effect, Attack attack) {
 		if (effect.getId() == Effect.TYPE_MOVED_TO_MP) {
 			double value = effect.getValue1();
@@ -526,6 +542,24 @@ public abstract class Entity {
 			double value = effect.getValue1();
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
 			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_AGILITY, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
+		}
+	}
+
+	public void activateOnCriticalPassiveEffect(EffectParameters effect, Attack attack) {
+		if (effect.getId() == Effect.TYPE_CRITICAL_TO_HEAL) {
+			if (this.getLife() < this.getTotalLife()) {
+				double value1 = effect.getValue1();
+				double value2 = effect.getValue2();
+				double jet = fight.getRandom().getDouble();
+				Effect.createEffect(this.fight, Effect.TYPE_RAW_HEAL, 0, 1, value1, value2, false, this, this, attack, jet, false, 0, 1, 0, effect.getModifiers());
+			}
+		}
+	}
+
+	public void activateOnKillPassiveEffect(EffectParameters effect, Attack attack) {
+		if (effect.getId() == Effect.TYPE_KILL_TO_TP) {
+			double value = effect.getValue1();
+			Effect.createEffect(this.fight, Effect.TYPE_RAW_BUFF_TP, effect.getTurns(), 1, value, value, false, this, this, attack, 0, true, 0, 1, 0, effect.getModifiers());
 		}
 	}
 
