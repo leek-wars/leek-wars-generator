@@ -71,6 +71,9 @@ public abstract class Effect {
 	public final static int TYPE_REPEL = 53;
 	public final static int TYPE_RAW_RELATIVE_SHIELD = 54;
 	public final static int TYPE_ALLY_KILLED_TO_AGILITY = 55;
+	public final static int TYPE_KILL_TO_TP = 56;
+	public final static int TYPE_RAW_HEAL = 57;
+	public final static int TYPE_CRITICAL_TO_HEAL = 58;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -146,6 +149,8 @@ public abstract class Effect {
 		EffectRepel.class, // 53
 		EffectRawRelativeShield.class, // 54
 		null, // 55
+		null, // 56
+		EffectRawHeal.class, // 57
 	};
 
 	// Effect characteristics
