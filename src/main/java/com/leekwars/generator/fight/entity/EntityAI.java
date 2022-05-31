@@ -2714,7 +2714,7 @@ public class EntityAI extends AI {
 
 	public ArrayLeekValue getActions() throws LeekRunException {
 		ArrayLeekValue array = new ArrayLeekValue();
-		for (Action action : fight.getActions().getActionsAfter(fight.getOrder().getNextPlayer().getFId())) {
+		for (Action action : fight.getActions().getActionsAfter(getEntity())) {
 			JSONArray json = action.getJSON();
 			// Patch weapons and chips actions: convert templates to id
 			if (action instanceof ActionSetWeapon) {

@@ -32,12 +32,12 @@ public class Actions {
 		List<Action> result = new ArrayList<Action>();
 		int i = this.actions.size() - 1;
 		for (; i >= 0; i--) {
-			result.add(this.actions.get(i));
-			if (this.actions.get(i) instanceof ActionEntityTurn) {
-				if (((ActionEntityTurn) this.actions.get(i)).id == leekId) {
+			if (this.actions.get(i) instanceof ActionEndTurn) {
+				if (((ActionEndTurn) this.actions.get(i)).target == leekId) {
 					break;
 				}
 			}
+			result.add(this.actions.get(i));
 		}
 		Collections.reverse(result);
 		return result;
