@@ -9,11 +9,11 @@ import com.leekwars.generator.maps.Cell;
 
 public class ActionUseWeapon implements Action {
 
-	private final int caster;
-	private final int cell;
-	private final int weapon;
-	private final int success;
-	private int[] leeks;
+	public final int caster;
+	public final int cell;
+	public final int weapon;
+	public final int success;
+	public int[] leeks;
 
 	public ActionUseWeapon(Entity caster, Cell cell, Weapon weapon, int success) {
 

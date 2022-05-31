@@ -1144,6 +1144,12 @@ public enum FightFunctions implements ILeekFunction {
 			return null;
 		}
 	},
+	getActions(0) {
+		@Override
+		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
+			return ((EntityAI) ai).getActions();
+		}
+	},
 	getRegisters(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {

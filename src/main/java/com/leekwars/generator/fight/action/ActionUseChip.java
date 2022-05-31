@@ -9,11 +9,11 @@ import com.leekwars.generator.maps.Cell;
 
 public class ActionUseChip implements Action {
 
-	private final int caster;
-	private final int cell;
-	private final int chip;
-	private final int success;
-	private int[] leeks;
+	public final int caster;
+	public final int cell;
+	public final int chip;
+	public final int success;
+	public int[] leeks;
 
 	public ActionUseChip(Entity caster, Cell cell, Chip chip, int success) {
 		this.caster = caster.getFId();
