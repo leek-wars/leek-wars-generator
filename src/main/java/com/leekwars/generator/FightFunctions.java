@@ -10,8 +10,11 @@ import leekscript.runner.CallableVersion;
 import leekscript.runner.ILeekFunction;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
+import leekscript.runner.values.GenericArrayLeekValue;
+import leekscript.runner.values.LegacyArrayLeekValue;
 import leekscript.common.Error;
 import leekscript.common.Type;
+import leekscript.compiler.LeekScript;
 
 public enum FightFunctions implements ILeekFunction {
 	getLife(0, 1) {
@@ -882,21 +885,21 @@ public enum FightFunctions implements ILeekFunction {
 	moveTowardLeeks(1, 2, new int[] { AI.ARRAY, -1 }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var leeks = (ArrayLeekValue) parameters[0];
+			var leeks = (GenericArrayLeekValue) parameters[0];
 			return ((EntityAI) ai).moveTowardLeeks(leeks, ai.intOrNull(parameters[1]));
 		}
 	},
 	moveTowardEntities(1, 2, new int[] { AI.ARRAY, -1 }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var entities = (ArrayLeekValue) parameters[0];
+			var entities = (GenericArrayLeekValue) parameters[0];
 			return ((EntityAI) ai).moveTowardLeeks(entities, ai.intOrNull(parameters[1]));
 		}
 	},
 	moveTowardCells(1, 2, new int[] { AI.ARRAY, -1 }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var cells = (ArrayLeekValue) parameters[0];
+			var cells = (LegacyArrayLeekValue) parameters[0];
 			return ((EntityAI) ai).moveTowardCells(cells, ai.intOrNull(parameters[1]));
 		}
 	},
@@ -915,21 +918,21 @@ public enum FightFunctions implements ILeekFunction {
 	moveAwayFromCells(1, 2, new int[] { AI.ARRAY, -1 }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var cells = (ArrayLeekValue) parameters[0];
+			var cells = (LegacyArrayLeekValue) parameters[0];
 			return ((EntityAI) ai).moveAwayFromCells(cells, ai.intOrNull(parameters[1]));
 		}
 	},
 	moveAwayFromLeeks(1, 2, new int[] { AI.ARRAY, -1 }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var leeks = (ArrayLeekValue) parameters[0];
+			var leeks = (LegacyArrayLeekValue) parameters[0];
 			return ((EntityAI) ai).moveAwayFromLeeks(leeks, ai.intOrNull(parameters[1]));
 		}
 	},
 	moveAwayFromEntities(1, 2, new int[] { AI.ARRAY, -1 }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var entities = (ArrayLeekValue) parameters[0];
+			var entities = (LegacyArrayLeekValue) parameters[0];
 			return ((EntityAI) ai).moveAwayFromLeeks(entities, ai.intOrNull(parameters[1]));
 		}
 	},
@@ -1280,5 +1283,13 @@ public enum FightFunctions implements ILeekFunction {
 
 	public void setOperations(int operations) {
 		mOperations = operations;
+	}
+
+	public int getMinVersion() {
+		return 1;
+	}
+
+	public int getMaxVersion() {
+		return LeekScript.LATEST_VERSION;
 	}
 }

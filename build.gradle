@@ -15,7 +15,7 @@ test {
 }
 
 jar {
-	baseName = 'generator'
+	archiveBaseName = "generator"
 	duplicatesStrategy = DuplicatesStrategy.INCLUDE
 	manifest {
 		attributes "Main-Class": "com.leekwars.Main"
@@ -28,7 +28,7 @@ jar {
 libsDirName = '..'
 
 repositories {
-	jcenter()
+	mavenCentral()
 }
 
 dependencies {

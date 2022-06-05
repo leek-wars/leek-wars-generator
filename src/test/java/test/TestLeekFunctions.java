@@ -6,6 +6,7 @@ import java.util.List;
 import leekscript.LSException;
 import leekscript.runner.AI;
 import leekscript.runner.values.ArrayLeekValue;
+import leekscript.runner.values.LegacyArrayLeekValue;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -292,7 +293,7 @@ public class TestLeekFunctions {
 		}
 		leekscript += "];";
 		try {
-			return GeneratorCompilation.testScriptGenerator(l, mFight, leekscript, new ArrayLeekValue(ai, values));
+			return GeneratorCompilation.testScriptGenerator(l, mFight, leekscript, new LegacyArrayLeekValue(ai, values));
 		} catch (LSException e) {
 			int i = e.getIndex();
 			System.err.println("Erreur :\n" + mCodes.get(i));

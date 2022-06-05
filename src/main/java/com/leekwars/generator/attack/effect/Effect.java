@@ -6,6 +6,7 @@ import java.util.Map;
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
+import leekscript.runner.values.GenericArrayLeekValue;
 
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.fight.Fight;
@@ -308,24 +309,24 @@ public abstract class Effect {
 		return modifiers;
 	}
 
-	public ArrayLeekValue getLeekValue(AI ai) throws LeekRunException {
+	public GenericArrayLeekValue getLeekValue(AI ai) throws LeekRunException {
 
-		ArrayLeekValue retour = new ArrayLeekValue();
-		retour.put(ai, 0, id);
-		retour.put(ai, 1, value);
-		retour.put(ai, 2, caster.getFId());
-		retour.put(ai, 3, turns);
-		retour.put(ai, 4, critical);
-		retour.put(ai, 5, attack == null ? 0 : attack.getItemId());
-		retour.put(ai, 6, target.getFId());
-		retour.put(ai, 7, modifiers);
+		var retour = ai.newArray();
+		retour.push(ai, id);
+		retour.push(ai, value);
+		retour.push(ai, caster.getFId());
+		retour.push(ai, turns);
+		retour.push(ai, critical);
+		retour.push(ai, attack == null ? 0 : attack.getItemId());
+		retour.push(ai, target.getFId());
+		retour.push(ai, modifiers);
 		return retour;
 	}
 
 	public void reduce(double percent, Entity caster) {
 		double reduction = 1 - percent;
 		value = (int) Math.round((double) value * reduction);
-		for (Map.Entry<Integer, Integer> stat : stats.stats.entrySet()) {
+		for (var stat : stats.stats.entrySet()) {
 			int newValue = (int) Math.round((double) stat.getValue() * reduction);
 			int delta = newValue - stat.getValue();
 			stats.updateStat(stat.getKey(), delta);
@@ -335,7 +336,7 @@ public abstract class Effect {
 
 	public void mergeWith(Effect effect) {
 		value += effect.value;
-		for (Map.Entry<Integer, Integer> stat : stats.stats.entrySet()) {
+		for (var stat : stats.stats.entrySet()) {
 			int signum = stat.getValue() > 0 ? 1 : -1;
 			stats.updateStat(stat.getKey(), effect.value * signum);
 		}

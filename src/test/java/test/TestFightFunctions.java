@@ -19,6 +19,7 @@ import leekscript.LSException;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.values.ArrayLeekValue;
+import leekscript.runner.values.LegacyArrayLeekValue;
 
 public class TestFightFunctions {
 
@@ -503,7 +504,7 @@ public class TestFightFunctions {
 
 		leekscript += "];";
 		try {
-			return GeneratorCompilation.testScriptGenerator(l, mFight, leekscript, new ArrayLeekValue(ai, values));
+			return GeneratorCompilation.testScriptGenerator(l, mFight, leekscript, new LegacyArrayLeekValue(ai, values));
 		} catch (LSException e) {
 			System.err.println("Erreur :\n" + leekscript);
 			System.err.println("Valeur attendue :\n" + ai.string(e.getThe()));
