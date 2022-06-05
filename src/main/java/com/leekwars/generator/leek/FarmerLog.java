@@ -30,9 +30,11 @@ public class FarmerLog extends AILog {
 	public final static int CLEAR_CELLS = 10;
 	public final static int TOO_MUCH_DEBUG = 11;
 
-	public static final int NO_WEAPON_EQUIPED = 1000;
-	public static final int CHIP_NOT_EQUIPED = 1001;
+	public static final int NO_WEAPON_EQUIPPED = 1000;
+	public static final int CHIP_NOT_EQUIPPED = 1001;
 	public static final int CHIP_NOT_EXISTS = 1002;
+	public static final int WEAPON_NOT_EXISTS = 1003;
+	public static final int WEAPON_NOT_EQUIPPED = 1004;
 
 	private boolean tooMuchDebug = false;
 
