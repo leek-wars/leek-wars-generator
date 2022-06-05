@@ -49,7 +49,7 @@ public class Main {
 		}
 		Log.enable(verbose);
 		Log.i(TAG, "Generator v1");
-		System.out.println("db_resolver " + db_resolver + " folder=" + folder + " farmer=" + farmer);
+		// System.out.println("db_resolver " + db_resolver + " folder=" + folder + " farmer=" + farmer);
 		if (file == null) {
 			Log.i(TAG, "No scenario/ai file passed!");
 			return;
