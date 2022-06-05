@@ -53,11 +53,12 @@ public class EntityAI extends AI {
 	private static final String TAG = EntityAI.class.getSimpleName();
 
 	protected static class LeekMessage {
-		private final int mAuthor;
-		private final int mType;
+
+		private final long mAuthor;
+		private final long mType;
 		private final Object mMessage;
 
-		public LeekMessage(int author, int type, Object message) {
+		public LeekMessage(long author, long type, Object message) {
 			mAuthor = author;
 			mType = type;
 			mMessage = message;
@@ -235,10 +236,6 @@ public class EntityAI extends AI {
 		return mIACpuRunTime / 1000000;
 	}
 
-	public int getLevel() {
-		return mEntity.getLevel();
-	}
-
 	public boolean isValid() {
 		return valid;
 	}
@@ -375,7 +372,7 @@ public class EntityAI extends AI {
 
 	//
 
-	public int getEntity() {
+	public long getEntity() {
 		return mEntity.getFId();
 	}
 
@@ -390,22 +387,22 @@ public class EntityAI extends AI {
 	 */
 	public Object getMP(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getMP();
+			return (long) mEntity.getMP();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getMP();
+				return (long) l.getMP();
 		}
 		return null;
 	}
 
 	public Object getTP(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getTP();
+			return (long) mEntity.getTP();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getTP();
+				return (long) l.getTP();
 			}
 		}
 		return null;
@@ -413,11 +410,11 @@ public class EntityAI extends AI {
 
 	public Object getTotalMP(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getTotalMP();
+			return (long) mEntity.getTotalMP();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getTotalMP();
+				return (long) l.getTotalMP();
 			}
 		}
 		return null;
@@ -425,11 +422,11 @@ public class EntityAI extends AI {
 
 	public Object getTotalTP(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getTotalTP();
+			return (long) mEntity.getTotalTP();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getTotalTP();
+				return (long) l.getTotalTP();
 			}
 		}
 		return null;
@@ -437,11 +434,11 @@ public class EntityAI extends AI {
 
 	public Object getFrequency(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_FREQUENCY);
+			return (long) mEntity.getStat(Entity.CHARAC_FREQUENCY);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_FREQUENCY);
+				return (long) l.getStat(Entity.CHARAC_FREQUENCY);
 			}
 		}
 		return null;
@@ -454,11 +451,11 @@ public class EntityAI extends AI {
 
 	public Object getStrength(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_STRENGTH);
+			return (long) mEntity.getStat(Entity.CHARAC_STRENGTH);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_STRENGTH);
+				return (long) l.getStat(Entity.CHARAC_STRENGTH);
 			}
 		}
 		return null;
@@ -477,11 +474,11 @@ public class EntityAI extends AI {
 
 	public Object getBirthTurn(Object value) throws LeekRunException {
 		if (value == null)
-			return mBirthTurn;
+			return (long) mBirthTurn;
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && l.getAI() != null)
-				return l.getAI().mBirthTurn;
+				return (long) l.getAI().mBirthTurn;
 		}
 		return null;
 	}
@@ -496,7 +493,7 @@ public class EntityAI extends AI {
 					List<Chip> chips = template.getChips();
 					var retour = newArray();
 					for (int i = 0; i < chips.size(); i++) {
-						retour.push(this, chips.get(i).getId());
+						retour.push(this, (long) chips.get(i).getId());
 					}
 					return retour;
 				}
@@ -507,12 +504,12 @@ public class EntityAI extends AI {
 
 	public Object getType(Object value) throws LeekRunException {
 		if (value == null) {
-			return mEntity.getType() + 1;
+			return (long) mEntity.getType() + 1;
 		}
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getType() + 1;
+				return (long) l.getType() + 1;
 			}
 		}
 		return null;
@@ -520,11 +517,11 @@ public class EntityAI extends AI {
 
 	public Object getSummoner(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.isSummon() ? mEntity.getSummoner().getFId(): -1;
+			return mEntity.isSummon() ? (long) mEntity.getSummoner().getFId(): -1l;
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.isSummon() ? l.getSummoner().getFId(): -1;
+				return l.isSummon() ? (long) l.getSummoner().getFId(): -1l;
 		}
 		return null;
 	}
@@ -542,11 +539,11 @@ public class EntityAI extends AI {
 
 	public Object getAgility(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_AGILITY);
+			return (long) mEntity.getStat(Entity.CHARAC_AGILITY);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_AGILITY);
+				return (long) l.getStat(Entity.CHARAC_AGILITY);
 			}
 		}
 		return null;
@@ -554,11 +551,11 @@ public class EntityAI extends AI {
 
 	public Object getResistance(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_RESISTANCE);
+			return (long) mEntity.getStat(Entity.CHARAC_RESISTANCE);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_RESISTANCE);
+				return (long) l.getStat(Entity.CHARAC_RESISTANCE);
 			}
 		}
 		return null;
@@ -566,11 +563,11 @@ public class EntityAI extends AI {
 
 	public Object getScience(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_SCIENCE);
+			return (long) mEntity.getStat(Entity.CHARAC_SCIENCE);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_SCIENCE);
+				return (long) l.getStat(Entity.CHARAC_SCIENCE);
 			}
 		}
 		return null;
@@ -578,11 +575,11 @@ public class EntityAI extends AI {
 
 	public Object getMagic(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_MAGIC);
+			return (long) mEntity.getStat(Entity.CHARAC_MAGIC);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_MAGIC);
+				return (long) l.getStat(Entity.CHARAC_MAGIC);
 			}
 		}
 		return null;
@@ -590,11 +587,11 @@ public class EntityAI extends AI {
 
 	public Object getWisdom(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_WISDOM);
+			return (long) mEntity.getStat(Entity.CHARAC_WISDOM);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null) {
-				return l.getStat(Entity.CHARAC_WISDOM);
+				return (long) l.getStat(Entity.CHARAC_WISDOM);
 			}
 		}
 		return null;
@@ -602,77 +599,77 @@ public class EntityAI extends AI {
 
 	public Object getLeekID(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getId();
+			return (long) mEntity.getId();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getId();
+				return (long) l.getId();
 		}
 		return null;
 	}
 
 	public Object getAbsoluteShield(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
+			return (long) mEntity.getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
+				return (long) l.getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
 		}
 		return null;
 	}
 
 	public Object getRelativeShield(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_RELATIVE_SHIELD);
+			return (long) mEntity.getStat(Entity.CHARAC_RELATIVE_SHIELD);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getStat(Entity.CHARAC_RELATIVE_SHIELD);
+				return (long) l.getStat(Entity.CHARAC_RELATIVE_SHIELD);
 		}
 		return null;
 	}
 
 	public Object getDamageReturn(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getStat(Entity.CHARAC_DAMAGE_RETURN);
+			return (long) mEntity.getStat(Entity.CHARAC_DAMAGE_RETURN);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getStat(Entity.CHARAC_DAMAGE_RETURN);
+				return (long) l.getStat(Entity.CHARAC_DAMAGE_RETURN);
 		}
 		return null;
 	}
 
 	public Object getTotalLife(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getTotalLife();
+			return (long) mEntity.getTotalLife();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getTotalLife();
+				return (long) l.getTotalLife();
 		}
 		return null;
 	}
 
 	public Object getPower(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getPower();
+			return (long) mEntity.getPower();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getPower();
+				return (long) l.getPower();
 		}
 		return null;
 	}
 
 	public Object getLevel(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getLevel();
+			return (long) mEntity.getLevel();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getLevel();
+				return (long) l.getLevel();
 		}
 		return null;
 	}
@@ -691,12 +688,12 @@ public class EntityAI extends AI {
 	public Object getCell(Object value) throws LeekRunException {
 		if (value == null) {
 			if (mEntity.getCell() != null)
-				return mEntity.getCell().getId();
+				return (long) mEntity.getCell().getId();
 		}
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && l.getCell() != null)
-				return l.getCell().getId();
+				return (long) l.getCell().getId();
 		}
 		return null;
 	}
@@ -704,23 +701,23 @@ public class EntityAI extends AI {
 	public Object getWeapon(Object value) throws LeekRunException {
 		if (value == null) {
 			if (mEntity.getWeapon() != null)
-				return mEntity.getWeapon().getId();
+				return (long) mEntity.getWeapon().getId();
 		}
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && l.getWeapon() != null)
-				return l.getWeapon().getId();
+				return (long) l.getWeapon().getId();
 		}
 		return null;
 	}
 
 	public Object getLife(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getLife();
+			return (long) mEntity.getLife();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getLife();
+				return (long) l.getLife();
 		}
 		return null;
 	}
@@ -782,7 +779,7 @@ public class EntityAI extends AI {
 			return null;
 		var retour = newArray();
 		for (var weapon : l.getWeapons()) {
-			retour.push(this, weapon.getId());
+			retour.push(this, (long) weapon.getId());
 		}
 		return retour;
 	}
@@ -797,7 +794,7 @@ public class EntityAI extends AI {
 			return null;
 		var result = newArray();
 		for (var chip : l.getChips()) {
-			result.push(this, chip.getId());
+			result.push(this, (long) chip.getId());
 		}
 		return result;
 	}
@@ -812,13 +809,13 @@ public class EntityAI extends AI {
 			return null;
 		var result = newArray();
 		for (var summon : l.getSummons(false)) {
-			result.push(this, summon.getFId());
+			result.push(this, (long) summon.getFId());
 		}
 		return result;
 	}
 
 	// ----- Fonctions Weapon -----
-	public int useWeapon(int leek_id) throws LeekRunException {
+	public long useWeapon(int leek_id) throws LeekRunException {
 		int success = -1;
 		Entity target = fight.getEntity(leek_id);
 		if (target != null && target != mEntity && !target.isDead()) {
@@ -830,7 +827,7 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public int useWeaponOnCell(int cell_id) throws LeekRunException {
+	public long useWeaponOnCell(int cell_id) throws LeekRunException {
 		int success = -1;
 		Cell target = fight.getMap().getCell(cell_id);
 		if (target != null && target != mEntity.getCell()) {
@@ -876,30 +873,30 @@ public class EntityAI extends AI {
 		return false;
 	}
 
-	public int getWeaponMinRange(int id) {
+	public long getWeaponMinRange(int id) {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
-			return -1;
-		return template.getAttack().getMinRange();
+			return -1l;
+		return (long) template.getAttack().getMinRange();
 	}
 
 	// Deprecated : always 0
-	public int getWeaponFail(int id) {
-		return 0;
+	public long getWeaponFail(int id) {
+		return 0l;
 	}
 
-	public int getWeaponMaxRange(int id) {
+	public long getWeaponMaxRange(int id) {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
-			return -1;
-		return template.getAttack().getMaxRange();
+			return -1l;
+		return (long) template.getAttack().getMaxRange();
 	}
 
-	public int getWeaponCost(int id) {
+	public long getWeaponCost(int id) {
 		Weapon template = id == -1 ? (mEntity.getWeapon() == null ? null : mEntity.getWeapon()) : Weapons.getWeapon(id);
 		if (template == null)
-			return -1;
-		return template.getCost();
+			return -1l;
+		return (long) template.getCost();
 	}
 
 	public boolean isInlineWeapon(int id) {
@@ -930,12 +927,12 @@ public class EntityAI extends AI {
 
 	public GenericArrayLeekValue getFeatureArray(EffectParameters e) throws LeekRunException {
 		var effect = newArray();
-		effect.push(this, e.getId());
-		effect.push(this, e.getValue1());
-		effect.push(this, e.getValue1() + e.getValue2());
-		effect.push(this, e.getTurns());
-		effect.push(this, e.getTargets());
-		effect.push(this, e.getModifiers());
+		effect.push(this, (long) e.getId());
+		effect.push(this, (long) e.getValue1());
+		effect.push(this, (long) e.getValue1() + e.getValue2());
+		effect.push(this, (long) e.getTurns());
+		effect.push(this, (long) e.getTargets());
+		effect.push(this, (long) e.getModifiers());
 		return effect;
 	}
 
@@ -953,9 +950,9 @@ public class EntityAI extends AI {
 
 	// ---- Fonctions Chip ----
 
-	public int useChip(int chip_id, int leek_id) throws LeekRunException {
+	public long useChip(int chip_id, int leek_id) throws LeekRunException {
 
-		int success = -1;
+		long success = -1;
 		Entity target = fight.getEntity(leek_id);
 		Chip chip = mEntity.getChip(chip_id);
 
@@ -973,9 +970,9 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public int useChipOnCell(int chip_id, int cell_id) throws LeekRunException {
+	public long useChipOnCell(int chip_id, int cell_id) throws LeekRunException {
 
-		int success = -1;
+		long success = -1;
 		Cell target = fight.getMap().getCell(cell_id);
 		Chip template = mEntity.getChip(chip_id);
 
@@ -1019,7 +1016,7 @@ public class EntityAI extends AI {
 			var retour = newArray();
 			List<Entity> entities = template.getAttack().getWeaponTargets(fight, mEntity, fight.getMap().getCell(cell_id));
 			for (Entity l : entities) {
-				retour.push(this, l.getFId());
+				retour.push(this, (long) l.getFId());
 			}
 			return retour;
 		}
@@ -1029,13 +1026,13 @@ public class EntityAI extends AI {
 	public Object getCurrentCooldown(Object chip_id, Object v) throws LeekRunException {
 		if (v == null) {
 			var chipTemplate = Chips.getChip(integer(chip_id));
-			return fight.getCooldown(mEntity, chipTemplate);
+			return (long) fight.getCooldown(mEntity, chipTemplate);
 		}
 		if (v instanceof Number) {
 			var l = fight.getEntity(((Number) v).intValue());
 			if (l != null) {
 				Chip chipTemplate = Chips.getChip(integer(chip_id));
-				return fight.getCooldown(l, chipTemplate);
+				return (long) fight.getCooldown(l, chipTemplate);
 			}
 		}
 		return null;
@@ -1048,7 +1045,7 @@ public class EntityAI extends AI {
 		return chip.getName();
 	}
 
-	public int getChipCooldown(int id) {
+	public long getChipCooldown(int id) {
 		Chip chip = Chips.getChip(id);
 		if (chip == null)
 			return 0;
@@ -1060,7 +1057,7 @@ public class EntityAI extends AI {
 		if (chip == null) {
 			return null;
 		}
-		return chip.getAttack().getMinRange();
+		return (long) chip.getAttack().getMinRange();
 	}
 
 	public Object getChipMaxRange(int id) {
@@ -1068,11 +1065,11 @@ public class EntityAI extends AI {
 		if (chip == null) {
 			return null;
 		}
-		return chip.getAttack().getMaxRange();
+		return (long) chip.getAttack().getMaxRange();
 	}
 
 	// Deprecated : always 0
-	public int getChipFail(int id) {
+	public long getChipFail(int id) {
 		return 0;
 	}
 
@@ -1081,15 +1078,7 @@ public class EntityAI extends AI {
 		if (chip == null) {
 			return null;
 		}
-		return chip.getCost();
-	}
-
-	public Object getC(int id) {
-		Chip chip = Chips.getChip(id);
-		if (chip == null) {
-			return null;
-		}
-		return chip.getCost();
+		return (long) chip.getCost();
 	}
 
 	public boolean isInlineChip(int id) {
@@ -1123,7 +1112,7 @@ public class EntityAI extends AI {
 		return Pathfinding.getDistance(cell1, cell2);
 	}
 
-	public int getCellDistance(int c1, int c2) {
+	public long getCellDistance(int c1, int c2) {
 		Cell cell1 = fight.getMap().getCell(c1);
 		if (cell1 == null)
 			return -1;
@@ -1148,20 +1137,20 @@ public class EntityAI extends AI {
 			putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
 		}
 		if (cell1 == cell2)
-			return 0;
+			return 0l;
 
 		List<Cell> path = fight.getMap().getPathBeetween(this, cell1, cell2, ignore);
 		if (path == null)
 			return null;
-		return path.size();
+		return (long) path.size();
 	}
 
-	public GenericArrayLeekValue getPath(Object c1, Object c2, Object leeks_to_ignore) throws LeekRunException {
+	public GenericArrayLeekValue getPath(int c1, int c2, Object leeks_to_ignore) throws LeekRunException {
 
-		Cell cell1 = fight.getMap().getCell(integer(c1));
+		Cell cell1 = fight.getMap().getCell(c1);
 		if (cell1 == null)
 			return null;
-		Cell cell2 = fight.getMap().getCell(integer(c2));
+		Cell cell2 = fight.getMap().getCell(c2);
 		if (cell2 == null)
 			return null;
 
@@ -1185,19 +1174,19 @@ public class EntityAI extends AI {
 			return null;
 		var retour = newArray();
 		for (int i = 0; i < path.size(); i++) {
-			retour.push(this, path.get(i).getId());
+			retour.push(this, (long) path.get(i).getId());
 		}
 		return retour;
 	}
 
-	public int getLeekOnCell(int c) {
+	public long getLeekOnCell(int c) {
 		Cell cell = fight.getMap().getCell(c);
 		if (cell == null)
 			return -1;
 		return cell.getPlayer() != null ? cell.getPlayer().getFId() : -1;
 	}
 
-	public int getCellContent(int c) {
+	public long getCellContent(int c) {
 		Cell cell = fight.getMap().getCell(c);
 		if (cell == null)
 			return -1;
@@ -1208,21 +1197,21 @@ public class EntityAI extends AI {
 		Cell cell = fight.getMap().getCell(x + fight.getMap().getWidth() - 1, y);
 		if (cell == null)
 			return null;
-		return cell.getId();
+		return (long) cell.getId();
 	}
 
 	public Object getCellX(int c) {
 		Cell cell = fight.getMap().getCell(c);
 		if (cell == null)
 			return null;
-		return cell.getX() - fight.getMap().getWidth() + 1;
+		return (long) cell.getX() - fight.getMap().getWidth() + 1;
 	}
 
 	public Object getCellY(int c) {
 		Cell cell = fight.getMap().getCell(c);
 		if (cell == null)
 			return null;
-		return cell.getY();
+		return (long) cell.getY();
 	}
 
 	public boolean isEmpty(int c) {
@@ -1256,7 +1245,7 @@ public class EntityAI extends AI {
 		return cell1.getX() == cell2.getX() || cell1.getY() == cell2.getY();
 	}
 
-	public int getNearestEnemy() throws LeekRunException {
+	public long getNearestEnemy() throws LeekRunException {
 		if (mEntity.getCell() == null)
 			return -1;
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
@@ -1275,7 +1264,7 @@ public class EntityAI extends AI {
 		return nearest == null ? -1 : nearest.getFId();
 	}
 
-	public int getFarthestEnemy() throws LeekRunException {
+	public long getFarthestEnemy() throws LeekRunException {
 		if (mEntity.getCell() == null)
 			return -1;
 		List<Entity> entities = fight.getEnemiesEntities(mEntity.getTeam());
@@ -1294,7 +1283,7 @@ public class EntityAI extends AI {
 		return farest == null ? -1 : farest.getFId();
 	}
 
-	public int getTurn() {
+	public long getTurn() {
 		return fight.getTurn();
 	}
 
@@ -1303,8 +1292,8 @@ public class EntityAI extends AI {
 		return df.format(fight.getDate()).toString();
 	}
 
-	public int getTimestamp() {
-		return (int) (fight.getDate().getTime() / 1000);
+	public long getTimestamp() {
+		return (fight.getDate().getTime() / 1000);
 	}
 
 	public String getDate() {
@@ -1315,7 +1304,7 @@ public class EntityAI extends AI {
 	public GenericArrayLeekValue getAllChips() throws LeekRunException {
 		var retour = newArray(Chips.getTemplates().size());
 		for (var chip : Chips.getTemplates().values()) {
-			retour.push(this, chip.getId());
+			retour.push(this, (long) chip.getId());
 		}
 		return retour;
 	}
@@ -1323,14 +1312,14 @@ public class EntityAI extends AI {
 	public GenericArrayLeekValue getAllWeapons() throws LeekRunException {
 		var retour = newArray(Weapons.getTemplates().size());
 		for (var weapon : Weapons.getTemplates().values()) {
-			retour.push(this, weapon.getId());
+			retour.push(this, (long) weapon.getId());
 		}
 		return retour;
 	}
 
 	public GenericArrayLeekValue getAllEffects() throws LeekRunException {
 		var retour = newArray(Effect.effects.length);
-		for (int i = 1; i <= Effect.effects.length; ++i) {
+		for (long i = 1; i <= Effect.effects.length; ++i) {
 			retour.push(this, i);
 		}
 		return retour;
@@ -1340,14 +1329,14 @@ public class EntityAI extends AI {
 		var result = newArray();
 		for (Entity e : fight.getAllEntities(false)) {
 			if (e.getTeam() != mEntity.getTeam()) {
-				result.push(this, e.getFId());
+				result.push(this, (long) e.getFId());
 			}
 		}
 		return result;
 	}
 
-	public int getNumAliveEnemies() throws LeekRunException {
-		short count = 0;
+	public long getNumAliveEnemies() throws LeekRunException {
+		long count = 0;
 		for (Entity e : fight.getAllEntities(false)) {
 			if (e.getTeam() != mEntity.getTeam()) {
 				count++;
@@ -1360,14 +1349,14 @@ public class EntityAI extends AI {
 		var result = newArray();
 		for (Entity e : fight.getAllEntities(true)) {
 			if (e.getTeam() != mEntity.getTeam() && e.isDead()) {
-				result.push(this, e.getFId());
+				result.push(this, (long) e.getFId());
 			}
 		}
 		return result;
 	}
 
-	public int getNumDeadEnemies() throws LeekRunException {
-		short count = 0;
+	public long getNumDeadEnemies() throws LeekRunException {
+		long count = 0;
 		for (Entity e : fight.getAllEntities(true)) {
 			if (e.getTeam() != mEntity.getTeam() && e.isDead()) {
 				count++;
@@ -1377,14 +1366,14 @@ public class EntityAI extends AI {
 	}
 
 	public GenericArrayLeekValue getEnemies() throws LeekRunException {
-		var retour = newArray();
-		for (Entity l : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
-			retour.push(this, l.getFId());
+		var result = newArray();
+		for (Entity e : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
+			result.push(this, (long) e.getFId());
 		}
-		return retour;
+		return result;
 	}
 
-	public int getEnemiesLife() {
+	public long getEnemiesLife() {
 		int life = 0;
 		for (Entity l : fight.getEnemiesEntities(mEntity.getTeam())) {
 			life += l.getLife();
@@ -1392,7 +1381,7 @@ public class EntityAI extends AI {
 		return life;
 	}
 
-	public int getNumEnemies() throws LeekRunException {
+	public long getNumEnemies() throws LeekRunException {
 		return fight.getEnemiesEntities(mEntity.getTeam(), true).size();
 	}
 
@@ -1414,7 +1403,7 @@ public class EntityAI extends AI {
 		return null;
 	}
 
-	public int getNearestAlly() throws LeekRunException {
+	public long getNearestAlly() throws LeekRunException {
 		if (mEntity.getCell() == null)
 			return -1;
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
@@ -1432,7 +1421,7 @@ public class EntityAI extends AI {
 		return nearest == null ? -1 : nearest.getFId();
 	}
 
-	public int getFarthestAlly() throws LeekRunException {
+	public long getFarthestAlly() throws LeekRunException {
 		if (mEntity.getCell() == null) return -1;
 		List<Entity> entities = fight.getTeamEntities(mEntity.getTeam());
 		int dist = -1;
@@ -1452,12 +1441,12 @@ public class EntityAI extends AI {
 	public GenericArrayLeekValue getAliveAllies() throws LeekRunException {
 		var retour = newArray();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam())) {
-			retour.push(this, l.getFId());
+			retour.push(this, (long) l.getFId());
 		}
 		return retour;
 	}
 
-	public int getNumAliveAllies() throws LeekRunException {
+	public long getNumAliveAllies() throws LeekRunException {
 		return fight.getTeamEntities(mEntity.getTeam()).size();
 	}
 
@@ -1465,14 +1454,14 @@ public class EntityAI extends AI {
 		var retour = newArray();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
 			if (l.isDead()) {
-				retour.push(this, l.getFId());
+				retour.push(this, (long) l.getFId());
 			}
 		}
 		return retour;
 	}
 
-	public int getNumDeadAllies() throws LeekRunException {
-		short nb = 0;
+	public long getNumDeadAllies() throws LeekRunException {
+		long nb = 0;
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
 			if (l.isDead())
 				nb++;
@@ -1483,16 +1472,16 @@ public class EntityAI extends AI {
 	public GenericArrayLeekValue getAllies() throws LeekRunException {
 		var retour = newArray();
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam(), true)) {
-			retour.push(this, l.getFId());
+			retour.push(this, (long) l.getFId());
 		}
 		return retour;
 	}
 
-	public int getNumAllies() throws LeekRunException {
+	public long getNumAllies() throws LeekRunException {
 		return fight.getTeamEntities(mEntity.getTeam(), true).size();
 	}
 
-	public int getAlliesLife() {
+	public long getAlliesLife() {
 		int life = 0;
 		for (Entity l : fight.getTeamEntities(mEntity.getTeam())) {
 			life += l.getLife();
@@ -1500,11 +1489,11 @@ public class EntityAI extends AI {
 		return life;
 	}
 
-	public int getNextPlayer() {
+	public long getNextPlayer() {
 		return fight.getOrder().getNextPlayer().getFId();
 	}
 
-	public int getPreviousPlayer() {
+	public long getPreviousPlayer() {
 		return fight.getOrder().getPreviousPlayer().getFId();
 	}
 
@@ -1526,7 +1515,7 @@ public class EntityAI extends AI {
 			var retour = newArray();
 			var leeks = weapon.getAttack().getWeaponTargets(fight, mEntity, target);
 			for (Entity l : leeks) {
-				retour.push(this, l.getFId());
+				retour.push(this, (long) l.getFId());
 			}
 			return retour;
 		}
@@ -1577,13 +1566,13 @@ public class EntityAI extends AI {
 		List<Cell> cells = weapon.getAttack().getTargetCells(start_cell, target);
 		// On les met dans le tableau
 		for (Cell cell : cells) {
-			retour.push(this, cell.getId());
+			retour.push(this, (long) cell.getId());
 		}
 
 		return retour;
 	}
 
-	public int getCellToUseWeapon(Object value1, Object value2, Object value3) throws LeekRunException {
+	public long getCellToUseWeapon(Object value1, Object value2, Object value3) throws LeekRunException {
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
 		Entity target = null;
 
@@ -1596,13 +1585,13 @@ public class EntityAI extends AI {
 		int cell = -1;
 		if (target != null && target.getCell() != null && weapon != null) {
 
-			ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
+			var cells_to_ignore = new ArrayList<Cell>();
 			if (value3 instanceof GenericArrayLeekValue) {
 				putCells(cells_to_ignore, (GenericArrayLeekValue) value3);
 			} else {
 				cells_to_ignore.add(mEntity.getCell());
 			}
-			List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
+			var possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
 			if (possible != null && possible.size() > 0) {
 				if (possible.contains(mEntity.getCell())) {
 					cell = mEntity.getCell().getId();
@@ -1620,7 +1609,7 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public int getCellToUseWeaponOnCell(Object value1, Object value2, Object value3) throws LeekRunException {
+	public long getCellToUseWeaponOnCell(Object value1, Object value2, Object value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (mEntity.getWeapon() == null) ? null : mEntity.getWeapon();
@@ -1640,7 +1629,7 @@ public class EntityAI extends AI {
 			} else
 				cells_to_ignore.add(mEntity.getCell());
 
-			List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target, cells_to_ignore);
+			var possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target, cells_to_ignore);
 			if (possible != null && possible.size() > 0) {
 				if (possible.contains(mEntity.getCell())) {
 					retour = mEntity.getCell().getId();
@@ -1658,7 +1647,7 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int getCellToUseChip(Object chip, Object t, Object value3) throws LeekRunException {
+	public long getCellToUseChip(Object chip, Object t, Object value3) throws LeekRunException {
 
 		Entity target = fight.getEntity(integer(t));
 		int cell = -1;
@@ -1689,7 +1678,7 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public int getCellToUseChipOnCell(Object chip, Object cell, Object value3) throws LeekRunException {
+	public long getCellToUseChipOnCell(Object chip, Object cell, Object value3) throws LeekRunException {
 
 		int retour = -1;
 		Cell target = fight.getMap().getCell(integer(cell));
@@ -1722,12 +1711,12 @@ public class EntityAI extends AI {
 		return retour;
 	}
 
-	public int moveToward(int leek_id, int pm_to_use) throws LeekRunException {
+	public long moveToward(int leek_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP()) {
 			pm = mEntity.getMP();
 		}
-		int used_pm = 0;
+		long used_pm = 0;
 		if (pm > 0) {
 			Entity target = fight.getEntity(leek_id);
 			if (target != null && !target.isDead()) {
@@ -1740,12 +1729,12 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardCell(int cell_id, int pm_to_use) throws LeekRunException {
+	public long moveTowardCell(int cell_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP()) {
 			pm = mEntity.getMP();
 		}
-		int used_pm = 0;
+		long used_pm = 0;
 		if (pm > 0 && mEntity.getCell() != null) {
 			Cell target = mEntity.getCell().getMap().getCell(cell_id);
 			if (target != null && target != mEntity.getCell()) {
@@ -1763,7 +1752,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardLeeks(GenericArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
+	public long moveTowardLeeks(GenericArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1786,7 +1775,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardCells(LegacyArrayLeekValue cells, int pm_to_use) throws LeekRunException {
+	public long moveTowardCells(LegacyArrayLeekValue cells, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1809,11 +1798,11 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFrom(int leek_id, int pm_to_use) throws LeekRunException {
+	public long moveAwayFrom(int leek_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
-		int used_pm = 0;
+		long used_pm = 0;
 		if (pm > 0) {
 			Entity target = fight.getEntity(leek_id);
 			if (target != null && target.getCell() != null) {
@@ -1828,7 +1817,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromCell(int cell_id, int pm_to_use) throws LeekRunException {
+	public long moveAwayFromCell(int cell_id, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1847,7 +1836,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromLeeks(LegacyArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
+	public long moveAwayFromLeeks(LegacyArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1870,7 +1859,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromCells(LegacyArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
+	public long moveAwayFromCells(LegacyArrayLeekValue leeks, int pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
 			pm = mEntity.getMP();
@@ -1893,7 +1882,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveAwayFromLine(int cell1, int cell2, int pm_to_use) throws LeekRunException {
+	public long moveAwayFromLine(int cell1, int cell2, int pm_to_use) throws LeekRunException {
 		// Nombre de PM à utiliser au max pour fuir comme un lache
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
@@ -1922,7 +1911,7 @@ public class EntityAI extends AI {
 		return used_pm;
 	}
 
-	public int moveTowardLine(int cell1, int cell2, int pm_to_use) throws LeekRunException {
+	public long moveTowardLine(int cell1, int cell2, int pm_to_use) throws LeekRunException {
 		// Nombre de PM à utiliser au max
 		int pm = pm_to_use == -1 ? mEntity.getMP() : pm_to_use;
 		if (pm > mEntity.getMP())
@@ -2102,7 +2091,7 @@ public class EntityAI extends AI {
 		// On les met dans le tableau
 		if (cells != null) {
 			for (Cell cell : cells) {
-				retour.push(this, cell.getId());
+				retour.push(this, (long) cell.getId());
 			}
 		}
 		return retour;
@@ -2141,7 +2130,7 @@ public class EntityAI extends AI {
 		var retour = newArray(possible.size());
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, cell.getId());
+				retour.push(this, (long) cell.getId());
 			}
 		}
 
@@ -2182,7 +2171,7 @@ public class EntityAI extends AI {
 		var retour = newArray();
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, cell.getId());
+				retour.push(this, (long) cell.getId());
 			}
 		}
 
@@ -2218,7 +2207,7 @@ public class EntityAI extends AI {
 		var retour = newArray(possible.size());
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, cell.getId());
+				retour.push(this, (long) cell.getId());
 			}
 		}
 		return retour;
@@ -2253,7 +2242,7 @@ public class EntityAI extends AI {
 		var retour = newArray(possible.size());
 		if (possible != null) {
 			for (Cell cell : possible) {
-				retour.push(this, cell.getId());
+				retour.push(this, (long) cell.getId());
 			}
 		}
 		return retour;
@@ -2288,7 +2277,7 @@ public class EntityAI extends AI {
 				nearest = l;
 			}
 		}
-		return nearest == null ? null : nearest.getFId();
+		return nearest == null ? null : (long) nearest.getFId();
 	}
 
 	/**
@@ -2316,7 +2305,7 @@ public class EntityAI extends AI {
 				nearest = l;
 			}
 		}
-		return nearest == null ? null : nearest.getFId();
+		return nearest == null ? null : (long) nearest.getFId();
 	}
 
 	/**
@@ -2344,7 +2333,7 @@ public class EntityAI extends AI {
 				nearest = l;
 			}
 		}
-		return nearest == null ? null : nearest.getFId();
+		return nearest == null ? null : (long) nearest.getFId();
 	}
 
 	/**
@@ -2373,7 +2362,7 @@ public class EntityAI extends AI {
 			}
 		}
 
-		return nearest == null ? null : nearest.getFId();
+		return nearest == null ? null : (long) nearest.getFId();
 	}
 
 	public Object lineOfSight(Object start, Object end, Object ignore) throws LeekRunException {
@@ -2421,7 +2410,7 @@ public class EntityAI extends AI {
 		var retour = newArray();
 		if (cells == null) return retour;
 		for (Cell c : cells)
-			retour.push(this, c.getId());
+			retour.push(this, (long) c.getId());
 		return retour;
 	}
 
@@ -2534,10 +2523,6 @@ public class EntityAI extends AI {
 		return true;
 	}
 
-	public int color(Object red, Object green, Object blue) throws LeekRunException {
-		return ((integer(red) & 255) << 16) | ((integer(green) & 255) << 8) | (integer(blue) & 255);
-	}
-
 	public GenericArrayLeekValue listen() throws LeekRunException {
 		var values = newArray();
 		for (Entity l : fight.getAllEntities(false)) {
@@ -2545,7 +2530,7 @@ public class EntityAI extends AI {
 				continue;
 			for (var say : l.getAI().getSays()) {
 				var s = newArray();
-				s.push(this, l.getFId());
+				s.push(this, (long) l.getFId());
 				s.push(this, say);
 				values.push(this, s);
 			}
@@ -2574,18 +2559,18 @@ public class EntityAI extends AI {
 		if (weapon_id == -1) {
 			template = mEntity.getWeapon();
 		} else {
-			template = Weapons.getWeapon(integer(weapon_id));
+			template = Weapons.getWeapon(weapon_id);
 		}
 		if (template == null)
 			return null;
-		return (int) template.getAttack().getLaunchType();
+		return (long) template.getAttack().getLaunchType();
 	}
 
 	public Object getChipLaunchType(Object chip_id) throws LeekRunException {
 		Chip template = Chips.getChip(integer(chip_id));
 		if (template == null)
 			return null;
-		return (int) template.getAttack().getLaunchType();
+		return (long) template.getAttack().getLaunchType();
 	}
 
 	public Object getAIName(Object value) throws LeekRunException {
@@ -2636,22 +2621,22 @@ public class EntityAI extends AI {
 
 	public Object getFarmerId(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getFarmer();
+			return (long) mEntity.getFarmer();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getFarmer();
+				return (long) l.getFarmer();
 		}
 		return null;
 	}
 
 	public Object getTeamId(Object value) throws LeekRunException {
 		if (value == null)
-			return mEntity.getTeamId();
+			return (long) mEntity.getTeamId();
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getTeamId();
+				return (long) l.getTeamId();
 		}
 		return null;
 	}
@@ -2660,7 +2645,7 @@ public class EntityAI extends AI {
 		if (value instanceof Number) {
 			Weapon weapon = Weapons.getWeapon(integer(value));
 			if (weapon != null) {
-				return weapon.getAttack().getArea();
+				return (long) weapon.getAttack().getArea();
 			}
 		}
 		return null;
@@ -2670,7 +2655,7 @@ public class EntityAI extends AI {
 		if (value instanceof Number) {
 			Chip template = Chips.getChip(integer(value));
 			if (template != null) {
-				return template.getAttack().getArea();
+				return (long) template.getAttack().getArea();
 			}
 		}
 		return null;
@@ -2678,11 +2663,11 @@ public class EntityAI extends AI {
 
 	public Object getAIId(Object value) throws LeekRunException {
 		if (value == null)
-			return id;
+			return (long) id;
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.getAI().getId();
+				return (long) l.getAI().getId();
 		}
 		return null;
 	}
@@ -2736,7 +2721,7 @@ public class EntityAI extends AI {
 		}
 	}
 
-	public int summon(Object chip, Object cell, Object ai) throws LeekRunException {
+	public long summon(Object chip, Object cell, Object ai) throws LeekRunException {
 
 		int success = -1;
 
@@ -2765,16 +2750,16 @@ public class EntityAI extends AI {
 
 	public Object getEntityTurnOrder(Object value) throws LeekRunException {
 		if (value == null)
-			return fight.getOrder().getEntityTurnOrder(mEntity);
+			return (long) fight.getOrder().getEntityTurnOrder(mEntity);
 		if (value instanceof Number) {
 			Entity l = fight.getEntity(((Number) value).intValue());
 			if (l != null && !l.isDead())
-				return fight.getOrder().getEntityTurnOrder(l);
+				return (long) fight.getOrder().getEntityTurnOrder(l);
 		}
 		return null;
 	}
 
-	public int reborn(Object entity, Object cell) throws LeekRunException {
+	public long reborn(Object entity, Object cell) throws LeekRunException {
 
 		int success = -1;
 
@@ -2806,7 +2791,7 @@ public class EntityAI extends AI {
 		return success;
 	}
 
-	public int getMapType() {
+	public long getMapType() {
 		// Nexus (the first map) is -1 so it's + 2
 		return fight.getMap().getType() + 2;
 	}

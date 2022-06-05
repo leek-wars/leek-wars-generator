@@ -312,14 +312,14 @@ public abstract class Effect {
 	public GenericArrayLeekValue getLeekValue(AI ai) throws LeekRunException {
 
 		var retour = ai.newArray();
-		retour.push(ai, id);
-		retour.push(ai, value);
-		retour.push(ai, caster.getFId());
-		retour.push(ai, turns);
+		retour.push(ai, (long) id);
+		retour.push(ai, (long) value);
+		retour.push(ai, (long) caster.getFId());
+		retour.push(ai, (long) turns);
 		retour.push(ai, critical);
-		retour.push(ai, attack == null ? 0 : attack.getItemId());
-		retour.push(ai, target.getFId());
-		retour.push(ai, modifiers);
+		retour.push(ai, attack == null ? 0l : (long) attack.getItemId());
+		retour.push(ai, (long) target.getFId());
+		retour.push(ai, (long) modifiers);
 		return retour;
 	}
 

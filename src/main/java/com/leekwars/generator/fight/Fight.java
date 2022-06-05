@@ -114,6 +114,13 @@ public class Fight {
 				return 0;
 			return min + (int) (getDouble() * (max - min + 1));
 		}
+
+		@Override
+		public long getLong(long min, long max) {
+			if (max - min + 1 <= 0)
+				return 0;
+			return min + (long) (getDouble() * (max - min + 1));
+		}
 	};
 
 	private final List<Team> teams;
@@ -334,8 +341,11 @@ public class Fight {
 	}
 
 	public Entity getEntity(int id) {
-		Entity l = mEntities.get(id);
-		return l;
+		return mEntities.get(id);
+	}
+
+	public Entity getEntity(long id) {
+		return mEntities.get((int) id);
 	}
 
 	private boolean canStartFight() {

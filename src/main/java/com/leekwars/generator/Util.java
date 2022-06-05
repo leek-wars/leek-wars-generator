@@ -35,8 +35,8 @@ public class Util {
 		return primes.contains(value);
 	}
 
-	public static String getHexaColor(int color) {
-		String retour = Integer.toString(color & 0xFFFFFF, 16);
+	public static String getHexaColor(long color) {
+		String retour = Long.toString(color & 0xFFFFFF, 16);
 		while (retour.length() < 6)
 			retour = "0" + retour;
 		return retour;

@@ -55,7 +55,7 @@ public class Main {
 			return;
 		}
 
-		Data.checkData("https://leekwars.com/api/");
+		// Data.checkData("https://leekwars.com/api/");
 		if (db_resolver) {
 			LeekScript.setResolver(new LocalDbResolver());
 		} else {

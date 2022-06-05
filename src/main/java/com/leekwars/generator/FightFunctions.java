@@ -645,19 +645,19 @@ public enum FightFunctions implements ILeekFunction {
 	getLeekOnCell(1, new int[] { AI.NUMBER }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLeekOnCell(ai.integer(parameters[0]));
+			return (long) ((EntityAI) ai).getLeekOnCell(ai.integer(parameters[0]));
 		}
 	},
 	getEntityOnCell(1, new int[] { AI.NUMBER }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLeekOnCell(ai.integer(parameters[0]));
+			return (long) ((EntityAI) ai).getLeekOnCell(ai.integer(parameters[0]));
 		}
 	},
 	getCellContent(1, new int[] { AI.NUMBER }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellContent(ai.integer(parameters[0]));
+			return (long) ((EntityAI) ai).getCellContent(ai.integer(parameters[0]));
 		}
 	},
 	isEmptyCell(1, new int[] { AI.NUMBER }) {
@@ -705,19 +705,19 @@ public enum FightFunctions implements ILeekFunction {
 	getNearestEnemy(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNearestEnemy();
+			return (long) ((EntityAI) ai).getNearestEnemy();
 		}
 	},
 	getFarestEnemy(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarthestEnemy();
+			return (long) ((EntityAI) ai).getFarthestEnemy();
 		}
 	},
 	getTurn(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTurn();
+			return (long) ((EntityAI) ai).getTurn();
 		}
 	},
 	getAliveEnemies(0) {
@@ -969,19 +969,19 @@ public enum FightFunctions implements ILeekFunction {
 	getFightID(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFight().getId();
+			return (long) ((EntityAI) ai).getFight().getId();
 		}
 	},
 	getFightType(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFight().getFightType();
+			return (long) ((EntityAI) ai).getFight().getFightType();
 		}
 	},
 	getFightContext(0) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFight().getFightContext();
+			return (long) ((EntityAI) ai).getFight().getFightContext();
 		}
 	},
 	getCellsToUseWeapon(1, 3) {
