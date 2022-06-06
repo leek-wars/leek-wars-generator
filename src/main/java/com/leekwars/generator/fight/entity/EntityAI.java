@@ -335,22 +335,34 @@ public class EntityAI extends AI {
 
 	// setWeapon
 	public boolean setWeapon(int weapon_id) throws LeekRunException {
-		boolean success = false;
-		if (mEntity.getTP() > 0) {
-			Weapon w = null;
-			for (Weapon w1 : mEntity.getWeapons()) {
-				if (w1.getId() == weapon_id)
-					w = w1;
-			}
-			if (w != null) {
-				mEntity.setWeapon(w);
-				mEntity.useTP(1);
-				fight.log(new ActionSetWeapon(mEntity, w));
-				fight.log(new ActionLoseTP(mEntity, 1));
-				success = true;
+
+		// 1 TP required
+		if (mEntity.getTP() <= 0) return false;
+
+		// Check if it is a valid weapon
+		var wt = Weapons.getWeapon(weapon_id);
+		if (wt == null) {
+			addSystemLog(FarmerLog.WARNING, FarmerLog.WEAPON_NOT_EXISTS, new String[] { String.valueOf(weapon_id) });
+			return false;
+		}
+
+		Weapon w = null;
+		for (Weapon w1 : mEntity.getWeapons()) {
+			if (w1.getId() == weapon_id) {
+				w = w1;
+				break;
 			}
 		}
-		return success;
+		if (w == null) {
+			addSystemLog(FarmerLog.WARNING, FarmerLog.WEAPON_NOT_EQUIPPED, new String[] { String.valueOf(weapon_id), wt.getName() });
+			return false;
+		}
+
+		mEntity.setWeapon(w);
+		mEntity.useTP(1);
+		fight.log(new ActionSetWeapon(mEntity, w));
+		fight.log(new ActionLoseTP(mEntity, 1));
+		return true;
 	}
 
 	//
@@ -807,7 +819,7 @@ public class EntityAI extends AI {
 		Entity target = fight.getEntity(leek_id);
 		if (target != null && target != mEntity && !target.isDead()) {
 			if (mEntity.getWeapon() == null) {
-				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPED);
+				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
 			success = fight.useWeapon(mEntity, target.getCell());
 		}
@@ -819,7 +831,7 @@ public class EntityAI extends AI {
 		Cell target = fight.getMap().getCell(cell_id);
 		if (target != null && target != mEntity.getCell()) {
 			if (mEntity.getWeapon() == null) {
-				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPED);
+				addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
 			success = fight.useWeapon(mEntity, target);
 		}
@@ -949,7 +961,7 @@ public class EntityAI extends AI {
 			if (ct == null) {
 				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
-				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
+				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
 		if (target != null && chip != null && !target.isDead()) {
@@ -969,7 +981,7 @@ public class EntityAI extends AI {
 			if (ct == null) {
 				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
-				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id), ct.getName() });
+				addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
 		if (target != null && template != null) {
@@ -2773,7 +2785,7 @@ public class EntityAI extends AI {
 			if (ct == null)
 				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(integer(chip)) });
 			else
-				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(integer(chip)), ct.getName() });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(integer(chip)), ct.getName() });
 			return -1;
 		}
 
@@ -2816,7 +2828,7 @@ public class EntityAI extends AI {
 			if (ct == null)
 				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
 			else
-				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
+				addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
 			return -1;
 		}
 
