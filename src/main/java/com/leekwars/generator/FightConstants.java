@@ -106,6 +106,7 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_ALLY_KILLED_TO_AGILITY(Effect.TYPE_ALLY_KILLED_TO_AGILITY, Type.INT),
 	EFFECT_KILL_TO_TP(Effect.TYPE_KILL_TO_TP, Type.INT),
 	EFFECT_RAW_HEAL(Effect.TYPE_RAW_HEAL, Type.INT),
+	EFFECT_CRITICAL_TO_HEAL(Effect.TYPE_CRITICAL_TO_HEAL, Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
