@@ -20,12 +20,15 @@ import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.Action;
 import com.leekwars.generator.fight.action.ActionAIError;
 import com.leekwars.generator.fight.action.ActionLama;
 import com.leekwars.generator.fight.action.ActionLoseTP;
 import com.leekwars.generator.fight.action.ActionSay;
 import com.leekwars.generator.fight.action.ActionSetWeapon;
 import com.leekwars.generator.fight.action.ActionShowCell;
+import com.leekwars.generator.fight.action.ActionUseChip;
+import com.leekwars.generator.fight.action.ActionUseWeapon;
 import com.leekwars.generator.fight.bulbs.BulbTemplate;
 import com.leekwars.generator.fight.bulbs.Bulbs;
 import com.leekwars.generator.items.Items;
@@ -45,6 +48,8 @@ import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.FunctionLeekValue;
 import leekscript.common.Error;
+
+import com.alibaba.fastjson.JSONArray;
 
 public class EntityAI extends AI {
 
@@ -2717,6 +2722,41 @@ public class EntityAI extends AI {
 				return l.getAI().getId();
 		}
 		return null;
+	}
+
+	public ArrayLeekValue getActions() throws LeekRunException {
+		ArrayLeekValue array = new ArrayLeekValue();
+		for (Action action : fight.getActions().getActionsAfter(getEntity())) {
+			JSONArray json = action.getJSON();
+			// Patch weapons and chips actions: convert templates to id
+			if (action instanceof ActionSetWeapon) {
+				json.set(2, Weapons.getWeaponFromTemplate(((ActionSetWeapon) action).weapon).getId());
+			}
+			if (action instanceof ActionUseWeapon) {
+				json.set(3, Weapons.getWeaponFromTemplate(((ActionUseWeapon) action).weapon).getId());
+			}
+			if (action instanceof ActionUseChip) {
+				json.set(3, Chips.getChipFromTemplate(((ActionUseChip) action).chip).getId());
+			}
+
+			// Convert JSON to ArrayLeek:
+			ArrayLeekValue actionLeek = new ArrayLeekValue();
+			for (int i=0; i<json.size(); i++) {
+				if (json.get(i) instanceof int[]) {
+					ArrayLeekValue arrayLeek = new ArrayLeekValue();
+					JSONArray arrayJson = json.getJSONArray(i);
+					for (int j=0; j<arrayJson.size(); j++) {
+						arrayLeek.push(this, arrayJson.getIntValue(j));
+					}
+					actionLeek.push(this, arrayLeek);
+				} else {
+					actionLeek.push(this, json.get(i));
+				}
+			}
+
+			array.push(this, actionLeek);
+		}
+		return array;
 	}
 
 	public ArrayLeekValue getRegisters() throws LeekRunException {

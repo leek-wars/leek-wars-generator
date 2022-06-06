@@ -1,0 +1,100 @@
+{	"farmers": [
+		{	"id": 1,
+			"name": "Pilow",
+			"country": "fr"
+		},
+		{	"id": 2,
+			"name": "Dawyde",
+			"country": "fr"
+		}
+	],
+	"teams": [
+		{	"id": 1,
+			"name": "DoT"
+		},
+		{	"id": 2,
+			"name": "Polytech"
+		}
+	],
+	"entities": [
+		[
+			{	"id": 12,
+				"ai": "test/ai/debugActions.leek",
+				"name": "Patrick",
+				"type": 1,
+				"farmer": 1,
+				"team": 1,
+				"level": 301,
+				"life": 5000,
+				"strength": 500,
+				"tp": 20,
+				"mp": 6,
+				"cell": 123,
+				"weapons": [37, 47],
+				"chips": [29]
+			},
+			{	"id": 57,
+				"ai": "test/ai/basic.leek",
+				"name": "Yolo",
+				"type": 1,
+				"farmer": 1,
+				"team": 1,
+				"level": 200,
+				"life": 3000,
+				"strength": 200,
+				"tp": 10,
+				"mp": 8,
+				"cell": 566,
+				"weapons": [47]
+			}
+		],
+		[
+			{	"id": 59,
+				"ai": "test/ai/basic.leek",
+				"name": "Boss",
+				"type": 1,
+				"farmer": 2,
+				"team": 2,
+				"level": 1000,
+				"life": 10000,
+				"strength": 2000,
+				"tp": 50,
+				"mp": 6,
+				"cell": 301,
+				"weapons": [37],
+				"chips": []
+			},
+			{	"id": 89,
+				"ai": "test/ai/basic.leek",
+				"name": "Bob",
+				"type": 1,
+				"farmer": 2,
+				"team": 2,
+				"level": 100,
+				"life": 3000,
+				"strength": 200,
+				"agility": 150,
+				"tp": 10,
+				"mp": 8,
+				"resistance": 67,
+				"science": 300,
+				"magic": 200,
+				"frequency": 100,
+				"cell": 566,
+				"weapons": [37],
+				"chips": []
+			}
+		]
+	],
+	"map": {
+		"width": 17,
+		"height": 17,
+		"type": 3,
+		"obstacles": [
+			123, 54, 212, 561, 231, 678, 122, 545, 753, 321, 565, 89
+		]
+	},
+	"random_seed": 1234567,
+	"max_turns": 3,
+	"max_operations_per_entity": 20000000
+}

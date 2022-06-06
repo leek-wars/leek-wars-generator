@@ -3,6 +3,8 @@ package com.leekwars.generator;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.action.Action;
+import com.leekwars.generator.fight.action.DamageType;
 
 import leekscript.common.Type;
 import leekscript.runner.ILeekConstant;
@@ -319,7 +321,63 @@ public enum FightConstants implements ILeekConstant {
 	FIGHT_CONTEXT_BATTLE_ROYALE(Fight.CONTEXT_BATTLE_ROYALE, Type.INT),
 
 	SUMMON_LIMIT(Fight.SUMMON_LIMIT, Type.INT),
-	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, Type.REAL);
+	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, Type.REAL),
+
+	// Actions
+	ACTION_START_FIGHT(Action.START_FIGHT, Type.INT),
+	ACTION_USE_WEAPON(Action.USE_WEAPON, Type.INT),
+	ACTION_USE_CHIP(Action.USE_CHIP, Type.INT),
+	ACTION_SET_WEAPON(Action.SET_WEAPON, Type.INT),
+	ACTION_END_FIGHT(Action.END_FIGHT, Type.INT),
+	ACTION_PLAYER_DEAD(Action.PLAYER_DEAD, Type.INT),
+	ACTION_NEW_TURN(Action.NEW_TURN, Type.INT),
+	ACTION_LEEK_TURN(Action.LEEK_TURN, Type.INT),
+	ACTION_END_TURN(Action.END_TURN, Type.INT),
+	ACTION_SUMMON(Action.SUMMON, Type.INT),
+	ACTION_MOVE_TO(Action.MOVE_TO, Type.INT),
+	ACTION_KILL(Action.KILL, Type.INT),
+
+	// Buffs
+	ACTION_TP_LOST(Action.LOST_PT, Type.INT),
+	ACTION_LIFE_LOST(Action.LOST_LIFE, Type.INT),
+	ACTION_MP_LOST(Action.LOST_PM, Type.INT),
+	ACTION_HEAL(Action.HEAL, Type.INT),
+	ACTION_VITALITY(Action.VITALITY, Type.INT),
+	ACTION_RESURRECT(Action.RESURRECT, Type.INT),
+	ACTION_LOSE_STRENGTH(Action.LOSE_STRENGTH, Type.INT),
+	ACTION_NOVA_DAMAGE(Action.NOVA_DAMAGE, Type.INT),
+	ACTION_DAMAGE_RETURN(Action.DAMAGE_RETURN, Type.INT),
+	ACTION_LIFE_DAMAGE(Action.LIFE_DAMAGE, Type.INT),
+	ACTION_POISON_DAMAGE(Action.POISON_DAMAGE, Type.INT),
+	ACTION_AFTEREFFECT(Action.AFTEREFFECT, Type.INT),
+	ACTION_NOVA_VITALITY(Action.NOVA_VITALITY, Type.INT),
+
+	// "fun" actions
+	ACTION_SAY(Action.SAY, Type.INT),
+	ACTION_LAMA(Action.LAMA, Type.INT),
+	ACTION_SHOW_CELL(Action.SHOW_CELL, Type.INT),
+
+	// Effects
+	ACTION_ADD_WEAPON_EFFECT(Action.ADD_WEAPON_EFFECT, Type.INT),
+	ACTION_ADD_CHIP_EFFECT(Action.ADD_CHIP_EFFECT, Type.INT),
+	ACTION_REMOVE_EFFECT(Action.REMOVE_EFFECT, Type.INT),
+	ACTION_UPDATE_EFFECT(Action.UPDATE_EFFECT, Type.INT),
+	ACTION_ADD_STACKED_EFFECT(Action.ADD_STACKED_EFFECT, Type.INT),
+	ACTION_REDUCE_EFFECTS(Action.REDUCE_EFFECTS, Type.INT),
+	ACTION_REMOVE_POISONS(Action.REMOVE_POISONS, Type.INT),
+	ACTION_REMOVE_SHACKLES(Action.REMOVE_SHACKLES, Type.INT),
+
+	// Other
+	ACTION_ERROR(Action.ERROR, Type.INT),
+	ACTION_MAP(Action.MAP, Type.INT),
+	ACTION_AI_ERROR(Action.AI_ERROR, Type.INT),
+
+	ACTION_DAMAGE_TYPE_DIRECT(DamageType.DIRECT.value, Type.INT),
+	ACTION_DAMAGE_TYPE_NOVA(DamageType.NOVA.value, Type.INT),
+	ACTION_DAMAGE_TYPE_RETURN(DamageType.RETURN.value, Type.INT),
+    ACTION_DAMAGE_TYPE_LIFE(DamageType.LIFE.value, Type.INT),
+    ACTION_DAMAGE_TYPE_POISON(DamageType.POISON.value, Type.INT),
+    ACTION_DAMAGE_TYPE_AFTEREFFECT(DamageType.AFTEREFFECT.value, Type.INT);
 
 	private double value;
 	private Type type;

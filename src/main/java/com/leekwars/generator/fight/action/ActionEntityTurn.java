@@ -5,7 +5,7 @@ import com.leekwars.generator.fight.entity.Entity;
 
 public class ActionEntityTurn implements Action {
 
-	private final int id;
+	public final int id;
 
 	public ActionEntityTurn(Entity leek) {
 		if (leek == null)

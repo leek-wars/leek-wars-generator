@@ -1,0 +1,42 @@
+say("hello world")
+
+var debugAction = [
+    ACTION_START_FIGHT: function(action) {
+        return "Start fight"
+    },
+    ACTION_USE_WEAPON: function(action) {
+        return getName(action[1])+": useWeaponOnCell("+getWeaponName(action[3])+", "+action[2]+")"
+    },
+    ACTION_USE_CHIP: function(action) {
+        return getName(action[1])+": useChipOnCell("+getChipName(action[3])+", "+action[2]+")"
+    },
+    ACTION_SET_WEAPON: function(action) {
+        return getName(action[1])+": setWeapon("+getWeaponName(action[2])+")"
+    },
+    ACTION_MOVE_TO: function(action) {
+        return getName(action[1])+": moveTowardCell("+action[2]+")"
+    },
+    ACTION_SAY: function(action) {
+        return getName(action[1])+": say("+action[2]+")"
+    },
+    ACTION_TP_LOST: function(action) {
+        return getName(action[1])+" perd "+action[2]+" TP"
+    },
+    ACTION_MP_LOST: function(action) {
+        return getName(action[1])+" perd "+action[2]+" MP"
+    },
+    ACTION_LEEK_TURN: function(action) {
+        return "Début du tour de "+getName(action[1])
+    },
+    ACTION_END_TURN: function(action) {
+        return "Fin du tour de "+getName(action[1])
+    }
+]
+
+for (var action in getActions()) {
+    if (debugAction[action[0]] === null) {
+        debug("Unknown action: "+action[0])
+    } else {
+        debug(debugAction[action[0]](action))
+    }
+}

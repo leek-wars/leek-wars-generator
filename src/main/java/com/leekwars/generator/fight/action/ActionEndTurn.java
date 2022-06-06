@@ -5,9 +5,9 @@ import com.leekwars.generator.fight.entity.Entity;
 
 public class ActionEndTurn implements Action {
 
-	private final int target;
-	private final int pt;
-	private final int pm;
+	public final int target;
+	public final int pt;
+	public final int pm;
 
 	public ActionEndTurn(Entity target) {
 
