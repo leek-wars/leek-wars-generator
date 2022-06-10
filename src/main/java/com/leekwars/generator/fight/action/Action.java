@@ -6,9 +6,9 @@ public interface Action {
 
 	// Actions
 	public final static int START_FIGHT = 0;
-	public final static int USE_WEAPON = 1;
-	public final static int USE_CHIP = 2;
-	public final static int SET_WEAPON = 3;
+	// public final static int USE_WEAPON_OLD = 1;
+	// public final static int USE_CHIP = 2;
+	// public final static int SET_WEAPON = 3;
 	public final static int END_FIGHT = 4;
 	public final static int PLAYER_DEAD = 5;
 	public final static int NEW_TURN = 6;
@@ -17,6 +17,10 @@ public interface Action {
 	public final static int SUMMON = 9;
 	public final static int MOVE_TO = 10;
 	public static final int KILL = 11;
+	public final static int USE_WEAPON = 11;
+	public final static int USE_CHIP = 12;
+	public final static int SET_WEAPON = 13;
+	public final static int STACK_EFFECT = 14;
 
 	// Buffs
 	public final static int LOST_PT = 100;
@@ -34,16 +38,18 @@ public interface Action {
 	public static final int NOVA_VITALITY = 112;
 
 	// "fun" actions
-	public final static int SAY = 200;
+	// public final static int SAY_OLD = 200;
 	public final static int LAMA = 201;
-	public final static int SHOW_CELL = 202;
+	// public final static int SHOW_CELL_OLD = 202;
+	public final static int SAY = 203;
+	public final static int SHOW_CELL = 205;
 
 	// Effects
 	public final static int ADD_WEAPON_EFFECT = 301;
 	public final static int ADD_CHIP_EFFECT = 302;
 	public final static int REMOVE_EFFECT = 303;
 	public final static int UPDATE_EFFECT = 304;
-	public final static int ADD_STACKED_EFFECT = 305;
+	// public final static int ADD_STACKED_EFFECT = 305;
 	public final static int REDUCE_EFFECTS = 306; // Action juste pour afficher "Les effets de X sont réduits de Y%"
 	public final static int REMOVE_POISONS = 307; // Action juste pour afficher "Les poisons de X sont neutralisés"
 	public final static int REMOVE_SHACKLES = 308; // Action juste pour afficher "Les entraves de X sont retirées"

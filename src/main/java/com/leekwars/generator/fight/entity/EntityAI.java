@@ -360,8 +360,7 @@ public class EntityAI extends AI {
 
 		mEntity.setWeapon(w);
 		mEntity.useTP(1);
-		fight.log(new ActionSetWeapon(mEntity, w));
-		fight.log(new ActionLoseTP(mEntity, 1));
+		fight.log(new ActionSetWeapon(w));
 		return true;
 	}
 
@@ -758,8 +757,7 @@ public class EntityAI extends AI {
 			message = message.substring(0, 200);
 		}
 		message = Censorship.checkString(fight, message);
-		fight.log(new ActionSay(mEntity, message));
-		fight.log(new ActionLoseTP(mEntity, 1));
+		fight.log(new ActionSay(message));
 		mSays.add(message);
 		fight.statistics.say(mEntity, message);
 		return true;
@@ -1972,8 +1970,7 @@ public class EntityAI extends AI {
 			return;
 		}
 		mEntity.useTP(1);
-		fight.log(new ActionLoseTP(mEntity, 1));
-		fight.log(new ActionLama(mEntity));
+		fight.log(new ActionLama());
 		fight.statistics.lama(mEntity);
 	}
 
@@ -2008,8 +2005,6 @@ public class EntityAI extends AI {
 			if (l == null || mEntity.getTP() < 1) {
 				return null;
 			}
-			mEntity.useTP(1);
-			fight.log(new ActionLoseTP(mEntity, 1));
 		}
 
 		// On crée le tableau de retour
@@ -2558,9 +2553,8 @@ public class EntityAI extends AI {
 		}
 		mEntity.useTP(1);
 		mEntity.showsTurn++;
-		fight.log(new ActionLoseTP(mEntity, 1));
 
-		fight.log(new ActionShowCell(mEntity, cell_id, col));
+		fight.log(new ActionShowCell(cell_id, col));
 		fight.statistics.show(mEntity, cell_id);
 
 		return true;
