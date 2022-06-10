@@ -213,14 +213,14 @@ public class EntityAI extends AI {
 
 	private void putCells(List<Cell> ignore, GenericArrayLeekValue leeks_to_ignore) throws LeekRunException {
 		if (leeks_to_ignore instanceof ArrayLeekValue) {
-			for (Object value : (ArrayLeekValue) leeks_to_ignore) {
+			for (var value : (ArrayLeekValue) leeks_to_ignore) {
 				var l = fight.getMap().getCell(integer(value));
 				if (l == null) continue;
 				ignore.add(l);
 			}
 		} else {
-			for (Object value : (LegacyArrayLeekValue) leeks_to_ignore) {
-				Cell l = fight.getMap().getCell(integer(value));
+			for (var value : (LegacyArrayLeekValue) leeks_to_ignore) {
+				Cell l = fight.getMap().getCell(integer(value.getValue()));
 				if (l == null) continue;
 				ignore.add(l);
 			}
@@ -1330,7 +1330,7 @@ public class EntityAI extends AI {
 
 	public GenericArrayLeekValue getAllEffects() throws LeekRunException {
 		var retour = newArray(Effect.effects.length);
-		for (long i = 1; i <= Effect.effects.length; ++i) {
+		for (int i = 1; i <= Effect.effects.length; ++i) {
 			retour.push(this, i);
 		}
 		return retour;
@@ -1377,7 +1377,11 @@ public class EntityAI extends AI {
 	}
 
 	public GenericArrayLeekValue getEnemies() throws LeekRunException {
-		return toGenericArray(fight.getEnemiesEntities(mEntity.getTeam(), true));
+		var retour = newArray();
+		for (Entity l : fight.getEnemiesEntities(mEntity.getTeam(), true)) {
+			retour.push(this, l.getFId());
+		}
+		return retour;
 	}
 
 	public int getEnemiesLife() {
@@ -1685,7 +1689,7 @@ public class EntityAI extends AI {
 		return cell;
 	}
 
-	public long getCellToUseChipOnCell(Object chip, Object cell, Object value3) throws LeekRunException {
+	public int getCellToUseChipOnCell(Object chip, Object cell, Object value3) throws LeekRunException {
 
 		int retour = -1;
 		Cell target = fight.getMap().getCell(integer(cell));
@@ -2395,7 +2399,7 @@ public class EntityAI extends AI {
 				cells.add(mEntity.getCell());
 			for (var value : (LegacyArrayLeekValue) ignore) {
 				if (value.getValue() instanceof Number) {
-					Entity l = fight.getEntity(integer(value));
+					Entity l = fight.getEntity(integer(value.getValue()));
 					if (l != null && l.getCell() != null) {
 						cells.add(l.getCell());
 					}
