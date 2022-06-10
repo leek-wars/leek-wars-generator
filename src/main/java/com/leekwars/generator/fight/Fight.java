@@ -646,16 +646,14 @@ public class Fight {
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
 		var cellEntity = target.getPlayer();
-		ActionUseWeapon log_use = new ActionUseWeapon(launcher, target, weapon, result);
+		ActionUseWeapon log_use = new ActionUseWeapon(target, result);
 		actions.log(log_use);
 		if (critical) launcher.onCritical();
 		List<Entity> target_leeks = weapon.getAttack().applyOnCell(this, launcher, target, critical);
-		log_use.setEntities(target_leeks);
 		statistics.useWeapon(launcher, weapon, target, target_leeks, cellEntity);
 		if (critical) statistics.critical(launcher);
 
 		launcher.useTP(weapon.getCost());
-		actions.log(new ActionLoseTP(launcher, weapon.getCost()));
 
 		return result;
 	}
@@ -694,11 +692,10 @@ public class Fight {
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
 		var cellEntity = target.getPlayer();
-		ActionUseChip log = new ActionUseChip(caster, target, template, result);
+		ActionUseChip log = new ActionUseChip(target, template, result);
 		actions.log(log);
 		if (critical) caster.onCritical();
 		List<Entity> targets = template.getAttack().applyOnCell(this, caster, target, critical);
-		log.setEntities(targets);
 		statistics.useChip(caster, template, target, targets, cellEntity);
 		if (critical) statistics.critical(caster);
 
@@ -707,7 +704,6 @@ public class Fight {
 		}
 
 		caster.useTP(template.getCost());
-		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;
 	}
@@ -726,8 +722,6 @@ public class Fight {
 
 		actions.log(new ActionMove(entity, path));
 		statistics.move(entity, entity, entity.getCell(), path);
-
-		actions.log(new ActionLoseMP(entity, size));
 
 		entity.useMP(size);
 		entity.setHasMoved(true);
@@ -826,7 +820,7 @@ public class Fight {
 		boolean critical = generateCritical(caster);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
-		ActionUseChip log = new ActionUseChip(caster, target, template, result);
+		ActionUseChip log = new ActionUseChip(target, template, result);
 		actions.log(log);
 		if (critical) caster.onCritical();
 
@@ -843,7 +837,6 @@ public class Fight {
 		}
 
 		caster.useTP(template.getCost());
-		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;
 	}
@@ -877,7 +870,7 @@ public class Fight {
 		boolean critical = generateCritical(caster);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
-		ActionUseChip log = new ActionUseChip(caster, target, template, result);
+		ActionUseChip log = new ActionUseChip(target, template, result);
 		actions.log(log);
 		if (critical) caster.onCritical();
 
@@ -891,7 +884,6 @@ public class Fight {
 		}
 
 		caster.useTP(template.getCost());
-		actions.log(new ActionLoseTP(caster, template.getCost()));
 
 		return result;
 	}

@@ -9,39 +9,23 @@ import com.leekwars.generator.maps.Cell;
 
 public class ActionUseChip implements Action {
 
-	private final int caster;
 	private final int cell;
 	private final int chip;
 	private final int success;
-	private int[] leeks;
 
-	public ActionUseChip(Entity caster, Cell cell, Chip chip, int success) {
-		this.caster = caster.getFId();
+	public ActionUseChip(Cell cell, Chip chip, int success) {
 		this.cell = cell.getId();
 		this.chip = chip.getTemplate();
 		this.success = success;
-		this.leeks = new int[0];
-	}
-
-	public void setEntities(List<Entity> leeks) {
-		if (leeks != null) {
-			this.leeks = new int[leeks.size()];
-			for (int i = 0; i < leeks.size(); i++) {
-				this.leeks[i] = leeks.get(i).getFId();
-			}
-		} else
-			this.leeks = new int[0];
 	}
 
 	@Override
 	public JSONArray getJSON() {
 		JSONArray retour = new JSONArray();
 		retour.add(Action.USE_CHIP);
-		retour.add(caster);
-		retour.add(cell);
 		retour.add(chip);
+		retour.add(cell);
 		retour.add(success);
-		retour.add(leeks);
 		return retour;
 	}
 }

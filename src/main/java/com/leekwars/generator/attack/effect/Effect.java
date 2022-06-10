@@ -10,6 +10,7 @@ import leekscript.runner.values.ArrayLeekValue;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionAddEffect;
+import com.leekwars.generator.fight.action.ActionStackEffect;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Stats;
 
@@ -228,7 +229,7 @@ public abstract class Effect {
 			for (Effect e : target.getEffects()) {
 				if ((e.attack == null ? attack == null : attack != null && e.attack.getItemId() == attack.getItemId()) && e.id == id && e.turns == turns && e.caster == caster) {
 					e.mergeWith(effect);
-					effect.addLog(fight, true);
+					fight.getActions().log(new ActionStackEffect(e.getLogID(), effect.value));
 					return effect.value; // No need to apply the effect again
 				}
 			}
@@ -238,17 +239,17 @@ public abstract class Effect {
 		if (effect.getTurns() != 0 && effect.value > 0) {
 			target.addEffect(effect);
 			caster.addLaunchedEffect(effect);
-			effect.addLog(fight, false);
+			effect.addLog(fight);
 			fight.statistics.effect(target, caster, effect);
 		}
 		return effect.value;
 	}
 
-	public void addLog(Fight fight, boolean stacked) {
+	public void addLog(Fight fight) {
 		if (turns == 0) {
 			return;
 		}
-		logID = ActionAddEffect.createEffect(fight.getActions(), attack == null ? Attack.TYPE_CHIP : attack.getType(), attack == null ? 0 : attack.getItemId(), caster, target, id, value, turns, stacked, modifiers);
+		logID = ActionAddEffect.createEffect(fight.getActions(), attack == null ? Attack.TYPE_CHIP : attack.getType(), attack == null ? 0 : attack.getItemId(), caster, target, id, value, turns, modifiers);
 	}
 
 	public Stats getStats() {
