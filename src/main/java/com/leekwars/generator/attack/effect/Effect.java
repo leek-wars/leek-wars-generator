@@ -151,6 +151,7 @@ public abstract class Effect {
 		null, // 55
 		null, // 56
 		EffectRawHeal.class, // 57
+		null, // 58
 	};
 
 	// Effect characteristics
