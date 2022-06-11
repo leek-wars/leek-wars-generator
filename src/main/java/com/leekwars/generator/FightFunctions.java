@@ -1078,7 +1078,7 @@ public enum FightFunctions implements ILeekFunction {
 	getMessageAuthor(1, new int[] { AI.ARRAY }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var message = (ArrayLeekValue) parameters[0];
+			var message = (GenericArrayLeekValue) parameters[0];
 			if (message.size() == 3)
 				return message.get(((EntityAI) ai).getUAI(), 0);
 			return null;
@@ -1087,7 +1087,7 @@ public enum FightFunctions implements ILeekFunction {
 	getMessageType(1, new int[] { AI.ARRAY }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var message = (ArrayLeekValue) parameters[0];
+			var message = (GenericArrayLeekValue) parameters[0];
 			if (message.size() == 3)
 				return message.get(((EntityAI) ai).getUAI(), 1);
 			return null;
@@ -1096,7 +1096,7 @@ public enum FightFunctions implements ILeekFunction {
 	getMessageParams(1, new int[] { AI.ARRAY }) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var message = (ArrayLeekValue) parameters[0];
+			var message = (GenericArrayLeekValue) parameters[0];
 			if (message.size() == 3)
 				return message.get(((EntityAI) ai).getUAI(), 2);
 			return null;
