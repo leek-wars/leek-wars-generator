@@ -108,11 +108,11 @@ public class EntityAI extends AI {
 		try {
 			if (entityInfo.ai_path != null) {
 				file = LeekScript.getFileSystemResolver().resolve(entityInfo.ai_path, null);
+				file.setVersion(entityInfo.ai_version);
 			} else {
 				var context = LeekScript.getResolver().createContext(entityInfo.farmer, entityInfo.aiOwner, entityInfo.ai_folder);
 				file = LeekScript.getResolver().resolve(entityInfo.ai, context);
 			}
-			file.setVersion(entityInfo.ai_version);
 		} catch (FileNotFoundException e) {
 			// Failed to resolve, not normal
 			generator.exception(e, entity.fight);
