@@ -2402,7 +2402,7 @@ public class EntityAI extends AI {
 		return nearest == null ? null : nearest.getFId();
 	}
 
-	public Object lineOfSight(Object start, Object end, Object ignore) throws LeekRunException {
+	public Object lineOfSight(Object start, Object end, Object ignore, Object blockedCells) throws LeekRunException {
 
 		Cell s = fight.getMap().getCell(integer(start));
 		Cell e = fight.getMap().getCell(integer(end));
@@ -2410,13 +2410,25 @@ public class EntityAI extends AI {
 		if (s == null || e == null)
 			return null;
 
+		List<Cell> blockedCellsList = new ArrayList<Cell>();
+		if (blockedCells instanceof ArrayLeekValue) {
+			for (var value : (ArrayLeekValue) blockedCells) {
+				if (value.getValue() instanceof Number) {
+					Cell cell = fight.getMap().getCell(integer(value));
+					if (cell != null) {
+						blockedCellsList.add(cell);
+					}
+				}
+			}
+		}
+
 		if (ignore instanceof Number) {
 
 			Entity l = fight.getEntity(integer(ignore));
 			List<Cell> cells = new ArrayList<Cell>();
 			if (l != null && l.getCell() != null)
 				cells.add(l.getCell());
-			return Pathfinding.verifyLoS(s, e, null, cells);
+			return Pathfinding.verifyLoS(s, e, null, cells, blockedCellsList);
 
 		} else if (ignore instanceof ArrayLeekValue) {
 
@@ -2431,13 +2443,13 @@ public class EntityAI extends AI {
 					}
 				}
 			}
-			return Pathfinding.verifyLoS(s, e, null, cells);
+			return Pathfinding.verifyLoS(s, e, null, cells, blockedCellsList);
 
 		} else {
 
 			List<Cell> cells = new ArrayList<Cell>();
 			cells.add(mEntity.getCell());
-			return Pathfinding.verifyLoS(s, e, null, cells);
+			return Pathfinding.verifyLoS(s, e, null, cells, blockedCellsList);
 		}
 	}
 

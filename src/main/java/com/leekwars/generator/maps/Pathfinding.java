@@ -170,6 +170,11 @@ public class Pathfinding {
 	}
 
 	public static boolean verifyLoS(Cell start, Cell end, Attack attack, List<Cell> ignoredCells) {
+		List<Cell> blockedCells = new ArrayList<Cell>();
+		return verifyLoS(start, end, attack, ignoredCells, blockedCells);
+	}
+
+	public static boolean verifyLoS(Cell start, Cell end, Attack attack, List<Cell> ignoredCells, List<Cell> blockedCells) {
 
 		boolean needLos = attack == null ? true : attack.needLos();
 		if (!needLos) {
@@ -222,6 +227,9 @@ public class Pathfinding {
 						if (!ignoredCells.contains(cell)) {
 							return false;
 						}
+					}
+					if (blockedCells.contains(cell)) {
+						return false;
 					}
 				}
 			}

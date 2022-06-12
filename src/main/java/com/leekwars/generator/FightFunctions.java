@@ -1041,10 +1041,10 @@ public enum FightFunctions implements ILeekFunction {
 			return ((EntityAI) ai).getChipArea(parameters[0], parameters[1], parameters[2]);
 		}
 	},
-	lineOfSight(2, 3) {
+	lineOfSight(2, 4) {
 		@Override
 		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).lineOfSight(parameters[0], parameters[1], parameters[2]);
+			return ((EntityAI) ai).lineOfSight(parameters[0], parameters[1], parameters[2], parameters[3]);
 		}
 	},
 	getObstacles(0) {
