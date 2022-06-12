@@ -22,7 +22,6 @@ import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionAIError;
 import com.leekwars.generator.fight.action.ActionLama;
-import com.leekwars.generator.fight.action.ActionLoseTP;
 import com.leekwars.generator.fight.action.ActionSay;
 import com.leekwars.generator.fight.action.ActionSetWeapon;
 import com.leekwars.generator.fight.action.ActionShowCell;
