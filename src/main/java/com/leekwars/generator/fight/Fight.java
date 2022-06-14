@@ -25,8 +25,6 @@ import com.leekwars.generator.fight.action.ActionEndTurn;
 import com.leekwars.generator.fight.action.ActionEntityDie;
 import com.leekwars.generator.fight.action.ActionEntityTurn;
 import com.leekwars.generator.fight.action.ActionInvocation;
-import com.leekwars.generator.fight.action.ActionLoseMP;
-import com.leekwars.generator.fight.action.ActionLoseTP;
 import com.leekwars.generator.fight.action.ActionMove;
 import com.leekwars.generator.fight.action.ActionNewTurn;
 import com.leekwars.generator.fight.action.ActionResurrect;
