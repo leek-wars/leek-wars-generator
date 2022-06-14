@@ -1,1188 +1,509 @@
 package com.leekwars.generator;
 
-import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.leek.FarmerLog;
+import java.util.HashMap;
+import java.util.Map;
 
-import leekscript.functions.Functions;
-import leekscript.functions.VariableOperations;
-import leekscript.runner.AI;
-import leekscript.runner.CallableVersion;
-import leekscript.runner.ILeekFunction;
-import leekscript.runner.LeekRunException;
-import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.GenericArrayLeekValue;
-import leekscript.runner.values.LegacyArrayLeekValue;
-import leekscript.common.Error;
 import leekscript.common.Type;
-import leekscript.compiler.LeekScript;
+import leekscript.runner.CallableVersion;
+import leekscript.runner.LeekFunctions;
 
-public enum FightFunctions implements ILeekFunction {
-	getLife(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLife(parameters[0]);
-		}
-	},
-	getForce(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getStrength(parameters[0]);
-		}
-	},
-	getStrength(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getStrength(parameters[0]);
-		}
-	},
-	getAgility(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAgility(parameters[0]);
-		}
-	},
-	getScience(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getScience(parameters[0]);
-		}
-	},
-	getWisdom(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWisdom(parameters[0]);
-		}
-	},
-	getResistance(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getResistance(parameters[0]);
-		}
-	},
-	getMagic(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getMagic(parameters[0]);
-		}
-	},
-	getCell(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCell(parameters[0]);
-		}
-	},
-	getWeapon(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeapon(parameters[0]);
-		}
-	},
-	getName(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getName(parameters[0]);
-		}
-	},
-	getMP(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getMP(parameters[0]);
-		}
-	},
-	getTP(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTP(parameters[0]);
-		}
-	},
-	getTotalTP(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTotalTP(parameters[0]);
-		}
-	},
-	getTotalMP(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTotalMP(parameters[0]);
-		}
-	},
-	getTotalLife(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTotalLife(parameters[0]);
-		}
-	},
-	getPower(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getPower(parameters[0]);
-		}
-	},
-	setWeapon(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).setWeapon(ai.integer(parameters[0]));
-		}
-	},
-	say(1, new int[] { AI.STRING }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).say(ai.string(parameters[0]));
-		}
-	},
-	getWeapons(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeapons(parameters[0]);
-		}
-	},
-	isEnemy(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isEnemy(ai.integer(parameters[0]));
-		}
-	},
-	isAlly(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isAlly(ai.integer(parameters[0]));
-		}
-	},
-	isDead(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isDead(ai.integer(parameters[0]));
-		}
-	},
-	isAlive(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isAlive(ai.integer(parameters[0]));
-		}
-	},
-	getLeek(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEntity();
-		}
-	},
-	getEntity(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEntity();
-		}
-	},
-	getChips(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChips(parameters[0]);
-		}
-	},
-	getEffects(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEffects(parameters[0]);
-		}
-	},
-	getLaunchedEffects(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLaunchedEffects(parameters[0]);
-		}
-	},
-	getPassiveEffects(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getPassiveEffects(parameters[0]);
-		}
-	},
-	getAbsoluteShield(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAbsoluteShield(parameters[0]);
-		}
-	},
-	getRelativeShield(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getRelativeShield(parameters[0]);
-		}
-	},
-	getDate(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getDate();
-		}
-	},
-	getDamageReturn(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getDamageReturn(parameters[0]);
-		}
-	},
-	getLevel(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLevel(parameters[0]);
-		}
-	},
-	getCurrentCooldown(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
-			return null;
-		}
-	},
-	getCooldown(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCurrentCooldown(parameters[0], parameters[1]);
-		}
-	},
-	getFrequency(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFrequency(parameters[0]);
-		}
-	},
-	getCores(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCores(parameters[0]);
-		}
-	},
-	listen(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).listen();
-		}
-	},
-	getLeekID(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLeekID(parameters[0]);
-		}
-	},
-	getEntityID(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getLeekID(parameters[0]);
-		}
-	},
-	getTeamName(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTeamName(parameters[0]);
-		}
-	},
-	getTime(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTime();
-		}
-	},
-	getTimestamp(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTimestamp();
-		}
-	},
-	getFarmerName(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarmerName(parameters[0]);
-		}
-	},
-	getFarmerCountry(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarmerCountry(parameters[0]);
-		}
-	},
-	getTeamID(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getTeamId(parameters[0]);
-		}
-	},
-	getFarmerID(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarmerId(parameters[0]);
-		}
-	},
-	getAIName(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAIName(parameters[0]);
-		}
-	},
-	getAIID(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAIId(parameters[0]);
-		}
-	},
-	useWeaponOnCell(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).useWeaponOnCell(ai.integer(parameters[0]));
-		}
-	},
-	getWeaponMinScope(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponMinRange(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponMinRange(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponMinRange(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponLaunchType(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponLaunchType(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponCost(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponCost(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponEffects(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponEffects(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponPassiveEffects(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponPassiveEffects(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponMaxScope(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponMaxRange(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponMaxRange(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponMaxRange(ai.intOrNull(parameters[0]));
-		}
-	},
-	getWeaponName(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponName(ai.intOrNull(parameters[0]));
-		}
-	},
-	isInlineWeapon(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isInlineWeapon(ai.intOrNull(parameters[0]));
-		}
-	},
-	weaponNeedLos(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).weaponNeedLos(ai.intOrNull(parameters[0]));
-		}
-	},
-	useWeapon(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).useWeapon(ai.integer(parameters[0]));
-		}
-	},
-	canUseWeapon(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).canUseWeapon(parameters[0], parameters[1]);
-		}
-	},
-	canUseWeaponOnCell(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).canUseWeaponOnCell(parameters[0], parameters[1]);
-		}
-	},
-	getWeaponTargets(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponTargets(parameters[0], parameters[1]);
-		}
-	},
-	getWeaponFailure(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponFail(ai.intOrNull(parameters[0]));
-		}
-	},
-	isWeapon(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isWeapon(ai.integer(parameters[0]));
-		}
-	},
-	getWeaponArea(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponArea(parameters[0]);
-		}
-	},
-	useChip(2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).useChip(ai.intOrNull(parameters[0]), ai.intOrNull(parameters[1]));
-		}
-	},
-	useChipOnCell(2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).useChipOnCell(ai.intOrNull(parameters[0]), ai.intOrNull(parameters[1]));
-		}
-	},
-	getChipName(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipName(ai.intOrNull(parameters[0]));
-		}
-	},
-	getChipMinScope(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipMinRange(ai.integer(parameters[0]));
-		}
-	},
-	getChipMinRange(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipMinRange(ai.integer(parameters[0]));
-		}
-	},
-	getChipMaxScope(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipMaxRange(ai.integer(parameters[0]));
-		}
-	},
-	getChipMaxRange(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipMaxRange(ai.integer(parameters[0]));
-		}
-	},
-	getChipCost(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipCost(ai.integer(parameters[0]));
-		}
-	},
-	getChipEffects(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipEffects(ai.integer(parameters[0]));
-		}
-	},
-	isInlineChip(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isInlineChip(ai.integer(parameters[0]));
-		}
-	},
-	chipNeedLos(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).chipNeedLos(ai.integer(parameters[0]));
-		}
-	},
-	getChipCooldown(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipCooldown(ai.integer(parameters[0]));
-		}
-	},
-	canUseChip(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).canUseChip(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	canUseChipOnCell(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).canUseChipOnCell(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	getChipTargets(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipTargets(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	getChipFailure(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipFail(ai.integer(parameters[0]));
-		}
-	},
-	isChip(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isChip(ai.integer(parameters[0]));
-		}
-	},
-	getChipLaunchType(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipLaunchType(parameters[0]);
-		}
-	},
-	getChipArea(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipArea(parameters[0]);
-		}
-	},
-	resurrect(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).reborn(parameters[0], parameters[1]);
-		}
-	},
-	summon(3, new int[] { AI.NUMBER, AI.NUMBER, AI.FUNCTION }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).summon(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getSummons(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getSummons(parameters[0]);
-		}
-	},
-	getType(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getType(parameters[0]);
-		}
-	},
-	isSummon(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isSummon(parameters[0]);
-		}
-	},
-	getSummoner(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getSummoner(parameters[0]);
-		}
-	},
-	isStatic(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isStatic(parameters[0]);
-		}
-	},
-	getBirthTurn(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getBirthTurn(parameters[0]);
-		}
-	},
-	getBulbChips(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getBulbChips(parameters[0]);
-		}
-	},
-	getDistance(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getDistance(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	getCellDistance(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellDistance(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	getPathLength(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getPathLength(parameters[0], parameters[1], parameters[2]);
-		}
+public class FightFunctions {
 
-		@Override
-		public void addOperations(AI ai, ILeekFunction function, Object parameters[], Object retour) throws LeekRunException {
-			((EntityAI) ai).ops(hasVariableOperations() ? mVariableOperations.getOperations(ai.integer(retour)) : 1);
-		}
-	},
-	getPath(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			int start = ai.integer(parameters[0]);
-			int end = ai.integer(parameters[1]);
-			return ((EntityAI) ai).getPath(start, end, parameters[2]);
-		}
+	private static HashMap<String, LeekFunctions> functions = new HashMap<>();
 
-		@Override
-		public void addOperations(AI ai, ILeekFunction function, Object parameters[], Object retour) throws LeekRunException {
-			((EntityAI) ai).ops(hasVariableOperations() ? mVariableOperations.getOperations(retour instanceof ArrayLeekValue ? ((ArrayLeekValue) retour).size() : 1) : 1);
-		}
-	},
-	getLeekOnCell(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getLeekOnCell(ai.integer(parameters[0]));
-		}
-	},
-	getEntityOnCell(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getLeekOnCell(ai.integer(parameters[0]));
-		}
-	},
-	getCellContent(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getCellContent(ai.integer(parameters[0]));
-		}
-	},
-	isEmptyCell(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isEmpty(ai.integer(parameters[0]));
-		}
-	},
-	isObstacle(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isObstacle(ai.integer(parameters[0]));
-		}
-	},
-	isOnSameLine(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isOnSameLine(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	isLeek(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isLeekCell(ai.integer(parameters[0]));
-		}
-	},
-	isEntity(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).isLeekCell(ai.integer(parameters[0]));
-		}
-	},
-	getCellX(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellX(ai.integer(parameters[0]));
-		}
-	},
-	getCellY(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellY(ai.integer(parameters[0]));
-		}
-	},
-	getNearestEnemy(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getNearestEnemy();
-		}
-	},
-	getFarestEnemy(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getFarthestEnemy();
-		}
-	},
-	getTurn(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getTurn();
-		}
-	},
-	getAliveEnemies(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAliveEnemies();
-		}
-	},
-	getAliveEnemiesCount(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNumAliveEnemies();
-		}
-	},
-	getAlliedTurret(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAlliedTurret();
-		}
-	},
-	getAllChips(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAllChips();
-		}
-	},
-	getAllWeapons(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAllWeapons();
-		}
-	},
-	getAllEffects(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAllEffects();
-		}
-	},
-	getEnemyTurret(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEnemyTurret();
-		}
-	},
-	getDeadEnemies(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getDeadEnemies();
-		}
-	},
-	getDeadEnemiesCount(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNumDeadEnemies();
-		}
-	},
-	getEnemies(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEnemies();
-		}
-	},
-	getAllies(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAllies();
-		}
-	},
-	getEnemiesCount(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNumEnemies();
-		}
-	},
-	getNearestAlly(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNearestAlly();
-		}
-	},
-	getFarestAlly(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarthestAlly();
-		}
-	},
-	getAliveAllies(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAliveAllies();
-		}
-	},
-	getDeadAllies(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getDeadAllies();
-		}
-	},
-	getAlliesCount(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNumAllies();
-		}
-	},
-	getNextPlayer(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNextPlayer();
-		}
-	},
-	getPreviousPlayer(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getPreviousPlayer();
-		}
-	},
-	getCellToUseWeapon(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellToUseWeapon(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getCellToUseWeaponOnCell(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellToUseWeaponOnCell(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getCellToUseChip(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellToUseChip(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getCellToUseChipOnCell(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellToUseChipOnCell(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getEnemiesLife(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEnemiesLife();
-		}
-	},
-	getAlliesLife(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getAlliesLife();
-		}
-	},
-	moveToward(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).moveToward(ai.integer(parameters[0]), ai.intOrNull(parameters[1]));
-		}
-	},
-	moveTowardCell(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).moveTowardCell(ai.integer(parameters[0]), ai.intOrNull(parameters[1]));
-		}
-	},
-	moveTowardLeeks(1, 2, new int[] { AI.ARRAY, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var leeks = (GenericArrayLeekValue) parameters[0];
-			return ((EntityAI) ai).moveTowardLeeks(leeks, ai.intOrNull(parameters[1]));
-		}
-	},
-	moveTowardEntities(1, 2, new int[] { AI.ARRAY, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var entities = (GenericArrayLeekValue) parameters[0];
-			return ((EntityAI) ai).moveTowardLeeks(entities, ai.intOrNull(parameters[1]));
-		}
-	},
-	moveTowardCells(1, 2, new int[] { AI.ARRAY, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var cells = (LegacyArrayLeekValue) parameters[0];
-			return ((EntityAI) ai).moveTowardCells(cells, ai.intOrNull(parameters[1]));
-		}
-	},
-	moveAwayFrom(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).moveAwayFrom(ai.integer(parameters[0]), ai.intOrNull(parameters[1]));
-		}
-	},
-	moveAwayFromCell(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).moveAwayFromCell(ai.integer(parameters[0]), ai.intOrNull(parameters[1]));
-		}
-	},
-	moveAwayFromCells(1, 2, new int[] { AI.ARRAY, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var cells = (LegacyArrayLeekValue) parameters[0];
-			return ((EntityAI) ai).moveAwayFromCells(cells, ai.intOrNull(parameters[1]));
-		}
-	},
-	moveAwayFromLeeks(1, 2, new int[] { AI.ARRAY, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var leeks = (LegacyArrayLeekValue) parameters[0];
-			return ((EntityAI) ai).moveAwayFromLeeks(leeks, ai.intOrNull(parameters[1]));
-		}
-	},
-	moveAwayFromEntities(1, 2, new int[] { AI.ARRAY, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var entities = (LegacyArrayLeekValue) parameters[0];
-			return ((EntityAI) ai).moveAwayFromLeeks(entities, ai.intOrNull(parameters[1]));
-		}
-	},
-	moveAwayFromLine(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).moveAwayFromLine(ai.integer(parameters[0]), ai.integer(parameters[1]), ai.intOrNull(parameters[2]));
-		}
-	},
-	moveTowardLine(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).moveTowardLine(ai.integer(parameters[0]), ai.integer(parameters[1]), ai.intOrNull(parameters[2]));
-		}
-	},
-	getCellFromXY(2, new int[] { AI.NUMBER, AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellFromXY(ai.integer(parameters[0]), ai.integer(parameters[1]));
-		}
-	},
-	getFarthestEnemy(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarthestEnemy();
-		}
-	},
-	getFarthestAlly(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getFarthestAlly();
-		}
-	},
-	getFightID(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getFight().getId();
-		}
-	},
-	getFightType(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getFight().getFightType();
-		}
-	},
-	getFightContext(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return (long) ((EntityAI) ai).getFight().getFightContext();
-		}
-	},
-	getCellsToUseWeapon(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellsToUseWeapon(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getCellsToUseWeaponOnCell(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellsToUseWeaponOnCell(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getCellsToUseChip(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellsToUseChip(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getCellsToUseChipOnCell(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getCellsToUseChipOnCell(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getNearestEnemyTo(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNearestEnemyTo(ai.integer(parameters[0]));
-		}
-	},
-	getNearestEnemyToCell(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNearestEnemyToCell(ai.integer(parameters[0]));
-		}
-	},
-	getNearestAllyToCell(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNearestAllyToCell(ai.integer(parameters[0]));
-		}
-	},
-	getNearestAllyTo(1, new int[] { AI.NUMBER }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getNearestAllyTo(ai.integer(parameters[0]));
-		}
-	},
-	getWeaponEffectiveArea(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getWeaponArea(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getChipEffectiveArea(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getChipArea(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	lineOfSight(2, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).lineOfSight(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	getObstacles(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getObstacles();
-		}
-	},
-	sendTo(3, new int[] { AI.INT, AI.INT, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).sendTo(ai.integer(parameters[0]), ai.integer(parameters[1]), parameters[2]);
-		}
-	},
-	sendAll(2, new int[] { AI.INT, -1 }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			((EntityAI) ai).sendAll(ai.integer(parameters[0]), parameters[1]);
-			return null;
-		}
-	},
-	getMessages(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getMessages(ai.intOrNull(parameters[0]));
-		}
-	},
-	getMessageAuthor(1, new int[] { AI.ARRAY }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var message = (GenericArrayLeekValue) parameters[0];
-			if (message.size() == 3)
-				return message.get(((EntityAI) ai).getUAI(), 0);
-			return null;
-		}
-	},
-	getMessageType(1, new int[] { AI.ARRAY }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var message = (GenericArrayLeekValue) parameters[0];
-			if (message.size() == 3)
-				return message.get(((EntityAI) ai).getUAI(), 1);
-			return null;
-		}
-	},
-	getMessageParams(1, new int[] { AI.ARRAY }) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			var message = (GenericArrayLeekValue) parameters[0];
-			if (message.size() == 3)
-				return message.get(((EntityAI) ai).getUAI(), 2);
-			return null;
-		}
-	},
-	lama(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			((EntityAI) ai).lama();
-			return null;
-		}
-	},
-	mark(1, 3) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).mark(parameters[0], parameters[1], parameters[2]);
-		}
-	},
-	markText(2, 4) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).markText(parameters[0], parameters[1], parameters[2], parameters[3]);
-		}
-	},
-	clearMarks(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			((EntityAI) ai).clearMarks();
-			return null;
-		}
-	},
-	show(1, 2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).show(parameters[0], parameters[1]);
-		}
-	},
-	getMapType(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getMapType();
-		}
-	},
-	pause(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			((EntityAI) ai).pause();
-			return null;
-		}
-	},
-	getRegisters(0) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getRegisters();
-		}
-	},
-	getRegister(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getRegister(parameters[0]);
-		}
-	},
-	setRegister(2) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).setRegister(parameters[0], parameters[1]);
-		}
-	},
-	deleteRegister(1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			((EntityAI) ai).deleteRegister(parameters[0]);
-			return null;
-		}
-	},
-	getEntityTurnOrder(0, 1) {
-		@Override
-		public Object run(AI ai, ILeekFunction function, Object... parameters) throws LeekRunException {
-			return ((EntityAI) ai).getEntityTurnOrder(parameters[0]);
-		}
-	};
+	static {
+
+		method("getLife", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getForce", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getStrength", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getAgility", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getScience", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getWisdom", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getResistance", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY),
+		});
+		method("getMagic", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getCell", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY),
+		});
+		method("getWeapon", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getName", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.STRING),
+		});
+		method("getTP", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getMP", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getTotalTP", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getTotalMP", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getTotalLife", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getPower", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getAbsoluteShield", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getRelativeShield", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getDamageReturn", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("setWeapon", "Entity", true, Type.BOOL, new Type[] { Type.INT });
+		method("say", "Entity", true, Type.BOOL, new Type[] { Type.STRING });
+		method("lama", "Entity", true, Type.VOID, new Type[0]);
+		method("listen", "Entity", true, Type.ARRAY, new Type[0]);
+		method("getWeapons", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ARRAY),
+		});
+		method("isEnemy", "Entity", true, Type.BOOL, new Type[] { Type.INT });
+		method("isAlly", "Entity", true, Type.BOOL, new Type[] { Type.INT });
+		method("isAlive", "Entity", true, Type.BOOL, new Type[] { Type.INT });
+		method("isDead", "Entity", true, Type.BOOL, new Type[] { Type.INT });
+		method("getLeek", "Entity", true, Type.INT, new Type[0]).setMaxVersion(3);
+		method("getEntity", "Entity", true, Type.INT, new Type[0]);
+		method("getChips", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ARRAY),
+		});
+		method("getEffects", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ARRAY),
+		});
+		method("getLaunchedEffects", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getPassiveEffects", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getLevel", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getFrequency", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getCores", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getTeamName", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getFarmerName", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getFarmerCountry", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getTeamID", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getFarmerID", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getAIName", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.STRING),
+		});
+		method("getAIID", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getSummons", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ARRAY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getType", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("isSummon", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.BOOL),
+		});
+		method("getSummoner", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.INT),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("isStatic", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getBirthTurn", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+		method("getEntityTurnOrder", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
+		});
+		method("getLeekID", "Entity", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT),
+		});
+
+		/**
+		 * Weapon
+		 */
+		method("useWeapon", "Weapon", true, Type.INT, new Type[] { Type.INT });
+		method("useWeaponOnCell", "Weapon", true, Type.INT, new Type[] { Type.INT });
+		method("getWeaponMinScope", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.INT),
+			new CallableVersion(Type.INT, new Type[] { Type.INT })
+		}).setMaxVersion(3);
+		method("getWeaponMaxScope", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.INT),
+			new CallableVersion(Type.INT, new Type[] { Type.INT })
+		}).setMaxVersion(3);
+		method("getWeaponMinRange", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.INT),
+			new CallableVersion(Type.INT, new Type[] { Type.INT })
+		});
+		method("getWeaponMaxRange", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.INT),
+			new CallableVersion(Type.INT, new Type[] { Type.INT })
+		});
+		method("getWeaponLaunchType", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.INT })
+		});
+		method("getWeaponCost", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.INT),
+			new CallableVersion(Type.INT, new Type[] { Type.INT })
+		});
+		method("getWeaponEffects", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.INT })
+		});
+		method("getWeaponPassiveEffects", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY),
+			new CallableVersion(Type.ANY, new Type[] { Type.INT })
+		});
+		method("getWeaponName", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.STRING),
+			new CallableVersion(Type.STRING, new Type[] { Type.INT })
+		});
+		method("isInlineWeapon", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL),
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT })
+		});
+		method("weaponNeedLos", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL),
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT })
+		});
+		method("canUseWeapon", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY }),
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY })
+		});
+		method("canUseWeaponOnCell", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY }),
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY })
+		});
+		method("getWeaponTargets", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY })
+		});
+		method("getWeaponFailure", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT })
+		});
+		method("isWeapon", "Weapon", true, Type.BOOL, new Type[] { Type.INT });
+		method("getWeaponArea", "Weapon", true, Type.ANY, new Type[] { Type.INT });
+		method("getWeaponEffectiveArea", "Weapon", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+		});
+		method("getAllWeapons", "Weapon", true, Type.ARRAY, new Type[0]);
+
+		/**
+		 * Chip
+		 */
+		method("getCurrentCooldown", "Chip", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+		}).setMaxVersion(3);
+		method("getCooldown", "Chip", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
+		});
+		method("useChip", "Chip", true, Type.INT, new Type[] { Type.INT, Type.INT });
+		method("useChipOnCell", "Chip", true, Type.INT, new Type[] { Type.INT, Type.INT });
+		method("getChipName", "Chip", true, Type.STRING, new Type[] { Type.INT });
+		method("getChipMinScope", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("getChipMaxScope", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("getChipMinRange", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("getChipMaxRange", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("getChipCost", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("getChipEffects", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("isInlineChip", "Chip", true, Type.BOOL, new Type[] { Type.INT });
+		method("chipNeedLos", "Chip", true, Type.BOOL, new Type[] { Type.INT });
+		method("getChipCooldown", "Chip", true, Type.INT, new Type[] { Type.INT });
+		method("canUseChip", "Chip", true, Type.BOOL, new Type[] { Type.INT, Type.INT });
+		method("canUseChipOnCell", "Chip", true, Type.BOOL, new Type[] { Type.INT, Type.INT });
+		method("getChipTargets", "Chip", true, Type.ANY, new Type[] { Type.INT, Type.INT });
+		method("getChipFailure", "Chip", true, Type.INT, new Type[] { Type.INT });
+		method("isChip", "Chip", true, Type.BOOL, new Type[] { Type.INT });
+		method("getChipLaunchType", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("getChipArea", "Chip", true, Type.ANY, new Type[] { Type.INT });
+		method("resurrect", "Chip", true, Type.INT, new Type[] { Type.ANY, Type.ANY });
+		method("summon", "Chip", true, Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY });
+		method("getChipEffectiveArea", "Chip", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getAllChips", "Chip", true, Type.ARRAY, new Type[0]);
+
+		/**
+		 * Field
+		 */
+		method("getDistance", "Field", true, Type.REAL, new Type[] { Type.INT, Type.INT });
+		method("getCellDistance", "Field", true, Type.INT, new Type[] { Type.INT, Type.INT });
+		method("getPathLength", "Field", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getPath", "Field", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.INT, Type.INT }),
+			new CallableVersion(Type.ANY, new Type[] { Type.INT, Type.INT, Type.ANY })
+		});
+		method("getLeekOnCell", "Field", true, Type.INT, new Type[] { Type.INT }).setMaxVersion(3);
+		method("getEntityOnCell", "Field", true, Type.INT, new Type[] { Type.INT });
+		method("getCellContent", "Field", true, Type.INT, new Type[] { Type.INT });
+		method("isEmptyCell", "Field", true, Type.BOOL, new Type[] { Type.INT });
+		method("isObstacle", "Field", true, Type.BOOL, new Type[] { Type.INT });
+		method("isOnSameLine", "Field", true, Type.BOOL, new Type[] { Type.INT, Type.INT });
+		method("isLeek", "Field", true, Type.BOOL, new Type[] { Type.INT }).setMaxVersion(3);
+		method("isEntity", "Field", true, Type.BOOL, new Type[] { Type.INT });
+		method("getCellX", "Field", true, Type.ANY, new Type[] { Type.INT });
+		method("getCellY", "Field", true, Type.ANY, new Type[] { Type.INT });
+		method("getCellFromXY", "Field", true, Type.ANY, new Type[] { Type.INT, Type.INT });
+		method("lineOfSight", "Field", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+		});
+		method("getObstacles", "Field", true, Type.ARRAY, new Type[0]);
+		method("getMapType", "Field", true, Type.INT, new Type[0]);
+
+		/**
+		 * Fight / Combat
+		 */
+		method("getBulbChips", "Fight", true, Type.ARRAY, new Type[] { Type.ANY });
+		method("getNearestEnemy", "Fight", true, Type.INT, new Type[0]);
+		method("getFarestEnemy", "Fight", true, Type.INT, new Type[0]).setMaxVersion(3);
+		method("getFarthestEnemy", "Fight", true, Type.INT, new Type[0]);
+		method("getTurn", "Fight", true, Type.INT, new Type[0]);
+		method("getAliveEnemies", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getAliveEnemiesCount", "Fight", true, Type.INT, new Type[0]);
+		method("getAlliedTurret", "Fight", true, Type.ANY, new Type[0]);
+		method("getAllEffects", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getEnemyTurret", "Fight", true, Type.ANY, new Type[0]);
+		method("getDeadEnemies", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getDeadEnemiesCount", "Fight", true, Type.ANY, new Type[0]);
+		method("getEnemies", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getAllies", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getEnemiesCount", "Fight", true, Type.ANY, new Type[0]);
+		method("getNearestAlly", "Fight", true, Type.ANY, new Type[0]);
+		method("getFarestAlly", "Fight", true, Type.ANY, new Type[0]).setMaxVersion(3);
+		method("getFarthestAlly", "Fight", true, Type.ANY, new Type[0]);
+		method("getAliveAllies", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getDeadAllies", "Fight", true, Type.ARRAY, new Type[0]);
+		method("getAlliesCount", "Fight", true, Type.ANY, new Type[0]);
+		method("getNextPlayer", "Fight", true, Type.ANY, new Type[0]);
+		method("getPreviousPlayer", "Fight", true, Type.ANY, new Type[0]);
+		method("getCellToUseWeapon", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getCellToUseWeaponOnCell", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getCellToUseChip", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getCellToUseChipOnCell", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getEnemiesLife", "Fight", true, Type.INT, new Type[0]);
+		method("getAlliesLife", "Fight", true, Type.INT, new Type[0]);
+		method("moveToward", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+		});
+		method("moveTowardCell", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+		});
+		method("moveTowardLeeks", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+		});
+		method("moveTowardEntities", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT })
+		});
+		method("moveTowardCells", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+		});
+		method("moveAwayFrom", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+		});
+		method("moveAwayFromCell", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+		});
+		method("moveAwayFromCells", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+		});
+		method("moveAwayFromLeeks", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT })
+		});
+		method("moveAwayFromEntities", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT })
+		});
+		method("moveAwayFromLine", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
+		});
+		method("moveTowardLine", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+		});
+		method("getFightID", "Fight", true, Type.INT, new Type[0]);
+		method("getFightType", "Fight", true, Type.INT, new Type[0]);
+		method("getFightContext", "Fight", true, Type.INT, new Type[0]);
+		method("getCellsToUseWeapon", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+		});
+		method("getCellsToUseWeaponOnCell", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+		});
+		method("getCellsToUseChip", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+		});
+		method("getCellsToUseChipOnCell", "Fight", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+		});
+		method("getNearestEnemyTo", "Fight", true, Type.ANY, new Type[] { Type.INT });
+		method("getNearestEnemyToCell", "Fight", true, Type.INT, new Type[] { Type.INT });
+		method("getNearestAllyToCell", "Fight", true, Type.INT, new Type[] { Type.INT });
+		method("getNearestAllyTo", "Fight", true, Type.INT, new Type[] { Type.INT });
+
+		/**
+		 * Network / Réseau
+		 */
+		method("sendTo", "Network", true, Type.BOOL, new Type[] { Type.INT, Type.INT, Type.ANY });
+		method("sendAll", "Network", true, Type.VOID, new Type[] { Type.INT, Type.ANY });
+		method("getMessages", "Network", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.INT }),
+			new CallableVersion(Type.ANY, new Type[0]),
+		});
+		method("getMessageAuthor", "Network", true, Type.ANY, new Type[] { Type.ARRAY });
+		method("getMessageType", "Network", true, Type.ANY, new Type[] { Type.ARRAY });
+		method("getMessageParams", "Network", true, Type.ANY, new Type[] { Type.ARRAY });
+
+		/**
+		 * Util
+		 */
+		method("getDate", "Util", true, Type.STRING, new Type[0]);
+		method("getTime", "Util", true, Type.STRING, new Type[0]);
+		method("getTimestamp", "Util", true, Type.INT, new Type[0]);
+		method("mark", "Util", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+		});
+		method("markText", "Util", true,  new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY, Type.ANY }),
+		});
+		method("clearMarks", "Util", true, Type.VOID, new Type[0]);
+		method("show", "Util", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+		});
+		method("pause", "Util", true, Type.VOID, new Type[0]);
+		method("getRegisters", "Util", true, Type.ARRAY, new Type[0]);
+		method("getRegister", "Util", true, Type.ANY, new Type[] { Type.STRING });
+		method("setRegister", "Util", true, Type.VOID, new Type[] { Type.STRING, Type.ANY });
+		method("deleteRegister", "Util", true, Type.VOID, new Type[] { Type.STRING });
+	}
 
 	private int mArguments;
 	private int mArgumentsMin;
 	private int mOperations = 1;
-	protected VariableOperations mVariableOperations = null;
 	private int[] parameters = null;
 
 	public static final int DOUBLE = 1;
@@ -1194,102 +515,34 @@ public enum FightFunctions implements ILeekFunction {
 	public static final int NUMBER = 7;
 	public static final int FUNCTION = 8;
 
-	FightFunctions(int arguments) {
-		mArgumentsMin = arguments;
-		mArguments = arguments;
-		// this.parameters = new int[0];
+
+	private static LeekFunctions method(String name, String clazz, Type return_type, Type[] arguments) {
+		return method(name, clazz, 0, false, return_type, arguments);
+	}
+	private static LeekFunctions method(String name, String clazz, boolean isStatic, Type return_type, Type[] arguments) {
+		return method(name, clazz, 0, isStatic, return_type, arguments);
+	}
+	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, Type return_type, Type[] arguments) {
+		return method(name, clazz, 0, isStatic, new CallableVersion[] { new CallableVersion(return_type, arguments) });
+	}
+	private static LeekFunctions method(String name, String clazz, CallableVersion[] versions) {
+		return method(name, clazz, 0, false, versions);
+	}
+	private static LeekFunctions method(String name, String clazz, boolean isStatic, CallableVersion[] versions) {
+		return method(name, clazz, 0, isStatic, versions);
+	}
+	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, CallableVersion[] versions) {
+		var function = new LeekFunctions(clazz, name, operations, isStatic, versions);
+		functions.put(name, function);
+		return function;
 	}
 
-	FightFunctions(int arguments, int[] parameters) {
-		mArgumentsMin = arguments;
-		mArguments = arguments;
-		this.parameters = parameters;
-	}
 
-	FightFunctions(int arguments, int arguments_max) {
-		mArgumentsMin = arguments;
-		mArguments = arguments_max;
-		// this.parameters = new int[0];
-	}
-
-	FightFunctions(int arguments, int arguments_max, int[] parameters) {
-		mArgumentsMin = arguments;
-		mArguments = arguments_max;
-		this.parameters = parameters;
-	}
-
-	@Override
-	public Type getReturnType() {
-		return Type.ANY;
-	}
-
-	@Override
-	public CallableVersion[] getVersions() {
-		return null;
-	}
-
-	@Override
-	public int getArguments() {
-		return mArguments;
-	}
-
-	@Override
-	public int getArgumentsMin() {
-		return mArgumentsMin;
-	}
-
-	@Override
-	public boolean isExtra() {
-		return true;
-	}
-
-	@Override
-	public void addOperations(AI ai, ILeekFunction function, Object[] parameters, Object retour) throws LeekRunException {
-		ai.ops(getOperations());
-	}
-
-	@Override
 	public String getNamespace() {
 		return "com.leekwars.generator.FightFunctions";
 	}
 
-	public int getOperations() {
-		return mOperations;
-	}
-
-	public boolean hasVariableOperations() {
-		if (mVariableOperations == null) {
-			mVariableOperations = Functions.getVariableOperations(name());
-		}
-		return mVariableOperations != null;
-	}
-
-	public static FightFunctions getValue(String name) {
-		for (FightFunctions func : FightFunctions.values()) {
-			if (func.name().equals(name))
-				return func;
-			// return IAFunctions.valueOf(name);
-		}
-		return null;
-	}
-
-	public int[] getParameters() {
-		return parameters;
-	}
-
-	public int cost() {
-		return 1;
-	}
-
-	public void setOperations(int operations) {
-		mOperations = operations;
-	}
-
-	public int getMinVersion() {
-		return 1;
-	}
-
-	public int getMaxVersion() {
-		return LeekScript.LATEST_VERSION;
+	public static Map<String, LeekFunctions> getFunctions() {
+		return functions;
 	}
 }

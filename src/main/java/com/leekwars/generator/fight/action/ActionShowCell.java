@@ -2,7 +2,6 @@ package com.leekwars.generator.fight.action;
 
 import com.alibaba.fastjson.JSONArray;
 import com.leekwars.generator.Util;
-import com.leekwars.generator.fight.entity.Entity;
 
 public class ActionShowCell implements Action {
 

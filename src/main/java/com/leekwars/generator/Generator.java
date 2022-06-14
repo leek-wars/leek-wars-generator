@@ -33,7 +33,6 @@ import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.compiler.resolver.FileSystemContext;
 import leekscript.compiler.resolver.ResolverContext;
-import leekscript.functions.Functions;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
@@ -49,12 +48,11 @@ public class Generator {
 
 	public Generator() {
 		new File("ai/").mkdir();
-		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
+		LeekFunctions.setExtraFunctions(FightFunctions.getFunctions(), "com.leekwars.generator.classes.*");
 		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
 		loadWeapons();
 		loadChips();
 		loadSummons();
-		loadFunctions();
 	}
 
 	/**
@@ -230,20 +228,6 @@ public class Generator {
 						summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
 			}
 			Log.end(summons.size() + " summons loaded.");
-		} catch (Exception e) {
-			exception(e);
-		}
-	}
-
-	private void loadFunctions() {
-		try {
-			Log.start(TAG, "- Loading functions... ");
-			JSONObject functions = JSON.parseObject(Util.readFile("data/functions.json"));
-			for (String name : functions.keySet()) {
-				JSONObject function = functions.getJSONObject(name);
-				Functions.addFunctionOperations(name, function.getIntValue("op"), function.getString("var_op"));
-			}
-			Log.end(functions.size() + " functions loaded.");
 		} catch (Exception e) {
 			exception(e);
 		}

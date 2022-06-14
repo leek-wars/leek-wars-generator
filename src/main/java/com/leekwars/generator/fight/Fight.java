@@ -183,14 +183,6 @@ public class Fight {
 		date = new Date();
 	}
 
-	public int getFightType() {
-		return type;
-	}
-
-	public int getFightContext() {
-		return context;
-	}
-
 	public void addFlag(int team, int flag) {
 		teams.get(team).addFlag(flag);
 	}
@@ -373,6 +365,10 @@ public class Fight {
 		lastTurn = 0;
 
 		Log.i(TAG, "Turn 1");
+
+		for (Entity entity : mEntities.values()) {
+			entity.getAI().staticInit();
+		}
 
 		// On lance les tours
 		while (order.getTurn() <= max_turns && mState == Fight.STATE_RUNNING) {

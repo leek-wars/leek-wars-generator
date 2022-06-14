@@ -1,5 +1,9 @@
 package com.leekwars.generator.attack;
 
+import leekscript.runner.AI;
+import leekscript.runner.LeekRunException;
+import leekscript.runner.values.GenericArrayLeekValue;
+
 public class EffectParameters {
 
 	private final int id;
@@ -8,7 +12,7 @@ public class EffectParameters {
 	private final int turns;
 	private final int targets;
 	private final int modifiers;
-	
+
 	public EffectParameters(int id, double value1, double value2, int turns, int targets, int modifiers) {
 
 		this.id = id;
@@ -41,5 +45,16 @@ public class EffectParameters {
 
 	public int getModifiers() {
 		return modifiers;
+	}
+
+	public GenericArrayLeekValue getFeatureArray(AI ai) throws LeekRunException {
+		var effect = ai.newArray();
+		effect.push(ai, (long) this.getId());
+		effect.push(ai, (long) this.getValue1());
+		effect.push(ai, (long) this.getValue1() + this.getValue2());
+		effect.push(ai, (long) this.getTurns());
+		effect.push(ai, (long) this.getTargets());
+		effect.push(ai, (long) this.getModifiers());
+		return effect;
 	}
 }

@@ -2,6 +2,7 @@ package test;
 
 import java.io.File;
 
+import com.leekwars.generator.FightFunctions;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
@@ -17,7 +18,7 @@ public class GeneratorCompilation {
 
 	static {
 		new File("ai/").mkdir();
-		LeekFunctions.setExtraFunctions("com.leekwars.generator.FightFunctions");
+		LeekFunctions.setExtraFunctions(FightFunctions.getFunctions(), "com.leekwars.generator.classes.*");
 		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
 	}
 

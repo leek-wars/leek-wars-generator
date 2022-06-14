@@ -18,7 +18,6 @@ import com.leekwars.generator.maps.Map;
 import leekscript.LSException;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
-import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
 
 public class TestFightFunctions {

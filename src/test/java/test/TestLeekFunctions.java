@@ -5,7 +5,6 @@ import java.util.List;
 
 import leekscript.LSException;
 import leekscript.runner.AI;
-import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
 
 import org.junit.Assert;

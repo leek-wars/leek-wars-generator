@@ -1,11 +1,9 @@
 package com.leekwars.generator.attack.effect;
 
 import java.util.List;
-import java.util.Map;
 
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;
-import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 
 import com.leekwars.generator.attack.Attack;

@@ -23,7 +23,7 @@ public class BulbAI extends EntityAI {
 	public Object runIA() throws LeekRunException {
 		if (mAIFunction != null) {
 			mOwnerAI.mEntity = mEntity;
-			return mAIFunction.execute(mOwnerAI);
+			return mAIFunction.run(mOwnerAI, null);
 		}
 		return null;
 	}

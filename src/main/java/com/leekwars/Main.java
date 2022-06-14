@@ -3,7 +3,6 @@ package com.leekwars;
 import java.io.File;
 
 import com.alibaba.fastjson.JSON;
-import com.leekwars.generator.Data;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
