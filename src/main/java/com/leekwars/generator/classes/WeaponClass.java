@@ -42,6 +42,27 @@ public class WeaponClass {
 		return success;
 	}
 
+	public static long getWeaponMinScope(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMinRange();
+	}
+
+	public static long getWeaponMinScope(EntityAI ai, long id) {
+		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMinRange();
+	}
+
+	public static long getWeaponMinRange(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMinRange();
+	}
+
 	public static long getWeaponMinRange(EntityAI ai, long id) {
 		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
 		if (template == null)
@@ -54,6 +75,27 @@ public class WeaponClass {
 		return 0l;
 	}
 
+	public static long getWeaponMaxScope(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMaxRange();
+	}
+
+	public static long getWeaponMaxScope(EntityAI ai, long id) {
+		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMaxRange();
+	}
+
+	public static long getWeaponMaxRange(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMaxRange();
+	}
+
 	public static long getWeaponMaxRange(EntityAI ai, long id) {
 		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
 		if (template == null)
@@ -61,11 +103,25 @@ public class WeaponClass {
 		return (long) template.getAttack().getMaxRange();
 	}
 
+	public static long getWeaponCost(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return -1l;
+		return (long) template.getCost();
+	}
+
 	public static long getWeaponCost(EntityAI ai, long id) {
 		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
 		if (template == null)
 			return -1l;
 		return (long) template.getCost();
+	}
+
+	public static boolean isInlineWeapon(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return false;
+		return template.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
 	public static boolean isInlineWeapon(EntityAI ai, long id) {
@@ -89,28 +145,24 @@ public class WeaponClass {
 		return template.getName();
 	}
 
-	public static LegacyArrayLeekValue getWeaponEffects_v1_3(EntityAI ai, long id) throws LeekRunException {
+	public static GenericArrayLeekValue getWeaponEffects(EntityAI ai) throws LeekRunException {
+		return getWeaponEffects(ai, -1);
+	}
+
+	public static GenericArrayLeekValue getWeaponEffects(EntityAI ai, long id) throws LeekRunException {
 		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
 		if (template == null) {
 			return null;
 		}
-		var result = new LegacyArrayLeekValue();
+		var result = ai.newArray();
 		for (var feature : template.getAttack().getEffects()) {
 			result.pushNoClone(ai, feature.getFeatureArray(ai));
 		}
 		return result;
 	}
 
-	public static ArrayLeekValue getWeaponEffects(EntityAI ai, long id) throws LeekRunException {
-		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
-		if (template == null) {
-			return null;
-		}
-		var result = new ArrayLeekValue();
-		for (var feature : template.getAttack().getEffects()) {
-			result.pushNoClone(ai, feature.getFeatureArray(ai));
-		}
-		return result;
+	public static GenericArrayLeekValue getWeaponPassiveEffects(EntityAI ai) throws LeekRunException {
+		return getWeaponPassiveEffects(ai, -1);
 	}
 
 	public static GenericArrayLeekValue getWeaponPassiveEffects(EntityAI ai, long id) throws LeekRunException {
@@ -125,6 +177,13 @@ public class WeaponClass {
 		return retour;
 	}
 
+	public static Object getWeaponLaunchType(EntityAI ai) throws LeekRunException {
+		Weapon template = ai.getEntity().getWeapon();
+		if (template == null)
+			return null;
+		return (long) template.getAttack().getLaunchType();
+	}
+
 	public static Object getWeaponLaunchType(EntityAI ai, long weapon_id) throws LeekRunException {
 		Weapon template = null;
 		if (weapon_id == -1) {
@@ -135,6 +194,14 @@ public class WeaponClass {
 		if (template == null)
 			return null;
 		return (long) template.getAttack().getLaunchType();
+	}
+
+	public static boolean weaponNeedLos(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null) {
+			return false;
+		}
+		return template.getAttack().needLos();
 	}
 
 	public static boolean weaponNeedLos(EntityAI ai, long id) {
@@ -185,6 +252,10 @@ public class WeaponClass {
 			return Pathfinding.canUseAttack(ai.getEntity().getCell(), target, weapon.getAttack());
 		}
 		return false;
+	}
+
+	public static GenericArrayLeekValue getWeaponTargets(EntityAI ai, Object value1) throws LeekRunException {
+		return getWeaponTargets(ai, value1, null);
 	}
 
 	public static GenericArrayLeekValue getWeaponTargets(EntityAI ai, Object value1, Object value2) throws LeekRunException {
@@ -297,7 +368,7 @@ public class WeaponClass {
 	}
 
 	public static ArrayLeekValue getAllWeapons(EntityAI ai) throws LeekRunException {
-		var retour = new ArrayLeekValue(Weapons.getTemplates().size());
+		var retour = new ArrayLeekValue(ai, Weapons.getTemplates().size());
 		for (var weapon : Weapons.getTemplates().values()) {
 			retour.push(ai, (long) weapon.getId());
 		}

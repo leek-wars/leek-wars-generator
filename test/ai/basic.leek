@@ -1,3 +1,5 @@
+include("subfolder/library.leek")
+
 // useChip(CHIP_FORTRESS, getLeek());
 
 var enemy = getNearestEnemy();

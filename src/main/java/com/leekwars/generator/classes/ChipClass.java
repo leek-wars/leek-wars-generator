@@ -24,6 +24,12 @@ import leekscript.common.Error;
 public class ChipClass {
 
 	// ---- Fonctions Chip ----
+
+	public static Object getCurrentCooldown(EntityAI ai, Object chip_id) throws LeekRunException {
+		((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
+		return null;
+	}
+
 	public static Object getCurrentCooldown(EntityAI ai, Object chip_id, Object v) throws LeekRunException {
 		((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 		return null;
@@ -135,12 +141,28 @@ public class ChipClass {
 		return chip.getCooldown();
 	}
 
+	public static Object getChipMinScope(EntityAI ai, long id) {
+		Chip chip = Chips.getChip((int) id);
+		if (chip == null) {
+			return null;
+		}
+		return (long) chip.getAttack().getMinRange();
+	}
+
 	public static Object getChipMinRange(EntityAI ai, long id) {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
 		}
 		return (long) chip.getAttack().getMinRange();
+	}
+
+	public static Object getChipMaxScope(EntityAI ai, long id) {
+		Chip chip = Chips.getChip((int) id);
+		if (chip == null) {
+			return null;
+		}
+		return (long) chip.getAttack().getMaxRange();
 	}
 
 	public static Object getChipMaxRange(EntityAI ai, long id) {
@@ -171,24 +193,12 @@ public class ChipClass {
 		return chip.getAttack().getLaunchType() == Attack.LAUNCH_TYPE_LINE;
 	}
 
-	public static LegacyArrayLeekValue getChipEffects_v1_3(EntityAI ai, long id) throws LeekRunException {
+	public static GenericArrayLeekValue getChipEffects(EntityAI ai, long id) throws LeekRunException {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
 		}
-		var retour = new LegacyArrayLeekValue();
-		for (var feature : chip.getAttack().getEffects()) {
-			retour.pushNoClone(ai, feature.getFeatureArray(ai));
-		}
-		return retour;
-	}
-
-	public static ArrayLeekValue getChipEffects(EntityAI ai, long id) throws LeekRunException {
-		Chip chip = Chips.getChip((int) id);
-		if (chip == null) {
-			return null;
-		}
-		var retour = new ArrayLeekValue();
+		var retour = ai.newArray();
 		for (var feature : chip.getAttack().getEffects()) {
 			retour.pushNoClone(ai, feature.getFeatureArray(ai));
 		}
@@ -310,7 +320,7 @@ public class ChipClass {
 	}
 
 	public static ArrayLeekValue getAllChips(EntityAI ai) throws LeekRunException {
-		var retour = new ArrayLeekValue(Chips.getTemplates().size());
+		var retour = new ArrayLeekValue(ai, Chips.getTemplates().size());
 		for (var chip : Chips.getTemplates().values()) {
 			retour.push(ai, (long) chip.getId());
 		}

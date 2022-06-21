@@ -42,24 +42,34 @@ public class FieldClass {
 
 	public static Object getPathLength(EntityAI ai, Object c1, Object c2, Object leeks_to_ignore) throws LeekRunException {
 
+		ai.ops(100);
+
 		Cell cell1 = ai.getFight().getMap().getCell(ai.integer(c1));
-		if (cell1 == null)
+		if (cell1 == null) {
 			return null;
+		}
 		Cell cell2 = ai.getFight().getMap().getCell(ai.integer(c2));
-		if (cell2 == null)
+		if (cell2 == null) {
 			return null;
+		}
+		if (cell1 == cell2) {
+			return 0l;
+		}
+
+		// Opérations
+		var distance = Pathfinding.getCaseDistance(cell1, cell2);
+		ai.ops(distance * distance * 20);
 
 		List<Cell> ignore = new ArrayList<Cell>();
 
 		if (leeks_to_ignore != null && leeks_to_ignore instanceof GenericArrayLeekValue) {
 			ai.putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
 		}
-		if (cell1 == cell2)
-			return 0l;
 
 		var path = ai.getFight().getMap().getPathBeetween(ai, cell1, cell2, ignore);
-		if (path == null)
+		if (path == null) {
 			return null;
+		}
 		return (long) path.size();
 	}
 
@@ -76,6 +86,13 @@ public class FieldClass {
 		if (cell2 == null)
 			return null;
 
+		if (cell1 == cell2)
+			return ai.newArray();
+
+		// Opérations
+		var distance = Pathfinding.getCaseDistance(cell1, cell2);
+		ai.ops(distance * distance * 20);
+
 		List<Cell> ignore = new ArrayList<Cell>();
 
 		if (leeks_to_ignore instanceof GenericArrayLeekValue) {
@@ -88,8 +105,6 @@ public class FieldClass {
 				ignore.add(l.getCell());
 			}
 		}
-		if (cell1 == cell2)
-			return ai.newArray();
 
 		List<Cell> path = ai.getFight().getMap().getPathBeetween(ai, cell1, cell2, ignore);
 		if (path == null)
@@ -237,7 +252,7 @@ public class FieldClass {
 	public static ArrayLeekValue getObstacles(EntityAI ai) throws LeekRunException {
 		Cell[] cells = ai.getFight().getMap().getObstacles();
 		// On ajoute les cases
-		var retour = new ArrayLeekValue();
+		var retour = new ArrayLeekValue(ai);
 		if (cells == null) return retour;
 		for (Cell c : cells)
 			retour.push(ai, (long) c.getId());

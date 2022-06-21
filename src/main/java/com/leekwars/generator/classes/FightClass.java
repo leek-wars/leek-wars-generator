@@ -65,8 +65,16 @@ public class FightClass {
 		return ai.getFight().getTurn();
 	}
 
-	public static GenericArrayLeekValue getAllEffects(EntityAI ai) throws LeekRunException {
-		var retour = ai.newArray(Effect.effects.length);
+	public static LegacyArrayLeekValue getAllEffects_v1_3(EntityAI ai) throws LeekRunException {
+		var retour = new LegacyArrayLeekValue();
+		for (long i = 1; i <= Effect.effects.length; ++i) {
+			retour.push(ai, i);
+		}
+		return retour;
+	}
+
+	public static ArrayLeekValue getAllEffects(EntityAI ai) throws LeekRunException {
+		var retour = new ArrayLeekValue(ai, Effect.effects.length);
 		for (long i = 1; i <= Effect.effects.length; ++i) {
 			retour.push(ai, i);
 		}
@@ -84,7 +92,7 @@ public class FightClass {
 	}
 
 	public static ArrayLeekValue getAliveEnemies(EntityAI ai) throws LeekRunException {
-		var result = new ArrayLeekValue();
+		var result = new ArrayLeekValue(ai);
 		for (Entity e : ai.getFight().getAllEntities(false)) {
 			if (e.getTeam() != ai.getEntity().getTeam()) {
 				result.push(ai, (long) e.getFId());
@@ -114,7 +122,7 @@ public class FightClass {
 	}
 
 	public static ArrayLeekValue getDeadEnemies(EntityAI ai) throws LeekRunException {
-		var result = new ArrayLeekValue();
+		var result = new ArrayLeekValue(ai);
 		for (Entity e : ai.getFight().getAllEntities(true)) {
 			if (e.getTeam() != ai.getEntity().getTeam() && e.isDead()) {
 				result.push(ai, (long) e.getFId());
@@ -142,7 +150,7 @@ public class FightClass {
 	}
 
 	public static ArrayLeekValue getEnemies(EntityAI ai) throws LeekRunException {
-		var result = new ArrayLeekValue();
+		var result = new ArrayLeekValue(ai);
 		for (Entity e : ai.getFight().getEnemiesEntities(ai.getEntity().getTeam(), true)) {
 			result.push(ai, (long) e.getFId());
 		}
@@ -223,7 +231,7 @@ public class FightClass {
 	}
 
 	public static ArrayLeekValue getAliveAllies(EntityAI ai) throws LeekRunException {
-		var retour = new ArrayLeekValue();
+		var retour = new ArrayLeekValue(ai);
 		for (Entity l : ai.getFight().getTeamEntities(ai.getEntity().getTeam())) {
 			retour.push(ai, (long) l.getFId());
 		}
@@ -245,7 +253,7 @@ public class FightClass {
 	}
 
 	public static ArrayLeekValue getDeadAllies(EntityAI ai) throws LeekRunException {
-		var retour = new ArrayLeekValue();
+		var retour = new ArrayLeekValue(ai);
 		for (Entity l : ai.getFight().getTeamEntities(ai.getEntity().getTeam(), true)) {
 			if (l.isDead()) {
 				retour.push(ai, (long) l.getFId());
@@ -272,7 +280,7 @@ public class FightClass {
 	}
 
 	public static ArrayLeekValue getAllies(EntityAI ai) throws LeekRunException {
-		var retour = new ArrayLeekValue();
+		var retour = new ArrayLeekValue(ai);
 		for (Entity l : ai.getFight().getTeamEntities(ai.getEntity().getTeam(), true)) {
 			retour.push(ai, (long) l.getFId());
 		}
@@ -467,6 +475,9 @@ public class FightClass {
 	}
 
 	public static long moveToward(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
+
+		ai.ops(2000);
+
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP()) {
 			pm = ai.getEntity().getMP();
@@ -509,6 +520,14 @@ public class FightClass {
 			}
 		}
 		return used_pm;
+	}
+
+	public static long moveTowardEntities(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
+		return moveTowardLeeks(ai, leeks, -1);
+	}
+
+	public static long moveTowardEntities(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
+		return moveTowardLeeks(ai, leeks, pm_to_use);
 	}
 
 	public static long moveTowardLeeks(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
@@ -588,6 +607,10 @@ public class FightClass {
 		return used_pm;
 	}
 
+	public static long moveAwayFromCell(EntityAI ai, long cell_id) throws LeekRunException {
+		return moveAwayFromCell(ai, cell_id, -1);
+	}
+
 	public static long moveAwayFromCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
@@ -605,6 +628,14 @@ public class FightClass {
 			}
 		}
 		return used_pm;
+	}
+
+	public static long moveAwayFromLeeks(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
+		return moveAwayFromEntities(ai, leeks, -1);
+	}
+
+	public static long moveAwayFromEntities(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
+		return moveAwayFromEntities(ai, leeks, -1);
 	}
 
 	public static long moveAwayFromLeeks(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
@@ -723,7 +754,7 @@ public class FightClass {
 		return used_pm;
 	}
 
-	public static LegacyArrayLeekValue getBulbChips_v1_3(EntityAI ai, Object value) throws LeekRunException {
+	public static GenericArrayLeekValue getBulbChips(EntityAI ai, Object value) throws LeekRunException {
 		var id = ai.integer(value);
 		if (id > 0) {
 			Chip chip = Chips.getChip(id);
@@ -731,26 +762,7 @@ public class FightClass {
 				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
 				if (template != null) {
 					List<Chip> chips = template.getChips();
-					var retour = new LegacyArrayLeekValue();
-					for (int i = 0; i < chips.size(); i++) {
-						retour.push(ai, (long) chips.get(i).getId());
-					}
-					return retour;
-				}
-			}
-		}
-		return null;
-	}
-
-	public static ArrayLeekValue getBulbChips(EntityAI ai, Object value) throws LeekRunException {
-		var id = ai.integer(value);
-		if (id > 0) {
-			Chip chip = Chips.getChip(id);
-			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
-				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
-				if (template != null) {
-					List<Chip> chips = template.getChips();
-					var retour = new ArrayLeekValue();
+					var retour = ai.newArray();
 					for (int i = 0; i < chips.size(); i++) {
 						retour.push(ai, (long) chips.get(i).getId());
 					}

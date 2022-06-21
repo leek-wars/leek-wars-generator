@@ -10,7 +10,6 @@ import com.leekwars.generator.fight.entity.EntityAI;
 
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.GenericArrayLeekValue;
-import leekscript.runner.values.GenericMapLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
 import leekscript.runner.values.MapLeekValue;
 
@@ -51,7 +50,7 @@ public class UtilClass {
 		} else {
 			registers = ai.getEntity().getAllRegisters();
 		}
-		var map = new MapLeekValue();
+		var map = new MapLeekValue(ai);
 		for (var e : registers.entrySet()) {
 			map.set(ai, e.getKey(), e.getValue());
 		}
@@ -189,6 +188,10 @@ public class UtilClass {
 		ai.getLogs().addCellText(cel, finalText, col, d);
 
 		return true;
+	}
+
+	public static Object show(EntityAI ai, Object cell) throws LeekRunException {
+		return show(ai, cell, null);
 	}
 
 	public static Object show(EntityAI ai, Object cell, Object color) throws LeekRunException {

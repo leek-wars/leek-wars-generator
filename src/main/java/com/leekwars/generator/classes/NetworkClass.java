@@ -39,6 +39,8 @@ public class NetworkClass {
 
 	public static GenericArrayLeekValue getMessages(EntityAI ai, long target_leek) throws LeekRunException {
 
+		ai.ops(100);
+
 		// On récupere le leek ciblé
 		Entity l = ai.getEntity();
 		if (target_leek != -1 && target_leek != l.getFId()) {
@@ -54,6 +56,9 @@ public class NetworkClass {
 
 		// On y ajoute les messages
 		if (lia != null) {
+
+			ai.ops(lia.getMessages().size() * 100);
+
 			for (var message : lia.getMessages()) {
 				var m = ai.newArray();
 				m.push(ai, message.getAuthor());
