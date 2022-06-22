@@ -75,6 +75,7 @@ public abstract class Entity {
 	protected int mTotalLife;
 	protected int mInitialLife;
 	protected boolean mStatic;
+	protected String mProfileResult;
 	protected int resurrected = 0;
 	protected long totalOperations = 0;
 	public int saysTurn = 0;
@@ -952,6 +953,12 @@ public abstract class Entity {
 	}
 	public boolean isStatic() {
 		return mStatic;
+	}
+	public void setProfile(String profileResult) {
+		this.mProfileResult = profileResult;
+	}
+	public String getProfile() {
+		return mProfileResult;
 	}
 	public void setSkin(int skin) {
 		mSkin = skin;

@@ -31,7 +31,8 @@
 				"mp": 6,
 				"cell": 123,
 				"weapons": [37, 47],
-				"chips": [29]
+				"chips": [29],
+				"profile": "profile_patrick.txt"
 			},
 			{	"id": 57,
 				"ai": "test/ai/basic.leek",

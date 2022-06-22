@@ -352,6 +352,7 @@ public class Fight {
 			// Build AI after the fight is ready (static init)
 			var ai = EntityAI.build(this.generator, entity.getAIFile(), entity);
 			entity.setAI(ai);
+			ai.enableProfile(entity.getProfile() != null);
 			ai.getRandom().seed(this.seed);
 			ai.staticInit();
 
@@ -404,6 +405,9 @@ public class Fight {
 			listener.newTurn(this);
 		}
 		actions.addOpsAndTimes(statistics);
+		for (Entity e : entities) {
+			if (e.getProfile() != null) e.getAI().generateProfile(e.getProfile());
+		}
 	}
 
 	public void initFight() throws FightException {

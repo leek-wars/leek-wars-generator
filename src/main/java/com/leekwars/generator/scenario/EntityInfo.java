@@ -49,6 +49,7 @@ public class EntityInfo {
 	public boolean static_;
 	public int skin;
 	public int hat;
+	public String profileResult;
 
 	public EntityInfo() {
 	}
@@ -73,6 +74,7 @@ public class EntityInfo {
 		science = e.getIntValue("science");
 		magic = e.getIntValue("magic");
 		static_ = e.getBooleanValue("static");
+		profileResult = e.getString("profile");
 
 		JSONArray weapons = e.getJSONArray("weapons");
 		if (weapons != null) {
@@ -113,6 +115,7 @@ public class EntityInfo {
 		entity.setTP(tp);
 		entity.setMP(mp);
 		entity.setStatic(static_);
+		entity.setProfile(profileResult);
 		entity.setFarmer(farmer);
 		if (farmer >= 0) {
 			entity.setFarmerName(scenario.getFarmer(farmer).name);
