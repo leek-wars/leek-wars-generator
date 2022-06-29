@@ -353,7 +353,6 @@ public class Fight {
 			var ai = EntityAI.build(this.generator, entity.getAIFile(), entity);
 			entity.setAI(ai);
 			ai.getRandom().seed(this.seed);
-			ai.staticInit();
 
 			// Check all entities characteristics
 			statistics.init(entity);
@@ -520,6 +519,9 @@ public class Fight {
 
 			if (current.hasValidAI()) {
 				long startTime = System.nanoTime();
+				if (order.getTurn() == 1) {
+					current.getAI().staticInit();
+				}
 				current.getAI().runTurn();
 				long endTime = System.nanoTime();
 
