@@ -1,6 +1,7 @@
 package com.leekwars.generator;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
@@ -26,6 +27,7 @@ import com.leekwars.generator.scenario.EntityInfo;
 import com.leekwars.generator.scenario.Scenario;
 
 import leekscript.compiler.AIFile;
+import leekscript.compiler.Hover;
 import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
@@ -92,11 +94,25 @@ public class Generator {
 			error.add(ai != null ? ai.getId() : 0);
 			error.add(1);
 			error.add(0);
-			error.add("?");
+			error.add(1);
+			error.add(0);
 			error.add(Error.INTERNAL_ERROR.ordinal());
 			result.informations.add(error);
 			return result;
 		}
+	}
+
+	public boolean isLoaded(int ai_id) {
+		return LeekScript.isLoaded(ai_id);
+	}
+
+	public Hover hoverAI(int ai_id, int line, int column) {
+		try {
+			return LeekScript.hover(ai_id, line, column);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	/**
