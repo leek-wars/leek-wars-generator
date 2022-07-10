@@ -367,10 +367,6 @@ public class Fight {
 
 		Log.i(TAG, "Turn 1");
 
-		for (Entity entity : mEntities.values()) {
-			entity.getAI().staticInit();
-		}
-
 		// On lance les tours
 		while (order.getTurn() <= max_turns && mState == Fight.STATE_RUNNING) {
 
