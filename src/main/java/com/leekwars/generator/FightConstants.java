@@ -20,6 +20,7 @@ public enum FightConstants implements ILeekConstant {
 	ENTITY_LEEK(1, Type.INT),
 	ENTITY_BULB(2, Type.INT),
 	ENTITY_TURRET(3, Type.INT),
+	ENTITY_CHEST(4, Type.INT),
 
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, Type.INT),

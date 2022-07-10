@@ -21,7 +21,11 @@ public class EntityInfo {
 
 	static public final String TAG = EntityInfo.class.getSimpleName();
 
-	static private final Class<?> classes[] = { Leek.class, Bulb.class, Turret.class };
+	static private final Class<?> classes[] = {
+		Leek.class,
+		Bulb.class,
+		Turret.class
+	};
 
 	public int id;
 	public String name;
@@ -50,6 +54,7 @@ public class EntityInfo {
 	public boolean static_;
 	public int skin;
 	public int hat;
+	public Class<?> customClass;
 
 	public EntityInfo() {
 	}
@@ -95,7 +100,8 @@ public class EntityInfo {
 
 		Entity entity;
 		try {
-			entity = (Entity) classes[type].getDeclaredConstructor().newInstance();
+			var clazz = this.customClass != null ? this.customClass : classes[type];
+			entity = (Entity) clazz.getDeclaredConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
 			generator.exception(e, fight);

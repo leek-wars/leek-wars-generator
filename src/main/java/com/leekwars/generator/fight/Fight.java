@@ -21,6 +21,7 @@ import com.leekwars.generator.attack.effect.Effect;
 import com.leekwars.generator.attack.weapons.Weapon;
 import com.leekwars.generator.fight.action.Action;
 import com.leekwars.generator.fight.action.ActionAIError;
+import com.leekwars.generator.fight.action.ActionChestOpened;
 import com.leekwars.generator.fight.action.ActionEndTurn;
 import com.leekwars.generator.fight.action.ActionEntityDie;
 import com.leekwars.generator.fight.action.ActionEntityTurn;
@@ -393,7 +394,7 @@ public class Fight {
 
 		int alive = 0;
 		for (int t = 0; t < teams.size(); ++t) {
-			if (!teams.get(t).isDead()) {
+			if (!teams.get(t).isDead() && !teams.get(t).containsChest()) {
 				alive++;
 				mWinteam = t;
 			}
@@ -547,6 +548,16 @@ public class Fight {
 			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, killer, killer, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 		}
 
+		// Coffre ouvert
+		if (entity.getType() == Entity.TYPE_CHEST && this.context != Fight.CONTEXT_CHALLENGE) {
+			var resources = entity.loot(this);
+			actions.log(new ActionChestOpened(killer, entity, resources));
+			statistics.chest(killer, entity, resources);
+
+			int amount = entity.getLevel() == 100 ? 10 : (entity.getLevel() == 200 ? 50 : 100);
+			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, killer, killer, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+		}
+
 		// Passive effect ally killed
 		if (!entity.isSummon()) {
 			for (var ally : getTeamEntities(entity.getTeam())) {
@@ -566,11 +577,11 @@ public class Fight {
 	 */
 	public boolean isFinished() {
 
-		int teamsAlive = 0;
+		int aliveTeams = 0;
 		for (Team team : teams) {
-			if (team.isAlive()) {
-				teamsAlive++;
-				if (teamsAlive > 1) {
+			if (team.isAlive() && !team.containsChest()) {
+				aliveTeams++;
+				if (aliveTeams >= 2) {
 					return false;
 				}
 			}

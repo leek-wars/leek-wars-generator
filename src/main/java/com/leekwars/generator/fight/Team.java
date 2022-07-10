@@ -150,4 +150,11 @@ public class Team {
 		}
 		return (double) life / total;
 	}
+
+	public boolean containsChest() {
+		for (var entity : entities) {
+			if (entity.getType() == Entity.TYPE_CHEST) return true;
+		}
+		return false;
+	}
 }

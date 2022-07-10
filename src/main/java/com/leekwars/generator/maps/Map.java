@@ -6,6 +6,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -119,13 +121,17 @@ public class Map {
 					for (Entity l : teams.get(t).getEntities()) {
 
 						Cell c;
-						if (teams.size() == 2) { // 2 teams : 2 sides
-
-							c = map.getRandomCell(fight, t == 0 ? 1 : 4);
-
-						} else { // 2+ teams : random
+						if (fight.getType() == Fight.TYPE_BATTLE_ROYALE) { // BR : random
 
 							c = map.getRandomCell(fight);
+
+						} else { // 2 sides
+
+							if (l.getType() == Entity.TYPE_CHEST) {
+								c = map.getCellEqualDistance(fight);
+							} else {
+								c = map.getRandomCell(fight, t == 0 ? 1 : 4);
+							}
 						}
 
 						c.setPlayer(l);
@@ -275,6 +281,53 @@ public class Map {
 			retour = getCell(cellid);
 		}
 		return retour;
+	}
+
+	public Cell getCellEqualDistance(Fight fight) {
+		// Cellule à distance éguale des deux équipes
+		var possible = new ArrayList<Cell>();
+		for (var cell : cells) {
+			if (cell.isWalkable() && Math.abs(getDistanceWithTeam(fight, 0, cell) - getDistanceWithTeam(fight, 1, cell)) < 2) {
+				possible.add(cell);
+			}
+		}
+		Collections.shuffle(possible);
+		if (possible.size() > 0) {
+			return possible.get(0);
+		}
+		return getRandomCell(fight);
+	}
+
+	public List<Cell> getCellsEqualDistance(Cell cell1, Cell cell2) {
+		var result = new ArrayList<Cell>();
+		for (var cell : cells) {
+			if (cell.isWalkable() && Math.abs(Pathfinding.getCaseDistance(cell, cell1) - Pathfinding.getCaseDistance(cell, cell2)) < 2) {
+				result.add(cell);
+			}
+		}
+		return result;
+	}
+
+	public int getDistanceWithTeam(Fight fight, int team, Cell cell) {
+		int min = Integer.MAX_VALUE;
+		for (var entity : fight.getTeamEntities(team)) {
+			int d = Pathfinding.getCaseDistance(entity.getCell(), cell);
+			if (d < min) {
+				min = d;
+			}
+		}
+		return min;
+	}
+
+	public Cell getTeamBarycenter(Fight fight, int team) {
+		int tx = 0;
+		int ty = 0;
+		var entities = fight.getTeamEntities(team);
+		for (var entity : entities) {
+			tx += entity.getCell().x;
+			ty += entity.getCell().y;
+		}
+		return getCell(tx / entities.size(), ty / entities.size());
 	}
 
 	public void computeComposantes() {
