@@ -6,12 +6,8 @@ import java.util.List;
 
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
-import com.leekwars.generator.attack.chips.Chip;
-import com.leekwars.generator.attack.chips.Chips;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.action.ActionAIError;
-import com.leekwars.generator.fight.action.ActionLama;
-import com.leekwars.generator.items.Items;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.maps.Cell;
@@ -273,7 +269,7 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
 			fight.statistics.error(mEntity);
 
-			if (e.getError() == LeekRunException.TOO_MUCH_OPERATIONS) {
+			if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
 				fight.statistics.tooMuchOperations(mEntity);
 			}
 			// Pas de rethrow

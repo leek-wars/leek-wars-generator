@@ -129,4 +129,14 @@ public class LocalDbResolver implements Resolver<DbContext> {
 	public ResolverContext createContext(int farmer, int owner, int folder) {
 		return new DbContext(farmer, folder);
 	}
+
+	@Override
+	public boolean isLoaded(int id) {
+		return false;
+	}
+
+	@Override
+	public AIFile<?> getById(int id) {
+		return null;
+	}
 }

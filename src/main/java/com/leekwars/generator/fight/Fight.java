@@ -354,6 +354,7 @@ public class Fight {
 			// Build AI after the fight is ready (static init)
 			var ai = EntityAI.build(this.generator, entity.getAIFile(), entity);
 			entity.setAI(ai);
+			ai.init();
 			ai.getRandom().seed(this.seed);
 
 			// Check all entities characteristics
