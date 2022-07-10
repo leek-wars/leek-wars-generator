@@ -55,6 +55,10 @@ public class ChipClass {
 		return null;
 	}
 
+	public static long useChip(EntityAI ai, long chip_id) throws LeekRunException {
+		return useChip(ai, chip_id, ai.getEntity().getFId());
+	}
+
 	public static long useChip(EntityAI ai, long chip_id, long leek_id) throws LeekRunException {
 
 		long success = -1;

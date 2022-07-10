@@ -281,7 +281,10 @@ public class FightFunctions {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
 			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
 		});
-		method("useChip", "Chip", 3000, true, Type.INT, new Type[] { Type.INT, Type.INT });
+		method("useChip", "Chip", 3000, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+		});
 		method("useChipOnCell", "Chip", 3000, true, Type.INT, new Type[] { Type.INT, Type.INT });
 		method("getChipName", "Chip", 15, true, Type.STRING, new Type[] { Type.INT });
 		method("getChipMinScope", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
