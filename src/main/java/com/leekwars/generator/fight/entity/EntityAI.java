@@ -246,7 +246,7 @@ public class EntityAI extends AI {
 		logs.setLogs(fight.getActions());
 	}
 
-	public void runTurn() {
+	public void runTurn(int turn) {
 
 		long startTime = System.nanoTime();
 
@@ -255,6 +255,9 @@ public class EntityAI extends AI {
 		try {
 
 			mEntity = mInitialEntity;
+			if (turn == 1) {
+				staticInit();
+			}
 			runIA();
 
 		} catch (StackOverflowError e) { // On suppose que c'est normal, ça vient de l'utilisateur

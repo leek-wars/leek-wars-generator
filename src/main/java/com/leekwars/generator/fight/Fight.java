@@ -489,18 +489,6 @@ public class Fight {
 		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
 	}
 
-	public void staticInit() {
-		for (Entity entity : mEntities.values()) {
-			if (entity.getAI() != null) {
-				try {
-					entity.getAI().staticInit();
-				} catch (Exception e) {
-					// Not handled, user error
-				}
-			}
-		}
-	}
-
 	public void finishFight() {
 		mState = Fight.STATE_FINISHED;
 	}
@@ -522,10 +510,7 @@ public class Fight {
 
 			if (current.hasValidAI()) {
 				long startTime = System.nanoTime();
-				if (order.getTurn() == 1) {
-					current.getAI().staticInit();
-				}
-				current.getAI().runTurn();
+				current.getAI().runTurn(order.getTurn());
 				long endTime = System.nanoTime();
 
 				statistics.addTimes(current, endTime - startTime, current.getAI().operations());
