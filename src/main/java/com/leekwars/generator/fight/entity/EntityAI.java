@@ -285,15 +285,20 @@ public class EntityAI extends AI {
 
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
-			// e.printStackTrace(System.out);
-			fight.log(new ActionAIError(mEntity));
-			addSystemLog(LeekLog.ERROR, e.getError(), new String[] { e.getMessage() }, e.getStackTrace());
-			fight.statistics.error(mEntity);
+			if (e.getError() == Error.ENTITY_DIED) {
+				// OK, c'est normal
+			} else {
 
-			if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
-				fight.statistics.tooMuchOperations(mEntity);
+				// e.printStackTrace(System.out);
+				fight.log(new ActionAIError(mEntity));
+				addSystemLog(LeekLog.ERROR, e.getError(), new String[] { e.getMessage() }, e.getStackTrace());
+				fight.statistics.error(mEntity);
+
+				if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
+					fight.statistics.tooMuchOperations(mEntity);
+				}
+				// Pas de rethrow
 			}
-			// Pas de rethrow
 
 		} catch (OutOfMemoryError e) { // Plus de RAM, Erreur critique, on tente de sauver les meubles
 

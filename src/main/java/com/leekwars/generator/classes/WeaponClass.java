@@ -10,6 +10,7 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
 
+import leekscript.common.Error;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
@@ -27,6 +28,10 @@ public class WeaponClass {
 			}
 			success = ai.getFight().useWeapon(ai.getEntity(), target.getCell());
 		}
+		// Mort pendant le lancement, on arrête l'IA
+		if (ai.getEntity().isDead()) {
+			throw new LeekRunException(Error.ENTITY_DIED);
+		}
 		return success;
 	}
 
@@ -38,6 +43,10 @@ public class WeaponClass {
 				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
 			success = ai.getFight().useWeapon(ai.getEntity(), target);
+		}
+		// Mort pendant le lancement, on arrête l'IA
+		if (ai.getEntity().isDead()) {
+			throw new LeekRunException(Error.ENTITY_DIED);
 		}
 		return success;
 	}

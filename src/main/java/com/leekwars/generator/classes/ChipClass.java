@@ -72,6 +72,11 @@ public class ChipClass {
 		if (target != null && chip != null && !target.isDead()) {
 			success = ai.getFight().useChip(ai.getEntity(), target.getCell(), chip);
 		}
+
+		// Mort pendant le lancement, on arrête l'IA
+		if (ai.getEntity().isDead()) {
+			throw new LeekRunException(Error.ENTITY_DIED);
+		}
 		return success;
 	}
 
@@ -91,6 +96,11 @@ public class ChipClass {
 		}
 		if (target != null && template != null) {
 			success = ai.getFight().useChip(ai.getEntity(), target, template);
+		}
+
+		// Mort pendant le lancement, on arrête l'IA
+		if (ai.getEntity().isDead()) {
+			throw new LeekRunException(Error.ENTITY_DIED);
 		}
 		return success;
 	}
