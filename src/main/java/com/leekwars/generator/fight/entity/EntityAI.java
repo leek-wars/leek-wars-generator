@@ -2,6 +2,7 @@ package com.leekwars.generator.fight.entity;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 
 import com.leekwars.generator.Generator;
@@ -18,6 +19,7 @@ import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.runner.AI;
+import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
@@ -80,6 +82,7 @@ public class EntityAI extends AI {
 	protected final List<String> mSays = new ArrayList<String>();
 
 	protected boolean valid = false;
+	private boolean isFirstRuntimeError = false;
 
 	public EntityAI(int instructions, int version) {
 		super(instructions, version);
@@ -198,7 +201,7 @@ public class EntityAI extends AI {
 	}
 
 	public void addSystemLog(int type, int key, String[] parameters, StackTraceElement[] elements) {
-		addOperationsNoCheck(AI.ERROR_LOG_COST);
+		opsNoCheck(AI.ERROR_LOG_COST);
 		if (type == FarmerLog.WARNING)
 			type = FarmerLog.SWARNING;
 		else if (type == FarmerLog.ERROR)
@@ -270,11 +273,18 @@ public class EntityAI extends AI {
 			fight.statistics.error(mEntity);
 			// Pas de rethrow
 
+		} catch (ConcurrentModificationException e) { // On suppose que c'est normal, ça vient de l'utilisateur
+
+			fight.log(new ActionAIError(mEntity));
+			addSystemLog(LeekLog.ERROR, Error.MODIFICATION_DURING_ITERATION, new String[0], e.getStackTrace());
+			fight.statistics.error(mEntity);
+			// Pas de rethrow
+
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
 			// e.printStackTrace(System.out);
 			fight.log(new ActionAIError(mEntity));
-			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
+			addSystemLog(LeekLog.ERROR, e.getError(), new String[] { e.getMessage() }, e.getStackTrace());
 			fight.statistics.error(mEntity);
 
 			if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
@@ -295,14 +305,17 @@ public class EntityAI extends AI {
 
 		} catch (RuntimeException e) { // Autre erreur, là c'est pas l'utilisateur
 
-			e.printStackTrace(System.out);
+			// e.printStackTrace(System.out);
 			fight.statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
-			e.printStackTrace();
+			e.printStackTrace(System.out);
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
-			fight.generator.exception(e, fight, id);
-			throw e; // On rethrow tel quel
+			if (isFirstRuntimeError) {
+				fight.generator.exception(e, fight, id);
+				isFirstRuntimeError = false;
+			}
+			// throw e; // On rethrow tel quel
 
 		} catch (Exception e) { // Autre erreur, là c'est pas l'utilisateur
 
