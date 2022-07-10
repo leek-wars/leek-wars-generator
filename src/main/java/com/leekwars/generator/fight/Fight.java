@@ -533,6 +533,7 @@ public class Fight {
 			} else {
 				// Add 'crash' action if AI is invalid
 				log(new ActionAIError(current));
+				statistics.error(current);
 			}
 			current.endTurn();
 			actions.log(new ActionEndTurn(current));

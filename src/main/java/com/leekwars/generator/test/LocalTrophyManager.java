@@ -292,4 +292,10 @@ public class LocalTrophyManager implements StatisticsManager {
 		// TODO Auto-generated method stub
 
 	}
+
+	@Override
+	public void setWeapon(Entity entity, Weapon w) {
+		// TODO Auto-generated method stub
+
+	}
 }

@@ -374,6 +374,7 @@ public class EntityClass {
 		ai.getEntity().setWeapon(w);
 		ai.getEntity().useTP(1);
 		ai.getFight().log(new ActionSetWeapon(w));
+		ai.getFight().statistics.setWeapon(ai.getEntity(), w);
 		return true;
 	}
 

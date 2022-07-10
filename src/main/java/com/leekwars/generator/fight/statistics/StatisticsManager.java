@@ -65,4 +65,5 @@ public interface StatisticsManager {
 	public void antidote(Entity entity, Entity caster, int poisonsRemoved);
 	public void vitality(Entity entity, Entity caster, int vitality);
 	public void registerWrite(Entity entity, String key, String value);
+	public void setWeapon(Entity entity, Weapon w);
 }
