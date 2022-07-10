@@ -14,44 +14,44 @@ public class FightFunctions {
 	static {
 
 		method("getLife", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getForce", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getStrength", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getAgility", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getScience", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getWisdom", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getResistance", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
 		});
 		method("getMagic", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getCell", "Entity", 5, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
 		});
 		method("getWeapon", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
@@ -116,44 +116,44 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY),
 		});
 		method("getLaunchedEffects", "Entity", 25, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getPassiveEffects", "Entity", 125, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getLevel", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getFrequency", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getCores", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getTeamName", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getFarmerName", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getFarmerCountry", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getTeamID", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getFarmerID", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getAIName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
@@ -164,32 +164,32 @@ public class FightFunctions {
 			new CallableVersion(Type.INT),
 		});
 		method("getSummons", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ARRAY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getType", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("isSummon", "Entity", 10, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.BOOL),
 		});
 		method("getSummoner", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.INT),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("isStatic", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getBirthTurn", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.INT),
 		});
 		method("getEntityTurnOrder", "Entity", 30, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY })
 		});
 		method("getLeekID", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
@@ -202,71 +202,71 @@ public class FightFunctions {
 		method("useWeapon", "Weapon", 3000, true, Type.INT, new Type[] { Type.INT });
 		method("useWeaponOnCell", "Weapon", 3000, true, Type.INT, new Type[] { Type.INT });
 		method("getWeaponMinScope", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-			new CallableVersion(Type.INT, new Type[] { Type.INT })
 		}).setMaxVersion(3);
 		method("getWeaponMaxScope", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-			new CallableVersion(Type.INT, new Type[] { Type.INT })
 		}).setMaxVersion(3);
 		method("getWeaponMinRange", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-			new CallableVersion(Type.INT, new Type[] { Type.INT })
 		});
 		method("getWeaponMaxRange", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-			new CallableVersion(Type.INT, new Type[] { Type.INT })
 		});
 		method("getWeaponLaunchType", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.INT }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.INT })
 		});
 		method("getWeaponCost", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-			new CallableVersion(Type.INT, new Type[] { Type.INT })
 		});
 		method("getWeaponEffects", "Weapon", 125, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.INT }),
 			new CallableVersion(Type.ANY),
 		});
 		method("getWeaponPassiveEffects", "Weapon", 125, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.INT }),
 			new CallableVersion(Type.ANY),
-			new CallableVersion(Type.ANY, new Type[] { Type.INT })
 		});
 		method("getWeaponName", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.STRING, new Type[] { Type.INT }),
 			new CallableVersion(Type.STRING),
-			new CallableVersion(Type.STRING, new Type[] { Type.INT })
 		});
 		method("isInlineWeapon", "Weapon", 10, true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT }),
 			new CallableVersion(Type.BOOL),
-			new CallableVersion(Type.BOOL, new Type[] { Type.INT })
 		});
 		method("weaponNeedLos", "Weapon", 10, true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT }),
 			new CallableVersion(Type.BOOL),
-			new CallableVersion(Type.BOOL, new Type[] { Type.INT })
 		});
 		method("canUseWeapon", "Weapon", 45, true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.ANY }),
-			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY })
 		});
 		method("canUseWeaponOnCell", "Weapon", 45, true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.ANY }),
-			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY })
 		});
 		method("getWeaponTargets", "Weapon", 40, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY })
 		});
 		method("getWeaponFailure", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT })
 		});
 		method("isWeapon", "Weapon", 15, true, Type.BOOL, new Type[] { Type.INT });
 		method("getWeaponArea", "Weapon", 15, true, Type.ANY, new Type[] { Type.INT });
 		method("getWeaponEffectiveArea", "Weapon", 78, true, new CallableVersion[] {
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 		});
 		method("getAllWeapons", "Weapon", 200, true, Type.ARRAY, new Type[0]);
 
@@ -274,8 +274,8 @@ public class FightFunctions {
 		 * Chip
 		 */
 		method("getCurrentCooldown", "Chip", 30, true, new CallableVersion[] {
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 		}).setMaxVersion(3);
 		method("getCooldown", "Chip", 30, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
@@ -303,8 +303,8 @@ public class FightFunctions {
 		method("resurrect", "Chip", 500, true, Type.INT, new Type[] { Type.ANY, Type.ANY });
 		method("summon", "Chip", 1750, true, Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY });
 		method("getChipEffectiveArea", "Chip", 78, true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY })
 		});
 		method("getAllChips", "Chip", 200, true, Type.ARRAY, new Type[0]);
 
@@ -314,12 +314,12 @@ public class FightFunctions {
 		method("getDistance", "Field", 15, true, Type.REAL, new Type[] { Type.INT, Type.INT });
 		method("getCellDistance", "Field", 15, true, Type.INT, new Type[] { Type.INT, Type.INT });
 		method("getPathLength", "Field", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY })
 		});
 		method("getPath", "Field", true, new CallableVersion[] {
+			new CallableVersion(Type.ANY, new Type[] { Type.INT, Type.INT, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.INT, Type.INT }),
-			new CallableVersion(Type.ANY, new Type[] { Type.INT, Type.INT, Type.ANY })
 		});
 		method("getLeekOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT }).setMaxVersion(3);
 		method("getEntityOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT });
@@ -366,22 +366,22 @@ public class FightFunctions {
 		method("getNextPlayer", "Fight", 20, true, Type.ANY, new Type[0]);
 		method("getPreviousPlayer", "Fight", 20, true, Type.ANY, new Type[0]);
 		method("getCellToUseWeapon", "Fight", 38080, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
 		});
 		method("getCellToUseWeaponOnCell", "Fight", 38080, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
+			new CallableVersion(Type.INT, new Type[] { Type.ANY }),
 		});
 		method("getCellToUseChip", "Fight", 38080, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
 		});
 		method("getCellToUseChipOnCell", "Fight", 38080, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY })
 		});
 		method("getEnemiesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		method("getAlliesLife", "Fight", 50, true, Type.INT, new Type[0]);
@@ -398,8 +398,8 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
 		});
 		method("moveTowardEntities", "Fight", 500, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT })
 		});
 		method("moveTowardCells", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
@@ -418,12 +418,12 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
 		});
 		method("moveAwayFromLeeks", "Fight", 500, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT })
 		});
 		method("moveAwayFromEntities", "Fight", 500, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT })
 		});
 		method("moveAwayFromLine", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.INT }),
@@ -479,19 +479,19 @@ public class FightFunctions {
 		method("getTime", "Util", 50, true, Type.STRING, new Type[0]);
 		method("getTimestamp", "Util", 5, true, Type.INT, new Type[0]);
 		method("mark", "Util", 164, true, new CallableVersion[] {
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 		});
 		method("markText", "Util", 164, true,  new CallableVersion[] {
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
 		});
 		method("clearMarks", "Util", 15, true, Type.VOID, new Type[0]);
 		method("show", "Util", true, new CallableVersion[] {
-			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.ANY, new Type[] { Type.ANY }),
 		});
 		method("pause", "Util", 30, true, Type.VOID, new Type[0]);
 		method("getRegisters", "Util", 25, true, Type.ARRAY, new Type[0]);
@@ -500,27 +500,19 @@ public class FightFunctions {
 		method("deleteRegister", "Util", 16, true, Type.VOID, new Type[] { Type.STRING });
 	}
 
-	private static LeekFunctions method(String name, String clazz, Type return_type, Type[] arguments) {
-		return method(name, clazz, 0, false, return_type, arguments);
-	}
-	private static LeekFunctions method(String name, String clazz, boolean isStatic, Type return_type, Type[] arguments) {
-		return method(name, clazz, 0, isStatic, return_type, arguments);
-	}
 	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, Type return_type, Type[] arguments) {
 		return method(name, clazz, 0, isStatic, new CallableVersion[] { new CallableVersion(return_type, arguments) });
 	}
-	private static LeekFunctions method(String name, String clazz, CallableVersion[] versions) {
-		return method(name, clazz, 0, false, versions);
-	}
+
 	private static LeekFunctions method(String name, String clazz, boolean isStatic, CallableVersion[] versions) {
 		return method(name, clazz, 0, isStatic, versions);
 	}
+
 	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, CallableVersion[] versions) {
 		var function = new LeekFunctions(clazz, name, operations, isStatic, versions);
 		functions.put(name, function);
 		return function;
 	}
-
 
 	public String getNamespace() {
 		return "com.leekwars.generator.FightFunctions";

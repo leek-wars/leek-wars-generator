@@ -42,6 +42,25 @@ public class FightClass {
 		return nearest == null ? -1 : nearest.getFId();
 	}
 
+	public static long getFarestEnemy(EntityAI ai) throws LeekRunException {
+		if (ai.getEntity().getCell() == null)
+			return -1;
+		List<Entity> entities = ai.getFight().getEnemiesEntities(ai.getEntity().getTeam());
+
+		int dist = -1;
+		Entity farest = null;
+		for (Entity l : entities) {
+			if (l.isDead() || l.getCell() == null)
+				continue;
+			int d = Pathfinding.getDistance2(ai.getEntity().getCell(), l.getCell());
+			if (d > dist || dist == -1) {
+				dist = d;
+				farest = l;
+			}
+		}
+		return farest == null ? -1 : farest.getFId();
+	}
+
 	public static long getFarthestEnemy(EntityAI ai) throws LeekRunException {
 		if (ai.getEntity().getCell() == null)
 			return -1;
@@ -172,7 +191,7 @@ public class FightClass {
 	public static Object getAlliedTurret(EntityAI ai) {
 		if (ai.getFight().getType() == Fight.TYPE_TEAM) {
 			for (Entity e : ai.getFight().getTeamEntities(ai.getEntity().getTeam(), true)) {
-				if (e.getType() == Entity.TYPE_TURRET) return e.getFId();
+				if (e.getType() == Entity.TYPE_TURRET) return (long) e.getFId();
 			}
 		}
 		return null;
@@ -181,7 +200,7 @@ public class FightClass {
 	public static Object getEnemyTurret(EntityAI ai) {
 		if (ai.getFight().getType() == Fight.TYPE_TEAM) {
 			for (Entity e : ai.getFight().getEnemiesEntities(ai.getEntity().getTeam(), true)) {
-				if (e.getType() == Entity.TYPE_TURRET) return e.getFId();
+				if (e.getType() == Entity.TYPE_TURRET) return (long) e.getFId();
 			}
 		}
 		return null;
@@ -203,6 +222,23 @@ public class FightClass {
 			}
 		}
 		return nearest == null ? -1 : nearest.getFId();
+	}
+
+	public static long getFarestAlly(EntityAI ai) throws LeekRunException {
+		if (ai.getEntity().getCell() == null) return -1;
+		List<Entity> entities = ai.getFight().getTeamEntities(ai.getEntity().getTeam());
+		int dist = -1;
+		Entity farest = null;
+		for (Entity l : entities) {
+			if (l.isDead() || l == ai.getEntity() || l.getCell() == null)
+				continue;
+			int d = Pathfinding.getDistance2(ai.getEntity().getCell(), l.getCell());
+			if (d > dist || dist == -1) {
+				dist = d;
+				farest = l;
+			}
+		}
+		return farest == null ? -1 : farest.getFId();
 	}
 
 	public static long getFarthestAlly(EntityAI ai) throws LeekRunException {

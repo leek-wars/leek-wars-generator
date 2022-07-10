@@ -454,7 +454,7 @@ public class EntityClass {
 		return retour;
 	}
 
-	public static LegacyArrayLeekValue getWeapons_v1_3(EntityAI ai, Object value) throws LeekRunException {
+	public static GenericArrayLeekValue getWeapons(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null)
 			l = ai.getEntity();
@@ -462,22 +462,7 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
-		var retour = new LegacyArrayLeekValue();
-		for (var weapon : l.getWeapons()) {
-			retour.push(ai, (long) weapon.getId());
-		}
-		return retour;
-	}
-
-	public static ArrayLeekValue getWeapons(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null)
-			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
-		if (l == null)
-			return null;
-		var retour = new ArrayLeekValue(ai);
+		var retour = ai.newArray();
 		for (var weapon : l.getWeapons()) {
 			retour.push(ai, (long) weapon.getId());
 		}
@@ -619,6 +604,24 @@ public class EntityClass {
 		var retour = ai.newArray(l.getLaunchedEffects().size());
 		for (var effect : l.getLaunchedEffects()) {
 			retour.pushNoClone(ai, effect.getLeekValue(ai));
+		}
+		return retour;
+	}
+
+	public static LegacyArrayLeekValue getPassiveEffects_v1_3(EntityAI ai) throws LeekRunException {
+		Entity l = ai.getEntity();
+		var retour = new LegacyArrayLeekValue();
+		for (var feature : l.getPassiveEffects()) {
+			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+		}
+		return retour;
+	}
+
+	public static ArrayLeekValue getPassiveEffects(EntityAI ai) throws LeekRunException {
+		Entity l = ai.getEntity();
+		var retour = new ArrayLeekValue(ai, l.getPassiveEffects().size());
+		for (var feature : l.getPassiveEffects()) {
+			retour.pushNoClone(ai, feature.getFeatureArray(ai));
 		}
 		return retour;
 	}

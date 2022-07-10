@@ -50,8 +50,8 @@ public class EffectParameters {
 	public GenericArrayLeekValue getFeatureArray(AI ai) throws LeekRunException {
 		var effect = ai.newArray();
 		effect.push(ai, (long) this.getId());
-		effect.push(ai, (long) this.getValue1());
-		effect.push(ai, (long) this.getValue1() + this.getValue2());
+		effect.push(ai, this.getValue1());
+		effect.push(ai, this.getValue1() + this.getValue2());
 		effect.push(ai, (long) this.getTurns());
 		effect.push(ai, (long) this.getTargets());
 		effect.push(ai, (long) this.getModifiers());

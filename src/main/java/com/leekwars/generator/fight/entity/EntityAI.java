@@ -51,6 +51,14 @@ public class EntityAI extends AI {
 		public Object getMessage() {
 			return mMessage;
 		}
+
+		public GenericArrayLeekValue getArray(EntityAI ai) throws LeekRunException {
+			var m = ai.newArray();
+			m.push(ai, (long) mAuthor);
+			m.push(ai, (long) mType);
+			m.pushNoClone(ai, LeekOperations.clone(ai, mMessage));
+			return m;
+		}
 	}
 
 	// Un IARunner => égale plus ou moins à une fonction, une partie de code

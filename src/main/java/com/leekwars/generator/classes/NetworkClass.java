@@ -4,14 +4,13 @@ import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.fight.entity.EntityAI.LeekMessage;
 
-import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.GenericArrayLeekValue;
 
 public class NetworkClass {
 
 	public static boolean sendTo(EntityAI ai, long target, long type, Object message) {
-		if (target == ai.getEntity().getId()) {
+		if (target == ai.getEntity().getFId()) {
 			return false;
 		}
 		Entity l = ai.getFight().getEntity(target);
@@ -25,7 +24,7 @@ public class NetworkClass {
 
 	public static Object sendAll(EntityAI ai, long type, Object message) {
 		for (Entity l : ai.getFight().getTeamEntities(ai.getEntity().getTeam())) {
-			if (l.getId() == ai.getEntity().getId())
+			if (l.getFId() == ai.getEntity().getFId())
 				continue;
 			if (l.getAI() != null)
 				l.getAI().addMessage(new LeekMessage(ai.getEntity().getFId(), type, message));
@@ -34,7 +33,7 @@ public class NetworkClass {
 	}
 
 	public static GenericArrayLeekValue getMessages(EntityAI ai) throws LeekRunException {
-		return getMessages(ai, ai.getEntity().getId());
+		return getMessages(ai, ai.getEntity().getFId());
 	}
 
 	public static GenericArrayLeekValue getMessages(EntityAI ai, long target_leek) throws LeekRunException {
@@ -60,11 +59,7 @@ public class NetworkClass {
 			ai.ops(lia.getMessages().size() * 100);
 
 			for (var message : lia.getMessages()) {
-				var m = ai.newArray();
-				m.push(ai, message.getAuthor());
-				m.push(ai, message.getType());
-				m.pushNoClone(ai, LeekOperations.clone(ai, message.getMessage()));
-				messages.push(ai, m);
+				messages.push(ai, message.getArray(ai));
 			}
 		}
 		return messages;
