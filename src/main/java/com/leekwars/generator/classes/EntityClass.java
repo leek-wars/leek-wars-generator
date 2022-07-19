@@ -18,6 +18,8 @@ import leekscript.runner.values.LegacyArrayLeekValue;
 
 public class EntityClass {
 
+	private static final int SAY_LENGTH_LIMIT = 100;
+
 	public static long getLife(EntityAI ai) {
 		return (long) ai.getEntity().getLife();
 	}
@@ -387,8 +389,8 @@ public class EntityClass {
 			return false;
 		}
 		ai.getEntity().saysTurn++;
-		if (message.length() > 200) {
-			message = message.substring(0, 200);
+		if (message.length() > SAY_LENGTH_LIMIT) {
+			message = message.substring(0, SAY_LENGTH_LIMIT);
 		}
 		message = Censorship.checkString(ai.getFight(), message);
 		ai.getFight().log(new ActionSay(message));
