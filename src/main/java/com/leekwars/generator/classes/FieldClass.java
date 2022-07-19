@@ -231,6 +231,21 @@ public class FieldClass {
 			}
 			return Pathfinding.verifyLoS(s, e, null, cells);
 
+		} else if (ignore instanceof ArrayLeekValue) {
+
+			List<Cell> cells = new ArrayList<Cell>();
+			if (ai.getEntity().getCell() != null)
+				cells.add(ai.getEntity().getCell());
+			for (var value : (ArrayLeekValue) ignore) {
+				if (value instanceof Number) {
+					Entity l = ai.getFight().getEntity(ai.integer(value));
+					if (l != null && l.getCell() != null) {
+						cells.add(l.getCell());
+					}
+				}
+			}
+			return Pathfinding.verifyLoS(s, e, null, cells);
+
 		} else {
 
 			List<Cell> cells = new ArrayList<Cell>();
