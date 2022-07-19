@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 public class Data {
@@ -39,14 +40,9 @@ public class Data {
 		JSONObject summons = JSON.parseObject(get(api + "summon/get-templates", "")).getJSONObject("summon_templates");
 		Util.writeFile(summons.toJSONString(), "data/summons.json");
 
-		// File functionsFile = new File("data/functions.json");
-		Log.i(TAG, "Load functions from API...");
-		JSONObject functions = JSON.parseObject(get(api + "function/operations", ""));
-		Util.writeFile(functions.toJSONString(), "data/functions.json");
-
 		// File fullmoonFile = new File("data/fullmoon.json");
 		Log.i(TAG, "Load fullmoon from API...");
-		var f = JSON.parseArray(get(api + "fight/fullmoon", ""));
+		JSONArray f = JSON.parseArray(get(api + "fight/fullmoon", ""));
 		for (var d : f) {
 			var dateUTC = ZonedDateTime.of(LocalDateTime.parse((String) d), ZoneOffset.UTC);
 			var dateLocal = dateUTC.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate();
