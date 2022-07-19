@@ -80,6 +80,9 @@ public class WeaponClass {
 	}
 
 	// Deprecated : always 0
+	public static long getWeaponFailure(EntityAI ai) {
+		return 0l;
+	}
 	public static long getWeaponFailure(EntityAI ai, long id) {
 		return 0l;
 	}
