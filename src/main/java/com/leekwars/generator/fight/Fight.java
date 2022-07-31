@@ -469,6 +469,11 @@ public class Fight {
 			this.order.addEntity(e);
 			actions.addEntity(e, false);
 			initialOrder.add(e);
+
+			// Coffre ?
+			if (e.getType() == Entity.TYPE_CHEST) {
+				statistics.chest();
+			}
 		}
 
 		// On ajoute la map
@@ -552,7 +557,7 @@ public class Fight {
 		if (entity.getType() == Entity.TYPE_CHEST && this.context != Fight.CONTEXT_CHALLENGE) {
 			var resources = entity.loot(this);
 			actions.log(new ActionChestOpened(killer, entity, resources));
-			statistics.chest(killer, entity, resources);
+			statistics.chestKilled(killer, entity, resources);
 
 			int amount = entity.getLevel() == 100 ? 10 : (entity.getLevel() == 200 ? 50 : 100);
 			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, killer, killer, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
@@ -569,6 +574,11 @@ public class Fight {
 		// Passive effect kill
 		if (killer != null) {
 			killer.onKill();
+		}
+
+		// Chest kill
+		if (killer != null && killer.getType() == Entity.TYPE_CHEST) {
+			statistics.chestKill();
 		}
 	}
 

@@ -290,24 +290,43 @@ public class LocalTrophyManager implements StatisticsManager {
 	@Override
 	public void registerWrite(Entity entity, String key, String value) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void setWeapon(Entity entity, Weapon w) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
-	public void chest(Entity killer, Entity entity, Map<Integer, Integer> resources) {
-		// TODO Auto-generated method stub
+	public void chest() {
+	}
 
+	@Override
+	public void chestKilled(Entity killer, Entity entity, Map<Integer, Integer> resources) {
+		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public Map<Integer, Map<Integer, Integer>> getLeekResources() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public long getChests() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long getChestsKills() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void chestKill() {
+		// TODO Auto-generated method stub
+
 	}
 }
