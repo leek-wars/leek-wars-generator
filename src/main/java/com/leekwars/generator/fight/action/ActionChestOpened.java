@@ -1,6 +1,5 @@
 package com.leekwars.generator.fight.action;
 
-import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONArray;
