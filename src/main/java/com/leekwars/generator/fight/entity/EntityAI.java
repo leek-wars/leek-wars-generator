@@ -296,6 +296,8 @@ public class EntityAI extends AI {
 
 				if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
 					fight.statistics.tooMuchOperations(mEntity);
+				} else if (e.getError() == Error.OUT_OF_MEMORY) {
+					valid = false; // Si plus de RAM, IA désactivée pour tout le combat
 				}
 				// Pas de rethrow
 			}
