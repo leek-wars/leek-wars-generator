@@ -900,6 +900,7 @@ public abstract class Entity {
 	public void setLife(int life) {
 		mBaseStats.setStat(CHARAC_LIFE, life);
 		mTotalLife = life;
+		mInitialLife = life;
 		this.life = life;
 	}
 	public void setStrength(int strength) {
