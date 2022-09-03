@@ -149,7 +149,7 @@ public class EntityAI extends AI {
 			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
 				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
 			} else {
-				generator.exception(e, entity.fight, file.getId());
+				generator.exception(e, entity.fight, entity.getFarmer(), file.getId(), file.getVersion());
 				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			}
 			return new EntityAI(entity, entity.getLogs());
@@ -161,7 +161,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) {
 			// Other error : server error
-			generator.exception(e, entity.fight, file.getId());
+			generator.exception(e, entity.fight, entity.mFarmer, file.getId(), file.getVersion());
 			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			return new EntityAI(entity, entity.getLogs());
 		}
@@ -310,7 +310,7 @@ public class EntityAI extends AI {
 			valid = false;
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Out Of Memory" }, e.getStackTrace());
 			System.out.println("Out Of Memory , Fight : " + fight.getId());
-			fight.generator.exception(e, fight, id);
+			fight.generator.exception(e, fight, mEntity.getFarmer(), id, version);
 			throw e; // On rethrow tel quel
 
 		} catch (RuntimeException e) { // Autre erreur, là c'est pas l'utilisateur
@@ -322,12 +322,12 @@ public class EntityAI extends AI {
 			e.printStackTrace(System.out);
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
 			if (isFirstRuntimeError) {
-				fight.generator.exception(e, fight, id);
+				fight.generator.exception(e, fight, mEntity.getFarmer(), id, version);
 				isFirstRuntimeError = false;
 			}
 			// throw e; // On rethrow tel quel
 
-		} catch (Exception e) { // Autre erreur, là c'est pas l'utilisateur
+		} catch (Throwable e) { // Autre erreur, là c'est pas l'utilisateur
 
 			e.printStackTrace(System.out);
 			fight.statistics.error(mEntity);
@@ -335,7 +335,7 @@ public class EntityAI extends AI {
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
 			e.printStackTrace();
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
-			fight.generator.exception(e, fight, id);
+			fight.generator.exception(e, fight, mEntity.getFarmer(), id, version);
 			throw new RuntimeException("Erreur importante dans l'IA " + id + "  " + e.getMessage(), e);
 		}
 

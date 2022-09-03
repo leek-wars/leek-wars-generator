@@ -42,7 +42,7 @@ public interface StatisticsManager {
 	public int getBullets();
 	public long getUsedChips();
 	public long getSummons();
-	public long getDamage();
+	public long getDirectDamage();
 	public long getHeal();
 	public long getDistance();
 	public long getStackOverflow();

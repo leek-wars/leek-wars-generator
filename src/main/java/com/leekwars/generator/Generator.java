@@ -301,9 +301,9 @@ public class Generator {
 			errorManager.exception(e, fight.getId());
 		}
 	}
-	public void exception(Throwable e, Fight fight, int aiID) {
+	public void exception(Throwable e, Fight fight, int farmer, int aiID, int aiVersion) {
 		if (errorManager != null) {
-			errorManager.exception(e, fight.getId(), aiID);
+			errorManager.exception(e, fight.getId(), farmer, aiID, aiVersion);
 		}
 	}
 }

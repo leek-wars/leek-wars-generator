@@ -138,7 +138,7 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public long getDamage() {
+	public long getDirectDamage() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
