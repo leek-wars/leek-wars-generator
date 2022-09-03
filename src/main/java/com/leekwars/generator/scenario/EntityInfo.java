@@ -54,6 +54,8 @@ public class EntityInfo {
 	public boolean static_;
 	public int skin;
 	public int hat;
+	public boolean metal;
+	public int face;
 	public Class<?> customClass;
 
 	public EntityInfo() {
@@ -133,6 +135,8 @@ public class EntityInfo {
 		}
 		entity.setSkin(skin);
 		entity.setHat(hat);
+		entity.setMetal(metal);
+		entity.setFace(face);
 
 		for (Object w : weapons) {
 			Weapon weapon = Weapons.getWeapon((Integer) w);

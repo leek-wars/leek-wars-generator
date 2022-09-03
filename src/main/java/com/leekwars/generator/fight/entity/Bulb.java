@@ -13,7 +13,7 @@ public class Bulb extends Entity {
 	protected Entity mOwner;
 
 	public Bulb(Entity owner, FunctionLeekValue ai, Integer id, String name, int level, int life, int strength, int wisdom, int agility, int resistance, int science, int magic, int tp, int mp, int skin, int hat) {
-		super(id, name, owner.getFarmer(), level, life, tp, mp, strength, agility, 0, wisdom, resistance, science, magic, skin, owner.getTeamId(), owner.getTeamName(), owner.getAI().getId(), owner.getAIName(), owner.getFarmerName(), owner.getFarmerCountry(), hat);
+		super(id, name, owner.getFarmer(), level, life, tp, mp, strength, agility, 0, wisdom, resistance, science, magic, skin, false, 0, owner.getTeamId(), owner.getTeamName(), owner.getAI().getId(), owner.getAIName(), owner.getFarmerName(), owner.getFarmerCountry(), hat);
 
 		mOwner = owner;
 		fight = mOwner.fight;

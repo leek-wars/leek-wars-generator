@@ -76,6 +76,8 @@ public class Actions {
 		object.put("level", entity.getLevel());
 		object.put("skin", entity.getSkin());
 		object.put("hat", (entity.getHat() > 0) ? entity.getHat() : null);
+		object.put("metal", entity.getMetal());
+		object.put("face", entity.getFace());
 
 		object.put("life", entity.getLife());
 		object.put("strength", entity.getStat(Entity.CHARAC_STRENGTH));

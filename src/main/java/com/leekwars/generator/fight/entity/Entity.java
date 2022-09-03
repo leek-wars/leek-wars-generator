@@ -67,6 +67,8 @@ public abstract class Entity {
 	protected int mLevel;
 	protected int mSkin;
 	protected int mHat;
+	protected boolean mMetal;
+	protected int mFace;
 	protected String mFarmerName = "";
 	protected String mFarmerCountry;
 	protected String mTeamName = "";
@@ -118,7 +120,7 @@ public abstract class Entity {
 		this(0, "");
 	}
 
-	public Entity(Integer id, String name, int farmer, int level, int life, int turn_point, int move_point, int force, int agility, int frequency, int wisdom, int resistance, int science, int magic, int skin, int team_id, String team_name, int ai_id, String ai_name, String farmer_name, String farmer_country, int hat) {
+	public Entity(Integer id, String name, int farmer, int level, int life, int turn_point, int move_point, int force, int agility, int frequency, int wisdom, int resistance, int science, int magic, int skin, boolean metal, int face, int team_id, String team_name, int ai_id, String ai_name, String farmer_name, String farmer_country, int hat) {
 
 		mId = id;
 		this.name = name;
@@ -126,6 +128,8 @@ public abstract class Entity {
 		mFarmer = farmer;
 		mSkin = skin;
 		mHat = hat;
+		mMetal = metal;
+		mFace = face;
 
 		mBuffStats = new Stats();
 		mBaseStats = new Stats();
@@ -844,6 +848,14 @@ public abstract class Entity {
 		return mSkin;
 	}
 
+	public boolean getMetal() {
+		return mMetal;
+	}
+
+	public int getFace() {
+		return mFace;
+	}
+
 	public List<Effect> getEffects() {
 		return effects;
 	}
@@ -952,14 +964,25 @@ public abstract class Entity {
 	public void setStatic(boolean isStatic) {
 		this.mStatic = isStatic;
 	}
+
 	public boolean isStatic() {
 		return mStatic;
 	}
+
 	public void setSkin(int skin) {
 		mSkin = skin;
 	}
+
 	public void setHat(int hat) {
 		mHat = hat;
+	}
+
+	public void setMetal(boolean metal) {
+		mMetal = metal;
+	}
+
+	public void setFace(int face) {
+		mFace = face;
 	}
 
 	public List<Entity> getSummons(boolean get_dead) {

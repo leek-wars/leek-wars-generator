@@ -30,8 +30,8 @@ public class TestLeekFunctions {
 		generator = new Generator();
 		mFight = new Fight(generator);
 
-		mLeek1 = new Leek(1, "Test", 0, 10, 500, 6, 7, 150, 151, 10, 56, 9, 0, 0, 0, 0, "Noname", 0, "", "", "", 0);
-		mLeek2 = new Leek(2, "Bob", 0, 10, 510, 4, 6, 152, 154, 11, 46, 8, 0, 0, 0, 0, "Noname", 0, "", "", "", 0);
+		mLeek1 = new Leek(1, "Test", 0, 10, 500, 6, 7, 150, 151, 10, 56, 9, 0, 0, 0, false, 0, 0, "Noname", 0, "", "", "", 0);
+		mLeek2 = new Leek(2, "Bob", 0, 10, 510, 4, 6, 152, 154, 11, 46, 8, 0, 0, 0, false, 0, 0, "Noname", 0, "", "", "", 0);
 
 		mFight.addEntity(0, mLeek1);
 		mFight.addEntity(1, mLeek2);
