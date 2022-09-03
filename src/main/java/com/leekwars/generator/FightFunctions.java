@@ -94,7 +94,7 @@ public class FightFunctions {
 			new CallableVersion(Type.INT),
 		});
 		method("setWeapon", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
-		method("say", "Entity", 30, true, Type.BOOL, new Type[] { Type.STRING });
+		method("say", "Entity", 30, true, Type.BOOL, new Type[] { Type.ANY });
 		method("lama", "Entity", 30, true, Type.VOID, new Type[0]);
 		method("listen", "Entity", 78, true, Type.ARRAY, new Type[0]);
 		method("getWeapons", "Entity", 50, true, new CallableVersion[] {

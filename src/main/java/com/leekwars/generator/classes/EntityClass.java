@@ -380,7 +380,7 @@ public class EntityClass {
 		return true;
 	}
 
-	public static boolean say(EntityAI ai, String message) {
+	public static boolean say(EntityAI ai, Object messageObject) throws LeekRunException {
 		if (ai.getEntity().getTP() < 1) {
 			return false;
 		}
@@ -388,6 +388,7 @@ public class EntityClass {
 		if (ai.getEntity().saysTurn >= Entity.SAY_LIMIT_TURN) {
 			return false;
 		}
+		String message = ai.string(messageObject);
 		ai.getEntity().saysTurn++;
 		if (message.length() > SAY_LENGTH_LIMIT) {
 			message = message.substring(0, SAY_LENGTH_LIMIT);
