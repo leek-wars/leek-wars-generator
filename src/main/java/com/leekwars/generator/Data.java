@@ -72,7 +72,9 @@ public class Data {
 
 	public static boolean isFullMoon() {
 		var today = LocalDate.now();
+		// System.out.println("f = " + fullmoon);
 		for (var d : fullmoon) {
+			// System.out.println("d = " + d);
 			if (d.equals(today)) return true;
 		}
 		return false;
