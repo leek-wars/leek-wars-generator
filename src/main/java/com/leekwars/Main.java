@@ -1,20 +1,20 @@
 package com.leekwars;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.Scenario;
+import com.leekwars.generator.test.LocalDbFileSystem;
 import com.leekwars.generator.test.LocalDbRegisterManager;
-import com.leekwars.generator.test.LocalDbResolver;
 import com.leekwars.generator.test.LocalTrophyManager;
 
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
-import leekscript.compiler.resolver.FileSystemContext;
-import leekscript.compiler.resolver.FileSystemResolver;
+import leekscript.compiler.resolver.NativeFileSystem;
 
 public class Main {
 
@@ -56,16 +56,20 @@ public class Main {
 
 		// Data.checkData("https://leekwars.com/api/");
 		if (db_resolver) {
-			LeekScript.setResolver(new LocalDbResolver());
+			LeekScript.setFileSystem(new LocalDbFileSystem());
 		} else {
-			LeekScript.setResolver(new FileSystemResolver());
+			LeekScript.setFileSystem(new NativeFileSystem());
 		}
 		Generator generator = new Generator();
 		generator.setCache(!nocache);
 		if (analyze) {
-			AnalyzeResult result = generator.analyzeAI(file, new FileSystemContext(new File(".")));
-			// AnalyzeResult result = generator.analyzeAI(file, new DbContext(farmer, folder));
-			System.out.println(result.informations);
+			try {
+				var ai = LeekScript.getFileSystem().getRoot().resolve(file);
+				AnalyzeResult result = generator.analyzeAI(ai);
+				System.out.println(result.informations);
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "File not found!");
+			}
 		} else {
 			Scenario scenario = Scenario.fromFile(new File(file));
 			if (scenario == null) {

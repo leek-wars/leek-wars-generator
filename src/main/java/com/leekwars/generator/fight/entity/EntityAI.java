@@ -94,7 +94,7 @@ public class EntityAI extends AI {
 		this.logs = logs;
 	}
 
-	public static AIFile<?> resolve(Generator generator, EntityInfo entityInfo, Entity entity) {
+	public static AIFile resolve(Generator generator, EntityInfo entityInfo, Entity entity) {
 
 		// No AI equipped : user error
 		if (entityInfo.ai == null && entityInfo.ai_path == null) {
@@ -103,14 +103,15 @@ public class EntityAI extends AI {
 		}
 
 		// Resolve first
-		AIFile<?> file = null;
+		AIFile file = null;
 		try {
 			if (entityInfo.ai_path != null) {
-				file = LeekScript.getFileSystemResolver().resolve(entityInfo.ai_path, null);
+				file = LeekScript.getNativeFileSystem().getRoot().resolve(entityInfo.ai_path);
 				file.setVersion(entityInfo.ai_version);
 			} else {
-				var context = LeekScript.getResolver().createContext(entityInfo.farmer, entityInfo.aiOwner, entityInfo.ai_folder);
-				file = LeekScript.getResolver().resolve(entityInfo.ai, context);
+				// Accès au dossier ?
+				var folder = LeekScript.getFileSystem().getFolderById(entityInfo.ai_folder, entityInfo.aiOwner);
+				file = folder.resolve(entityInfo.ai);
 			}
 		} catch (FileNotFoundException e) {
 			// Failed to resolve, not normal
@@ -124,7 +125,7 @@ public class EntityAI extends AI {
 	 * Build an entity AI from parameters
 	 * Add the correct errors in farmer logs
 	 */
-	public static EntityAI build(Generator generator, AIFile<?> file, Entity entity) {
+	public static EntityAI build(Generator generator, AIFile file, Entity entity) {
 
 		if (file == null) {
 			return new EntityAI(entity, entity.getLogs());

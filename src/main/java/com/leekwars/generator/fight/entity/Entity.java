@@ -98,7 +98,7 @@ public abstract class Entity {
 	protected int team;
 
 	protected Fight fight;
-	protected AIFile<?> aiFile;
+	protected AIFile aiFile;
 	private LeekLog logs;
 	protected EntityAI mEntityAI;
 
@@ -269,10 +269,10 @@ public abstract class Entity {
 		mHasMoved = moved;
 	}
 
-	public void setAIFile(AIFile<?> file) {
+	public void setAIFile(AIFile file) {
 		this.aiFile = file;
 	}
-	public AIFile<?> getAIFile() {
+	public AIFile getAIFile() {
 		return this.aiFile;
 	}
 

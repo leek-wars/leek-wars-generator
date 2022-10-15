@@ -33,8 +33,6 @@ import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.exceptions.LeekCompilerException;
-import leekscript.compiler.resolver.FileSystemContext;
-import leekscript.compiler.resolver.ResolverContext;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
@@ -66,11 +64,9 @@ public class Generator {
 	 * @return a object representing the analysis results: success or list of
 	 *         errors.
 	 */
-	public AnalyzeResult analyzeAI(String file, ResolverContext context) {
-		Log.i(TAG, "Analyze AI " + file + "...");
-		AIFile<?> ai = null;
+	public AnalyzeResult analyzeAI(AIFile ai) {
+		Log.i(TAG, "Analyze AI " + ai + "..." + ai.hashCode());
 		try {
-			ai = context instanceof FileSystemContext ? LeekScript.getFileSystemResolver().resolve(file, context) : LeekScript.getResolver().resolve(file, context);
 			long t = System.currentTimeMillis();
 			AnalyzeResult result = new IACompiler().analyze(ai);
 			long time = System.currentTimeMillis() - t;
@@ -79,7 +75,7 @@ public class Generator {
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
-			Log.e(TAG, "AI " + file + " not compiled");
+			Log.e(TAG, "AI " + ai + " not compiled");
 			if (e.getMessage() != null) {
 				Log.e(TAG, e.getMessage());
 			}
@@ -100,19 +96,6 @@ public class Generator {
 			result.informations.add(error);
 			return result;
 		}
-	}
-
-	public boolean isLoaded(int ai_id) {
-		return LeekScript.isLoaded(ai_id);
-	}
-
-	public Hover hoverAI(int ai_id, int line, int column) {
-		try {
-			return LeekScript.hover(ai_id, line, column);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	/**
@@ -256,6 +239,7 @@ public class Generator {
 	/**
 	 * Compile an AI task (debug purposes)
 	 */
+	/*
 	public String compileAI(String file, ResolverContext context) {
 		Log.i(TAG, "Compile AI " + file + "...");
 		try {
@@ -275,11 +259,12 @@ public class Generator {
 			return e.getMessage();
 		}
 	}
+	*/
 
-	public String downloadAI(String file, ResolverContext context) {
-		Log.i(TAG, "Download AI " + file + "...");
+	public String downloadAI(AIFile ai) {
+		Log.i(TAG, "Download AI " + ai + "...");
 		try {
-			return LeekScript.mergeFile(file, context);
+			return LeekScript.mergeFile(ai);
 		} catch (Exception e) {
 			System.out.println("Exception " + e.getMessage());
 			e.printStackTrace(System.out);
@@ -301,9 +286,9 @@ public class Generator {
 			errorManager.exception(e, fight.getId());
 		}
 	}
-	public void exception(Throwable e, Fight fight, int farmer, int aiID, int aiVersion) {
+	public void exception(Throwable e, Fight fight, int farmer, AIFile file) {
 		if (errorManager != null) {
-			errorManager.exception(e, fight.getId(), farmer, aiID, aiVersion);
+			errorManager.exception(e, fight.getId(), farmer, file);
 		}
 	}
 }
