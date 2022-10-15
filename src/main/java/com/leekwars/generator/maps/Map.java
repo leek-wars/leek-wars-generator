@@ -286,13 +286,13 @@ public class Map {
 		// Cellule à distance éguale des deux équipes
 		var possible = new ArrayList<Cell>();
 		for (var cell : cells) {
-			if (cell.isWalkable() && Math.abs(getDistanceWithTeam(fight, 0, cell) - getDistanceWithTeam(fight, 1, cell)) < 2) {
+			if (cell.available() && Math.abs(getDistanceWithTeam(fight, 0, cell) - getDistanceWithTeam(fight, 1, cell)) < 2) {
 				possible.add(cell);
 			}
 		}
-		Collections.shuffle(possible);
 		if (possible.size() > 0) {
-			return possible.get(0);
+			int i = fight.getRandom().getInt(0, possible.size() - 1);
+			return possible.get(i);
 		}
 		return getRandomCell(fight);
 	}
