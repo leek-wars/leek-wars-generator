@@ -37,11 +37,14 @@ import com.leekwars.generator.fight.entity.Bulb;
 import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.fight.statistics.StatisticsManager;
+import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
+import leekscript.common.Error;
 
 import leekscript.compiler.RandomGenerator;
 import leekscript.runner.values.FunctionLeekValue;
@@ -683,7 +686,10 @@ public class Fight {
 			statistics.useInvalidPosition(caster, template.getAttack(), target);
 			return Attack.USE_INVALID_POSITION;
 		}
+		// Invocation mais sans IA
 		if (template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON) != null) {
+			caster.getAI().addSystemLog(LeekLog.WARNING, FarmerLog.BULB_WITHOUT_AI);
+			caster.getAI().addSystemLog(LeekLog.STANDARD, Error.HELP_PAGE_LINK, new String[] { "summons" });
 			return summonEntity(caster, target, template, null);
 		}
 

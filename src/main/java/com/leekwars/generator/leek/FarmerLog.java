@@ -35,6 +35,7 @@ public class FarmerLog extends AILog {
 	public static final int CHIP_NOT_EXISTS = 1002;
 	public static final int WEAPON_NOT_EXISTS = 1003;
 	public static final int WEAPON_NOT_EQUIPPED = 1004;
+	public static final int BULB_WITHOUT_AI = 1005;
 
 	private boolean tooMuchDebug = false;
 

@@ -82,14 +82,14 @@ public class EntityAI extends AI {
 	protected final List<String> mSays = new ArrayList<String>();
 
 	protected boolean valid = false;
-	private boolean isFirstRuntimeError = false;
+	private boolean isFirstRuntimeError = true;
 
 	public EntityAI(int instructions, int version) {
 		super(instructions, version);
 	}
 
 	public EntityAI(Entity entity, LeekLog logs) {
-		super(0, 11);
+		super(0, LeekScript.LATEST_VERSION);
 		setEntity(entity);
 		this.logs = logs;
 	}
@@ -149,7 +149,7 @@ public class EntityAI extends AI {
 			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
 				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
 			} else {
-				generator.exception(e, entity.fight, entity.getFarmer(), file.getId(), file.getVersion());
+				generator.exception(e, entity.fight, entity.getFarmer(), file);
 				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			}
 			return new EntityAI(entity, entity.getLogs());
@@ -161,7 +161,7 @@ public class EntityAI extends AI {
 
 		} catch (Exception e) {
 			// Other error : server error
-			generator.exception(e, entity.fight, entity.mFarmer, file.getId(), file.getVersion());
+			generator.exception(e, entity.fight, entity.mFarmer, file);
 			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
 			return new EntityAI(entity, entity.getLogs());
 		}
@@ -187,6 +187,10 @@ public class EntityAI extends AI {
 
 	public void addSystemLog(int type, Error error, String[] parameters) {
 		addSystemLog(type, error.ordinal(), parameters, Thread.currentThread().getStackTrace());
+	}
+
+	public void addSystemLog(int type, int error) {
+		addSystemLog(type, error, new String[0], Thread.currentThread().getStackTrace());
 	}
 
 	public void addSystemLog(int type, int error, String[] parameters) {
@@ -285,22 +289,7 @@ public class EntityAI extends AI {
 
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
 
-			if (e.getError() == Error.ENTITY_DIED) {
-				// OK, c'est normal
-			} else {
-
-				// e.printStackTrace(System.out);
-				fight.log(new ActionAIError(mEntity));
-				addSystemLog(LeekLog.ERROR, e.getError(), new String[] { e.getMessage() }, e.getStackTrace());
-				fight.statistics.error(mEntity);
-
-				if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
-					fight.statistics.tooMuchOperations(mEntity);
-				} else if (e.getError() == Error.OUT_OF_MEMORY) {
-					valid = false; // Si plus de RAM, IA désactivée pour tout le combat
-				}
-				// Pas de rethrow
-			}
+			handleLeekRunException(e);
 
 		} catch (OutOfMemoryError e) { // Plus de RAM, Erreur critique, on tente de sauver les meubles
 
@@ -310,19 +299,37 @@ public class EntityAI extends AI {
 			valid = false;
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Out Of Memory" }, e.getStackTrace());
 			System.out.println("Out Of Memory , Fight : " + fight.getId());
-			fight.generator.exception(e, fight, mEntity.getFarmer(), id, version);
+			fight.generator.exception(e, fight, mEntity.getFarmer(), getFile());
 			throw e; // On rethrow tel quel
 
 		} catch (RuntimeException e) { // Autre erreur, là c'est pas l'utilisateur
 
+			// On regarde la cause si c'est pas une LeekRunException imbriquée
+			// Exemple arraySort() relance une Runtime qui peut contenir une LeekRun
+			if (e.getCause() instanceof LeekRunException) {
+				handleLeekRunException((LeekRunException) e.getCause());
+				return;
+			}
+
+			// IllegalArgumentException
+			if (e instanceof IllegalArgumentException) {
+				// Erreur de sort() incohérent : erreur utilisateur
+				if (e.getMessage().equals("Comparison method violates its general contract!")) {
+					fight.statistics.error(mEntity);
+					fight.log(new ActionAIError(mEntity));
+					addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
+					return;
+				}
+			}
+
 			// e.printStackTrace(System.out);
 			fight.statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));
-			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
-			e.printStackTrace(System.out);
+			// System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
+			// e.printStackTrace(System.out);
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
 			if (isFirstRuntimeError) {
-				fight.generator.exception(e, fight, mEntity.getFarmer(), id, version);
+				fight.generator.exception(e, fight, mEntity.getFarmer(), getFile());
 				isFirstRuntimeError = false;
 			}
 			// throw e; // On rethrow tel quel
@@ -335,7 +342,7 @@ public class EntityAI extends AI {
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
 			e.printStackTrace();
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
-			fight.generator.exception(e, fight, mEntity.getFarmer(), id, version);
+			fight.generator.exception(e, fight, mEntity.getFarmer(), getFile());
 			throw new RuntimeException("Erreur importante dans l'IA " + id + "  " + e.getMessage(), e);
 		}
 
@@ -343,6 +350,27 @@ public class EntityAI extends AI {
 
 		long endTime = System.nanoTime();
 		mIARunTime += (endTime - startTime);
+	}
+
+	public void handleLeekRunException(LeekRunException e) {
+
+		if (e.getError() == Error.ENTITY_DIED) {
+			// OK, c'est normal
+		} else {
+
+			// e.printStackTrace(System.out);
+			fight.log(new ActionAIError(mEntity));
+			addSystemLog(LeekLog.ERROR, e.getError(), new String[] { e.getMessage() }, e.getStackTrace());
+			fight.statistics.error(mEntity);
+
+			if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
+				fight.statistics.tooMuchOperations(mEntity);
+				addSystemLog(LeekLog.STANDARD, Error.HELP_PAGE_LINK, new String[] { "too_much_ops" });
+			} else if (e.getError() == Error.OUT_OF_MEMORY) {
+				valid = false; // Si plus de RAM, IA désactivée pour tout le combat
+			}
+			// Pas de rethrow
+		}
 	}
 
 	public Entity getEntity() {
