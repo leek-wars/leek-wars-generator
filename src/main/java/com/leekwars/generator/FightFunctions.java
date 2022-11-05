@@ -262,7 +262,7 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { }),
 		});
 		method("isWeapon", "Weapon", 15, true, Type.BOOL, new Type[] { Type.INT });
-		method("getWeaponArea", "Weapon", 15, true, Type.ANY, new Type[] { Type.INT });
+		method("getWeaponArea", "Weapon", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getWeaponEffectiveArea", "Weapon", 78, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
@@ -287,22 +287,22 @@ public class FightFunctions {
 		});
 		method("useChipOnCell", "Chip", 3000, true, Type.INT, new Type[] { Type.INT, Type.INT });
 		method("getChipName", "Chip", 15, true, Type.STRING, new Type[] { Type.INT });
-		method("getChipMinScope", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
-		method("getChipMaxScope", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
-		method("getChipMinRange", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
-		method("getChipMaxRange", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
-		method("getChipCost", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
-		method("getChipEffects", "Chip", 125, true, Type.ANY, new Type[] { Type.INT });
+		method("getChipMinScope", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getChipMaxScope", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getChipMinRange", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getChipMaxRange", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getChipCost", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getChipEffects", "Chip", 125, true, Type.ARRAY_OR_NULL, new Type[] { Type.INT });
 		method("isInlineChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("chipNeedLos", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("getChipCooldown", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
 		method("canUseChip", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
 		method("canUseChipOnCell", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
-		method("getChipTargets", "Chip", 40, true, Type.ANY, new Type[] { Type.INT, Type.INT });
+		method("getChipTargets", "Chip", 40, true, Type.ARRAY_OR_NULL, new Type[] { Type.INT, Type.INT });
 		method("getChipFailure", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
 		method("isChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
-		method("getChipLaunchType", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
-		method("getChipArea", "Chip", 15, true, Type.ANY, new Type[] { Type.INT });
+		method("getChipLaunchType", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getChipArea", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("resurrect", "Chip", 500, true, Type.INT, new Type[] { Type.ANY, Type.ANY });
 		method("summon", "Chip", 1750, true, Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY });
 		method("getChipEffectiveArea", "Chip", 78, true, new CallableVersion[] {
@@ -332,9 +332,9 @@ public class FightFunctions {
 		method("isOnSameLine", "Field", 15, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
 		method("isLeek", "Field", 10, true, Type.BOOL, new Type[] { Type.INT }).setMaxVersion(3);
 		method("isEntity", "Field", 10, true, Type.BOOL, new Type[] { Type.INT });
-		method("getCellX", "Field", 5, true, Type.ANY, new Type[] { Type.INT });
-		method("getCellY", "Field", 5, true, Type.ANY, new Type[] { Type.INT });
-		method("getCellFromXY", "Field", 5, true, Type.ANY, new Type[] { Type.INT, Type.INT });
+		method("getCellX", "Field", 5, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getCellY", "Field", 5, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getCellFromXY", "Field", 5, true, Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT });
 		method("lineOfSight", "Field", 31, true, new CallableVersion[] {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
@@ -345,29 +345,30 @@ public class FightFunctions {
 		/**
 		 * Fight / Combat
 		 */
-		method("getBulbChips", "Fight", 40, true, Type.ANY, new Type[] { Type.ANY });
+		method("getBulbChips", "Fight", 40, true, Type.ARRAY_OR_NULL, new Type[] { Type.ANY });
 		method("getNearestEnemy", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getFarestEnemy", "Fight", 31, true, Type.INT, new Type[0]).setMaxVersion(3);
 		method("getFarthestEnemy", "Fight", 31, true, Type.INT, new Type[0]);
 		method("getTurn", "Fight", 15, true, Type.INT, new Type[0]);
 		method("getAliveEnemies", "Fight", 100, true, Type.ARRAY, new Type[0]);
 		method("getAliveEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
-		method("getAlliedTurret", "Fight", 15, true, Type.ANY, new Type[0]);
+		method("getAlliedTurret", "Fight", 15, true, Type.INT_OR_NULL, new Type[0]);
 		method("getAllEffects", "Fight", 200, true, Type.ARRAY, new Type[0]);
-		method("getEnemyTurret", "Fight", 15, true, Type.ANY, new Type[0]);
+		method("getEnemyTurret", "Fight", 15, true, Type.INT_OR_NULL, new Type[0]);
 		method("getDeadEnemies", "Fight", 100, true, Type.ARRAY, new Type[0]);
-		method("getDeadEnemiesCount", "Fight", 25, true, Type.ANY, new Type[0]);
+		method("getDeadEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getEnemies", "Fight", 100, true, Type.ARRAY, new Type[0]);
 		method("getAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
-		method("getEnemiesCount", "Fight", 25, true, Type.ANY, new Type[0]);
-		method("getNearestAlly", "Fight", 25, true, Type.ANY, new Type[0]);
-		method("getFarestAlly", "Fight", 31, true, Type.ANY, new Type[0]).setMaxVersion(3);
-		method("getFarthestAlly", "Fight", 31, true, Type.ANY, new Type[0]);
+		method("getEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
+		method("getNearestAlly", "Fight", 25, true, Type.INT, new Type[0]);
+		method("getFarestAlly", "Fight", 31, true, Type.INT, new Type[0]).setMaxVersion(3);
+		method("getFarthestAlly", "Fight", 31, true, Type.INT, new Type[0]);
 		method("getAliveAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
+		method("getAliveAlliesCount", "Fight", 100, true, Type.INT, new Type[0]);
 		method("getDeadAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
-		method("getAlliesCount", "Fight", 25, true, Type.ANY, new Type[0]);
-		method("getNextPlayer", "Fight", 20, true, Type.ANY, new Type[0]);
-		method("getPreviousPlayer", "Fight", 20, true, Type.ANY, new Type[0]);
+		method("getAlliesCount", "Fight", 25, true, Type.INT, new Type[0]);
+		method("getNextPlayer", "Fight", 20, true, Type.INT, new Type[0]);
+		method("getPreviousPlayer", "Fight", 20, true, Type.INT, new Type[0]);
 		method("getCellToUseWeapon", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.INT, new Type[] { Type.ANY, Type.ANY }),
@@ -457,10 +458,10 @@ public class FightFunctions {
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY, Type.ANY }),
 			new CallableVersion(Type.ANY, new Type[] { Type.ANY, Type.ANY }),
 		});
-		method("getNearestEnemyTo", "Fight", 35, true, Type.ANY, new Type[] { Type.INT });
-		method("getNearestEnemyToCell", "Fight", 35, true, Type.ANY, new Type[] { Type.INT });
-		method("getNearestAllyToCell", "Fight", 35, true, Type.ANY, new Type[] { Type.INT });
-		method("getNearestAllyTo", "Fight", 35, true, Type.ANY, new Type[] { Type.INT });
+		method("getNearestEnemyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getNearestEnemyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getNearestAllyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		method("getNearestAllyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 
 		/**
 		 * Network / Réseau
@@ -498,7 +499,7 @@ public class FightFunctions {
 		});
 		method("pause", "Util", 30, true, Type.VOID, new Type[0]);
 		method("getRegisters", "Util", 25, true, Type.ARRAY, new Type[0]);
-		method("getRegister", "Util", 15, true, Type.ANY, new Type[] { Type.STRING });
+		method("getRegister", "Util", 15, true, Type.STRING_OR_NULL, new Type[] { Type.STRING });
 		method("setRegister", "Util", 50, true, Type.VOID, new Type[] { Type.STRING, Type.ANY });
 		method("deleteRegister", "Util", 16, true, Type.VOID, new Type[] { Type.STRING });
 	}
