@@ -146,24 +146,24 @@ public class EntityAI extends AI {
 		} catch (LeekScriptException e) {
 			// Java compilation error : server error
 			if (e.getType() == Error.CODE_TOO_LARGE) {
-				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE, new String[] { e.getMessage() });
+				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE);
 			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
-				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getMessage() });
+				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION);
 			} else {
 				generator.exception(e, entity.fight, entity.getFarmer(), file);
-				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
+				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
 			}
 			return new EntityAI(entity, entity.getLogs());
 
 		} catch (LeekCompilerException e) {
 			// Analyze error : AI is not valid, user error, no need to log it
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.INVALID_AI);
 			return new EntityAI(entity, entity.getLogs());
 
 		} catch (Exception e) {
 			// Other error : server error
 			generator.exception(e, entity.fight, entity.mFarmer, file);
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getMessage() });
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
 			return new EntityAI(entity, entity.getLogs());
 		}
 	}

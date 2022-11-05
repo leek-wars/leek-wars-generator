@@ -64,7 +64,7 @@ public class Generator {
 	 * @return a object representing the analysis results: success or list of
 	 *         errors.
 	 */
-	public AnalyzeResult analyzeAI(AIFile ai) {
+	public AnalyzeResult analyzeAI(AIFile ai, int farmer) {
 		Log.i(TAG, "Analyze AI " + ai + "..." + ai.hashCode());
 		try {
 			long t = System.currentTimeMillis();
@@ -80,7 +80,7 @@ public class Generator {
 				Log.e(TAG, e.getMessage());
 			}
 			Log.e(TAG, "Compile failed!");
-			errorManager.exception(e, 0);
+			errorManager.exception(e, 0, farmer, ai);
 			// Create a result with internal error
 			AnalyzeResult result = new AnalyzeResult();
 			result.success = false;

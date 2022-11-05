@@ -65,7 +65,7 @@ public class Main {
 		if (analyze) {
 			try {
 				var ai = LeekScript.getFileSystem().getRoot().resolve(file);
-				AnalyzeResult result = generator.analyzeAI(ai);
+				AnalyzeResult result = generator.analyzeAI(ai, 0);
 				System.out.println(result.informations);
 			} catch (FileNotFoundException e) {
 				Log.e(TAG, "File not found!");
