@@ -451,6 +451,7 @@ public abstract class Entity {
 	}
 
 	public void onDirectDamage(int damage) {
+		if (isDead()) return;
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
 				activateOnDamagePassiveEffect(effect, weapon.getAttack(), damage);
@@ -458,6 +459,7 @@ public abstract class Entity {
 		}
 	}
 	public void onNovaDamage(int damage) {
+		if (isDead()) return;
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
 				activateOnNovaDamagePassiveEffect(effect, weapon.getAttack(), damage);
@@ -465,6 +467,7 @@ public abstract class Entity {
 		}
 	}
 	public void onPoisonDamage(int damage) {
+		if (isDead()) return;
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
 				activateOnPoisonDamagePassiveEffect(effect, weapon.getAttack(), damage);
@@ -473,6 +476,7 @@ public abstract class Entity {
 	}
 
 	public void onMoved(Entity by) {
+		if (isDead()) return;
 		if (by == this) return; // Déplacement subi uniquement
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
@@ -482,6 +486,7 @@ public abstract class Entity {
 	}
 
 	public void onAllyKilled() {
+		if (isDead()) return;
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
 				activateOnAllyKilledPassiveEffect(effect, weapon.getAttack());
@@ -490,6 +495,7 @@ public abstract class Entity {
 	}
 
 	public void onCritical() {
+		if (isDead()) return;
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
 				activateOnCriticalPassiveEffect(effect, weapon.getAttack());
@@ -498,6 +504,7 @@ public abstract class Entity {
 	}
 
 	public void onKill() {
+		if (isDead()) return;
 		for (Weapon weapon : mWeapons) {
 			for (EffectParameters effect : weapon.getPassiveEffects()) {
 				activateOnKillPassiveEffect(effect, weapon.getAttack());
