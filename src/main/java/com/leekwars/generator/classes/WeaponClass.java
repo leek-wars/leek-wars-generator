@@ -157,32 +157,64 @@ public class WeaponClass {
 		return template.getName();
 	}
 
-	public static GenericArrayLeekValue getWeaponEffects(EntityAI ai) throws LeekRunException {
+	public static ArrayLeekValue getWeaponEffects(EntityAI ai) throws LeekRunException {
 		return getWeaponEffects(ai, -1);
 	}
 
-	public static GenericArrayLeekValue getWeaponEffects(EntityAI ai, long id) throws LeekRunException {
+	public static ArrayLeekValue getWeaponEffects(EntityAI ai, long id) throws LeekRunException {
 		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
 		if (template == null) {
 			return null;
 		}
-		var result = ai.newArray();
+		var result = new ArrayLeekValue(ai);
 		for (var feature : template.getAttack().getEffects()) {
 			result.pushNoClone(ai, feature.getFeatureArray(ai));
 		}
 		return result;
 	}
 
-	public static GenericArrayLeekValue getWeaponPassiveEffects(EntityAI ai) throws LeekRunException {
-		return getWeaponPassiveEffects(ai, -1);
+	public static LegacyArrayLeekValue getWeaponEffects_v1_3(EntityAI ai) throws LeekRunException {
+		return getWeaponEffects_v1_3(ai, -1);
 	}
 
-	public static GenericArrayLeekValue getWeaponPassiveEffects(EntityAI ai, long id) throws LeekRunException {
+	public static LegacyArrayLeekValue getWeaponEffects_v1_3(EntityAI ai, long id) throws LeekRunException {
 		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
 		if (template == null) {
 			return null;
 		}
-		var retour = ai.newArray();
+		var result = new LegacyArrayLeekValue();
+		for (var feature : template.getAttack().getEffects()) {
+			result.pushNoClone(ai, feature.getFeatureArray(ai));
+		}
+		return result;
+	}
+
+	public static ArrayLeekValue getWeaponPassiveEffects(EntityAI ai) throws LeekRunException {
+		return getWeaponPassiveEffects(ai, -1);
+	}
+
+	public static ArrayLeekValue getWeaponPassiveEffects(EntityAI ai, long id) throws LeekRunException {
+		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
+		if (template == null) {
+			return null;
+		}
+		var retour = new ArrayLeekValue(ai);
+		for (var feature : template.getPassiveEffects()) {
+			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+		}
+		return retour;
+	}
+
+	public static LegacyArrayLeekValue getWeaponPassiveEffects_v1_3(EntityAI ai) throws LeekRunException {
+		return getWeaponPassiveEffects_v1_3(ai, -1);
+	}
+
+	public static LegacyArrayLeekValue getWeaponPassiveEffects_v1_3(EntityAI ai, long id) throws LeekRunException {
+		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
+		if (template == null) {
+			return null;
+		}
+		var retour = new LegacyArrayLeekValue();
 		for (var feature : template.getPassiveEffects()) {
 			retour.pushNoClone(ai, feature.getFeatureArray(ai));
 		}
@@ -266,11 +298,11 @@ public class WeaponClass {
 		return false;
 	}
 
-	public static GenericArrayLeekValue getWeaponTargets(EntityAI ai, Object value1) throws LeekRunException {
+	public static ArrayLeekValue getWeaponTargets(EntityAI ai, long value1) throws LeekRunException {
 		return getWeaponTargets(ai, value1, null);
 	}
 
-	public static GenericArrayLeekValue getWeaponTargets(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static ArrayLeekValue getWeaponTargets(EntityAI ai, long value1, Object value2) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
@@ -285,7 +317,7 @@ public class WeaponClass {
 		if (weapon == null)
 			return null;
 		if (target != null && ai.getEntity().getCell() != null) {
-			var retour = ai.newArray();
+			var retour = new ArrayLeekValue(ai);
 			var leeks = weapon.getAttack().getWeaponTargets(ai.getFight(), ai.getEntity(), target);
 			for (Entity l : leeks) {
 				retour.push(ai, (long) l.getFId());
@@ -295,11 +327,40 @@ public class WeaponClass {
 		return null;
 	}
 
-	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, Object value1) throws LeekRunException {
+	public static LegacyArrayLeekValue getWeaponTargets_v1_3(EntityAI ai, long value1) throws LeekRunException {
+		return getWeaponTargets_v1_3(ai, value1, null);
+	}
+
+	public static LegacyArrayLeekValue getWeaponTargets_v1_3(EntityAI ai, long value1, Object value2) throws LeekRunException {
+
+		Cell target = null;
+		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
+
+		if (value2 == null) {
+			target = ai.getFight().getMap().getCell(ai.integer(value1));
+		} else {
+			weapon = Weapons.getWeapon(ai.integer(value1));
+			target = ai.getFight().getMap().getCell(ai.integer(value2));
+		}
+
+		if (weapon == null)
+			return null;
+		if (target != null && ai.getEntity().getCell() != null) {
+			var retour = new LegacyArrayLeekValue();
+			var leeks = weapon.getAttack().getWeaponTargets(ai.getFight(), ai.getEntity(), target);
+			for (Entity l : leeks) {
+				retour.push(ai, (long) l.getFId());
+			}
+			return retour;
+		}
+		return null;
+	}
+
+	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1) throws LeekRunException {
 		return getWeaponEffectiveArea(ai, value1, null, null);
 	}
 
-	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getWeaponEffectiveArea(ai, value1, value2, null);
 	}
 
@@ -316,14 +377,14 @@ public class WeaponClass {
 	 * @return Array des cellules affectées
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, Object value1, Object value2, Object value3) throws LeekRunException {
+	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell(ai.integer(value1));
+			target = ai.getFight().getMap().getCell((int) value1);
 		} else {
-			weapon = Weapons.getWeapon(ai.integer(value1));
+			weapon = Weapons.getWeapon((int) value1);
 			target = ai.getFight().getMap().getCell(ai.integer(value2));
 		}
 

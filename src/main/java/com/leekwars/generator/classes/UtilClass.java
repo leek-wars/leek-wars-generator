@@ -98,17 +98,15 @@ public class UtilClass {
 		return null;
 	}
 
-	public static Object mark(EntityAI ai, Object cell) throws LeekRunException {
-		return mark(ai, cell, null, null);
+	public static boolean mark(EntityAI ai, Object cell) throws LeekRunException {
+		return mark(ai, cell, 0x000000, 1);
 	}
 
-	public static Object mark(EntityAI ai, Object cell, Object color) throws LeekRunException {
-		return mark(ai, cell, color, null);
+	public static boolean mark(EntityAI ai, Object cell, long color) throws LeekRunException {
+		return mark(ai, cell, color, 1);
 	}
 
-	public static Object mark(EntityAI ai, Object cell, Object color, Object duration) throws LeekRunException {
-		int d = 1;
-		int col = 1;
+	public static boolean mark(EntityAI ai, Object cell, long color, long duration) throws LeekRunException {
 		int[] cel = null;
 		if (cell instanceof Number) {
 			var id = ai.integer(cell);
@@ -131,12 +129,7 @@ public class UtilClass {
 		} else
 			return false;
 
-		if (color instanceof Number)
-			col = ai.integer(color);
-		if (duration instanceof Number)
-			d = ai.integer(duration);
-
-		ai.getLogs().addCell(cel, col, d);
+		ai.getLogs().addCell(cel, (int) color, (int) duration);
 
 		return true;
 	}
@@ -146,15 +139,13 @@ public class UtilClass {
 		return null;
 	}
 
-	public static Object markText(EntityAI ai, Object cell, Object text) throws LeekRunException {
-		return markText(ai, cell, text, null, null);
+	public static boolean markText(EntityAI ai, Object cell, Object text) throws LeekRunException {
+		return markText(ai, cell, text, 0xffffff, 1);
 	}
-	public static Object markText(EntityAI ai, Object cell, Object text, Object color) throws LeekRunException {
-		return markText(ai, cell, text, color, null);
+	public static boolean markText(EntityAI ai, Object cell, Object text, long color) throws LeekRunException {
+		return markText(ai, cell, text, color, 1);
 	}
-	public static Object markText(EntityAI ai, Object cell, Object text, Object color, Object duration) throws LeekRunException {
-		int d = 1;
-		int col = 0xffffff;
+	public static boolean markText(EntityAI ai, Object cell, Object text, long color, long duration) throws LeekRunException {
 		int[] cel = null;
 		if (cell instanceof Number) {
 			var id = ai.integer(cell);
@@ -177,35 +168,22 @@ public class UtilClass {
 		} else
 			return false;
 
-		if (color instanceof Number)
-			col = ai.integer(color);
-		if (duration instanceof Number)
-			d = ai.integer(duration);
-
 		String userText = ai.string(text);
 		String finalText = userText.substring(0, Math.min(userText.length(), 10));
 
-		ai.getLogs().addCellText(cel, finalText, col, d);
+		ai.getLogs().addCellText(cel, finalText, (int) color, (int) duration);
 
 		return true;
 	}
 
-	public static Object show(EntityAI ai, Object cell) throws LeekRunException {
-		return show(ai, cell, null);
+	public static boolean show(EntityAI ai, long cell) throws LeekRunException {
+		return show(ai, cell, 0xffffff);
 	}
 
-	public static Object show(EntityAI ai, Object cell, Object color) throws LeekRunException {
-		int cell_id = 1;
-		int col = 0xFFFFFF;
-		if (cell instanceof Number)
-			cell_id = ((Number) cell).intValue();
-		else
-			return false;
-		if (ai.getFight().getMap().getCell(cell_id) == null)
-			return false;
+	public static boolean show(EntityAI ai, long cell, long color) throws LeekRunException {
 
-		if (color instanceof Number)
-			col = ((Number) color).intValue();
+		if (ai.getFight().getMap().getCell((int) cell) == null)
+			return false;
 
 		if (ai.getEntity().getTP() < 1) {
 			return false;
@@ -216,8 +194,8 @@ public class UtilClass {
 		ai.getEntity().useTP(1);
 		ai.getEntity().showsTurn++;
 
-		ai.getFight().log(new ActionShowCell(cell_id, col));
-		ai.getFight().statistics.show(ai.getEntity(), cell_id);
+		ai.getFight().log(new ActionShowCell((int) cell, (int) color));
+		ai.getFight().statistics.show(ai.getEntity(), (int) cell);
 
 		return true;
 	}

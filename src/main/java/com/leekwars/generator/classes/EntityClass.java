@@ -201,11 +201,11 @@ public class EntityClass {
 	}
 
 	// Deprecated function in LeekScript
-	public static Object getCores(EntityAI ai) {
+	public static long getCores(EntityAI ai) {
 		return 0l;
 	}
 
-	public static Object getCores(EntityAI ai, Object value) {
+	public static long getCores(EntityAI ai, long value) {
 		return 0l;
 	}
 
@@ -527,7 +527,7 @@ public class EntityClass {
 		return result;
 	}
 
-	public static GenericArrayLeekValue getChips(EntityAI ai, Object value) throws LeekRunException {
+	public static ArrayLeekValue getChips(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null)
 			l = ai.getEntity();
@@ -535,7 +535,23 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
-		var result = ai.newArray();
+		var result = new ArrayLeekValue(ai);
+		for (var chip : l.getChips()) {
+			result.push(ai, (long) chip.getId());
+		}
+		return result;
+	}
+
+
+	public static LegacyArrayLeekValue getChips_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		Entity l = null;
+		if (value == null)
+			l = ai.getEntity();
+		else if (value instanceof Number)
+			l = ai.getFight().getEntity(((Number) value).intValue());
+		if (l == null)
+			return null;
+		var result = new LegacyArrayLeekValue();
 		for (var chip : l.getChips()) {
 			result.push(ai, (long) chip.getId());
 		}
@@ -560,7 +576,7 @@ public class EntityClass {
 		return retour;
 	}
 
-	public static GenericArrayLeekValue getEffects(EntityAI ai, Object value) throws LeekRunException {
+	public static ArrayLeekValue getEffects(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null) {
 			l = ai.getEntity();
@@ -570,7 +586,25 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
-		var retour = ai.newArray(l.getEffects().size());
+		var retour = new ArrayLeekValue(ai, l.getEffects().size());
+		for (Effect effect : l.getEffects()) {
+			retour.pushNoClone(ai, effect.getLeekValue(ai));
+		}
+		return retour;
+	}
+
+
+	public static LegacyArrayLeekValue getEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		Entity l = null;
+		if (value == null) {
+			l = ai.getEntity();
+		} else if (value instanceof Number) {
+			l = ai.getFight().getEntity(ai.integer(value));
+		}
+		if (l == null) {
+			return null;
+		}
+		var retour = new LegacyArrayLeekValue();
 		for (Effect effect : l.getEffects()) {
 			retour.pushNoClone(ai, effect.getLeekValue(ai));
 		}
@@ -595,7 +629,7 @@ public class EntityClass {
 		return retour;
 	}
 
-	public static GenericArrayLeekValue getLaunchedEffects(EntityAI ai, Object value) throws LeekRunException {
+	public static ArrayLeekValue getLaunchedEffects(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null) {
 			l = ai.getEntity();
@@ -605,7 +639,25 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
-		var retour = ai.newArray(l.getLaunchedEffects().size());
+		var retour = new ArrayLeekValue(ai, l.getLaunchedEffects().size());
+		for (var effect : l.getLaunchedEffects()) {
+			retour.pushNoClone(ai, effect.getLeekValue(ai));
+		}
+		return retour;
+	}
+
+
+	public static LegacyArrayLeekValue getLaunchedEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		Entity l = null;
+		if (value == null) {
+			l = ai.getEntity();
+		} else if (value instanceof Number) {
+			l = ai.getFight().getEntity(ai.integer(value));
+		}
+		if (l == null) {
+			return null;
+		}
+		var retour = new LegacyArrayLeekValue();
 		for (var effect : l.getLaunchedEffects()) {
 			retour.pushNoClone(ai, effect.getLeekValue(ai));
 		}
@@ -630,7 +682,7 @@ public class EntityClass {
 		return retour;
 	}
 
-	public static GenericArrayLeekValue getPassiveEffects(EntityAI ai, Object value) throws LeekRunException {
+	public static ArrayLeekValue getPassiveEffects(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null) {
 			l = ai.getEntity();
@@ -640,7 +692,24 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
-		var retour = ai.newArray();
+		var retour = new ArrayLeekValue(ai);
+		for (var feature : l.getPassiveEffects()) {
+			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+		}
+		return retour;
+	}
+
+	public static LegacyArrayLeekValue getPassiveEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		Entity l = null;
+		if (value == null) {
+			l = ai.getEntity();
+		} else if (value instanceof Number) {
+			l = ai.getFight().getEntity(ai.integer(value));
+		}
+		if (l == null) {
+			return null;
+		}
+		var retour = new LegacyArrayLeekValue();
 		for (var feature : l.getPassiveEffects()) {
 			retour.pushNoClone(ai, feature.getFeatureArray(ai));
 		}
@@ -724,7 +793,7 @@ public class EntityClass {
 		return null;
 	}
 
-	public static Object getTeamID(EntityAI ai) throws LeekRunException {
+	public static long getTeamID(EntityAI ai) throws LeekRunException {
 		return (long) ai.getEntity().getTeamId();
 	}
 
@@ -757,7 +826,7 @@ public class EntityClass {
 		return result;
 	}
 
-	public static GenericArrayLeekValue getSummons(EntityAI ai, Object value) throws LeekRunException {
+	public static ArrayLeekValue getSummons(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null)
 			l = ai.getEntity();
@@ -765,7 +834,23 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
-		var result = ai.newArray();
+		var result = new ArrayLeekValue(ai);
+		for (var summon : l.getSummons(false)) {
+			result.push(ai, (long) summon.getFId());
+		}
+		return result;
+	}
+
+
+	public static LegacyArrayLeekValue getSummons_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		Entity l = null;
+		if (value == null)
+			l = ai.getEntity();
+		else if (value instanceof Number)
+			l = ai.getFight().getEntity(((Number) value).intValue());
+		if (l == null)
+			return null;
+		var result = new LegacyArrayLeekValue();
 		for (var summon : l.getSummons(false)) {
 			result.push(ai, (long) summon.getFId());
 		}
@@ -894,7 +979,7 @@ public class EntityClass {
 		return null;
 	}
 
-	public static Object getEntityTurnOrder(EntityAI ai) throws LeekRunException {
+	public static long getEntityTurnOrder(EntityAI ai) throws LeekRunException {
 		return (long) ai.getFight().getOrder().getEntityTurnOrder(ai.getEntity());
 	}
 

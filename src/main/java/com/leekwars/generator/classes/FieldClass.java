@@ -36,19 +36,19 @@ public class FieldClass {
 		return Pathfinding.getCaseDistance(cell1, cell2);
 	}
 
-	public static Object getPathLength(EntityAI ai, Object c1, Object c2) throws LeekRunException {
+	public static Object getPathLength(EntityAI ai, long c1, long c2) throws LeekRunException {
 		return getPathLength(ai, c1, c2, null);
 	}
 
-	public static Object getPathLength(EntityAI ai, Object c1, Object c2, Object leeks_to_ignore) throws LeekRunException {
+	public static Object getPathLength(EntityAI ai, long c1, long c2, Object leeks_to_ignore) throws LeekRunException {
 
 		ai.ops(100);
 
-		Cell cell1 = ai.getFight().getMap().getCell(ai.integer(c1));
+		Cell cell1 = ai.getFight().getMap().getCell((int) c1);
 		if (cell1 == null) {
 			return null;
 		}
-		Cell cell2 = ai.getFight().getMap().getCell(ai.integer(c2));
+		Cell cell2 = ai.getFight().getMap().getCell((int) c2);
 		if (cell2 == null) {
 			return null;
 		}
@@ -196,14 +196,14 @@ public class FieldClass {
 		return cell1.getX() == cell2.getX() || cell1.getY() == cell2.getY();
 	}
 
-	public static Object lineOfSight(EntityAI ai, Object start, Object end) throws LeekRunException {
+	public static Object lineOfSight(EntityAI ai, long start, long end) throws LeekRunException {
 		return lineOfSight(ai, start, end, null);
 	}
 
-	public static Object lineOfSight(EntityAI ai, Object start, Object end, Object ignore) throws LeekRunException {
+	public static Object lineOfSight(EntityAI ai, long start, long end, Object ignore) throws LeekRunException {
 
-		Cell s = ai.getFight().getMap().getCell(ai.integer(start));
-		Cell e = ai.getFight().getMap().getCell(ai.integer(end));
+		Cell s = ai.getFight().getMap().getCell((int) start);
+		Cell e = ai.getFight().getMap().getCell((int) end);
 
 		if (s == null || e == null)
 			return null;

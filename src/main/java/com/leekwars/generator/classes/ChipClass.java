@@ -25,30 +25,30 @@ public class ChipClass {
 
 	// ---- Fonctions Chip ----
 
-	public static Object getCurrentCooldown(EntityAI ai, Object chip_id) throws LeekRunException {
+	public static Object getCurrentCooldown(EntityAI ai, long chip_id) throws LeekRunException {
 		((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 		return null;
 	}
 
-	public static Object getCurrentCooldown(EntityAI ai, Object chip_id, Object v) throws LeekRunException {
+	public static Object getCurrentCooldown(EntityAI ai, long chip_id, long v) throws LeekRunException {
 		((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 		return null;
 	}
 
-	public static long getCooldown(EntityAI ai, Object chip_id) throws LeekRunException {
-		var chipTemplate = Chips.getChip(ai.integer(chip_id));
+	public static long getCooldown(EntityAI ai, long chip_id) throws LeekRunException {
+		var chipTemplate = Chips.getChip((int) chip_id);
 		return (long) ai.getFight().getCooldown(ai.getEntity(), chipTemplate);
 	}
 
-	public static Object getCooldown(EntityAI ai, Object chip_id, Object v) throws LeekRunException {
+	public static Object getCooldown(EntityAI ai, long chip_id, Object v) throws LeekRunException {
 		if (v == null) {
-			var chipTemplate = Chips.getChip(ai.integer(chip_id));
+			var chipTemplate = Chips.getChip((int) chip_id);
 			return (long) ai.getFight().getCooldown(ai.getEntity(), chipTemplate);
 		}
 		if (v instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) v).intValue());
 			if (l != null) {
-				Chip chipTemplate = Chips.getChip(ai.integer(chip_id));
+				Chip chipTemplate = Chips.getChip((int) chip_id);
 				return (long) ai.getFight().getCooldown(l, chipTemplate);
 			}
 		}
@@ -219,20 +219,20 @@ public class ChipClass {
 		return retour;
 	}
 
-	public static long summon(EntityAI ai, Object chip, Object cell, Object summonAI) throws LeekRunException {
+	public static long summon(EntityAI ai, long chip, long cell, FunctionLeekValue summonAI) throws LeekRunException {
 
 		int success = -1;
 
-		Cell target = ai.getFight().getMap().getCell(ai.integer(cell));
+		Cell target = ai.getFight().getMap().getCell((int) cell);
 		if (target == null)
 			return -1;
 
 		if (!(summonAI instanceof FunctionLeekValue))
 			return -1;
 
-		Chip template = ai.getEntity().getChip(ai.integer(chip));
+		Chip template = ai.getEntity().getChip((int) chip);
 		if (template == null) {
-			Chip ct = Chips.getChip(ai.integer(chip));
+			Chip ct = Chips.getChip((int) chip);
 			if (ct == null)
 				ai.addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(ai.integer(chip)) });
 			else
@@ -246,11 +246,11 @@ public class ChipClass {
 		return success;
 	}
 
-	public static long resurrect(EntityAI ai, Object entity, Object cell) throws LeekRunException {
+	public static long resurrect(EntityAI ai, long entity, long cell) throws LeekRunException {
 
 		int success = -1;
 
-		Cell target = ai.getFight().getMap().getCell(ai.integer(cell));
+		Cell target = ai.getFight().getMap().getCell((int) cell);
 		if (target == null) {
 			return -1;
 		}
@@ -278,7 +278,7 @@ public class ChipClass {
 		return success;
 	}
 
-	public static GenericArrayLeekValue getChipEffectiveArea(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static GenericArrayLeekValue getChipEffectiveArea(EntityAI ai, long value1, long value2) throws LeekRunException {
 		return getChipEffectiveArea(ai, value1, value2, null);
 	}
 
@@ -293,7 +293,7 @@ public class ChipClass {
 	 * @return Array des cellules affectées
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getChipEffectiveArea(EntityAI ai, Object value1, Object value2, Object value3) throws LeekRunException {
+	public static GenericArrayLeekValue getChipEffectiveArea(EntityAI ai, long value1, long value2, Object value3) throws LeekRunException {
 
 		Cell start_cell = ai.getEntity().getCell();
 		if (value3 != null) {
@@ -304,11 +304,11 @@ public class ChipClass {
 		if (start_cell == null)
 			return null;
 		// On récupère la cellule
-		Cell c = ai.getFight().getMap().getCell(ai.integer(value2));
+		Cell c = ai.getFight().getMap().getCell((int) value2);
 		if (c == null || ai.getEntity().getCell() == null)
 			return null;
 		// On récupère le sort
-		Chip template = Chips.getChip(ai.integer(value1));
+		Chip template = Chips.getChip((int) value1);
 
 		if (template == null)
 			return null;

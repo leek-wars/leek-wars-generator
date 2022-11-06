@@ -343,15 +343,15 @@ public class FightClass {
 		return ai.getFight().getOrder().getPreviousPlayer().getFId();
 	}
 
-	public static long getCellToUseWeapon(EntityAI ai, Object value1) throws LeekRunException {
+	public static long getCellToUseWeapon(EntityAI ai, long value1) throws LeekRunException {
 		return getCellToUseWeapon(ai, value1, null, null);
 	}
 
-	public static long getCellToUseWeapon(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static long getCellToUseWeapon(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getCellToUseWeapon(ai, value1, value2, null);
 	}
 
-	public static long getCellToUseWeapon(EntityAI ai, Object value1, Object value2, Object value3) throws LeekRunException {
+	public static long getCellToUseWeapon(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 		Entity target = null;
 
@@ -388,23 +388,23 @@ public class FightClass {
 		return cell;
 	}
 
-	public static long getCellToUseWeaponOnCell(EntityAI ai, Object value1) throws LeekRunException {
+	public static long getCellToUseWeaponOnCell(EntityAI ai, long value1) throws LeekRunException {
 		return getCellToUseWeaponOnCell(ai, value1, null, null);
 	}
 
-	public static long getCellToUseWeaponOnCell(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static long getCellToUseWeaponOnCell(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getCellToUseWeaponOnCell(ai, value1, value2, null);
 	}
 
-	public static long getCellToUseWeaponOnCell(EntityAI ai, Object value1, Object value2, Object value3) throws LeekRunException {
+	public static long getCellToUseWeaponOnCell(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell(ai.integer(value1));
+			target = ai.getFight().getMap().getCell((int) value1);
 		} else {
-			weapon = Weapons.getWeapon(ai.integer(value1));
+			weapon = Weapons.getWeapon((int) value1);
 			target = ai.getFight().getMap().getCell(ai.integer(value2));
 		}
 		int retour = -1;
@@ -790,10 +790,9 @@ public class FightClass {
 		return used_pm;
 	}
 
-	public static GenericArrayLeekValue getBulbChips(EntityAI ai, Object value) throws LeekRunException {
-		var id = ai.integer(value);
+	public static GenericArrayLeekValue getBulbChips(EntityAI ai, long id) throws LeekRunException {
 		if (id > 0) {
-			Chip chip = Chips.getChip(id);
+			Chip chip = Chips.getChip((int) id);
 			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
 				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
 				if (template != null) {
@@ -820,11 +819,11 @@ public class FightClass {
 		return null;
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, Object value1) throws LeekRunException {
+	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1) throws LeekRunException {
 		return getCellsToUseWeapon(ai, value1, null, null);
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getCellsToUseWeapon(ai, value1, value2, null);
 	}
 
@@ -837,7 +836,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, Object value1, Object value2, Object value3) throws LeekRunException {
+	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 		Entity target = null;
 
@@ -868,11 +867,11 @@ public class FightClass {
 		return retour;
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, Object value1) throws LeekRunException {
+	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1) throws LeekRunException {
 		return getCellsToUseWeaponOnCell(ai, value1, null, null);
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, Object value1, Object value2) throws LeekRunException {
+	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getCellsToUseWeaponOnCell(ai, value1, value2, null);
 	}
 
@@ -885,7 +884,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, Object value1, Object value2, Object value3) throws LeekRunException {
+	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
@@ -917,7 +916,7 @@ public class FightClass {
 		return retour;
 	}
 
-	public static Object getCellsToUseChip(EntityAI ai, Object chip_id, Object target_leek_id) throws LeekRunException {
+	public static Object getCellsToUseChip(EntityAI ai, long chip_id, long target_leek_id) throws LeekRunException {
 		return getCellsToUseChip(ai, chip_id, target_leek_id, null);
 	}
 
@@ -932,7 +931,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static Object getCellsToUseChip(EntityAI ai, Object chip_id, Object target_leek_id, Object value3) throws LeekRunException {
+	public static Object getCellsToUseChip(EntityAI ai, long chip_id, long target_leek_id, Object value3) throws LeekRunException {
 
 		Entity target = ai.getFight().getEntity(ai.integer(target_leek_id));
 		// On récupère le sort
@@ -956,7 +955,7 @@ public class FightClass {
 		return retour;
 	}
 
-	public static Object getCellsToUseChipOnCell(EntityAI ai, Object chip_id, Object target_cell_id) throws LeekRunException {
+	public static Object getCellsToUseChipOnCell(EntityAI ai, long chip_id, long target_cell_id) throws LeekRunException {
 		return getCellsToUseChipOnCell(ai, chip_id, target_cell_id, null);
 	}
 	/**
@@ -970,7 +969,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static Object getCellsToUseChipOnCell(EntityAI ai, Object chip_id, Object target_cell_id, Object value3) throws LeekRunException {
+	public static Object getCellsToUseChipOnCell(EntityAI ai, long chip_id, long target_cell_id, Object value3) throws LeekRunException {
 
 		Cell target = ai.getFight().getMap().getCell(ai.integer(target_cell_id));
 		// On récupère le sort
