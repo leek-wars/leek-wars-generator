@@ -491,6 +491,10 @@ public class FightFunctions {
 			new CallableVersion(Type.BOOL, new Type[] { Type.compound(Type.ARRAY_INT, Type.INT), Type.ANY, Type.INT, Type.INT }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.compound(Type.ARRAY_INT, Type.INT), Type.ANY, Type.INT }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.compound(Type.ARRAY_INT, Type.INT), Type.ANY }),
+			new CallableVersion(Type.BOOL, new Type[] { Type.compound(Type.ARRAY_INT, Type.INT) }),
+			// new CallableVersion(Type.BOOL, new Type[] { Type.MAP_INT_STRING, Type.INT, Type.INT }),
+			// new CallableVersion(Type.BOOL, new Type[] { Type.MAP_INT_STRING, Type.INT }),
+			// new CallableVersion(Type.BOOL, new Type[] { Type.MAP_INT_STRING }),
 		});
 		method("clearMarks", "Util", 15, true, Type.VOID, new Type[0]);
 		method("show", "Util", true, new CallableVersion[] {

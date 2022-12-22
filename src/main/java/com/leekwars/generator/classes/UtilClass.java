@@ -139,6 +139,26 @@ public class UtilClass {
 		return null;
 	}
 
+	// public static boolean markText(EntityAI ai, MapLeekValue cells) throws LeekRunException {
+	// 	return markText(ai, cells, 0xffffff, 1);
+	// }
+
+	// public static boolean markText(EntityAI ai, MapLeekValue cells, long color) throws LeekRunException {
+	// 	return markText(ai, cells, color, 1);
+	// }
+
+	// public static boolean markText(EntityAI ai, MapLeekValue cells, long color, long duration) throws LeekRunException {
+	// 	for (var entry : (MapLeekValue) cells) {
+	// 		var cellText = ai.string(entry.getValue());
+	// 		String finalText = cellText.substring(0, Math.min(cellText.length(), 10));
+	// 		ai.getLogs().addCellText(new int[] { ai.integer(entry.getKey()) }, finalText, (int) color, (int) duration);
+	// 	}
+	// 	return true;
+	// }
+
+	public static boolean markText(EntityAI ai, Object cell) throws LeekRunException {
+		return markText(ai, cell, "X", 0xffffff, 1);
+	}
 	public static boolean markText(EntityAI ai, Object cell, Object text) throws LeekRunException {
 		return markText(ai, cell, text, 0xffffff, 1);
 	}
@@ -146,11 +166,22 @@ public class UtilClass {
 		return markText(ai, cell, text, color, 1);
 	}
 	public static boolean markText(EntityAI ai, Object cell, Object text, long color, long duration) throws LeekRunException {
+		// Pour une map, on affiche les textes de chaque cellule (map<cell, text>)
+		if (cell instanceof MapLeekValue) {
+			for (var entry : (MapLeekValue) cell) {
+				var cellText = ai.string(entry.getValue());
+				String finalText = cellText.substring(0, Math.min(cellText.length(), 10));
+				ai.getLogs().addCellText(new int[] { ai.integer(entry.getKey()) }, finalText, (int) color, (int) duration);
+			}
+			return true;
+		}
+
 		int[] cel = null;
 		if (cell instanceof Number) {
 			var id = ai.integer(cell);
-			if (ai.getFight().getMap().getCell(id) == null)
+			if (ai.getFight().getMap().getCell(id) == null) {
 				return false;
+			}
 			cel = new int[] { ai.integer(cell) };
 		} else if (cell instanceof GenericArrayLeekValue) {
 			cel = new int[((GenericArrayLeekValue) cell).size()];
@@ -165,9 +196,9 @@ public class UtilClass {
 			}
 			if (i == 0)
 				return false;
-		} else
+		} else {
 			return false;
-
+		}
 		String userText = ai.string(text);
 		String finalText = userText.substring(0, Math.min(userText.length(), 10));
 
