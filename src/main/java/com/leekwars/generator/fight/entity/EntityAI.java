@@ -157,7 +157,7 @@ public class EntityAI extends AI {
 
 		} catch (LeekCompilerException e) {
 			// Analyze error : AI is not valid, user error, no need to log it
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.INVALID_AI);
+			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
 			return new EntityAI(entity, entity.getLogs());
 
 		} catch (Exception e) {
