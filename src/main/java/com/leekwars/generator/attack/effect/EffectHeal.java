@@ -10,6 +10,8 @@ public class EffectHeal extends Effect {
 
 		value = (int) Math.round((value1 + jet * value2) * (1 + (double) caster.getWisdom() / 100) * aoe * criticalPower * targetCount);
 
+		value = Math.max(0, value); // Soin negatif si la sagesse est negative
+
 		if (turns == 0) {
 			if (target.getLife() + value > target.getTotalLife()) {
 				value = target.getTotalLife() - target.getLife();
