@@ -942,8 +942,9 @@ public class FightClass {
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
 		if (value3 instanceof GenericArrayLeekValue) {
 			ai.putCells(cells_to_ignore, (GenericArrayLeekValue) value3);
-		} else
+		} else {
 			cells_to_ignore.add(ai.getEntity().getCell());
+		}
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target.getCell(), cells_to_ignore);
 
 		var retour = ai.newArray(possible.size());

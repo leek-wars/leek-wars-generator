@@ -18,7 +18,7 @@ public class MaskAreaCell {
 				boolean in_range = Math.abs(x) + Math.abs(y) <= max && Math.abs(x) + Math.abs(y) >= min;
 				boolean condition = (((launchType & 1) != 0) && (x == 0 || y == 0))
 					|| (((launchType & 2) != 0) && Math.abs(x) == Math.abs(y))
-					|| (((launchType & 4) != 0) && (Math.abs(x) != Math.abs(y) && x != 0 && y != 0));
+					|| (((launchType & 4) != 0) && ((x == 0 && y == 0) || (Math.abs(x) != Math.abs(y) && x != 0 && y != 0)));
 				if (in_range && condition) {
 					cells.add(new int[] { x, y });
 				}

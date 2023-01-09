@@ -112,11 +112,11 @@ public class Pathfinding {
 		if (target.isWalkable()) {
 
 			if (attack.getLaunchType() == Attack.LAUNCH_TYPE_LINE) {
-				boolean[] line = new boolean[] { true, true, true, true };
+				var line = new boolean[] { true, true, true, true };
 				int x = target.getX(), y = target.getY();
-				int[][] dirs = new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+				var dirs = new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
 				Cell c;
-				for (int i = 1; i <= attack.getMaxRange(); i++) {
+				for (int i = 0; i <= attack.getMaxRange(); i++) {
 					for (int dir = 0; dir < 4; dir++) {
 						if (!line[dir])
 							continue;
@@ -124,7 +124,7 @@ public class Pathfinding {
 						if (c == null)
 							line[dir] = false;
 						else {
-							if (attack.needLos() && !available(c, cells_to_ignore))
+							if (attack.needLos() && !available(c, cells_to_ignore) && i > 0)
 								line[dir] = false;
 							else if (attack.needLos() && !c.isWalkable())
 								line[dir] = false;
