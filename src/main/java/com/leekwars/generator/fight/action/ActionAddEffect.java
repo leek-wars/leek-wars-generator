@@ -53,7 +53,9 @@ public class ActionAddEffect implements Action {
 		retour.add(effectID);
 		retour.add(value);
 		retour.add(turns);
-		retour.add(modifiers);
+		if (modifiers != 0) {
+			retour.add(modifiers);
+		}
 		return retour;
 	}
 }
