@@ -557,10 +557,13 @@ public class Fight {
 		}
 
 		// Coffre ouvert
-		if (entity.getType() == Entity.TYPE_CHEST && this.context != Fight.CONTEXT_CHALLENGE) {
-			var resources = entity.loot(this);
-			actions.log(new ActionChestOpened(killer, entity, resources));
-			statistics.chestKilled(killer, entity, resources);
+		if (entity.getType() == Entity.TYPE_CHEST) {
+
+			if (this.context != Fight.CONTEXT_CHALLENGE) {
+				var resources = entity.loot(this);
+				actions.log(new ActionChestOpened(killer, entity, resources));
+				statistics.chestKilled(killer, entity, resources);
+			}
 
 			int amount = entity.getLevel() == 100 ? 10 : (entity.getLevel() == 200 ? 50 : 100);
 			Effect.createEffect(this, Effect.TYPE_RAW_BUFF_POWER, -1, 1, amount, 0, false, killer, killer, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
