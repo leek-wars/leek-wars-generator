@@ -13,7 +13,6 @@ import com.leekwars.generator.leek.FarmerLog;
 
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
 
 public class EntityClass {
@@ -458,7 +457,7 @@ public class EntityClass {
 		return retour;
 	}
 
-	public static GenericArrayLeekValue getWeapons(EntityAI ai, Object value) throws LeekRunException {
+	public static LegacyArrayLeekValue getWeapons_v1_3(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null)
 			l = ai.getEntity();
@@ -466,7 +465,22 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
-		var retour = ai.newArray();
+		var retour = new LegacyArrayLeekValue();
+		for (var weapon : l.getWeapons()) {
+			retour.push(ai, (long) weapon.getId());
+		}
+		return retour;
+	}
+
+	public static ArrayLeekValue getWeapons(EntityAI ai, Object value) throws LeekRunException {
+		Entity l = null;
+		if (value == null)
+			l = ai.getEntity();
+		else if (value instanceof Number)
+			l = ai.getFight().getEntity(((Number) value).intValue());
+		if (l == null)
+			return null;
+		var retour = new ArrayLeekValue(ai);
 		for (var weapon : l.getWeapons()) {
 			retour.push(ai, (long) weapon.getId());
 		}

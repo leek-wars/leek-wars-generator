@@ -13,7 +13,6 @@ import com.leekwars.generator.maps.Pathfinding;
 import leekscript.common.Error;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
-import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
 
 public class WeaponClass {
@@ -356,17 +355,24 @@ public class WeaponClass {
 		return null;
 	}
 
-	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1) throws LeekRunException {
+	public static LegacyArrayLeekValue getWeaponEffectiveArea_v1_3(EntityAI ai, long value1) throws LeekRunException {
+		return getWeaponEffectiveArea_v1_3(ai, value1, null, null);
+	}
+
+	public static ArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1) throws LeekRunException {
 		return getWeaponEffectiveArea(ai, value1, null, null);
 	}
 
-	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1, Object value2) throws LeekRunException {
+	public static LegacyArrayLeekValue getWeaponEffectiveArea_v1_3(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return getWeaponEffectiveArea_v1_3(ai, value1, value2, null);
+	}
+
+	public static ArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getWeaponEffectiveArea(ai, value1, value2, null);
 	}
 
 	/**
-	 * Retourne la liste des cellules affectées par le tir sur la cellule
-	 * target_cell
+	 * Retourne la liste des cellules affectées par le tir sur la cellule target_cell
 	 *
 	 * @param value1
 	 *            Cellule cible de l'attaque ou id d'arme
@@ -377,7 +383,7 @@ public class WeaponClass {
 	 * @return Array des cellules affectées
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+	public static LegacyArrayLeekValue getWeaponEffectiveArea_v1_3(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
@@ -402,15 +408,48 @@ public class WeaponClass {
 		if (start_cell == null)
 			return null;
 
-		var retour = ai.newArray();
-
+		var retour = new LegacyArrayLeekValue();
 		// On récupère les cellules touchées
 		var cells = weapon.getAttack().getTargetCells(start_cell, target);
 		// On les met dans le tableau
 		for (Cell cell : cells) {
 			retour.push(ai, (long) cell.getId());
 		}
+		return retour;
+	}
 
+	public static ArrayLeekValue getWeaponEffectiveArea(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		Cell target = null;
+		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
+
+		if (value2 == null) {
+			target = ai.getFight().getMap().getCell((int) value1);
+		} else {
+			weapon = Weapons.getWeapon((int) value1);
+			target = ai.getFight().getMap().getCell(ai.integer(value2));
+		}
+
+		Cell start_cell = ai.getEntity().getCell();
+		if (value3 != null) {
+			start_cell = ai.getFight().getMap().getCell(ai.integer(value3));
+		}
+
+		if (target == null)
+			return null;
+		// On récupère l'arme
+		if (weapon == null)
+			return null;
+		// On vérifie que la cellule de départ existe
+		if (start_cell == null)
+			return null;
+
+		var retour = new ArrayLeekValue(ai);
+		// On récupère les cellules touchées
+		var cells = weapon.getAttack().getTargetCells(start_cell, target);
+		// On les met dans le tableau
+		for (Cell cell : cells) {
+			retour.push(ai, (long) cell.getId());
+		}
 		return retour;
 	}
 

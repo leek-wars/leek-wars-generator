@@ -108,7 +108,7 @@ public class FightFunctions {
 		method("getLeek", "Entity", 5, true, Type.INT, new Type[0]).setMaxVersion(3);
 		method("getEntity", "Entity", 5, true, Type.INT, new Type[0]);
 		method("getChips", "Entity", 40, true, new CallableVersion[] {
-			new CallableVersion(Type.ARRAY_INT, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
 		});
 		method("getEffects", "Entity", 25, true, new CallableVersion[] {
@@ -226,12 +226,12 @@ public class FightFunctions {
 			new CallableVersion(Type.INT),
 		});
 		method("getWeaponEffects", "Weapon", 125, true, new CallableVersion[] {
-			new CallableVersion(Type.array(Type.INT_OR_REAL), new Type[] { Type.INT }),
-			new CallableVersion(Type.array(Type.INT_OR_REAL)),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL)), new Type[] { Type.INT }),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
 		});
 		method("getWeaponPassiveEffects", "Weapon", 125, true, new CallableVersion[] {
-			new CallableVersion(Type.array(Type.INT_OR_REAL), new Type[] { Type.INT }),
-			new CallableVersion(Type.array(Type.INT_OR_REAL)),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL)), new Type[] { Type.INT }),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
 		});
 		method("getWeaponName", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING, new Type[] { Type.INT }),
@@ -254,8 +254,8 @@ public class FightFunctions {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }),
 		});
 		method("getWeaponTargets", "Weapon", 40, true, new CallableVersion[] {
-			new CallableVersion(Type.ARRAY_INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
-			new CallableVersion(Type.ARRAY_INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
 		});
 		method("getWeaponFailure", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),

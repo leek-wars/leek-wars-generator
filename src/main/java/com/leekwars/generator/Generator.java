@@ -1,7 +1,6 @@
 package com.leekwars.generator;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
@@ -27,13 +26,9 @@ import com.leekwars.generator.scenario.EntityInfo;
 import com.leekwars.generator.scenario.Scenario;
 
 import leekscript.compiler.AIFile;
-import leekscript.compiler.Hover;
 import leekscript.compiler.IACompiler;
 import leekscript.compiler.LeekScript;
-import leekscript.compiler.LeekScriptException;
 import leekscript.compiler.IACompiler.AnalyzeResult;
-import leekscript.compiler.exceptions.LeekCompilerException;
-import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 import leekscript.common.Error;

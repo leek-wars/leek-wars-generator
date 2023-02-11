@@ -73,11 +73,15 @@ public class FieldClass {
 		return (long) path.size();
 	}
 
-	public static GenericArrayLeekValue getPath(EntityAI ai, long c1, long c2) throws LeekRunException {
+	public static LegacyArrayLeekValue getPath_v1_3(EntityAI ai, long c1, long c2) throws LeekRunException {
+		return getPath_v1_3(ai, c1, c2, null);
+	}
+
+	public static ArrayLeekValue getPath(EntityAI ai, long c1, long c2) throws LeekRunException {
 		return getPath(ai, c1, c2, null);
 	}
 
-	public static GenericArrayLeekValue getPath(EntityAI ai, long c1, long c2, Object leeks_to_ignore) throws LeekRunException {
+	public static LegacyArrayLeekValue getPath_v1_3(EntityAI ai, long c1, long c2, Object leeks_to_ignore) throws LeekRunException {
 
 		Cell cell1 = ai.getFight().getMap().getCell((int) c1);
 		if (cell1 == null)
@@ -87,7 +91,7 @@ public class FieldClass {
 			return null;
 
 		if (cell1 == cell2)
-			return ai.newArray();
+			return new LegacyArrayLeekValue();
 
 		// Opérations
 		var distance = Pathfinding.getCaseDistance(cell1, cell2);
@@ -105,11 +109,48 @@ public class FieldClass {
 				ignore.add(l.getCell());
 			}
 		}
-
 		List<Cell> path = ai.getFight().getMap().getPathBeetween(ai, cell1, cell2, ignore);
 		if (path == null)
 			return null;
-		var retour = ai.newArray();
+		var retour = new LegacyArrayLeekValue();
+		for (int i = 0; i < path.size(); i++) {
+			retour.push(ai, (long) path.get(i).getId());
+		}
+		return retour;
+	}
+
+	public static ArrayLeekValue getPath(EntityAI ai, long c1, long c2, Object leeks_to_ignore) throws LeekRunException {
+
+		Cell cell1 = ai.getFight().getMap().getCell((int) c1);
+		if (cell1 == null)
+			return null;
+		Cell cell2 = ai.getFight().getMap().getCell((int) c2);
+		if (cell2 == null)
+			return null;
+
+		if (cell1 == cell2)
+			return new ArrayLeekValue(ai);
+
+		// Opérations
+		var distance = Pathfinding.getCaseDistance(cell1, cell2);
+		ai.ops(distance * distance * 20);
+
+		List<Cell> ignore = new ArrayList<Cell>();
+
+		if (leeks_to_ignore instanceof GenericArrayLeekValue) {
+			ai.putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
+		} else if (leeks_to_ignore instanceof Number) {
+			ai.getLogs().addLog(FarmerLog.WARNING,
+					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désormais utiliser un tableau de cellules à ignorer.");
+			Entity l = ai.getFight().getEntity(ai.integer(leeks_to_ignore));
+			if (l != null && l.getCell() != null) {
+				ignore.add(l.getCell());
+			}
+		}
+		List<Cell> path = ai.getFight().getMap().getPathBeetween(ai, cell1, cell2, ignore);
+		if (path == null)
+			return null;
+		var retour = new ArrayLeekValue(ai, path.size());
 		for (int i = 0; i < path.size(); i++) {
 			retour.push(ai, (long) path.get(i).getId());
 		}

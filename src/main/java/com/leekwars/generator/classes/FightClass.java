@@ -790,14 +790,33 @@ public class FightClass {
 		return used_pm;
 	}
 
-	public static GenericArrayLeekValue getBulbChips(EntityAI ai, long id) throws LeekRunException {
+	public static LegacyArrayLeekValue getBulbChips_v1_3(EntityAI ai, long id) throws LeekRunException {
 		if (id > 0) {
 			Chip chip = Chips.getChip((int) id);
 			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
 				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
 				if (template != null) {
 					List<Chip> chips = template.getChips();
-					var retour = ai.newArray();
+					var retour = new LegacyArrayLeekValue();
+					for (int i = 0; i < chips.size(); i++) {
+						retour.push(ai, (long) chips.get(i).getId());
+					}
+					return retour;
+				}
+			}
+		}
+		return null;
+	}
+
+
+	public static ArrayLeekValue getBulbChips(EntityAI ai, long id) throws LeekRunException {
+		if (id > 0) {
+			Chip chip = Chips.getChip((int) id);
+			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
+				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
+				if (template != null) {
+					List<Chip> chips = template.getChips();
+					var retour = new ArrayLeekValue(ai, chips.size());
 					for (int i = 0; i < chips.size(); i++) {
 						retour.push(ai, (long) chips.get(i).getId());
 					}
@@ -819,11 +838,19 @@ public class FightClass {
 		return null;
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1) throws LeekRunException {
+	public static LegacyArrayLeekValue getCellsToUseWeapon_v1_3(EntityAI ai, long value1) throws LeekRunException {
+		return getCellsToUseWeapon_v1_3(ai, value1, null, null);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1) throws LeekRunException {
 		return getCellsToUseWeapon(ai, value1, null, null);
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1, Object value2) throws LeekRunException {
+	public static LegacyArrayLeekValue getCellsToUseWeapon_v1_3(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return getCellsToUseWeapon_v1_3(ai, value1, value2, null);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1, Object value2) throws LeekRunException {
 		return getCellsToUseWeapon(ai, value1, value2, null);
 	}
 
@@ -836,7 +863,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+	public static LegacyArrayLeekValue getCellsToUseWeapon_v1_3(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 		Entity target = null;
 
@@ -846,7 +873,6 @@ public class FightClass {
 			weapon = Weapons.getWeapon(ai.integer(value1));
 			target = ai.getFight().getEntity(ai.integer(value2));
 		}
-
 		if (target == null || target.getCell() == null || weapon == null || ai.getEntity().getCell() == null)
 			return null;
 
@@ -857,24 +883,55 @@ public class FightClass {
 			cells_to_ignore.add(ai.getEntity().getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
 
-		var retour = ai.newArray(possible.size());
-		if (possible != null) {
-			for (Cell cell : possible) {
-				retour.push(ai, (long) cell.getId());
-			}
+		var retour = new LegacyArrayLeekValue();
+		for (Cell cell : possible) {
+			retour.push(ai, (long) cell.getId());
 		}
-
 		return retour;
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1) throws LeekRunException {
+	public static ArrayLeekValue getCellsToUseWeapon(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
+		Entity target = null;
+
+		if (value2 == null) {
+			target = ai.getFight().getEntity(ai.integer(value1));
+		} else {
+			weapon = Weapons.getWeapon(ai.integer(value1));
+			target = ai.getFight().getEntity(ai.integer(value2));
+		}
+		if (target == null || target.getCell() == null || weapon == null || ai.getEntity().getCell() == null)
+			return null;
+
+		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
+		if (value3 instanceof GenericArrayLeekValue) {
+			ai.putCells(cells_to_ignore, (GenericArrayLeekValue) value3);
+		} else
+			cells_to_ignore.add(ai.getEntity().getCell());
+		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target.getCell(), cells_to_ignore);
+
+		var retour = new ArrayLeekValue(ai, possible.size());
+		for (Cell cell : possible) {
+			retour.push(ai, (long) cell.getId());
+		}
+		return retour;
+	}
+
+	public static LegacyArrayLeekValue getCellsToUseWeaponOnCell_v1_3(EntityAI ai, long value1) throws LeekRunException {
+		return getCellsToUseWeaponOnCell_v1_3(ai, value1, null, null);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1) throws LeekRunException {
 		return getCellsToUseWeaponOnCell(ai, value1, null, null);
 	}
 
-	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return getCellsToUseWeaponOnCell(ai, value1, value2, null);
+	public static LegacyArrayLeekValue getCellsToUseWeaponOnCell_v1_3(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return getCellsToUseWeaponOnCell_v1_3(ai, value1, value2, null);
 	}
 
+	public static ArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return getCellsToUseWeaponOnCell(ai, value1, value2, null);
+	}
 	/**
 	 * Renvoie la liste des cellules à partir desquelles on peut utiliser son
 	 * arme sur la cellule cible
@@ -884,18 +941,15 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static GenericArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-
+	public static LegacyArrayLeekValue getCellsToUseWeaponOnCell_v1_3(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
-
 		if (value2 == null) {
 			target = ai.getFight().getMap().getCell(ai.integer(value1));
 		} else {
 			weapon = Weapons.getWeapon(ai.integer(value1));
 			target = ai.getFight().getMap().getCell(ai.integer(value2));
 		}
-
 		if (target == null || weapon == null || ai.getEntity().getCell() == null)
 			return null;
 
@@ -906,17 +960,48 @@ public class FightClass {
 			cells_to_ignore.add(ai.getEntity().getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target, cells_to_ignore);
 
-		var retour = ai.newArray();
+		var retour = new LegacyArrayLeekValue();
 		if (possible != null) {
 			for (Cell cell : possible) {
 				retour.push(ai, (long) cell.getId());
 			}
 		}
-
 		return retour;
 	}
 
-	public static Object getCellsToUseChip(EntityAI ai, long chip_id, long target_leek_id) throws LeekRunException {
+	public static ArrayLeekValue getCellsToUseWeaponOnCell(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		Cell target = null;
+		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
+		if (value2 == null) {
+			target = ai.getFight().getMap().getCell(ai.integer(value1));
+		} else {
+			weapon = Weapons.getWeapon(ai.integer(value1));
+			target = ai.getFight().getMap().getCell(ai.integer(value2));
+		}
+		if (target == null || weapon == null || ai.getEntity().getCell() == null)
+			return null;
+
+		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
+		if (value3 instanceof GenericArrayLeekValue) {
+			ai.putCells(cells_to_ignore, (GenericArrayLeekValue) value3);
+		} else
+			cells_to_ignore.add(ai.getEntity().getCell());
+		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(weapon.getAttack(), target, cells_to_ignore);
+
+		var retour = new ArrayLeekValue(ai);
+		if (possible != null) {
+			for (Cell cell : possible) {
+				retour.push(ai, (long) cell.getId());
+			}
+		}
+		return retour;
+	}
+
+	public static LegacyArrayLeekValue getCellsToUseChip_v1_3(EntityAI ai, long chip_id, long target_leek_id) throws LeekRunException {
+		return getCellsToUseChip_v1_3(ai, chip_id, target_leek_id, null);
+	}
+
+	public static ArrayLeekValue getCellsToUseChip(EntityAI ai, long chip_id, long target_leek_id) throws LeekRunException {
 		return getCellsToUseChip(ai, chip_id, target_leek_id, null);
 	}
 
@@ -931,7 +1016,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static Object getCellsToUseChip(EntityAI ai, long chip_id, long target_leek_id, Object value3) throws LeekRunException {
+	public static LegacyArrayLeekValue getCellsToUseChip_v1_3(EntityAI ai, long chip_id, long target_leek_id, Object value3) throws LeekRunException {
 
 		Entity target = ai.getFight().getEntity(ai.integer(target_leek_id));
 		// On récupère le sort
@@ -947,7 +1032,7 @@ public class FightClass {
 		}
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target.getCell(), cells_to_ignore);
 
-		var retour = ai.newArray(possible.size());
+		var retour = new LegacyArrayLeekValue();
 		if (possible != null) {
 			for (Cell cell : possible) {
 				retour.push(ai, (long) cell.getId());
@@ -956,9 +1041,37 @@ public class FightClass {
 		return retour;
 	}
 
-	public static Object getCellsToUseChipOnCell(EntityAI ai, long chip_id, long target_cell_id) throws LeekRunException {
+	public static ArrayLeekValue getCellsToUseChip(EntityAI ai, long chip_id, long target_leek_id, Object value3) throws LeekRunException {
+
+		Entity target = ai.getFight().getEntity(ai.integer(target_leek_id));
+		// On récupère le sort
+		Chip template = Chips.getChip(ai.integer(chip_id));
+		if (target == null || target.getCell() == null || template == null || ai.getEntity().getCell() == null)
+			return null;
+
+		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
+		if (value3 instanceof GenericArrayLeekValue) {
+			ai.putCells(cells_to_ignore, (GenericArrayLeekValue) value3);
+		} else {
+			cells_to_ignore.add(ai.getEntity().getCell());
+		}
+		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target.getCell(), cells_to_ignore);
+
+		var retour = new ArrayLeekValue(ai, possible.size());
+		for (Cell cell : possible) {
+			retour.push(ai, (long) cell.getId());
+		}
+		return retour;
+	}
+
+	public static LegacyArrayLeekValue getCellsToUseChipOnCell_v1_3(EntityAI ai, long chip_id, long target_cell_id) throws LeekRunException {
+		return getCellsToUseChipOnCell_v1_3(ai, chip_id, target_cell_id, null);
+	}
+
+	public static ArrayLeekValue getCellsToUseChipOnCell(EntityAI ai, long chip_id, long target_cell_id) throws LeekRunException {
 		return getCellsToUseChipOnCell(ai, chip_id, target_cell_id, null);
 	}
+
 	/**
 	 * Renvoie la liste des cellules à partir desquelles on peut utiliser la
 	 * puce chip_id, sur la cellule cible
@@ -970,7 +1083,7 @@ public class FightClass {
 	 * @return Liste des cellules
 	 * @throws LeekRunException
 	 */
-	public static Object getCellsToUseChipOnCell(EntityAI ai, long chip_id, long target_cell_id, Object value3) throws LeekRunException {
+	public static LegacyArrayLeekValue getCellsToUseChipOnCell_v1_3(EntityAI ai, long chip_id, long target_cell_id, Object value3) throws LeekRunException {
 
 		Cell target = ai.getFight().getMap().getCell(ai.integer(target_cell_id));
 		// On récupère le sort
@@ -985,7 +1098,31 @@ public class FightClass {
 			cells_to_ignore.add(ai.getEntity().getCell());
 		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target, cells_to_ignore);
 
-		var retour = ai.newArray(possible.size());
+		var retour = new LegacyArrayLeekValue();
+		if (possible != null) {
+			for (Cell cell : possible) {
+				retour.push(ai, (long) cell.getId());
+			}
+		}
+		return retour;
+	}
+
+	public static ArrayLeekValue getCellsToUseChipOnCell(EntityAI ai, long chip_id, long target_cell_id, Object value3) throws LeekRunException {
+
+		Cell target = ai.getFight().getMap().getCell(ai.integer(target_cell_id));
+		// On récupère le sort
+		Chip template = Chips.getChip(ai.integer(chip_id));
+		if (target == null || template == null || ai.getEntity().getCell() == null)
+			return null;
+
+		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
+		if (value3 instanceof GenericArrayLeekValue) {
+			ai.putCells(cells_to_ignore, (GenericArrayLeekValue) value3);
+		} else
+			cells_to_ignore.add(ai.getEntity().getCell());
+		List<Cell> possible = Pathfinding.getPossibleCastCellsForTarget(template.getAttack(), target, cells_to_ignore);
+
+		var retour = new ArrayLeekValue(ai, possible.size());
 		if (possible != null) {
 			for (Cell cell : possible) {
 				retour.push(ai, (long) cell.getId());
