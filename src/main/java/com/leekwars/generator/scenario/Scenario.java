@@ -32,6 +32,10 @@ public class Scenario {
 	public Map<Integer, TeamInfo> teams = new HashMap<Integer, TeamInfo>();
 	public List<List<EntityInfo>> entities = new ArrayList<List<EntityInfo>>();
 	public JSONObject map = null;
+	/**
+	 * Si match nul, on regarde le poireau qui a le plus de vie (en absolu).
+	 */
+	public boolean drawCheckLife = false;
 
 	public Scenario() {
 		// Between 1 and MAX_VALUE (included)
@@ -130,5 +134,9 @@ public class Scenario {
 		} else {
 			return this.farmers.get(farmer);
 		}
+	}
+
+	public void setDrawCheckLife(boolean drawCheckLife) {
+		this.drawCheckLife = drawCheckLife;
 	}
 }

@@ -349,7 +349,7 @@ public class Fight {
 		return true;
 	}
 
-	public void startFight() throws Exception {
+	public void startFight(boolean drawCheckLife) throws Exception {
 
 		initFight();
 
@@ -393,8 +393,18 @@ public class Fight {
 				removeInvocation(e, true);
 		}
 
-		mWinteam = -1;
+		// Calcul de l'équipe gagnante
+		computeWinner(drawCheckLife);
 
+		statistics.endFight(mEntities.values());
+		if (listener != null) {
+			listener.newTurn(this);
+		}
+		actions.addOpsAndTimes(statistics);
+	}
+
+	public void computeWinner(boolean drawCheckLife) {
+		mWinteam = -1;
 		int alive = 0;
 		for (int t = 0; t < teams.size(); ++t) {
 			if (!teams.get(t).isDead() && !teams.get(t).containsChest()) {
@@ -405,11 +415,14 @@ public class Fight {
 		if (alive != 1) {
 			mWinteam = -1;
 		}
-		statistics.endFight(mEntities.values());
-		if (listener != null) {
-			listener.newTurn(this);
+		// Égalité : on regarde la vie des équipes
+		if (mWinteam == -1 && drawCheckLife) {
+			if (teams.get(0).getLife() > teams.get(1).getLife()) {
+				mWinteam = 0;
+			} else if (teams.get(1).getLife() > teams.get(0).getLife()) {
+				mWinteam = 1;
+			}
 		}
-		actions.addOpsAndTimes(statistics);
 	}
 
 	public void initFight() throws FightException {

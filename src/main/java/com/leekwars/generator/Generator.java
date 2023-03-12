@@ -136,7 +136,7 @@ public class Generator {
 
 		try {
 			Log.i(TAG, "Start fight...");
-			fight.startFight();
+			fight.startFight(scenario.drawCheckLife);
 			fight.finishFight();
 
 			outcome.fight = fight.getActions();

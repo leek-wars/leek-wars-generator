@@ -157,4 +157,14 @@ public class Team {
 		}
 		return false;
 	}
+
+	public int getLife() {
+		int life = 0;
+		for (Entity entity : entities) {
+			if (entity.isSummon()) continue;
+			if (entity instanceof Turret) continue;
+			life += entity.getLife();
+		}
+		return life;
+	}
 }
