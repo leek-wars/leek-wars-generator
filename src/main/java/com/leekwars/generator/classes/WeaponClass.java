@@ -10,6 +10,7 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
 
+import leekscript.AILog;
 import leekscript.common.Error;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
@@ -23,7 +24,7 @@ public class WeaponClass {
 		Entity target = ai.getFight().getEntity(leek_id);
 		if (target != null && target != ai.getEntity() && !target.isDead()) {
 			if (ai.getEntity().getWeapon() == null) {
-				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
+				ai.addSystemLog(AILog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
 			success = ai.getFight().useWeapon(ai.getEntity(), target.getCell());
 		}
@@ -39,7 +40,7 @@ public class WeaponClass {
 		Cell target = ai.getFight().getMap().getCell((int) cell_id);
 		if (target != null && target != ai.getEntity().getCell()) {
 			if (ai.getEntity().getWeapon() == null) {
-				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
+				ai.addSystemLog(AILog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
 			success = ai.getFight().useWeapon(ai.getEntity(), target);
 		}

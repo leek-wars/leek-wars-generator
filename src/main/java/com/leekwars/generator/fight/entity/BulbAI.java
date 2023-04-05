@@ -11,7 +11,7 @@ public class BulbAI extends EntityAI {
 	private EntityAI mOwnerAI;
 
 	public BulbAI(Entity entity, EntityAI owner_ai, FunctionLeekValue ai) {
-		super(entity, owner_ai.logs);
+		super(entity, owner_ai.getLogs());
 		valid = true;
 		mAIFunction = ai;
 		setFight(owner_ai.fight);

@@ -11,6 +11,7 @@ import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
 
+import leekscript.AILog;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
@@ -356,7 +357,7 @@ public class EntityClass {
 		// Check if it is a valid weapon
 		var wt = Weapons.getWeapon((int) weapon_id);
 		if (wt == null) {
-			ai.addSystemLog(FarmerLog.WARNING, FarmerLog.WEAPON_NOT_EXISTS, new String[] { String.valueOf(weapon_id) });
+			ai.addSystemLog(AILog.WARNING, FarmerLog.WEAPON_NOT_EXISTS, new String[] { String.valueOf(weapon_id) });
 			return false;
 		}
 
@@ -368,7 +369,7 @@ public class EntityClass {
 			}
 		}
 		if (w == null) {
-			ai.addSystemLog(FarmerLog.WARNING, FarmerLog.WEAPON_NOT_EQUIPPED, new String[] { String.valueOf(weapon_id), wt.getName() });
+			ai.addSystemLog(AILog.WARNING, FarmerLog.WEAPON_NOT_EQUIPPED, new String[] { String.valueOf(weapon_id), wt.getName() });
 			return false;
 		}
 

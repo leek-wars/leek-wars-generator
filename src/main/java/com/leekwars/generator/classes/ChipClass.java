@@ -18,6 +18,7 @@ import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.FunctionLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
+import leekscript.AILog;
 import leekscript.common.Error;
 
 public class ChipClass {
@@ -25,12 +26,12 @@ public class ChipClass {
 	// ---- Fonctions Chip ----
 
 	public static Object getCurrentCooldown(EntityAI ai, long chip_id) throws LeekRunException {
-		((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
+		((EntityAI) ai).addSystemLog(AILog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 		return null;
 	}
 
 	public static Object getCurrentCooldown(EntityAI ai, long chip_id, long v) throws LeekRunException {
-		((EntityAI) ai).addSystemLog(FarmerLog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
+		((EntityAI) ai).addSystemLog(AILog.WARNING, Error.DEPRECATED_FUNCTION, new String[] { "getCurrentCooldown", "getCooldown" });
 		return null;
 	}
 
@@ -67,9 +68,9 @@ public class ChipClass {
 		if (chip == null) {
 			Chip ct = Chips.getChip((int) chip_id);
 			if (ct == null) {
-				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
-				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip_id), ct.getName() });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
 		if (target != null && chip != null && !target.isDead()) {
@@ -92,9 +93,9 @@ public class ChipClass {
 		if (template == null) {
 			Chip ct = Chips.getChip((int) chip_id);
 			if (ct == null) {
-				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip_id) });
 			} else {
-				ai.addSystemLog(FarmerLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip_id), ct.getName() });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip_id), ct.getName() });
 			}
 		}
 		if (target != null && template != null) {
@@ -259,9 +260,9 @@ public class ChipClass {
 		if (template == null) {
 			Chip ct = Chips.getChip((int) chip);
 			if (ct == null)
-				ai.addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(ai.integer(chip)) });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(ai.integer(chip)) });
 			else
-				ai.addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(ai.integer(chip)), ct.getName() });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(ai.integer(chip)), ct.getName() });
 			return -1;
 		}
 
@@ -291,9 +292,9 @@ public class ChipClass {
 			Chip ct = Chips.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
 
 			if (ct == null)
-				ai.addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
 			else
-				ai.addSystemLog(LeekLog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
 			return -1;
 		}
 

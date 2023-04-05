@@ -24,6 +24,7 @@ import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
+import leekscript.AILog;
 import leekscript.common.Error;
 
 public class EntityAI extends AI {
@@ -76,7 +77,6 @@ public class EntityAI extends AI {
 	protected long mIACpuRunTime = 0;
 
 	protected String ai_name = "";
-	protected LeekLog logs;
 
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
 	protected final List<String> mSays = new ArrayList<String>();
@@ -89,9 +89,8 @@ public class EntityAI extends AI {
 	}
 
 	public EntityAI(Entity entity, LeekLog logs) {
-		super(0, LeekScript.LATEST_VERSION);
+		super(0, LeekScript.LATEST_VERSION, logs);
 		setEntity(entity);
-		this.logs = logs;
 	}
 
 	public static AIFile resolve(Generator generator, EntityInfo entityInfo, Entity entity) {
@@ -207,16 +206,14 @@ public class EntityAI extends AI {
 
 	public void addSystemLog(int type, int key, String[] parameters, StackTraceElement[] elements) {
 		opsNoCheck(AI.ERROR_LOG_COST);
-		if (type == FarmerLog.WARNING)
-			type = FarmerLog.SWARNING;
-		else if (type == FarmerLog.ERROR)
-			type = FarmerLog.SERROR;
-		else if (type == FarmerLog.STANDARD)
-			type = FarmerLog.SSTANDARD;
+		if (type == AILog.WARNING)
+			type = AILog.SWARNING;
+		else if (type == AILog.ERROR)
+			type = AILog.SERROR;
+		else if (type == AILog.STANDARD)
+			type = AILog.SSTANDARD;
 
-		if (this != null) {
-			logs.addSystemLog(type, this.getErrorMessage(elements), key, parameters);
-		}
+		logs.addSystemLog(type, this.getErrorMessage(elements), key, parameters);
 	}
 
 	public long getIARunTime() {
@@ -232,7 +229,7 @@ public class EntityAI extends AI {
 	}
 
 	public LeekLog getLogs() {
-		return logs;
+		return (LeekLog) logs;
 	}
 
 	public void addMessage(LeekMessage leekMessage) {
@@ -248,7 +245,7 @@ public class EntityAI extends AI {
 
 	public void setFight(Fight fight) {
 		this.fight = fight;
-		logs.setLogs(fight.getActions());
+		((LeekLog) logs).setLogs(fight.getActions());
 	}
 
 	public void runTurn(int turn) {

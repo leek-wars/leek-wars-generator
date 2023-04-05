@@ -10,8 +10,10 @@ import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.entity.Entity;
 
 import leekscript.AILog;
+import leekscript.runner.AI;
+import leekscript.runner.LeekRunException;
 
-public class FarmerLog extends AILog {
+public class FarmerLog {
 
 	private final static int MAX_LENGTH = 500000;
 
@@ -61,7 +63,40 @@ public class FarmerLog extends AILog {
 		mCurArray.add(action);
 	}
 
-	public void addSystemLog(Entity leek, int type, String error, int key, String[] parameters) {
+	public void addSystemLog(AI ai, int type, String error, int key, Object[] parameters) throws LeekRunException {
+		throw new RuntimeException("not implemented");
+	}
+
+	public void addSystemLog(AI ai, Entity leek, int type, String error, int key, Object[] parameters) throws LeekRunException {
+
+		if (!addSize(20)) {
+			return;
+		}
+
+		String[] parametersString = parameters != null ? new String[parameters.length] : null;
+
+		if (parameters != null) {
+			for (int p = 0; p < parameters.length; ++p) {
+				var parameterString = ai.string(parameters[p]);
+				if (!addSize(parameterString.length())) {
+					parametersString[p] = "[...]";
+				} else {
+					parametersString[p] = parameterString;
+				}
+			}
+		}
+		JSONArray obj = new JSONArray();
+		obj.add(leek.getFId());
+		obj.add(type);
+		obj.add(error);
+		obj.add(key);
+		if (parameters != null) {
+			obj.add(parametersString);
+		}
+		addAction(obj);
+	}
+
+	public void addSystemLogString(Entity leek, int type, String error, int key, String[] parameters) {
 		int paramSize = 0;
 		if (parameters != null) {
 			for (String p : parameters) {
@@ -142,7 +177,7 @@ public class FarmerLog extends AILog {
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(type);
-		obj.add(new String(message.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
+		obj.add(message);
 		if (color != 0) {
 			obj.add(color);
 		}
@@ -185,5 +220,9 @@ public class FarmerLog extends AILog {
 		obj.add(leek.getFId());
 		obj.add(PAUSE);
 		addAction(obj);
+	}
+
+	public boolean isFull() {
+		return mSize >= MAX_LENGTH;
 	}
 }

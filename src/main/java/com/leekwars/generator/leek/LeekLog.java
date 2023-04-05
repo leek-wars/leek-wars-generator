@@ -1,10 +1,10 @@
 package com.leekwars.generator.leek;
 
-import com.alibaba.fastjson.JSONArray;
 import com.leekwars.generator.fight.action.Actions;
 import com.leekwars.generator.fight.entity.Entity;
 import leekscript.common.Error;
-
+import leekscript.runner.AI;
+import leekscript.runner.LeekRunException;
 import leekscript.AILog;
 
 public class LeekLog extends AILog {
@@ -15,13 +15,6 @@ public class LeekLog extends AILog {
 	public LeekLog(FarmerLog farmerLogs, Entity entity) {
 		this.farmerLogs = farmerLogs;
 		this.entity = entity;
-		stream = new AILog.Stream() {
-			@Override
-			public void write(JSONArray array) {
-				array.set(0, entity.getFId());
-				farmerLogs.addAction(array);
-			}
-		};
 	}
 
 	public void addLog(int warning, String string) {
@@ -42,7 +35,12 @@ public class LeekLog extends AILog {
 	}
 
 	public void addSystemLog(int type, String trace, int key, String[] parameters) {
-		farmerLogs.addSystemLog(entity, type, trace, key, parameters);
+		farmerLogs.addSystemLogString(entity, type, trace, key, parameters);
+	}
+
+	@Override
+	public void addSystemLog(AI ai, int type, String trace, int key, Object[] parameters) throws LeekRunException {
+		farmerLogs.addSystemLog(ai, entity, type, trace, key, parameters);
 	}
 
 	public void setLogs(Actions actions) {
@@ -63,5 +61,10 @@ public class LeekLog extends AILog {
 
 	public void addPause() {
 		farmerLogs.addPause(entity);
+	}
+
+	@Override
+	public boolean isFull() {
+		return farmerLogs.isFull();
 	}
 }

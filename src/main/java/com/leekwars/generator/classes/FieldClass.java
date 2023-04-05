@@ -9,6 +9,7 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
 
+import leekscript.AILog;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
@@ -102,7 +103,7 @@ public class FieldClass {
 		if (leeks_to_ignore instanceof GenericArrayLeekValue) {
 			ai.putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
 		} else if (leeks_to_ignore instanceof Number) {
-			ai.getLogs().addLog(FarmerLog.WARNING,
+			ai.getLogs().addLog(AILog.WARNING,
 					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désormais utiliser un tableau de cellules à ignorer.");
 			Entity l = ai.getFight().getEntity(ai.integer(leeks_to_ignore));
 			if (l != null && l.getCell() != null) {
@@ -140,7 +141,7 @@ public class FieldClass {
 		if (leeks_to_ignore instanceof GenericArrayLeekValue) {
 			ai.putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
 		} else if (leeks_to_ignore instanceof Number) {
-			ai.getLogs().addLog(FarmerLog.WARNING,
+			ai.getLogs().addLog(AILog.WARNING,
 					"Attention, la fonction getPath(Cell start, Cell end, Leek leek_to_ignore) va disparaitre, il faut désormais utiliser un tableau de cellules à ignorer.");
 			Entity l = ai.getFight().getEntity(ai.integer(leeks_to_ignore));
 			if (l != null && l.getCell() != null) {
