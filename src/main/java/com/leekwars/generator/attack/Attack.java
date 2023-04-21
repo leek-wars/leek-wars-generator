@@ -182,7 +182,8 @@ public class Attack {
 			if (parameters.getId() == Effect.TYPE_ATTRACT) {
 				for (Entity entity : targetEntities) {
 					// Attract directly to target cell
-					fight.slideEntity(entity, target, caster);
+					Cell destination = Pathfinding.getAttractLastAvailableCell(entity.getCell(), target, caster.getCell());
+					fight.slideEntity(entity, destination, caster);
 				}
 			} else if (parameters.getId() == Effect.TYPE_PUSH) {
 				for (Entity entity : targetEntities) {

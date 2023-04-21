@@ -746,4 +746,24 @@ public class Pathfinding {
 		}
 		return current;
 	}
+
+	public static Cell getAttractLastAvailableCell(Cell entity, Cell target, Cell caster) {
+		// Delta caster --> entity
+		int cdx = (int) Math.signum(entity.x - caster.x);
+		int cdy = (int) Math.signum(entity.y - caster.y);
+		// Delta entity --> target
+		int dx = (int) Math.signum(target.x - entity.x);
+		int dy = (int) Math.signum(target.y - entity.y);
+		// Check deltas (must be attracted in the correct direction)
+		if (cdx != -dx || cdy != -dy) return entity; // no change
+		Cell current = entity;
+		while (current != target) {
+			Cell next = current.next(dx, dy);
+			if (!next.available()) {
+				return current;
+			}
+			current = next;
+		}
+		return current;
+	}
 }

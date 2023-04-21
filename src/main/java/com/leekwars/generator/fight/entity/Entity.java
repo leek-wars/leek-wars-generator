@@ -40,6 +40,7 @@ public abstract class Entity {
 	public static final int TYPE_BULB = 1;
 	public static final int TYPE_TURRET = 2;
 	public static final int TYPE_CHEST = 3;
+	public static final int TYPE_MOB = 4;
 
 	// Characteristics constants
 	public final static int CHARAC_LIFE = 0;
