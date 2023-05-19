@@ -268,7 +268,7 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
 		});
-		method("getAllWeapons", "Weapon", 200, true, Type.ARRAY, new Type[0]);
+		method("getAllWeapons", "Weapon", 200, true, Type.ARRAY_INT, new Type[0]);
 
 		/**
 		 * Chip
@@ -309,7 +309,7 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 		});
-		method("getAllChips", "Chip", 200, true, Type.ARRAY, new Type[0]);
+		method("getAllChips", "Chip", 200, true, Type.ARRAY_INT, new Type[0]);
 
 		/**
 		 * Field
@@ -339,7 +339,7 @@ public class FightFunctions {
 			new CallableVersion(Type.BOOL_OR_NULL, new Type[] { Type.INT, Type.INT, Type.compound(Type.ARRAY_INT, Type.INT, Type.NULL) }),
 			new CallableVersion(Type.BOOL_OR_NULL, new Type[] { Type.INT, Type.INT }),
 		});
-		method("getObstacles", "Field", 85, true, Type.ARRAY, new Type[0]);
+		method("getObstacles", "Field", 85, true, Type.ARRAY_INT, new Type[0]);
 		method("getMapType", "Field", 5, true, Type.INT, new Type[0]);
 
 		/**
@@ -502,7 +502,7 @@ public class FightFunctions {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT }),
 		});
 		method("pause", "Util", 30, true, Type.VOID, new Type[0]);
-		method("getRegisters", "Util", 25, true, Type.ARRAY, new Type[0]);
+		method("getRegisters", "Util", 25, true, Type.MAP_STRING_STRING, new Type[0]);
 		method("getRegister", "Util", 15, true, Type.STRING_OR_NULL, new Type[] { Type.STRING });
 		method("setRegister", "Util", 50, true, Type.VOID, new Type[] { Type.STRING, Type.ANY });
 		method("deleteRegister", "Util", 16, true, Type.VOID, new Type[] { Type.STRING });
