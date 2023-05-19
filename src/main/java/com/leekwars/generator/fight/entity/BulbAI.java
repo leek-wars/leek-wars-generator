@@ -1,5 +1,7 @@
 package com.leekwars.generator.fight.entity;
 
+import com.leekwars.generator.state.Entity;
+
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.FunctionLeekValue;
 

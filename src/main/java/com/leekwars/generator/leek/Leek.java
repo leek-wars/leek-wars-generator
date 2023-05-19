@@ -1,6 +1,6 @@
 package com.leekwars.generator.leek;
 
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.state.Entity;
 
 public class Leek extends Entity {
 
@@ -12,6 +12,11 @@ public class Leek extends Entity {
 
 	public Leek(Integer id, String name) {
 		super(id, name);
+	}
+
+	public Leek(Leek leek) {
+		super(leek);
+		// super(leek.getId(), leek.name, leek.getFarmer(), leek.getLevel(), leek.getLife(), leek.getTP(), leek.getMP(), leek.getStrength(), leek.getAgility(), leek.getFrequency(), leek.getWisdom(), leek.getResistance(), leek.getScience(), leek.getMagic(), leek.getSkin(), leek.getMetal(), leek.getFace(), leek.getTeamId(), leek.getTeamName(), leek.getAIId(), leek.getAIName(), leek.getFarmerName(), leek.getFarmerCountry(), leek.getHat());
 	}
 
 	@Override

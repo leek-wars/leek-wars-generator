@@ -6,16 +6,15 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.generator.chips.Chips;
+import com.leekwars.generator.entity.Bulb;
+import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.turret.Turret;
+import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
-import com.leekwars.generator.attack.chips.Chips;
-import com.leekwars.generator.attack.weapons.Weapon;
-import com.leekwars.generator.attack.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.entity.Bulb;
-import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.turret.Turret;
-import com.leekwars.generator.leek.Leek;
 
 public class EntityInfo {
 
@@ -112,6 +111,7 @@ public class EntityInfo {
 		entity.setId(id);
 		entity.setName(name);
 		entity.setLevel(level);
+		entity.setTotalLife(life);
 		entity.setLife(life);
 		entity.setStrength(strength);
 		entity.setAgility(agility);
@@ -139,7 +139,7 @@ public class EntityInfo {
 		entity.setFace(face);
 
 		for (Object w : weapons) {
-			Weapon weapon = Weapons.getWeapon((Integer) w);
+			var weapon = Weapons.getWeapon((Integer) w);
 			if (weapon == null) {
 				Log.e(TAG, "No such weapon: " + w);
 			} else {

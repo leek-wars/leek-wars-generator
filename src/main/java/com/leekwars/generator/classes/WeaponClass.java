@@ -1,14 +1,14 @@
 package com.leekwars.generator.classes;
 
 import com.leekwars.generator.attack.Attack;
-import com.leekwars.generator.attack.weapons.Weapon;
-import com.leekwars.generator.attack.weapons.Weapons;
-import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.items.Items;
-import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.weapons.Weapon;
+import com.leekwars.generator.weapons.Weapons;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.FarmerLog;
 
 import leekscript.AILog;
 import leekscript.common.Error;
@@ -21,12 +21,12 @@ public class WeaponClass {
 	// ----- Fonctions Weapon -----
 	public static long useWeapon(EntityAI ai, long leek_id) throws LeekRunException {
 		int success = -1;
-		Entity target = ai.getFight().getEntity(leek_id);
+		var target = ai.getFight().getEntity(leek_id);
 		if (target != null && target != ai.getEntity() && !target.isDead()) {
 			if (ai.getEntity().getWeapon() == null) {
 				ai.addSystemLog(AILog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
-			success = ai.getFight().useWeapon(ai.getEntity(), target.getCell());
+			success = ai.getState().useWeapon(ai.getEntity(), target.getCell());
 		}
 		// Mort pendant le lancement, on arrête l'IA
 		if (ai.getEntity().isDead()) {
@@ -37,12 +37,12 @@ public class WeaponClass {
 
 	public static long useWeaponOnCell(EntityAI ai, long cell_id) throws LeekRunException {
 		int success = -1;
-		Cell target = ai.getFight().getMap().getCell((int) cell_id);
+		Cell target = ai.getState().getMap().getCell((int) cell_id);
 		if (target != null && target != ai.getEntity().getCell()) {
 			if (ai.getEntity().getWeapon() == null) {
 				ai.addSystemLog(AILog.WARNING, FarmerLog.NO_WEAPON_EQUIPPED);
 			}
-			success = ai.getFight().useWeapon(ai.getEntity(), target);
+			success = ai.getState().useWeapon(ai.getEntity(), target);
 		}
 		// Mort pendant le lancement, on arrête l'IA
 		if (ai.getEntity().isDead()) {
@@ -168,7 +168,7 @@ public class WeaponClass {
 		}
 		var result = new ArrayLeekValue(ai);
 		for (var feature : template.getAttack().getEffects()) {
-			result.pushNoClone(ai, feature.getFeatureArray(ai));
+			result.pushNoClone(ai, ai.getFeatureArray(feature));
 		}
 		return result;
 	}
@@ -182,9 +182,9 @@ public class WeaponClass {
 		if (template == null) {
 			return null;
 		}
-		var result = new LegacyArrayLeekValue();
+		var result = new LegacyArrayLeekValue(ai);
 		for (var feature : template.getAttack().getEffects()) {
-			result.pushNoClone(ai, feature.getFeatureArray(ai));
+			result.pushNoClone(ai, ai.getFeatureArray(feature));
 		}
 		return result;
 	}
@@ -200,7 +200,7 @@ public class WeaponClass {
 		}
 		var retour = new ArrayLeekValue(ai);
 		for (var feature : template.getPassiveEffects()) {
-			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+			retour.pushNoClone(ai, ai.getFeatureArray(feature));
 		}
 		return retour;
 	}
@@ -214,21 +214,21 @@ public class WeaponClass {
 		if (template == null) {
 			return null;
 		}
-		var retour = new LegacyArrayLeekValue();
+		var retour = new LegacyArrayLeekValue(ai);
 		for (var feature : template.getPassiveEffects()) {
-			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+			retour.pushNoClone(ai, ai.getFeatureArray(feature));
 		}
 		return retour;
 	}
 
-	public static Object getWeaponLaunchType(EntityAI ai) throws LeekRunException {
+	public static Long getWeaponLaunchType(EntityAI ai) throws LeekRunException {
 		Weapon template = ai.getEntity().getWeapon();
 		if (template == null)
 			return null;
 		return (long) template.getAttack().getLaunchType();
 	}
 
-	public static Object getWeaponLaunchType(EntityAI ai, long weapon_id) throws LeekRunException {
+	public static Long getWeaponLaunchType(EntityAI ai, long weapon_id) throws LeekRunException {
 		Weapon template = null;
 		if (weapon_id == -1) {
 			template = ai.getEntity().getWeapon();
@@ -272,7 +272,7 @@ public class WeaponClass {
 		if (weapon == null)
 			return false;
 		if (target != null && target.getCell() != null) {
-			return Pathfinding.canUseAttack(ai.getEntity().getCell(), target.getCell(), weapon.getAttack());
+			return ai.getState().getMap().canUseAttack(ai.getEntity().getCell(), target.getCell(), weapon.getAttack());
 		}
 		return false;
 	}
@@ -285,15 +285,15 @@ public class WeaponClass {
 		Cell target = null;
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell(ai.integer(value1));
+			target = ai.getState().getMap().getCell(ai.integer(value1));
 		} else {
-			target = ai.getFight().getMap().getCell(ai.integer(value2));
+			target = ai.getState().getMap().getCell(ai.integer(value2));
 			weapon = Weapons.getWeapon(ai.integer(value1));
 		}
 		if (weapon == null)
 			return false;
 		if (target != null) {
-			return Pathfinding.canUseAttack(ai.getEntity().getCell(), target, weapon.getAttack());
+			return ai.getState().getMap().canUseAttack(ai.getEntity().getCell(), target, weapon.getAttack());
 		}
 		return false;
 	}
@@ -308,18 +308,18 @@ public class WeaponClass {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell(ai.integer(value1));
+			target = ai.getState().getMap().getCell(ai.integer(value1));
 		} else {
 			weapon = Weapons.getWeapon(ai.integer(value1));
-			target = ai.getFight().getMap().getCell(ai.integer(value2));
+			target = ai.getState().getMap().getCell(ai.integer(value2));
 		}
 
 		if (weapon == null)
 			return null;
 		if (target != null && ai.getEntity().getCell() != null) {
 			var retour = new ArrayLeekValue(ai);
-			var leeks = weapon.getAttack().getWeaponTargets(ai.getFight(), ai.getEntity(), target);
-			for (Entity l : leeks) {
+			var leeks = weapon.getAttack().getWeaponTargets(ai.getState(), ai.getEntity(), target);
+			for (var l : leeks) {
 				retour.push(ai, (long) l.getFId());
 			}
 			return retour;
@@ -337,18 +337,18 @@ public class WeaponClass {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell(ai.integer(value1));
+			target = ai.getState().getMap().getCell(ai.integer(value1));
 		} else {
 			weapon = Weapons.getWeapon(ai.integer(value1));
-			target = ai.getFight().getMap().getCell(ai.integer(value2));
+			target = ai.getState().getMap().getCell(ai.integer(value2));
 		}
 
 		if (weapon == null)
 			return null;
 		if (target != null && ai.getEntity().getCell() != null) {
-			var retour = new LegacyArrayLeekValue();
-			var leeks = weapon.getAttack().getWeaponTargets(ai.getFight(), ai.getEntity(), target);
-			for (Entity l : leeks) {
+			var retour = new LegacyArrayLeekValue(ai);
+			var leeks = weapon.getAttack().getWeaponTargets(ai.getState(), ai.getEntity(), target);
+			for (var l : leeks) {
 				retour.push(ai, (long) l.getFId());
 			}
 			return retour;
@@ -389,15 +389,15 @@ public class WeaponClass {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell((int) value1);
+			target = ai.getState().getMap().getCell((int) value1);
 		} else {
 			weapon = Weapons.getWeapon((int) value1);
-			target = ai.getFight().getMap().getCell(ai.integer(value2));
+			target = ai.getState().getMap().getCell(ai.integer(value2));
 		}
 
 		Cell start_cell = ai.getEntity().getCell();
 		if (value3 != null) {
-			start_cell = ai.getFight().getMap().getCell(ai.integer(value3));
+			start_cell = ai.getState().getMap().getCell(ai.integer(value3));
 		}
 
 		if (target == null)
@@ -409,9 +409,9 @@ public class WeaponClass {
 		if (start_cell == null)
 			return null;
 
-		var retour = new LegacyArrayLeekValue();
+		var retour = new LegacyArrayLeekValue(ai);
 		// On récupère les cellules touchées
-		var cells = weapon.getAttack().getTargetCells(start_cell, target);
+		var cells = weapon.getAttack().getTargetCells(ai.getState().getMap(), start_cell, target);
 		// On les met dans le tableau
 		for (Cell cell : cells) {
 			retour.push(ai, (long) cell.getId());
@@ -424,15 +424,15 @@ public class WeaponClass {
 		Weapon weapon = (ai.getEntity().getWeapon() == null) ? null : ai.getEntity().getWeapon();
 
 		if (value2 == null) {
-			target = ai.getFight().getMap().getCell((int) value1);
+			target = ai.getState().getMap().getCell((int) value1);
 		} else {
 			weapon = Weapons.getWeapon((int) value1);
-			target = ai.getFight().getMap().getCell(ai.integer(value2));
+			target = ai.getState().getMap().getCell(ai.integer(value2));
 		}
 
 		Cell start_cell = ai.getEntity().getCell();
 		if (value3 != null) {
-			start_cell = ai.getFight().getMap().getCell(ai.integer(value3));
+			start_cell = ai.getState().getMap().getCell(ai.integer(value3));
 		}
 
 		if (target == null)
@@ -446,7 +446,7 @@ public class WeaponClass {
 
 		var retour = new ArrayLeekValue(ai);
 		// On récupère les cellules touchées
-		var cells = weapon.getAttack().getTargetCells(start_cell, target);
+		var cells = weapon.getAttack().getTargetCells(ai.getState().getMap(), start_cell, target);
 		// On les met dans le tableau
 		for (Cell cell : cells) {
 			retour.push(ai, (long) cell.getId());
@@ -462,7 +462,7 @@ public class WeaponClass {
 		return i == Items.TYPE_WEAPON;
 	}
 
-	public static Object getWeaponArea(EntityAI ai, Object value) throws LeekRunException {
+	public static Long getWeaponArea(EntityAI ai, Object value) throws LeekRunException {
 		if (value instanceof Number) {
 			Weapon weapon = Weapons.getWeapon(ai.integer(value));
 			if (weapon != null) {
@@ -473,7 +473,7 @@ public class WeaponClass {
 	}
 
 	public static LegacyArrayLeekValue getAllWeapons_v1_3(EntityAI ai) throws LeekRunException {
-		var retour = new LegacyArrayLeekValue();
+		var retour = new LegacyArrayLeekValue(ai);
 		for (var weapon : Weapons.getTemplates().values()) {
 			retour.push(ai, (long) weapon.getId());
 		}

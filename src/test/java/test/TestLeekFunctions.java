@@ -11,10 +11,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.leek.Leek;
 
 public class TestLeekFunctions {
 
@@ -33,8 +33,8 @@ public class TestLeekFunctions {
 		mLeek1 = new Leek(1, "Test", 0, 10, 500, 6, 7, 150, 151, 10, 56, 9, 0, 0, 0, false, 0, 0, "Noname", 0, "", "", "", 0);
 		mLeek2 = new Leek(2, "Bob", 0, 10, 510, 4, 6, 152, 154, 11, 46, 8, 0, 0, 0, false, 0, 0, "Noname", 0, "", "", "", 0);
 
-		mFight.addEntity(0, mLeek1);
-		mFight.addEntity(1, mLeek2);
+		mFight.getState().addEntity(0, mLeek1);
+		mFight.getState().addEntity(1, mLeek2);
 
 		mFight.initFight();
 		ai = new DefaultUserAI();

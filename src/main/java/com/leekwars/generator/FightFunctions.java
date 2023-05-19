@@ -112,16 +112,16 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT),
 		});
 		method("getEffects", "Entity", 25, true, new CallableVersion[] {
-			new CallableVersion(Type.array(Type.array(Type.compound(Type.INT_OR_BOOL))), new Type[] { Type.INT_OR_NULL }),
-			new CallableVersion(Type.array(Type.array(Type.compound(Type.INT_OR_BOOL)))),
+			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_BOOL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_BOOL))),
 		});
 		method("getLaunchedEffects", "Entity", 25, true, new CallableVersion[] {
-			new CallableVersion(Type.array(Type.array(Type.compound(Type.INT_OR_BOOL))), new Type[] { Type.INT_OR_NULL }),
-			new CallableVersion(Type.array(Type.array(Type.compound(Type.INT_OR_BOOL)))),
+			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_BOOL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_BOOL))),
 		});
 		method("getPassiveEffects", "Entity", 125, true, new CallableVersion[] {
-			new CallableVersion(Type.ARRAY_INT, new Type[] { Type.INT_OR_NULL }),
-			new CallableVersion(Type.ARRAY),
+			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
 		});
 		method("getLevel", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
@@ -226,8 +226,8 @@ public class FightFunctions {
 			new CallableVersion(Type.INT),
 		});
 		method("getWeaponEffects", "Weapon", 125, true, new CallableVersion[] {
-			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL)), new Type[] { Type.INT }),
-			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
+			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT }),
+			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL)),
 		});
 		method("getWeaponPassiveEffects", "Weapon", 125, true, new CallableVersion[] {
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL)), new Type[] { Type.INT }),
@@ -292,7 +292,7 @@ public class FightFunctions {
 		method("getChipMinRange", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getChipMaxRange", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getChipCost", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
-		method("getChipEffects", "Chip", 125, true, Type.ARRAY_OR_NULL, new Type[] { Type.INT });
+		method("getChipEffects", "Chip", 125, true, Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT });
 		method("isInlineChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("chipNeedLos", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("getChipCooldown", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
@@ -357,13 +357,13 @@ public class FightFunctions {
 		method("getEnemyTurret", "Fight", 15, true, Type.INT_OR_NULL, new Type[0]);
 		method("getDeadEnemies", "Fight", 100, true, Type.ARRAY, new Type[0]);
 		method("getDeadEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
-		method("getEnemies", "Fight", 100, true, Type.ARRAY, new Type[0]);
-		method("getAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
+		method("getEnemies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
+		method("getAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getNearestAlly", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getFarestAlly", "Fight", 31, true, Type.INT, new Type[0]).setMaxVersion(3);
 		method("getFarthestAlly", "Fight", 31, true, Type.INT, new Type[0]);
-		method("getAliveAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
+		method("getAliveAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAliveAlliesCount", "Fight", 100, true, Type.INT, new Type[0]);
 		method("getDeadAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
 		method("getAlliesCount", "Fight", 25, true, Type.INT, new Type[0]);
@@ -469,11 +469,11 @@ public class FightFunctions {
 		method("sendTo", "Network", 15, true, Type.BOOL, new Type[] { Type.INT, Type.INT, Type.ANY });
 		method("sendAll", "Network", 40, true, Type.VOID, new Type[] { Type.INT, Type.ANY });
 		method("getMessages", "Network", true, new CallableVersion[] {
-			new CallableVersion(Type.ANY, new Type[] { Type.INT }),
-			new CallableVersion(Type.ANY, new Type[0]),
+			new CallableVersion(Type.array(Type.ARRAY), new Type[] { Type.INT }),
+			new CallableVersion(Type.array(Type.ARRAY), new Type[0]),
 		});
-		method("getMessageAuthor", "Network", 5, true, Type.ANY, new Type[] { Type.ARRAY });
-		method("getMessageType", "Network", 5, true, Type.ANY, new Type[] { Type.ARRAY });
+		method("getMessageAuthor", "Network", 5, true, Type.INT, new Type[] { Type.ARRAY });
+		method("getMessageType", "Network", 5, true, Type.INT, new Type[] { Type.ARRAY });
 		method("getMessageParams", "Network", 5, true, Type.ANY, new Type[] { Type.ARRAY });
 
 		/**
@@ -509,7 +509,7 @@ public class FightFunctions {
 	}
 
 	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, Type return_type, Type[] arguments) {
-		return method(name, clazz, 0, isStatic, new CallableVersion[] { new CallableVersion(return_type, arguments) });
+		return method(name, clazz, operations, isStatic, new CallableVersion[] { new CallableVersion(return_type, arguments) });
 	}
 
 	private static LeekFunctions method(String name, String clazz, boolean isStatic, CallableVersion[] versions) {

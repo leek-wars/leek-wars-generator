@@ -6,21 +6,20 @@ import java.util.List;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.attack.chips.Chip;
-import com.leekwars.generator.attack.chips.ChipType;
-import com.leekwars.generator.attack.chips.Chips;
-import com.leekwars.generator.attack.weapons.Weapon;
-import com.leekwars.generator.attack.weapons.Weapons;
+import com.leekwars.generator.bulbs.BulbTemplate;
+import com.leekwars.generator.bulbs.Bulbs;
+import com.leekwars.generator.chips.Chip;
+import com.leekwars.generator.chips.ChipType;
+import com.leekwars.generator.chips.Chips;
+import com.leekwars.generator.leek.RegisterManager;
+import com.leekwars.generator.weapons.Weapon;
+import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.FightListener;
-import com.leekwars.generator.fight.bulbs.BulbTemplate;
-import com.leekwars.generator.fight.bulbs.Bulbs;
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.fight.StatisticsManager;
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.fight.statistics.StatisticsManager;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
-import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.EntityInfo;
 import com.leekwars.generator.scenario.Scenario;
@@ -67,6 +66,9 @@ public class Generator {
 			long time = System.currentTimeMillis() - t;
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			Log.s(TAG, "Analyze success!");
+			if (result.tooMuchErrors != null) {
+				errorManager.exception(result.tooMuchErrors, -1, farmer, ai);
+			}
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
@@ -104,14 +106,14 @@ public class Generator {
 		Outcome outcome = new Outcome();
 
 		Fight fight = new Fight(this, listener);
-		fight.setRegisterManager(registerManager);
+		fight.getState().setRegisterManager(registerManager);
 		fight.setStatisticsManager(statisticsManager);
 		fight.setId(scenario.fightID);
 		fight.setMaxTurns(scenario.maxTurns);
-		fight.setType(scenario.type);
-		fight.setContext(scenario.context);
-		fight.setCustomMap(scenario.map);
-		fight.seed(scenario.seed);
+		fight.getState().setType(scenario.type);
+		fight.getState().setContext(scenario.context);
+		fight.getState().setCustomMap(scenario.map);
+		fight.getState().seed(scenario.seed);
 
 		// Create logs and compile AIs
 		int t = 0;
@@ -124,8 +126,9 @@ public class Generator {
 					outcome.logs.put(aiOwner, new FarmerLog(fight, entityInfo.farmer));
 				}
 				// Create entity
-				Entity entity = entityInfo.createEntity(this, scenario, fight);
-				fight.addEntity(t, entity);
+				var entity = entityInfo.createEntity(this, scenario, fight);
+				fight.getState().addEntity(t, entity);
+				entity.setFight(fight);
 
 				// Resolve AI
 				entity.setLogs(new LeekLog(outcome.logs.get(aiOwner), entity));
@@ -139,21 +142,21 @@ public class Generator {
 			fight.startFight(scenario.drawCheckLife);
 			fight.finishFight();
 
-			outcome.fight = fight.getActions();
-			outcome.fight.dead = fight.getDeadReport();
+			outcome.fight = fight.getState().getActions();
+			outcome.fight.dead = fight.getState().getDeadReport();
 			outcome.winner = fight.getWinner();
-			outcome.duration = fight.getDuration();
+			outcome.duration = fight.getState().getDuration();
 			outcome.statistics = statisticsManager;
-			for (var entity : fight.getEntities().values()) {
+			for (var entity : fight.getState().getEntities().values()) {
 				if (entity.getAI() != null) {
-					outcome.analyzeTime += entity.getAI().getAnalyzeTime();
-					outcome.compilationTime += entity.getAI().getCompileTime();
+					outcome.analyzeTime += ((EntityAI) entity.getAI()).getAnalyzeTime();
+					outcome.compilationTime += ((EntityAI) entity.getAI()).getCompileTime();
 				}
 			}
 			outcome.executionTime = fight.executionTime;
 
 			// Save registers
-			for (Entity entity : fight.getEntities().values()) {
+			for (var entity : fight.getState().getEntities().values()) {
 				if (!entity.isSummon() && entity.getRegisters() != null	&& (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
 					registerManager.saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
 				}
@@ -182,7 +185,7 @@ public class Generator {
 			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
 			for (String id : weapons.keySet()) {
 				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeapon(new Weapon(weapon.getInteger("item"), (byte) 1, weapon.getInteger("cost"),
+				Weapons.addWeapon(new Weapon(weapon.getInteger("item"), weapon.getInteger("cost"),
 						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
 						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
 						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects")));

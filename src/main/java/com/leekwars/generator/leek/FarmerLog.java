@@ -1,15 +1,12 @@
 package com.leekwars.generator.leek;
 
-import java.nio.charset.StandardCharsets;
-
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.leekwars.generator.action.Actions;
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.Util;
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.action.Actions;
-import com.leekwars.generator.fight.entity.Entity;
 
-import leekscript.AILog;
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;
 
@@ -187,7 +184,7 @@ public class FarmerLog {
 	public boolean addSize(int size) {
 		if (mSize + size > MAX_LENGTH) {
 			if (!tooMuchDebug) {
-				fight.statistics.tooMuchDebug(farmer);
+				fight.getState().statistics.tooMuchDebug(farmer);
 
 				// Message : trop de logs
 				JSONArray obj = new JSONArray();

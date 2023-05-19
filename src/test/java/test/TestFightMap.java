@@ -9,14 +9,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.generator.Generator;
-import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.Team;
-import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.state.Team;
+import com.leekwars.generator.Generator;
+import com.leekwars.generator.fight.Fight;
 
 public class TestFightMap {
 
@@ -38,9 +38,9 @@ public class TestFightMap {
 		Cell start = map.getCell(5, 0);
 		Cell end = map.getCell(7, 1);
 
-		Assert.assertEquals(Pathfinding.getDistance2(start, end), 5);
+		Assert.assertEquals(Map.getDistance2(start, end), 5);
 		Assert.assertEquals(Pathfinding.getCaseDistance(start, end), 3);
-		Assert.assertEquals(Pathfinding.getAStarPath(null, start, new Cell[] { end }).size(), 3);
+		Assert.assertEquals(map.getAStarPath(start, new Cell[] { end }).size(), 3);
 	}
 
 	@Test
@@ -52,7 +52,7 @@ public class TestFightMap {
 		Cell start = map.getCell(5, 0);
 		Cell end = map.getCell(7, 0);
 
-		List<Cell> cells = Pathfinding.getPathAwayFromLine(null, c, start, end, 3);
+		List<Cell> cells = map.getPathAwayFromLine(c, start, end, 3);
 //		map.drawMap(cells);
 		Assert.assertNotNull(cells);
 		Assert.assertEquals(cells.size(), 3);
@@ -69,7 +69,7 @@ public class TestFightMap {
 		// On test un paquet de path au hasard
 		for (int i = 1; i < map.getNbCell(); i += 10) {
 			for (int j = 0; j < map.getNbCell(); j += 9) {
-				List<Cell> path = Pathfinding.getAStarPath(null, map.getCell(i), new Cell[] { map.getCell(j) });
+				List<Cell> path = map.getAStarPath(map.getCell(i), new Cell[] { map.getCell(j) });
 				if (i == j)
 					Assert.assertTrue(path == null);
 				else
@@ -77,13 +77,13 @@ public class TestFightMap {
 			}
 		}
 		// On teste différents chemins
-		map = Map.generateMap(fight, 0, 18, 18, 50, new ArrayList<Team>(), null);
+		map = Map.generateMap(fight.getState(), 0, 18, 18, 50, new ArrayList<Team>(), null);
 
 		for (int i = 1; i < map.getNbCell(); i += 10) {
 			for (int j = 600; j >= 0; j -= 10) {
 				Cell c1 = map.getCell(i);
 				Cell c2 = map.getCell(j);
-				List<Cell> path = Pathfinding.getAStarPath(null, c1, new Cell[] { c2 });
+				List<Cell> path = map.getAStarPath(c1, new Cell[] { c2 });
 				if (!c2.isWalkable() || !c1.isWalkable())
 					continue;
 				if (c1 == c2 || c1.getComposante() != c2.getComposante()) {
@@ -109,12 +109,12 @@ public class TestFightMap {
 	public void generationTest() throws Exception {
 		Leek l1 = new Leek(1, "Bob");
 		Leek l2 = new Leek(2, "Martin");
-		List<Entity> t1 = new ArrayList<Entity>();
-		List<Entity> t2 = new ArrayList<Entity>();
+		var t1 = new ArrayList<Entity>();
+		var t2 = new ArrayList<Entity>();
 		t1.add(l1);
 		t2.add(l2);
 
-		Map map = Map.generateMap(fight, 0, 18, 18, 50, new ArrayList<Team>(), null);
+		Map map = Map.generateMap(fight.getState(), 0, 18, 18, 50, new ArrayList<Team>(), null);
 		// On vérifie le nombre de cases
 		Assert.assertEquals(map.getNbCell(), 613);
 		// On vérifie que la carte a bien des obstacles
@@ -126,7 +126,7 @@ public class TestFightMap {
 		if (obst == 0)
 			fail("Pas d'obstacles sur la map");
 		// On vérifie que les deux joueurs sont sur la meme composante connexe
-		List<Cell> patj = Pathfinding.getAStarPath(null, l1.getCell(), new Cell[] { l2.getCell() });
+		List<Cell> patj = map.getAStarPath(l1.getCell(), new Cell[] { l2.getCell() });
 //		map.drawMap();
 		Assert.assertFalse(patj == null);
 	}
@@ -135,7 +135,7 @@ public class TestFightMap {
 	public void astar2Test() throws Exception {
 
 		// On génère une map sans obstacles
-		Map map = Map.generateMap(fight, 0, 18, 18, 100, new ArrayList<Team>(), null);
+		Map map = Map.generateMap(fight.getState(), 0, 18, 18, 100, new ArrayList<Team>(), null);
 
 		long start = System.nanoTime();
 
@@ -145,7 +145,7 @@ public class TestFightMap {
 			ends.add(map.getCell((int) Math.floor(Math.random() * 613)));
 			Cell c = map.getCell((int) Math.floor(Math.random() * 613));
 
-			List<Cell> path = Pathfinding.getAStarPath(null, c, ends, null);
+			List<Cell> path = map.getAStarPath(c, ends, null);
 			System.out.println(path != null ? path.size() : 0);
 		}
 

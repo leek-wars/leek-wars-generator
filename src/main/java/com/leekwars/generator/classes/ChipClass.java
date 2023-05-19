@@ -2,17 +2,15 @@ package com.leekwars.generator.classes;
 
 import java.util.List;
 
-import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.attack.Attack;
-import com.leekwars.generator.attack.chips.Chip;
-import com.leekwars.generator.attack.chips.Chips;
-import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.chips.Chip;
+import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.items.Items;
-import com.leekwars.generator.leek.FarmerLog;
-import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.FarmerLog;
 
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
@@ -37,19 +35,19 @@ public class ChipClass {
 
 	public static long getCooldown(EntityAI ai, long chip_id) throws LeekRunException {
 		var chipTemplate = Chips.getChip((int) chip_id);
-		return (long) ai.getFight().getCooldown(ai.getEntity(), chipTemplate);
+		return (long) ai.getState().getCooldown(ai.getEntity(), chipTemplate);
 	}
 
-	public static Object getCooldown(EntityAI ai, long chip_id, Object v) throws LeekRunException {
+	public static Long getCooldown(EntityAI ai, long chip_id, Object v) throws LeekRunException {
 		if (v == null) {
 			var chipTemplate = Chips.getChip((int) chip_id);
-			return (long) ai.getFight().getCooldown(ai.getEntity(), chipTemplate);
+			return (long) ai.getState().getCooldown(ai.getEntity(), chipTemplate);
 		}
 		if (v instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) v).intValue());
 			if (l != null) {
 				Chip chipTemplate = Chips.getChip((int) chip_id);
-				return (long) ai.getFight().getCooldown(l, chipTemplate);
+				return (long) ai.getState().getCooldown(l, chipTemplate);
 			}
 		}
 		return null;
@@ -62,7 +60,7 @@ public class ChipClass {
 	public static long useChip(EntityAI ai, long chip_id, long leek_id) throws LeekRunException {
 
 		long success = -1;
-		Entity target = ai.getFight().getEntity(leek_id);
+		var target = ai.getFight().getEntity(leek_id);
 		Chip chip = ai.getEntity().getChip((int) chip_id);
 
 		if (chip == null) {
@@ -87,7 +85,7 @@ public class ChipClass {
 	public static long useChipOnCell(EntityAI ai, long chip_id, long cell_id) throws LeekRunException {
 
 		long success = -1;
-		Cell target = ai.getFight().getMap().getCell((int) cell_id);
+		Cell target = ai.getState().getMap().getCell((int) cell_id);
 		Chip template = ai.getEntity().getChip((int) chip_id);
 
 		if (template == null) {
@@ -110,30 +108,30 @@ public class ChipClass {
 	}
 
 	public static boolean canUseChipOnCell(EntityAI ai, long chip_id, long cell_id) throws LeekRunException {
-		Cell target = ai.getFight().getMap().getCell((int) cell_id);
+		Cell target = ai.getState().getMap().getCell((int) cell_id);
 		Chip template = ai.getEntity().getChip((int) chip_id);
 		if (target != null && template != null && ai.getEntity().getCell() != null) {
-			return Pathfinding.canUseAttack(ai.getEntity().getCell(), target, template.getAttack());
+			return ai.getState().getMap().canUseAttack(ai.getEntity().getCell(), target, template.getAttack());
 		}
 		return false;
 	}
 
 	public static boolean canUseChip(EntityAI ai, long chip_id, long leek_id) throws LeekRunException {
-		Entity target = ai.getFight().getEntity((int) leek_id);
+		var target = ai.getFight().getEntity((int) leek_id);
 		Chip template = ai.getEntity().getChip((int) chip_id);
 		if (target != null && template != null && target.getCell() != null && ai.getEntity().getCell() != null) {
-			return Pathfinding.canUseAttack(ai.getEntity().getCell(), target.getCell(), template.getAttack());
+			return ai.getState().getMap().canUseAttack(ai.getEntity().getCell(), target.getCell(), template.getAttack());
 		}
 		return false;
 	}
 
 	public static LegacyArrayLeekValue getChipTargets_v1_3(EntityAI ai, long chip_id, long cell_id) throws LeekRunException {
-		Cell target = ai.getFight().getMap().getCell((int) cell_id);
+		Cell target = ai.getState().getMap().getCell((int) cell_id);
 		Chip template = Chips.getChip((int) chip_id);
 		if (target != null && template != null) {
-			var retour = new LegacyArrayLeekValue();
-			var entities = template.getAttack().getWeaponTargets(ai.getFight(), ai.getEntity(), ai.getFight().getMap().getCell((int) cell_id));
-			for (Entity l : entities) {
+			var retour = new LegacyArrayLeekValue(ai);
+			var entities = template.getAttack().getWeaponTargets(ai.getState(), ai.getEntity(), ai.getState().getMap().getCell((int) cell_id));
+			for (var l : entities) {
 				retour.push(ai, (long) l.getFId());
 			}
 			return retour;
@@ -142,12 +140,12 @@ public class ChipClass {
 	}
 
 	public static ArrayLeekValue getChipTargets(EntityAI ai, long chip_id, long cell_id) throws LeekRunException {
-		Cell target = ai.getFight().getMap().getCell((int) cell_id);
+		Cell target = ai.getState().getMap().getCell((int) cell_id);
 		Chip template = Chips.getChip((int) chip_id);
 		if (target != null && template != null) {
 			var retour = new ArrayLeekValue(ai);
-			var entities = template.getAttack().getWeaponTargets(ai.getFight(), ai.getEntity(), ai.getFight().getMap().getCell((int) cell_id));
-			for (Entity l : entities) {
+			var entities = template.getAttack().getWeaponTargets(ai.getState(), ai.getEntity(), ai.getState().getMap().getCell((int) cell_id));
+			for (var l : entities) {
 				retour.push(ai, (long) l.getFId());
 			}
 			return retour;
@@ -169,7 +167,7 @@ public class ChipClass {
 		return chip.getCooldown();
 	}
 
-	public static Object getChipMinScope(EntityAI ai, long id) {
+	public static Long getChipMinScope(EntityAI ai, long id) {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
@@ -177,7 +175,7 @@ public class ChipClass {
 		return (long) chip.getAttack().getMinRange();
 	}
 
-	public static Object getChipMinRange(EntityAI ai, long id) {
+	public static Long getChipMinRange(EntityAI ai, long id) {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
@@ -185,7 +183,7 @@ public class ChipClass {
 		return (long) chip.getAttack().getMinRange();
 	}
 
-	public static Object getChipMaxScope(EntityAI ai, long id) {
+	public static Long getChipMaxScope(EntityAI ai, long id) {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
@@ -193,7 +191,7 @@ public class ChipClass {
 		return (long) chip.getAttack().getMaxRange();
 	}
 
-	public static Object getChipMaxRange(EntityAI ai, long id) {
+	public static Long getChipMaxRange(EntityAI ai, long id) {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
@@ -206,7 +204,7 @@ public class ChipClass {
 		return 0l;
 	}
 
-	public static Object getChipCost(EntityAI ai, long id) {
+	public static Long getChipCost(EntityAI ai, long id) {
 		Chip chip = Chips.getChip((int) id);
 		if (chip == null) {
 			return null;
@@ -226,9 +224,9 @@ public class ChipClass {
 		if (chip == null) {
 			return null;
 		}
-		var retour = new LegacyArrayLeekValue();
+		var retour = new LegacyArrayLeekValue(ai);
 		for (var feature : chip.getAttack().getEffects()) {
-			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+			retour.pushNoClone(ai, ai.getFeatureArray(feature));
 		}
 		return retour;
 	}
@@ -240,7 +238,7 @@ public class ChipClass {
 		}
 		var retour = new ArrayLeekValue(ai);
 		for (var feature : chip.getAttack().getEffects()) {
-			retour.pushNoClone(ai, feature.getFeatureArray(ai));
+			retour.pushNoClone(ai, ai.getFeatureArray(feature));
 		}
 		return retour;
 	}
@@ -249,7 +247,7 @@ public class ChipClass {
 
 		int success = -1;
 
-		Cell target = ai.getFight().getMap().getCell((int) cell);
+		Cell target = ai.getState().getMap().getCell((int) cell);
 		if (target == null)
 			return -1;
 
@@ -276,12 +274,12 @@ public class ChipClass {
 
 		int success = -1;
 
-		Cell target = ai.getFight().getMap().getCell((int) cell);
+		Cell target = ai.getState().getMap().getCell((int) cell);
 		if (target == null) {
 			return -1;
 		}
 
-		Entity l = ai.getFight().getEntity(ai.integer(entity));
+		var l = ai.getFight().getEntity(ai.integer(entity));
 		if (l == null || !l.isDead()) {
 			return FightConstants.USE_RESURRECT_INVALID_ENTIITY.getIntValue();
 		}
@@ -299,7 +297,7 @@ public class ChipClass {
 		}
 
 		if (target != null && template != null) {
-			success = ai.getFight().resurrectEntity(ai.getEntity(), target, template, l);
+			success = ai.getState().resurrectEntity(ai.getEntity(), target, template, l);
 		}
 		return success;
 	}
@@ -325,13 +323,13 @@ public class ChipClass {
 	public static LegacyArrayLeekValue getChipEffectiveArea_v1_3(EntityAI ai, long value1, long value2, Object value3) throws LeekRunException {
 		Cell start_cell = ai.getEntity().getCell();
 		if (value3 != null) {
-			start_cell = ai.getFight().getMap().getCell(ai.integer(value3));
+			start_cell = ai.getState().getMap().getCell(ai.integer(value3));
 		}
 		// On vérifie que la cellule de départ existe
 		if (start_cell == null)
 			return null;
 		// On récupère la cellule
-		Cell c = ai.getFight().getMap().getCell((int) value2);
+		Cell c = ai.getState().getMap().getCell((int) value2);
 		if (c == null || ai.getEntity().getCell() == null)
 			return null;
 		// On récupère le sort
@@ -340,9 +338,9 @@ public class ChipClass {
 		if (template == null)
 			return null;
 
-		var retour = new LegacyArrayLeekValue();
+		var retour = new LegacyArrayLeekValue(ai);
 		// On récupère les cellules touchées
-		List<Cell> cells = template.getAttack().getTargetCells(start_cell, c);
+		List<Cell> cells = template.getAttack().getTargetCells(ai.getState().getMap(), start_cell, c);
 		// On les met dans le tableau
 		if (cells != null) {
 			for (Cell cell : cells) {
@@ -356,14 +354,14 @@ public class ChipClass {
 
 		Cell start_cell = ai.getEntity().getCell();
 		if (value3 != null) {
-			start_cell = ai.getFight().getMap().getCell(ai.integer(value3));
+			start_cell = ai.getState().getMap().getCell(ai.integer(value3));
 		}
 		// On vérifie que la cellule de départ existe
 
 		if (start_cell == null)
 			return null;
 		// On récupère la cellule
-		Cell c = ai.getFight().getMap().getCell((int) value2);
+		Cell c = ai.getState().getMap().getCell((int) value2);
 		if (c == null || ai.getEntity().getCell() == null)
 			return null;
 		// On récupère le sort
@@ -374,7 +372,7 @@ public class ChipClass {
 
 		var retour = new ArrayLeekValue(ai);
 		// On récupère les cellules touchées
-		List<Cell> cells = template.getAttack().getTargetCells(start_cell, c);
+		List<Cell> cells = template.getAttack().getTargetCells(ai.getState().getMap(), start_cell, c);
 		// On les met dans le tableau
 		if (cells != null) {
 			for (Cell cell : cells) {
@@ -385,7 +383,7 @@ public class ChipClass {
 	}
 
 	public static LegacyArrayLeekValue getAllChips_v1_3(EntityAI ai) throws LeekRunException {
-		var retour = new LegacyArrayLeekValue();
+		var retour = new LegacyArrayLeekValue(ai);
 		for (var chip : Chips.getTemplates().values()) {
 			retour.push(ai, (long) chip.getId());
 		}
@@ -416,14 +414,14 @@ public class ChipClass {
 		return i == Items.TYPE_CHIP;
 	}
 
-	public static Object getChipLaunchType(EntityAI ai, Object chip_id) throws LeekRunException {
+	public static Long getChipLaunchType(EntityAI ai, Object chip_id) throws LeekRunException {
 		Chip template = Chips.getChip(ai.integer(chip_id));
 		if (template == null)
 			return null;
 		return (long) template.getAttack().getLaunchType();
 	}
 
-	public static Object getChipArea(EntityAI ai, Object value) throws LeekRunException {
+	public static Long getChipArea(EntityAI ai, Object value) throws LeekRunException {
 		if (value instanceof Number) {
 			Chip template = Chips.getChip(ai.integer(value));
 			if (template != null) {

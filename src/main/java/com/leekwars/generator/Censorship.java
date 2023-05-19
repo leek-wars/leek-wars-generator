@@ -18,7 +18,7 @@ public class Censorship {
 	public static String getReplacement(Fight fight, int l) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < l; i++)
-			sb.append(replacements[fight.getRandom().getInt(0, replacements.length - 1)]);
+			sb.append(replacements[fight.getState().getRandom().getInt(0, replacements.length - 1)]);
 		return sb.toString();
 	}
 

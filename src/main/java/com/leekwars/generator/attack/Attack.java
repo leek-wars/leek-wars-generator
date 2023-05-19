@@ -2,20 +2,21 @@ package com.leekwars.generator.attack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.attack.area.Area;
-import com.leekwars.generator.attack.area.AreaFirstInLine;
-import com.leekwars.generator.attack.area.AreaLaserLine;
-import com.leekwars.generator.attack.effect.Effect;
-import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.area.Area;
+import com.leekwars.generator.area.AreaFirstInLine;
+import com.leekwars.generator.area.AreaLaserLine;
+import com.leekwars.generator.effect.Effect;
+import com.leekwars.generator.effect.EffectParameters;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.state.State;
 
 public class Attack {
 
@@ -91,21 +92,17 @@ public class Attack {
 		return areaID;
 	}
 
-	public boolean canLaunch(Leek caster, Cell target) {
-		return false;
-	}
-
-	public List<Cell> getTargetCells(Leek caster, Cell target) {
+	public List<Cell> getTargetCells(Map map, Leek caster, Cell target) {
 		// On récupère les cases cibles
-		return area.getArea(caster.getCell(), target);
+		return area.getArea(map, caster.getCell(), target);
 	}
 
-	public List<Cell> getTargetCells(Cell cast_cell, Cell target) {
+	public List<Cell> getTargetCells(Map map, Cell cast_cell, Cell target) {
 		// On récupère les cases cibles
-		return area.getArea(cast_cell, target);
+		return area.getArea(map, cast_cell, target);
 	}
 
-	public List<Entity> getWeaponTargets(Fight fight, Entity caster, Cell target) {
+	public List<Entity> getWeaponTargets(State state, Entity caster, Cell target) {
 
 		List<Entity> returnEntities = new ArrayList<Entity>();
 
@@ -113,14 +110,14 @@ public class Attack {
 		// launchType) a été vérifiée avant l'appel
 
 		// On récupère les cases cibles
-		List<Cell> targetCells = area.getArea(caster.getCell(), target);
+		List<Cell> targetCells = area.getArea(state.getMap(), caster.getCell(), target);
 
 		// On trouve les poireaux sur ces cellules
 		List<Entity> targetEntities = new ArrayList<Entity>();
 
 		for (Cell cell : targetCells) {
-			if (cell.getPlayer() != null) {
-				targetEntities.add(cell.getPlayer());
+			if (cell.getPlayer(state.getMap()) != null) {
+				targetEntities.add(cell.getPlayer(state.getMap()));
 			}
 		}
 
@@ -148,28 +145,28 @@ public class Attack {
 	/*
 	 * On suppose que l'autorisation de lancer le sort (minRange, maxRange, launchType) a été vérifiée avant l'appel
 	 */
-	public List<Entity> applyOnCell(Fight fight, Entity caster, Cell target, boolean critical) {
+	public List<Entity> applyOnCell(State state, Entity caster, Cell target, boolean critical) {
 
 		List<Entity> returnEntities = new ArrayList<Entity>();
 
 		// On récupère les cases cibles
-		List<Cell> targetCells = area.getArea(caster.getCell(), target);
+		List<Cell> targetCells = area.getArea(state.getMap(), caster.getCell(), target);
 
 		// On trouve les poireaux sur ces cellules
 		List<Entity> targetEntities = new ArrayList<Entity>();
 
 		// Facteurs de zones pour chaque entité
-		Map<Integer, Double> areaFactors = new TreeMap<Integer, Double>();
+		var areaFactors = new TreeMap<Integer, Double>();
 
 		for (Cell cell : targetCells) {
-			if (cell.getPlayer() != null && cell.getPlayer().isAlive()) {
-				targetEntities.add(cell.getPlayer());
-				areaFactors.put(cell.getPlayer().getFId(), getPowerForCell(target, cell));
+			if (cell.getPlayer(state.getMap()) != null && cell.getPlayer(state.getMap()).isAlive()) {
+				targetEntities.add(cell.getPlayer(state.getMap()));
+				areaFactors.put(cell.getPlayer(state.getMap()).getFId(), getPowerForCell(target, cell));
 			}
 		}
 
 		// On défini le jet
-		double jet = fight.getRandom().getDouble();
+		double jet = state.getRandom().getDouble();
 
 		// Apply effects
 		int previousEffectTotalValue = 0;
@@ -182,20 +179,20 @@ public class Attack {
 			if (parameters.getId() == Effect.TYPE_ATTRACT) {
 				for (Entity entity : targetEntities) {
 					// Attract directly to target cell
-					Cell destination = Pathfinding.getAttractLastAvailableCell(entity.getCell(), target, caster.getCell());
-					fight.slideEntity(entity, destination, caster);
+					Cell destination = state.getMap().getAttractLastAvailableCell(entity.getCell(), target, caster.getCell());
+					state.slideEntity(entity, destination, caster);
 				}
 			} else if (parameters.getId() == Effect.TYPE_PUSH) {
 				for (Entity entity : targetEntities) {
 					// Find last available position to push
-					Cell destination = Pathfinding.getPushLastAvailableCell(entity.getCell(), target, caster.getCell());
-					fight.slideEntity(entity, destination, caster);
+					Cell destination = state.getMap().getPushLastAvailableCell(entity.getCell(), target, caster.getCell());
+					state.slideEntity(entity, destination, caster);
 				}
 			}
 
 			if (parameters.getId() == Effect.TYPE_TELEPORT) {
 
-				fight.teleportEntity(caster, target, caster);
+				state.teleportEntity(caster, target, caster);
 				returnEntities.add(caster);
 
 			} else if (parameters.getId() == Effect.TYPE_PROPAGATION) {
@@ -236,14 +233,14 @@ public class Attack {
 
 						double aoe = areaFactors.get(targetEntity.getFId());
 
-						effectTotalValue += Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), aoe, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate, modifiers);
+						effectTotalValue += Effect.createEffect(state, parameters.getId(), parameters.getTurns(), aoe, parameters.getValue1(), parameters.getValue2(), critical, targetEntity, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate, modifiers);
 					}
 				}
 
 				// Always caster
 				if (onCaster) {
 					returnEntities.add(caster);
-					Effect.createEffect(fight, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate, modifiers);
+					Effect.createEffect(state, parameters.getId(), parameters.getTurns(), 1, parameters.getValue1(), parameters.getValue2(), critical, caster, caster, this, jet, stackable, previousEffectTotalValue, targetCount, propagate, modifiers);
 				}
 
 				previousEffectTotalValue = effectTotalValue;

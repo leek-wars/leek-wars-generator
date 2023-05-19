@@ -4,14 +4,19 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import com.leekwars.generator.action.ActionAIError;
+import com.leekwars.generator.effect.Effect;
+import com.leekwars.generator.effect.EffectParameters;
+import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.state.State;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.action.ActionAIError;
-import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
-import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.scenario.EntityInfo;
 
 import leekscript.compiler.AIFile;
@@ -97,7 +102,7 @@ public class EntityAI extends AI {
 
 		// No AI equipped : user error
 		if (entityInfo.ai == null && entityInfo.ai_path == null) {
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.NO_AI_EQUIPPED);
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.NO_AI_EQUIPPED);
 			return null;
 		}
 
@@ -114,8 +119,8 @@ public class EntityAI extends AI {
 			}
 		} catch (FileNotFoundException e) {
 			// Failed to resolve, not normal
-			generator.exception(e, entity.fight);
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { "Failed to resolve AI" });
+			generator.exception(e, (Fight) entity.getFight());
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { "Failed to resolve AI" });
 		}
 		return file;
 	}
@@ -127,43 +132,44 @@ public class EntityAI extends AI {
 	public static EntityAI build(Generator generator, AIFile file, Entity entity) {
 
 		if (file == null) {
-			return new EntityAI(entity, entity.getLogs());
+			return new EntityAI(entity, (LeekLog) entity.getLogs());
 		}
 
-		Log.i(TAG, "Compile AI " + file.getPath() + "...");
+		Log.i(TAG, "Compile AI " + file.getPath() + " (id " + file.getId() + ")...");
+		EntityAI ai = null;
 		try {
 			file.setJavaClass("AI_" + file.getId());
 			file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-			EntityAI ai = (EntityAI) file.compile(generator.use_leekscript_cache);
+			ai = (EntityAI) file.compile(generator.use_leekscript_cache, true);
 
 			Log.i(TAG, "AI " + file.getPath() + " compiled!");
 			ai.valid = true;
 			ai.setEntity(entity);
-			ai.setLogs(entity.getLogs());
+			ai.setLogs((LeekLog) entity.getLogs());
 			return ai;
 
 		} catch (LeekScriptException e) {
 			// Java compilation error : server error
 			if (e.getType() == Error.CODE_TOO_LARGE) {
-				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE);
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE);
 			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
-				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION);
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION);
 			} else {
-				generator.exception(e, entity.fight, entity.getFarmer(), file);
-				entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
+				generator.exception(e, (Fight) entity.getFight(), entity.getFarmer(), file);
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getLocation() });
 			}
-			return new EntityAI(entity, entity.getLogs());
+			return new EntityAI(entity, (LeekLog) entity.getLogs());
 
 		} catch (LeekCompilerException e) {
 			// Analyze error : AI is not valid, user error, no need to log it
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
-			return new EntityAI(entity, entity.getLogs());
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
+			return new EntityAI(entity, (LeekLog) entity.getLogs());
 
 		} catch (Exception e) {
 			// Other error : server error
-			generator.exception(e, entity.fight, entity.mFarmer, file);
-			entity.getLogs().addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
-			return new EntityAI(entity, entity.getLogs());
+			generator.exception(e, (Fight) entity.getFight(), entity.getFarmer(), file);
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
+			return new EntityAI(entity, (LeekLog) entity.getLogs());
 		}
 	}
 
@@ -182,7 +188,7 @@ public class EntityAI extends AI {
 	public void setEntity(Entity entity) {
 		mEntity = entity;
 		mInitialEntity = entity;
-		this.fight = entity.fight;
+		this.fight = (Fight) entity.getFight();
 	}
 
 	public void addSystemLog(int type, Error error, String[] parameters) {
@@ -245,7 +251,7 @@ public class EntityAI extends AI {
 
 	public void setFight(Fight fight) {
 		this.fight = fight;
-		((LeekLog) logs).setLogs(fight.getActions());
+		((LeekLog) logs).setLogs(fight.getState().getActions());
 	}
 
 	public void runTurn(int turn) {
@@ -267,22 +273,22 @@ public class EntityAI extends AI {
 			// e.printStackTrace(System.out);
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.STACKOVERFLOW, e.getStackTrace());
-			fight.statistics.stackOverflow(mEntity);
-			fight.statistics.error(mEntity);
+			fight.getState().statistics.stackOverflow(mEntity);
+			fight.getState().statistics.error(mEntity);
 			// Pas de rethrow
 
 		} catch (ArithmeticException e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
-			fight.statistics.error(mEntity);
+			fight.getState().statistics.error(mEntity);
 			// Pas de rethrow
 
 		} catch (ConcurrentModificationException e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.MODIFICATION_DURING_ITERATION, new String[0], e.getStackTrace());
-			fight.statistics.error(mEntity);
+			fight.getState().statistics.error(mEntity);
 			// Pas de rethrow
 
 		} catch (LeekRunException e) { // Exception de l'utilisateur, normales
@@ -292,7 +298,7 @@ public class EntityAI extends AI {
 		} catch (OutOfMemoryError e) { // Plus de RAM, Erreur critique, on tente de sauver les meubles
 
 			fight.log(new ActionAIError(mEntity));
-			fight.statistics.error(mEntity);
+			fight.getState().statistics.error(mEntity);
 			// Premierement on coupe l'IA incriminée
 			valid = false;
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Out Of Memory" }, e.getStackTrace());
@@ -313,20 +319,24 @@ public class EntityAI extends AI {
 			if (e instanceof IllegalArgumentException) {
 				// Erreur de sort() incohérent : erreur utilisateur
 				if (e.getMessage().equals("Comparison method violates its general contract!")) {
-					fight.statistics.error(mEntity);
+					fight.getState().statistics.error(mEntity);
 					fight.log(new ActionAIError(mEntity));
 					addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { e.getMessage() }, e.getStackTrace());
 					return;
 				}
 			}
 
-			// e.printStackTrace(System.out);
-			fight.statistics.error(mEntity);
+			fight.getState().statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));
-			// System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
-			// e.printStackTrace(System.out);
-			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
-			if (isFirstRuntimeError) {
+
+			var error = throwableToError(e);
+			try {
+				addSystemLog(LeekLog.ERROR, error.type.ordinal(), error.parameters, e);
+			} catch (LeekRunException e1) {
+				fight.generator.exception(e1, fight, mEntity.getFarmer(), getFile());
+			}
+			// On signale l'erreur si elle est inconnue
+			if (error.type == Error.UNKNOWN_ERROR && isFirstRuntimeError) {
 				fight.generator.exception(e, fight, mEntity.getFarmer(), getFile());
 				isFirstRuntimeError = false;
 			}
@@ -335,7 +345,7 @@ public class EntityAI extends AI {
 		} catch (Throwable e) { // Autre erreur, là c'est pas l'utilisateur
 
 			e.printStackTrace(System.out);
-			fight.statistics.error(mEntity);
+			fight.getState().statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));
 			System.out.println("Erreur importante dans l'IA " + id + "  " + e.getMessage());
 			e.printStackTrace();
@@ -358,11 +368,11 @@ public class EntityAI extends AI {
 
 			// e.printStackTrace(System.out);
 			fight.log(new ActionAIError(mEntity));
-			addSystemLog(LeekLog.ERROR, e.getError(), new String[] { e.getMessage() }, e.getStackTrace());
-			fight.statistics.error(mEntity);
+			addSystemLog(LeekLog.ERROR, e.getError(), e.getParameters() == null ? new String[] { e.getMessage() } : e.getParameters(), e.getStackTrace());
+			fight.getState().statistics.error(mEntity);
 
 			if (e.getError() == Error.TOO_MUCH_OPERATIONS) {
-				fight.statistics.tooMuchOperations(mEntity);
+				fight.getState().statistics.tooMuchOperations(mEntity);
 				addSystemLog(LeekLog.STANDARD, Error.HELP_PAGE_LINK, new String[] { "too_much_ops" });
 			} else if (e.getError() == Error.OUT_OF_MEMORY) {
 				valid = false; // Si plus de RAM, IA désactivée pour tout le combat
@@ -375,8 +385,6 @@ public class EntityAI extends AI {
 		return mEntity;
 	}
 
-
-
 	public Fight getFight() {
 		return fight;
 	}
@@ -384,13 +392,13 @@ public class EntityAI extends AI {
 	public void putCells(List<Cell> ignore, GenericArrayLeekValue leeks_to_ignore) throws LeekRunException {
 		if (leeks_to_ignore instanceof ArrayLeekValue) {
 			for (var value : (ArrayLeekValue) leeks_to_ignore) {
-				var l = fight.getMap().getCell(integer(value));
+				var l = getState().getMap().getCell(integer(value));
 				if (l == null) continue;
 				ignore.add(l);
 			}
 		} else {
 			for (var value : (LegacyArrayLeekValue) leeks_to_ignore) {
-				Cell l = fight.getMap().getCell(integer(value.getValue()));
+				Cell l = getState().getMap().getCell(integer(value.getValue()));
 				if (l == null) continue;
 				ignore.add(l);
 			}
@@ -412,5 +420,33 @@ public class EntityAI extends AI {
 
 	public List<LeekMessage> getMessages() {
 		return mMessages;
+	}
+
+	public State getState() {
+		return this.fight.getState();
+	}
+
+	public GenericArrayLeekValue getFeatureArray(EffectParameters feature) throws LeekRunException {
+		var effect = newArray();
+		effect.push(this, (long) feature.getId());
+		effect.push(this, feature.getValue1());
+		effect.push(this, feature.getValue1() + feature.getValue2());
+		effect.push(this, (long) feature.getTurns());
+		effect.push(this, (long) feature.getTargets());
+		effect.push(this, (long) feature.getModifiers());
+		return effect;
+	}
+
+	public GenericArrayLeekValue getEffectArray(Effect effect) throws LeekRunException {
+		var retour = newArray();
+		retour.push(this, (long) effect.getId());
+		retour.push(this, (long) effect.value);
+		retour.push(this, (long) effect.getCaster().getFId());
+		retour.push(this, (long) effect.getTurns());
+		retour.push(this, effect.isCritical());
+		retour.push(this, effect.getAttack() == null ? 0l : (long) effect.getAttack().getItemId());
+		retour.push(this, (long) effect.getTarget().getFId());
+		retour.push(this, (long) effect.modifiers);
+		return retour;
 	}
 }

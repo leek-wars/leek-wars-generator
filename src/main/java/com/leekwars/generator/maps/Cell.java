@@ -1,13 +1,10 @@
 package com.leekwars.generator.maps;
 
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.state.Entity;
 
 public class Cell {
 
 	private final int id;
-	private final Map map;
-
-	private Entity player;
 
 	private boolean walkable;
 	private int obstacle;
@@ -29,7 +26,6 @@ public class Cell {
 	public Cell(Map map, int id) {
 
 		this.id = id;
-		this.map = map;
 		this.walkable = true;
 		this.obstacle = 0;
 		int x = id % (map.getWidth() * 2 - 1);
@@ -52,6 +48,20 @@ public class Cell {
 		// On calcule Y
 		this.y = y - x % map.getWidth();
 		this.x = (id - (map.getWidth() - 1) * this.y) / map.getWidth();
+	}
+
+	public Cell(Cell cell) {
+		this.id = cell.id;
+		this.x = cell.x;
+		this.y = cell.y;
+		this.walkable = cell.walkable;
+		this.composante = cell.composante;
+		this.obstacle = cell.obstacle;
+		this.size = cell.size;
+		this.north = cell.north;
+		this.west = cell.west;
+		this.south = cell.south;
+		this.east = cell.east;
 	}
 
 	public boolean hasNorth() {
@@ -92,10 +102,6 @@ public class Cell {
 		this.size = size;
 	}
 
-	public Map getMap() {
-		return map;
-	}
-
 	public int getId() {
 		return id;
 	}
@@ -108,42 +114,19 @@ public class Cell {
 		return y;
 	}
 
-	public Entity getPlayer() {
-		return player;
+	public boolean available(Map map) {
+		return walkable && map.getEntity(this) == null;
 	}
 
-	public void setPlayer(Entity entity) {
-		if (this.player == entity)
-			return;
-		// this.map.positionChanged();
-		if (entity == null) {
-			this.player = null;
-			return;
-		}
-		if (entity.getCell() != null) {
-			entity.getCell().setPlayer(null);
-		}
-		entity.setCell(this);
-		player = entity;
-	}
-
-	public void setCellPlayer(Entity leek) {
-		player = leek;
-	}
-
-	public boolean available() {
-		return walkable && player == null;
-	}
-
-	public boolean available(Cell l) {
-		return walkable && (player == null || this == l);
+	public Entity getPlayer(Map map) {
+		return map.getEntity(this);
 	}
 
 	public int getComposante() {
 		return composante;
 	}
 
-	public Cell next(int dx, int dy) {
+	public Cell next(Map map, int dx, int dy) {
 		return map.getCell(this.x + dx, this.y + dy);
 	}
 

@@ -7,13 +7,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.generator.FightConstants;
-import com.leekwars.generator.Generator;
-import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.action.DamageType;
+import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
+import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.Generator;
+import com.leekwars.generator.fight.Fight;
 
 import leekscript.LSException;
 import leekscript.runner.AI;
@@ -38,8 +38,8 @@ public class TestFightFunctions {
 		mLeek1 = new Leek(1, "Test");
 		mLeek2 = new Leek(2, "Bob");
 
-		mFight.addEntity(0, mLeek1);
-		mFight.addEntity(1, mLeek2);
+		mFight.getState().addEntity(0, mLeek1);
+		mFight.getState().addEntity(1, mLeek2);
 
 		mFight.initFight();
 		ai = new DefaultUserAI();
@@ -53,15 +53,15 @@ public class TestFightFunctions {
 		Fight fight = new Fight(generator);
 		Leek leek1 = new Leek(1, "Test");
 		Leek leek2 = new Leek(2, "Bob");
-		fight.addEntity(0, leek1);
-		fight.addEntity(1, leek2);
+		fight.getState().addEntity(0, leek1);
+		fight.getState().addEntity(1, leek2);
 
 		fight.initFight();
 
-		Map map = fight.getMap();
+		Map map = fight.getState().getMap();
 		map.clear();
-		map.getCell(203).setPlayer(leek2);
-		map.getCell(306).setPlayer(leek1);
+		// map.getCell(203).setPlayer(leek2);
+		// map.getCell(306).setPlayer(leek1);
 
 		leek2.removeLife(leek2.getLife(), 0, leek1, DamageType.DIRECT, null);
 
@@ -177,10 +177,10 @@ public class TestFightFunctions {
 
 	@Test
 	public void cellTest() throws Exception {
-		Map map = mFight.getMap();
+		Map map = mFight.getState().getMap();
 		map.clear();
-		map.getCell(203).setPlayer(mLeek2);
-		map.getCell(306).setPlayer(mLeek1);
+		// map.getCell(203).setPlayer(mLeek2);
+		// map.getCell(306).setPlayer(mLeek1);
 
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();
@@ -213,10 +213,10 @@ public class TestFightFunctions {
 
 	@Test
 	public void getPathTest() throws Exception {
-		Map map = mFight.getMap();
+		Map map = mFight.getState().getMap();
 		map.clear();
-		map.getCell(10, 0).setPlayer(mLeek2);
-		map.getCell(306).setPlayer(mLeek1);
+		// map.getCell(10, 0).setPlayer(mLeek2);
+		// map.getCell(306).setPlayer(mLeek1);
 
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();
@@ -240,8 +240,8 @@ public class TestFightFunctions {
 		Cell emptycell = null;
 		Cell obstaclecell = null;
 		for (int i = 1; i < 250; i++) {
-			Cell c = mFight.getMap().getCell(i);
-			if (c.available() && emptycell == null)
+			Cell c = mFight.getState().getMap().getCell(i);
+			if (c.available(mFight.getState().getMap()) && emptycell == null)
 				emptycell = c;
 			if (!c.isWalkable() && obstaclecell == null)
 				obstaclecell = c;
@@ -321,13 +321,13 @@ public class TestFightFunctions {
 
 		// Test getCellX
 		codes.add("getCellX(getCell())");
-		values.add(mLeek1.getCell().getX() - mFight.getMap().getWidth() + 1);
+		values.add(mLeek1.getCell().getX() - mFight.getState().getMap().getWidth() + 1);
 		codes.add("getCellX(getCell(" + mLeek2.getFId() + "))");
-		values.add(mLeek2.getCell().getX() - mFight.getMap().getWidth() + 1);
+		values.add(mLeek2.getCell().getX() - mFight.getState().getMap().getWidth() + 1);
 		codes.add("getCellX(" + emptycell.getId() + ")");
-		values.add(emptycell.getX() - mFight.getMap().getWidth() + 1);
+		values.add(emptycell.getX() - mFight.getState().getMap().getWidth() + 1);
 		codes.add("getCellX(" + obstaclecell.getId() + ")");
-		values.add(obstaclecell.getX() - mFight.getMap().getWidth() + 1);
+		values.add(obstaclecell.getX() - mFight.getState().getMap().getWidth() + 1);
 		codes.add("getCellX(-1)");
 		values.add(null);
 

@@ -2,8 +2,8 @@ package com.leekwars.generator.test;
 
 import java.sql.ResultSet;
 
-import com.leekwars.generator.Log;
 import com.leekwars.generator.leek.RegisterManager;
+import com.leekwars.generator.Log;
 
 public class LocalDbRegisterManager implements RegisterManager {
 

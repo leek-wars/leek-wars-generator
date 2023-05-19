@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.leekwars.generator.attack.Attack;
-import com.leekwars.generator.attack.chips.Chip;
-import com.leekwars.generator.attack.effect.Effect;
-import com.leekwars.generator.attack.weapons.Weapon;
-import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.action.DamageType;
-import com.leekwars.generator.fight.entity.Entity;
-import com.leekwars.generator.fight.statistics.StatisticsManager;
+import com.leekwars.generator.attack.DamageType;
+import com.leekwars.generator.chips.Chip;
+import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.weapons.Weapon;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.StatisticsManager;
 
 public class LocalTrophyManager implements StatisticsManager {
 
@@ -222,12 +222,6 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void setGeneratorFight(Fight fight) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void tooMuchDebug(int farmer) {
 		// TODO Auto-generated method stub
 
@@ -328,5 +322,10 @@ public class LocalTrophyManager implements StatisticsManager {
 	public void chestKill() {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void setGeneratorFight(Fight fight) {
+		// TODO Auto-generated method stub
 	}
 }

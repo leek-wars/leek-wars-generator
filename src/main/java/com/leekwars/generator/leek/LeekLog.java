@@ -1,7 +1,8 @@
 package com.leekwars.generator.leek;
 
-import com.leekwars.generator.fight.action.Actions;
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.action.Actions;
+import com.leekwars.generator.state.Entity;
+
 import leekscript.common.Error;
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;

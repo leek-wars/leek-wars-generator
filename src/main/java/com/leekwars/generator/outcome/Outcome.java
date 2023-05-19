@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.alibaba.fastjson.JSONObject;
-import com.leekwars.generator.fight.action.Actions;
-import com.leekwars.generator.fight.statistics.StatisticsManager;
+import com.leekwars.generator.action.Actions;
+import com.leekwars.generator.statistics.StatisticsManager;
 import com.leekwars.generator.leek.FarmerLog;
 
 public class Outcome {

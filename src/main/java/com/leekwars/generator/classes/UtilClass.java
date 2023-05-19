@@ -4,8 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 
-import com.leekwars.generator.fight.action.ActionShowCell;
-import com.leekwars.generator.fight.entity.Entity;
+import com.leekwars.generator.action.ActionShowCell;
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 
 import leekscript.runner.LeekRunException;
@@ -17,16 +17,16 @@ public class UtilClass {
 
 	public static String getDate(EntityAI ai) {
 		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-		return df.format(ai.getFight().getDate()).toString();
+		return df.format(ai.getState().getDate()).toString();
 	}
 
 	public static String getTime(EntityAI ai) {
 		DateFormat df = new SimpleDateFormat("HH:mm:ss");
-		return df.format(ai.getFight().getDate()).toString();
+		return df.format(ai.getState().getDate()).toString();
 	}
 
 	public static long getTimestamp(EntityAI ai) {
-		return (ai.getFight().getDate().getTime() / 1000);
+		return (ai.getState().getDate().getTime() / 1000);
 	}
 
 	public static LegacyArrayLeekValue getRegisters_v1_3(EntityAI ai) throws LeekRunException {
@@ -36,7 +36,7 @@ public class UtilClass {
 		} else {
 			registers = ai.getEntity().getAllRegisters();
 		}
-		var map = new LegacyArrayLeekValue();
+		var map = new LegacyArrayLeekValue(ai);
 		for (var e : registers.entrySet()) {
 			map.set(ai, e.getKey(), e.getValue());
 		}
@@ -110,7 +110,7 @@ public class UtilClass {
 		int[] cel = null;
 		if (cell instanceof Number) {
 			var id = ai.integer(cell);
-			if (ai.getFight().getMap().getCell(id) == null)
+			if (ai.getState().getMap().getCell(id) == null)
 				return false;
 			cel = new int[] { ai.integer(cell) };
 		} else if (cell instanceof GenericArrayLeekValue) {
@@ -119,7 +119,7 @@ public class UtilClass {
 			var it = ai.iterator(cell);
 			while (it.hasNext()) {
 				var value = it.next().getValue();
-				if (ai.getFight().getMap().getCell(ai.integer(value)) == null)
+				if (ai.getState().getMap().getCell(ai.integer(value)) == null)
 					continue;
 				cel[i] = ai.integer(value);
 				i++;
@@ -179,7 +179,7 @@ public class UtilClass {
 		int[] cel = null;
 		if (cell instanceof Number) {
 			var id = ai.integer(cell);
-			if (ai.getFight().getMap().getCell(id) == null) {
+			if (ai.getState().getMap().getCell(id) == null) {
 				return false;
 			}
 			cel = new int[] { ai.integer(cell) };
@@ -189,7 +189,7 @@ public class UtilClass {
 			var it = ai.iterator(cell);
 			while (it.hasNext()) {
 				var value = it.next().getValue();
-				if (ai.getFight().getMap().getCell(ai.integer(value)) == null)
+				if (ai.getState().getMap().getCell(ai.integer(value)) == null)
 					continue;
 				cel[i] = ai.integer(value);
 				i++;
@@ -213,7 +213,7 @@ public class UtilClass {
 
 	public static boolean show(EntityAI ai, long cell, long color) throws LeekRunException {
 
-		if (ai.getFight().getMap().getCell((int) cell) == null)
+		if (ai.getState().getMap().getCell((int) cell) == null)
 			return false;
 
 		if (ai.getEntity().getTP() < 1) {
@@ -226,7 +226,7 @@ public class UtilClass {
 		ai.getEntity().showsTurn++;
 
 		ai.getFight().log(new ActionShowCell((int) cell, (int) color));
-		ai.getFight().statistics.show(ai.getEntity(), (int) cell);
+		ai.getFight().getState().statistics.show(ai.getEntity(), (int) cell);
 
 		return true;
 	}

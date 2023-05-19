@@ -1,7 +1,8 @@
 package com.leekwars.generator;
 
 import com.leekwars.generator.attack.Attack;
-import com.leekwars.generator.attack.effect.Effect;
+import com.leekwars.generator.attack.EntityState;
+import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.fight.Fight;
 
 import leekscript.common.Type;
@@ -108,6 +109,8 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_KILL_TO_TP(Effect.TYPE_KILL_TO_TP, Type.INT),
 	EFFECT_RAW_HEAL(Effect.TYPE_RAW_HEAL, Type.INT),
 	EFFECT_CRITICAL_TO_HEAL(Effect.TYPE_CRITICAL_TO_HEAL, Type.INT),
+
+	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),

@@ -2,9 +2,9 @@ package test;
 
 import java.io.File;
 
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.FightFunctions;
 import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.fight.entity.Entity;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
@@ -23,7 +23,7 @@ public class GeneratorCompilation {
 	}
 
 	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, Object s) throws Exception {
-		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI");
+		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", true);
 		ai.setEntity(entity);
 		var fl = new FarmerLog(fight, 0);
 		ai.setLogs(new LeekLog(fl, entity));
