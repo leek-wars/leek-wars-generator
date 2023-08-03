@@ -1167,7 +1167,7 @@ public class FightClass {
 	 * @return Allié le plus proche
 	 */
 	public static Long getNearestAllyTo(EntityAI ai, long leek_id) {
-		var entities = ai.getState().getTeamEntities(ai.getEntity().getTeam() == 2 ? 2 : 1);
+		var entities = ai.getState().getTeamEntities(ai.getEntity().getTeam());
 		var entity = ai.getFight().getEntity(leek_id);
 		if (entity == null || entity.getCell() == null)
 			return null;
@@ -1195,7 +1195,7 @@ public class FightClass {
 	 * @return C le plus proche
 	 */
 	public static Long getNearestAllyToCell(EntityAI ai, long cell_id) {
-		var entities = ai.getState().getTeamEntities(ai.getEntity().getTeam() == 2 ? 2 : 1);
+		var entities = ai.getState().getTeamEntities(ai.getEntity().getTeam());
 		Cell cell = ai.getState().getMap().getCell((int) cell_id);
 		if (cell == null)
 			return null;

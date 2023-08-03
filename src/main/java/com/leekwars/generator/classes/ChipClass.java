@@ -281,7 +281,7 @@ public class ChipClass {
 
 		var l = ai.getFight().getEntity(ai.integer(entity));
 		if (l == null || !l.isDead()) {
-			return FightConstants.USE_RESURRECT_INVALID_ENTIITY.getIntValue();
+			return FightConstants.USE_RESURRECT_INVALID_ENTITY.getIntValue();
 		}
 
 		Chip template = ai.getEntity().getChip(FightConstants.CHIP_RESURRECTION.getIntValue());

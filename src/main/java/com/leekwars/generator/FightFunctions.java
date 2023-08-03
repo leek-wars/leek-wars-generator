@@ -96,7 +96,7 @@ public class FightFunctions {
 		method("setWeapon", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
 		method("say", "Entity", 30, true, Type.BOOL, new Type[] { Type.ANY });
 		method("lama", "Entity", 30, true, Type.VOID, new Type[0]);
-		method("listen", "Entity", 78, true, Type.ARRAY, new Type[0]);
+		method("listen", "Entity", 78, true, Type.array(Type.ARRAY), new Type[0]);
 		method("getWeapons", "Entity", 50, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
@@ -165,7 +165,7 @@ public class FightFunctions {
 		});
 		method("getSummons", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT, new Type[] { Type.INT_OR_NULL }),
-			new CallableVersion(Type.ARRAY),
+			new CallableVersion(Type.ARRAY_INT),
 		});
 		method("getType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
@@ -298,7 +298,7 @@ public class FightFunctions {
 		method("getChipCooldown", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
 		method("canUseChip", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
 		method("canUseChipOnCell", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
-		method("getChipTargets", "Chip", 40, true, Type.ARRAY_OR_NULL, new Type[] { Type.INT, Type.INT });
+		method("getChipTargets", "Chip", 40, true, Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT });
 		method("getChipFailure", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
 		method("isChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("getChipLaunchType", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
@@ -353,9 +353,9 @@ public class FightFunctions {
 		method("getAliveEnemies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAliveEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getAlliedTurret", "Fight", 15, true, Type.INT_OR_NULL, new Type[0]);
-		method("getAllEffects", "Fight", 200, true, Type.ARRAY, new Type[0]);
+		method("getAllEffects", "Fight", 200, true, Type.ARRAY_INT, new Type[0]);
 		method("getEnemyTurret", "Fight", 15, true, Type.INT_OR_NULL, new Type[0]);
-		method("getDeadEnemies", "Fight", 100, true, Type.ARRAY, new Type[0]);
+		method("getDeadEnemies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getDeadEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getEnemies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
@@ -365,7 +365,7 @@ public class FightFunctions {
 		method("getFarthestAlly", "Fight", 31, true, Type.INT, new Type[0]);
 		method("getAliveAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAliveAlliesCount", "Fight", 100, true, Type.INT, new Type[0]);
-		method("getDeadAllies", "Fight", 100, true, Type.ARRAY, new Type[0]);
+		method("getDeadAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAlliesCount", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getNextPlayer", "Fight", 20, true, Type.INT, new Type[0]);
 		method("getPreviousPlayer", "Fight", 20, true, Type.INT, new Type[0]);
@@ -398,16 +398,16 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 		});
 		method("moveTowardLeeks", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveTowardEntities", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveTowardCells", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveAwayFrom", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
@@ -418,16 +418,16 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 		});
 		method("moveAwayFromCells", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveAwayFromLeeks", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveAwayFromEntities", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.ARRAY }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveAwayFromLine", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.INT }),
