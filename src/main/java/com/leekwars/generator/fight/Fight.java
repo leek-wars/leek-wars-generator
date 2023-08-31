@@ -277,6 +277,8 @@ public class Fight {
 			var ai = (EntityAI) current.getAI();
 			if (ai != null) {
 				if (ai.isValid()) {
+					ai.setEntity(current);
+
 					// System.out.println("Run " + current.getName() + " ai...");
 					long startTime = System.nanoTime();
 					ai.runTurn(state.getOrder().getTurn());
@@ -321,6 +323,8 @@ public class Fight {
 		// On assigne l'ia de l'invocation
 		if (result > 0) {
 			var summon = state.getLastEntity();
+			summon.setFight(this);
+			summon.setBirthTurn(getTurn());
 			summon.setAI(new BulbAI(summon, (EntityAI) caster.getAI(), value));
 		}
 

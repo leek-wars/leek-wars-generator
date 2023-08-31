@@ -81,6 +81,7 @@ public abstract class Entity {
 	protected long totalOperations = 0;
 	public int saysTurn = 0;
 	public int showsTurn = 0;
+	protected int mBirthTurn = 1;
 
 	// Current effects on the entity
 	protected final ArrayList<Effect> effects = new ArrayList<Effect>();
@@ -1094,5 +1095,13 @@ public abstract class Entity {
 
 	public Set<EntityState> getStates() {
 		return this.states;
+	}
+
+	public void setBirthTurn(int birthTurn) {
+		mBirthTurn = birthTurn;
+	}
+
+	public int getBirthTurn() {
+		return mBirthTurn;
 	}
 }

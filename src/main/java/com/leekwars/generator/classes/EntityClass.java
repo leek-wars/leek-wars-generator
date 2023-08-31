@@ -903,16 +903,16 @@ public class EntityClass {
 	}
 
 	public static long getBirthTurn(EntityAI ai) throws LeekRunException {
-		return (long) ai.getBirthTurn();
+		return (long) ai.getEntity().getBirthTurn();
 	}
 
 	public static Long getBirthTurn(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
-			return (long) ai.getBirthTurn();
+			return (long) ai.getEntity().getBirthTurn();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null && l.getAI() != null)
-				return (long) ((EntityAI) l.getAI()).getBirthTurn();
+			if (l != null)
+				return (long) l.getBirthTurn();
 		}
 		return null;
 	}

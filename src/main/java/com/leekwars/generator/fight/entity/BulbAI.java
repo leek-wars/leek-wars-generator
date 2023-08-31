@@ -17,7 +17,6 @@ public class BulbAI extends EntityAI {
 		valid = true;
 		mAIFunction = ai;
 		setFight(owner_ai.fight);
-		mBirthTurn = fight.getTurn();
 		mOwnerAI = owner_ai;
 	}
 

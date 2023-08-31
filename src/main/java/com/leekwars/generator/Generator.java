@@ -129,6 +129,7 @@ public class Generator {
 				var entity = entityInfo.createEntity(this, scenario, fight);
 				fight.getState().addEntity(t, entity);
 				entity.setFight(fight);
+				entity.setBirthTurn(1);
 
 				// Resolve AI
 				entity.setLogs(new LeekLog(outcome.logs.get(aiOwner), entity));

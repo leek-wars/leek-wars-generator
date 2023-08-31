@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.leekwars.generator.action.ActionAIError;
 import com.leekwars.generator.effect.Effect;
@@ -76,7 +74,6 @@ public class EntityAI extends AI {
 	protected Entity mEntity;
 	protected Fight fight;
 	protected final static boolean LOG_IA = true;
-	protected int mBirthTurn = 1;
 
 	protected long mIARunTime = 0;
 	protected long mIACpuRunTime = 0;
@@ -412,10 +409,6 @@ public class EntityAI extends AI {
 	@Override
 	public Object runIA() throws LeekRunException {
 		return null;
-	}
-
-	public int getBirthTurn() {
-		return mBirthTurn;
 	}
 
 	public List<LeekMessage> getMessages() {
