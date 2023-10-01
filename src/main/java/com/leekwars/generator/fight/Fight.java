@@ -286,6 +286,7 @@ public class Fight {
 
 					state.statistics.addTimes(current, endTime - startTime, ai.operations());
 					executionTime += endTime - startTime;
+					current.addOperations(ai.operations());
 				} else {
 					// Add 'crash' action if AI is invalid
 					if (getTurn() == 1) {

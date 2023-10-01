@@ -662,10 +662,6 @@ public abstract class Entity {
 		saysTurn = 0;
 		showsTurn = 0;
 
-		if (ai != null) {
-			// totalOperations += ai.operations();
-		}
-
 		// Propagation des effets
 		for (Effect effect : effects) {
 			if (effect.propagate > 0) {
@@ -1103,5 +1099,9 @@ public abstract class Entity {
 
 	public int getBirthTurn() {
 		return mBirthTurn;
+	}
+
+	public void addOperations(long operations) {
+		this.totalOperations += operations;
 	}
 }
