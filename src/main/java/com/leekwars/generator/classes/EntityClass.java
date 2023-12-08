@@ -200,13 +200,34 @@ public class EntityClass {
 		return null;
 	}
 
-	// Deprecated function in LeekScript
 	public static long getCores(EntityAI ai) {
-		return 0l;
+		return ai.getEntity().getCores();
 	}
 
-	public static long getCores(EntityAI ai, long value) {
-		return 0l;
+	public static Long getCores(EntityAI ai, Object value) {
+		if (value == null)
+			return (long) ai.getEntity().getCores();
+		if (value instanceof Number) {
+			var l = ai.getFight().getEntity(((Number) value).intValue());
+			if (l != null)
+				return (long) l.getCores();
+		}
+		return null;
+	}
+
+	public static long getRAM(EntityAI ai) {
+		return ai.getEntity().getRAM();
+	}
+
+	public static Long getRAM(EntityAI ai, Object value) {
+		if (value == null)
+			return (long) ai.getEntity().getRAM();
+		if (value instanceof Number) {
+			var l = ai.getFight().getEntity(((Number) value).intValue());
+			if (l != null)
+				return (long) l.getRAM();
+		}
+		return null;
 	}
 
 	public static Long getCell(EntityAI ai) throws LeekRunException {

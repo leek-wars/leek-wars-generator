@@ -5,6 +5,8 @@ import java.util.List;
 import com.leekwars.generator.action.ActionAddEffect;
 import com.leekwars.generator.action.ActionStackEffect;
 import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.attack.EntityState;
+import com.leekwars.generator.items.Item;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.State;
 import com.leekwars.generator.state.Stats;
@@ -172,6 +174,7 @@ public abstract class Effect implements Cloneable {
 	public int targetCount;
 	public int propagate = 0; // Distance de propagation
 	public int modifiers = 0;
+	protected EntityState state;
 
 	public static int createEffect(State state, int id, int turns, double aoe, double value1, double value2, boolean critical, Entity target, Entity caster, Attack attack, double jet, boolean stackable, int previousEffectTotalValue, int targetCount, int propagate, int modifiers) {
 
@@ -384,5 +387,13 @@ public abstract class Effect implements Cloneable {
 
 	public void setCaster(Entity entity) {
 		this.caster = entity;
+	}
+
+	public Item getItem() {
+		return this.attack != null ? this.attack.getItem() : null;
+	}
+
+	public EntityState getState() {
+		return state;
 	}
 }

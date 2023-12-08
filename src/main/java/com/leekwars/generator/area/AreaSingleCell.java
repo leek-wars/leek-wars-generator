@@ -6,6 +6,7 @@ import java.util.List;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
+import com.leekwars.generator.state.Entity;
 
 public class AreaSingleCell extends Area {
 
@@ -14,7 +15,7 @@ public class AreaSingleCell extends Area {
 	}
 
 	@Override
-	public List<Cell> getArea(Map map, Cell launchCell, Cell targetCell) {
+	public List<Cell> getArea(Map map, Cell launchCell, Cell targetCell, Entity caster) {
 		ArrayList<Cell> area = new ArrayList<Cell>();
 		area.add(targetCell);
 		return area;

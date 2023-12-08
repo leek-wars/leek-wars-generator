@@ -145,6 +145,7 @@ public class Util {
 
 	public static void writeFile(String data, String file) {
 		File f = new File(file);
+		System.out.println("Write file " + f.getAbsolutePath());
 		try {
 			PrintWriter out = new PrintWriter(f);
 			out.append(data);

@@ -2,6 +2,7 @@ package com.leekwars.generator.classes;
 
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.fight.entity.EntityAI.LeekMessage;
+import com.leekwars.generator.state.Entity;
 
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
@@ -86,6 +87,10 @@ public class NetworkClass {
 		// On crée le tableau de retour
 		EntityAI lia = (EntityAI) l.getAI();
 		var messages = new ArrayLeekValue(ai);
+
+		if (l.getType() == Entity.TYPE_MOB && l != ai.getEntity()) {
+			return messages;
+		}
 
 		// On y ajoute les messages
 		if (lia != null) {

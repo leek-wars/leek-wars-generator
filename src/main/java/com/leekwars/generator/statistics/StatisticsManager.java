@@ -8,6 +8,7 @@ import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.effect.Effect;
+import com.leekwars.generator.items.Item;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.weapons.Weapon;
@@ -29,7 +30,7 @@ public interface StatisticsManager {
 	public void error(Entity entity);
 	public void useChip(Entity caster, Chip chip, Cell cell, List<Entity> targets, Entity cellEntity);
 	public void useWeapon(Entity caster, Weapon weapon, Cell cell, List<Entity> targets, Entity cellEntity);
-	public void kill(Entity killer, Entity entity);
+	public void kill(Entity killer, Entity entity, Item item, Cell killCell);
 	public void critical(Entity launcher);
 	public void endFight(Collection<Entity> values);
 	public void addTimes(Entity current, long time, long operations);

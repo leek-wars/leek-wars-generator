@@ -14,6 +14,7 @@ import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.StatisticsManager;
+import com.leekwars.generator.items.Item;
 
 public class LocalTrophyManager implements StatisticsManager {
 
@@ -73,7 +74,7 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void kill(Entity killer, Entity entity) {
+	public void kill(Entity killer, Entity entity, Item item, Cell killCell) {
 		// TODO Auto-generated method stub
 
 	}

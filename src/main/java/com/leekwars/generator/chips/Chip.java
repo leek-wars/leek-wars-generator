@@ -14,6 +14,7 @@ public class Chip extends Item {
 
 	public Chip(int id, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name, ChipType chipType) {
 		super(id, cost, name, template, new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, id));
+		this.attack.setItem(this);
 
 		this.cooldown = cooldown;
 		this.teamCooldown = teamCooldown;

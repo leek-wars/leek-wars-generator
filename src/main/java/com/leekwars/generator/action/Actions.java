@@ -96,9 +96,10 @@ public class Actions {
 
 		object.put("team", entity.getTeam() + 1);
 		object.put("name", entity.getName());
-		object.put("cellPos", entity.getCell().getId());
+		object.put("cellPos", entity.getCell() != null ? entity.getCell().getId() : null);
 		object.put("farmer", entity.getFarmer());
 		object.put("type", entity.getType());
+		object.put("orientation", entity.getOrientation());
 
 		object.put("summon", entity.isSummon());
 		if (entity.isSummon()) {
@@ -116,16 +117,26 @@ public class Actions {
 			Cell c = map.getCell(i);
 			if (c != null && !c.isWalkable() && c.getObstacleSize() > 0) {
 
-				JSONArray obstacle = new JSONArray();
-				obstacle.add(c.getObstacle());
-				obstacle.add(c.getObstacleSize());
+				if (map.getId() != 0) {
+					obstacles.put(String.valueOf(c.getId()), c.getObstacle());
+				} else {
+					JSONArray obstacle = new JSONArray();
+					obstacle.add(c.getObstacle());
+					obstacle.add(c.getObstacleSize());
 
-				obstacles.put(String.valueOf(c.getId()), map.isCustom() ? obstacle : c.getObstacleSize());
+					obstacles.put(String.valueOf(c.getId()), map.isCustom() ? obstacle : c.getObstacleSize());
+				}
 			}
+		}
+		if (map.getId() != 0) {
+			this.map.put("id", map.getId());
 		}
 		this.map.put("obstacles", obstacles);
 		this.map.put("type", map.getType());
 		this.map.put("width", map.getWidth());
 		this.map.put("height", map.getWidth());
+		if (map.getPattern() != null) {
+			this.map.put("pattern", map.getPattern());
+		}
 	}
 }

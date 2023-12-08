@@ -7,10 +7,14 @@ import java.util.TreeMap;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.leekwars.generator.area.Area;
+import com.leekwars.generator.area.AreaAllies;
+import com.leekwars.generator.area.AreaEnemies;
 import com.leekwars.generator.area.AreaFirstInLine;
 import com.leekwars.generator.area.AreaLaserLine;
+import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.effect.EffectParameters;
+import com.leekwars.generator.items.Item;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
@@ -54,6 +58,7 @@ public class Attack {
 	private int dammageAttack = 0;
 	private final int attackType;
 	private final int itemID;
+	private Item item;
 	private final int areaID;
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 
@@ -94,12 +99,12 @@ public class Attack {
 
 	public List<Cell> getTargetCells(Map map, Leek caster, Cell target) {
 		// On récupère les cases cibles
-		return area.getArea(map, caster.getCell(), target);
+		return area.getArea(map, caster.getCell(), target, caster);
 	}
 
 	public List<Cell> getTargetCells(Map map, Cell cast_cell, Cell target) {
 		// On récupère les cases cibles
-		return area.getArea(map, cast_cell, target);
+		return area.getArea(map, cast_cell, target, null);
 	}
 
 	public List<Entity> getWeaponTargets(State state, Entity caster, Cell target) {
@@ -110,7 +115,7 @@ public class Attack {
 		// launchType) a été vérifiée avant l'appel
 
 		// On récupère les cases cibles
-		List<Cell> targetCells = area.getArea(state.getMap(), caster.getCell(), target);
+		List<Cell> targetCells = area.getArea(state.getMap(), caster.getCell(), target, caster);
 
 		// On trouve les poireaux sur ces cellules
 		List<Entity> targetEntities = new ArrayList<Entity>();
@@ -150,7 +155,7 @@ public class Attack {
 		List<Entity> returnEntities = new ArrayList<Entity>();
 
 		// On récupère les cases cibles
-		List<Cell> targetCells = area.getArea(state.getMap(), caster.getCell(), target);
+		List<Cell> targetCells = area.getArea(state.getMap(), caster.getCell(), target, caster);
 
 		// On trouve les poireaux sur ces cellules
 		List<Entity> targetEntities = new ArrayList<Entity>();
@@ -282,7 +287,7 @@ public class Attack {
 	// Compute the area effect attenuation : 100% at center, 50% on the border
 	public double getPowerForCell(Cell target_cell, Cell current_cell) {
 
-		if (area instanceof AreaLaserLine || area instanceof AreaFirstInLine) {
+		if (area instanceof AreaLaserLine || area instanceof AreaFirstInLine || area instanceof AreaAllies || area instanceof AreaEnemies) {
 			return 1.0;
 		}
 
@@ -341,5 +346,13 @@ public class Attack {
 				return true;
 		}
 		return false;
+	}
+
+	public void setItem(Item item) {
+		this.item = item;
+	}
+
+	public Item getItem() {
+		return item;
 	}
 }

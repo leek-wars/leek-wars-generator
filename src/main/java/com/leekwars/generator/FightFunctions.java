@@ -123,6 +123,10 @@ public class FightFunctions {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
 		});
+		method("getStates", "Entity", 25, true, new CallableVersion[] {
+			new CallableVersion(Type.compound(Type.array(Type.INT), Type.NULL), new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.array(Type.INT)),
+		});
 		method("getLevel", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
@@ -132,7 +136,11 @@ public class FightFunctions {
 			new CallableVersion(Type.INT),
 		});
 		method("getCores", "Entity", 15, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
+		method("getRAM", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		});
 		method("getTeamName", "Entity", 15, true, new CallableVersion[] {

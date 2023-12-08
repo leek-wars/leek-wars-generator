@@ -285,7 +285,9 @@ public class ChipClass {
 		}
 
 		Chip template = ai.getEntity().getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
-		if (template == null) {
+		Chip template2 = ai.getEntity().getChip(415);
+		boolean fullLife = template2 != null;
+		if (template == null && template2 == null) {
 
 			Chip ct = Chips.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
 
@@ -296,8 +298,8 @@ public class ChipClass {
 			return -1;
 		}
 
-		if (target != null && template != null) {
-			success = ai.getState().resurrectEntity(ai.getEntity(), target, template, l);
+		if (target != null && (template != null || template2 != null)) {
+			success = ai.getState().resurrectEntity(ai.getEntity(), target, template != null ? template : template2, l, fullLife);
 		}
 		return success;
 	}

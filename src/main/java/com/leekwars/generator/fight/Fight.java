@@ -59,6 +59,7 @@ public class Fight {
 	public final static int TYPE_FARMER = 1;
 	public final static int TYPE_TEAM = 2;
 	public final static int TYPE_BATTLE_ROYALE = 3;
+	public final static int TYPE_BOSS = 4;
 
 	// Flags
 	public final static int FLAG_STATIC = 1;
@@ -139,6 +140,10 @@ public class Fight {
 			}
 		}
 		return leeks;
+	}
+
+	public List<Entity> getTeamEntities(int team) {
+		return state.getTeams().get(team).getEntities();
 	}
 
 	public Entity getEntity(int id) {

@@ -8,24 +8,21 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.state.Entity;
 
-public class MaskArea extends Area {
+public class AreaEnemies extends Area {
 
-	private int[][] area;
-
-	public MaskArea(Attack attack, int[][] area) {
+	public AreaEnemies(Attack attack) {
 		super(attack);
-		this.area = area;
 	}
 
 	@Override
 	public List<Cell> getArea(Map map, Cell launchCell, Cell targetCell, Entity caster) {
-		int x = targetCell.getX(), y = targetCell.getY();
-		ArrayList<Cell> cells = new ArrayList<Cell>();
-		for (int i = 0; i < area.length; i++) {
-			Cell c = map.getCell(x + area[i][0], y + area[i][1]);
-			if (c == null || !c.isWalkable())
-				continue;
-			cells.add(c);
+		var cells = new ArrayList<Cell>();
+		if (caster != null) {
+			for (var entity : map.getState().getEntities().values()) {
+				if (entity.getCell() != null && entity.getTeam() != caster.getTeam()) {
+					cells.add(entity.getCell());
+				}
+			}
 		}
 		return cells;
 	}

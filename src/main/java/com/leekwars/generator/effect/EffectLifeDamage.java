@@ -2,6 +2,7 @@ package com.leekwars.generator.effect;
 
 import com.leekwars.generator.action.ActionDamage;
 import com.leekwars.generator.attack.DamageType;
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.state.State;
 
 public class EffectLifeDamage extends Effect {
@@ -13,6 +14,10 @@ public class EffectLifeDamage extends Effect {
 
 		// Base damages
 		double d = ((value1 + jet * value2) / 100) * caster.getLife() * aoe * criticalPower * (1 + caster.getPower() / 100.0);
+
+		if (target.hasState(EntityState.INVINCIBLE)) {
+			d = 0;
+		}
 
 		// Return damage
 		if (target != caster) {
@@ -32,12 +37,12 @@ public class EffectLifeDamage extends Effect {
 		int erosion = (int) Math.round(value * erosionRate);
 
 		state.log(new ActionDamage(DamageType.LIFE, target, value, erosion));
-		target.removeLife(value, erosion, caster, DamageType.LIFE, this);
+		target.removeLife(value, erosion, caster, DamageType.LIFE, this, getItem());
 		target.onDirectDamage(value);
 		target.onNovaDamage(erosion);
 
 		// Return damage
-		if (returnDamage > 0) {
+		if (returnDamage > 0 && !caster.hasState(EntityState.INVINCIBLE)) {
 
 			if (caster.getLife() < returnDamage) {
 				returnDamage = caster.getLife();
@@ -47,7 +52,7 @@ public class EffectLifeDamage extends Effect {
 
 			if (returnDamage > 0) {
 				state.log(new ActionDamage(DamageType.RETURN, caster, returnDamage, returnErosion));
-				caster.removeLife(returnDamage, returnErosion, target, DamageType.RETURN, this);
+				caster.removeLife(returnDamage, returnErosion, target, DamageType.RETURN, this, getItem());
 			}
 		}
 	}

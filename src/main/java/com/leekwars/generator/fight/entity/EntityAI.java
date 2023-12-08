@@ -85,6 +85,7 @@ public class EntityAI extends AI {
 
 	protected boolean valid = false;
 	private boolean isFirstRuntimeError = true;
+	private boolean staticInitialized = false;
 
 	public EntityAI(int instructions, int version) {
 		super(instructions, version);
@@ -143,6 +144,9 @@ public class EntityAI extends AI {
 			ai.valid = true;
 			ai.setEntity(entity);
 			ai.setLogs((LeekLog) entity.getLogs());
+			// System.out.println("Coeurs = " + entity.getCores() + " RAM = " + entity.getRAM());
+			ai.setMaxRAM(Math.min(50, entity.getRAM()) * 8_000_000);
+			ai.setMaxOperations(entity.getCores() * 1_000_000);
 			return ai;
 
 		} catch (LeekScriptException e) {
@@ -260,8 +264,9 @@ public class EntityAI extends AI {
 		try {
 
 			mEntity = mInitialEntity;
-			if (turn == 1) {
+			if (!staticInitialized) {
 				staticInit();
+				staticInitialized = true;
 			}
 			runIA();
 

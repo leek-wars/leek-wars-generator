@@ -7,6 +7,7 @@ public class Items {
 	public final static int TYPE_WEAPON = 1;
 	public final static int TYPE_CHIP = 2;
 	public final static int TYPE_POTION = 3;
+	public final static int TYPE_COMPONENT = 8;
 
 	private static TreeMap<Integer, Integer> items = new TreeMap<Integer, Integer>();
 
@@ -15,6 +16,9 @@ public class Items {
 	}
 	public static void addChip(int id) {
 		items.put(id, TYPE_CHIP);
+	}
+	public static void addComponent(int id) {
+		items.put(id, TYPE_COMPONENT);
 	}
 
 	public static Integer getType(int item) {

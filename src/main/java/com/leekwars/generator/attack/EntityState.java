@@ -4,7 +4,7 @@ public enum EntityState {
 	NONE, // 0
 	RESURRECTED, // 1
 	UNHEALABLE, // 2
-	INVICIBLE, // 3
+	INVINCIBLE, // 3
 	PACIFIST, // 4
 	HEAVY, // 5
 	DENSE, // 6

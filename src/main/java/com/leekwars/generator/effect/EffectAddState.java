@@ -5,9 +5,12 @@ import com.leekwars.generator.state.State;
 
 public class EffectAddState extends Effect {
 
+
 	@Override
 	public void apply(State state) {
 
-		target.addState(EntityState.values()[(int) value1]);
+		value = 1;
+		this.state = EntityState.values()[(int) value1];
+		target.addState(this.state);
 	}
 }

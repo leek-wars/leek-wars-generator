@@ -63,7 +63,7 @@ public class TestFightFunctions {
 		// map.getCell(203).setPlayer(leek2);
 		// map.getCell(306).setPlayer(leek1);
 
-		leek2.removeLife(leek2.getLife(), 0, leek1, DamageType.DIRECT, null);
+		leek2.removeLife(leek2.getLife(), 0, leek1, DamageType.DIRECT, null, null);
 
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();

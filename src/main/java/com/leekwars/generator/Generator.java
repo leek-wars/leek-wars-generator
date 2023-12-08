@@ -11,6 +11,8 @@ import com.leekwars.generator.bulbs.Bulbs;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.ChipType;
 import com.leekwars.generator.chips.Chips;
+import com.leekwars.generator.component.Component;
+import com.leekwars.generator.component.Components;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.weapons.Weapons;
@@ -47,6 +49,7 @@ public class Generator {
 		loadWeapons();
 		loadChips();
 		loadSummons();
+		loadComponents();
 	}
 
 	/**
@@ -204,6 +207,7 @@ public class Generator {
 			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
 			for (String id : chips.keySet()) {
 				JSONObject chip = chips.getJSONObject(id);
+				// System.out.println("New chip " + chip.getString("name") + " " + id + " " + chip.getInteger("template"));
 				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"),
 						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"),
 						chip.getByte("area"), chip.getBoolean("los"), chip.getInteger("cooldown"),
@@ -226,6 +230,20 @@ public class Generator {
 						summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
 			}
 			Log.end(summons.size() + " summons loaded.");
+		} catch (Exception e) {
+			exception(e);
+		}
+	}
+
+	private void loadComponents() {
+		try {
+			Log.start(TAG, "- Loading components... ");
+			JSONObject components = JSON.parseObject(Util.readFile("data/components.json"));
+			for (String id : components.keySet()) {
+				JSONObject component = components.getJSONObject(id);
+				Components.addComponent(new Component(Integer.parseInt(id), component.getString("name"), component.getString("stats"), component.getInteger("template")));
+			}
+			Log.end(components.size() + " components loaded.");
 		} catch (Exception e) {
 			exception(e);
 		}

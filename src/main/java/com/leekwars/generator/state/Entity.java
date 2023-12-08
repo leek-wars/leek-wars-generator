@@ -23,6 +23,7 @@ import com.leekwars.generator.effect.EffectShackleMagic;
 import com.leekwars.generator.effect.EffectShackleStrength;
 import com.leekwars.generator.effect.EffectShackleTP;
 import com.leekwars.generator.effect.EffectShackleWisdom;
+import com.leekwars.generator.items.Item;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.Registers;
 import com.leekwars.generator.maps.Cell;
@@ -55,6 +56,8 @@ public abstract class Entity {
 	public final static int CHARAC_MAGIC = 13;
 	public final static int CHARAC_DAMAGE_RETURN = 14;
 	public final static int CHARAC_POWER = 15;
+	public final static int CHARAC_CORES = 16;
+	public final static int CHARAC_RAM = 17;
 
 	// Characteristics
 	protected Cell cell;
@@ -119,12 +122,14 @@ public abstract class Entity {
 	private Object logs;
 	private Object fight;
 	private Object aiFile;
+	private Integer initialCell = null;
+	private int orientation = -1;
 
 	public Entity() {
 		this(0, "");
 	}
 
-	public Entity(Integer id, String name, int farmer, int level, int life, int turn_point, int move_point, int force, int agility, int frequency, int wisdom, int resistance, int science, int magic, int skin, boolean metal, int face, int team_id, String team_name, int ai_id, String ai_name, String farmer_name, String farmer_country, int hat) {
+	public Entity(Integer id, String name, int farmer, int level, int life, int turn_point, int move_point, int force, int agility, int frequency, int wisdom, int resistance, int science, int magic, int cores, int ram, int skin, boolean metal, int face, int team_id, String team_name, int ai_id, String ai_name, String farmer_name, String farmer_country, int hat) {
 
 		mId = id;
 		this.name = name;
@@ -147,6 +152,8 @@ public abstract class Entity {
 		mBaseStats.setStat(CHARAC_RESISTANCE, resistance);
 		mBaseStats.setStat(CHARAC_SCIENCE, science);
 		mBaseStats.setStat(CHARAC_MAGIC, magic);
+		mBaseStats.setStat(CHARAC_CORES, cores);
+		mBaseStats.setStat(CHARAC_RAM, ram);
 
 		mTotalLife = mBaseStats.getStat(CHARAC_LIFE);
 		mInitialLife = mTotalLife;
@@ -184,6 +191,8 @@ public abstract class Entity {
 		mBaseStats.setStat(CHARAC_RESISTANCE, 0);
 		mBaseStats.setStat(CHARAC_SCIENCE, 0);
 		mBaseStats.setStat(CHARAC_MAGIC, 0);
+		mBaseStats.setStat(CHARAC_CORES, 0);
+		mBaseStats.setStat(CHARAC_RAM, 0);
 
 		mTotalLife = mBaseStats.getStat(CHARAC_LIFE);
 		this.life = mTotalLife;
@@ -408,6 +417,14 @@ public abstract class Entity {
 		return getStat(Entity.CHARAC_FREQUENCY);
 	}
 
+	public int getCores() {
+		return getStat(Entity.CHARAC_CORES);
+	}
+
+	public int getRAM() {
+		return getStat(Entity.CHARAC_RAM);
+	}
+
 	public int getTotalTP() {
 		return getStat(Entity.CHARAC_TP);
 	}
@@ -452,7 +469,7 @@ public abstract class Entity {
 		return life <= 0;
 	}
 
-	public void removeLife(int pv, int erosion, Entity attacker, DamageType type, Effect effect) {
+	public void removeLife(int pv, int erosion, Entity attacker, DamageType type, Effect effect, Item item) {
 
 		if (isDead()) return;
 
@@ -472,7 +489,7 @@ public abstract class Entity {
 		if (mTotalLife < 1) mTotalLife = 1;
 
 		if (life <= 0) {
-			state.onPlayerDie(this, attacker);
+			state.onPlayerDie(this, attacker, item);
 			die();
 		}
 	}
@@ -710,7 +727,7 @@ public abstract class Entity {
 		List<Entity> entities = new ArrayList<Entity>(state.getTeamEntities(getTeam()));
 		for (Entity e : entities) {
 			if (e.isSummon() && e.getSummoner().getFId() == getFId()) {
-				state.onPlayerDie(e, null);
+				state.onPlayerDie(e, null, null);
 				e.die();
 			}
 		}
@@ -718,9 +735,13 @@ public abstract class Entity {
 
 	public void updateBuffStats() {
 		mBuffStats.clear();
+		states.clear();
 		for (Effect effect : effects) {
 			if (effect.getStats() != null)
 				mBuffStats.addStats(effect.getStats());
+			if (effect.getState() != null) {
+				states.add(effect.getState());
+			}
 		}
 	}
 
@@ -825,8 +846,11 @@ public abstract class Entity {
 	}
 
 	public void addChip(Chip chip) {
-		if (chip != null)
-			mChips.put(chip.getId(), chip);
+		if (chip != null) {
+			if (mChips.size() < getRAM()) {
+				mChips.put(chip.getId(), chip);
+			}
+		}
 	}
 
 	// Chip has just been used, we must store the cooldown (entity cooldown)
@@ -892,9 +916,13 @@ public abstract class Entity {
 		mLevel = level;
 	}
 
-	public void resurrect(Entity entity, double factor) {
-		mTotalLife = Math.max(10, (int) Math.round(mTotalLife * 0.5 * factor));
-		life = mTotalLife / 2;
+	public void resurrect(Entity entity, double factor, boolean fullLife) {
+		if (fullLife) {
+			life = mTotalLife;
+		} else {
+			mTotalLife = Math.max(10, (int) Math.round(mTotalLife * 0.5 * factor));
+			life = mTotalLife / 2;
+		}
 		resurrected++;
 		endTurn();
 	}
@@ -950,6 +978,12 @@ public abstract class Entity {
 	}
 	public void setFrequency(int frequency) {
 		mBaseStats.setStat(CHARAC_FREQUENCY, frequency);
+	}
+	public void setCores(int cores) {
+		mBaseStats.setStat(CHARAC_CORES, cores);
+	}
+	public void setRAM(int ram) {
+		mBaseStats.setStat(CHARAC_RAM, ram);
 	}
 	public void setTP(int tp) {
 		mBaseStats.setStat(CHARAC_TP, tp);
@@ -1103,5 +1137,27 @@ public abstract class Entity {
 
 	public void addOperations(long operations) {
 		this.totalOperations += operations;
+	}
+
+	public void setInitialCell(Integer cell) {
+		this.initialCell = cell;
+	}
+
+	public Integer getInitialCell() {
+		return initialCell;
+	}
+
+	public void setDead(boolean dead) {
+		if (dead) {
+			this.life = 0;
+		}
+	}
+
+	public void setOrientation(int orientation) {
+		this.orientation = orientation;
+	}
+
+	public int getOrientation() {
+		return this.orientation;
 	}
 }

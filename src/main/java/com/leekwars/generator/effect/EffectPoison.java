@@ -2,6 +2,7 @@ package com.leekwars.generator.effect;
 
 import com.leekwars.generator.action.ActionDamage;
 import com.leekwars.generator.attack.DamageType;
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.state.State;
 
 public class EffectPoison extends Effect {
@@ -18,11 +19,16 @@ public class EffectPoison extends Effect {
 		if (target.getLife() < damages) {
 			damages = target.getLife();
 		}
+
+		if (target.hasState(EntityState.INVINCIBLE)) {
+			damages = 0;
+		}
+
 		if (damages > 0) {
 			int erosion = (int) Math.round(damages * erosionRate);
 
 			state.log(new ActionDamage(DamageType.POISON, target, damages, erosion));
-			target.removeLife(damages, erosion, caster, DamageType.POISON, this);
+			target.removeLife(damages, erosion, caster, DamageType.POISON, this, getItem());
 			target.onPoisonDamage(damages);
 			target.onNovaDamage(erosion);
 		}

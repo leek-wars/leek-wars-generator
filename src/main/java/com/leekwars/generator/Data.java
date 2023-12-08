@@ -1,5 +1,6 @@
 package com.leekwars.generator;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -24,24 +25,27 @@ public class Data {
 	public static List<LocalDate> fullmoon = new ArrayList<>();
 
 	public static void checkData(String api) {
-		Log.i(TAG, "Check api: " + api);
+
+		new File("data").mkdir();
+
+		System.out.println("Check api: " + api);
 		// File weaponsFile = new File("data/weapons.json");
-		Log.i(TAG, "Load weapons from API...");
+		System.out.println("Load weapons from API...");
 		JSONObject weapons = JSON.parseObject(get(api + "weapon/get-all", "")).getJSONObject("weapons");
 		Util.writeFile(weapons.toJSONString(), "data/weapons.json");
 
 		// File chipsFile = new File("data/chips.json");
-		Log.i(TAG, "Load chips from API...");
+		System.out.println("Load chips from API...");
 		JSONObject chips = JSON.parseObject(get(api + "chip/get-all", "")).getJSONObject("chips");
 		Util.writeFile(chips.toJSONString(), "data/chips.json");
 
 		// File summonsFile = new File("data/summons.json");
-		Log.i(TAG, "Load summons from API...");
+		System.out.println("Load summons from API...");
 		JSONObject summons = JSON.parseObject(get(api + "summon/get-templates", "")).getJSONObject("summon_templates");
 		Util.writeFile(summons.toJSONString(), "data/summons.json");
 
 		// File fullmoonFile = new File("data/fullmoon.json");
-		Log.i(TAG, "Load fullmoon from API...");
+		System.out.println("Load fullmoon from API...");
 		JSONArray f = JSON.parseArray(get(api + "fight/fullmoon", ""));
 		for (var d : f) {
 			var dateUTC = ZonedDateTime.of(LocalDateTime.parse((String) d), ZoneOffset.UTC);
@@ -50,6 +54,11 @@ public class Data {
 		}
 		// System.out.println("full moon = " + fullmoon);
 		Util.writeFile(f.toJSONString(), "data/fullmoon.json");
+
+		// TODO
+		System.out.println("Load components from API...");
+		JSONObject components = JSON.parseObject(get(api + "component/get-all/dfgdfgzegktyrtytm", ""));
+		Util.writeFile(components.toJSONString(), "data/components.json");
 	}
 
     private static String get(String url, String urlParameters) {

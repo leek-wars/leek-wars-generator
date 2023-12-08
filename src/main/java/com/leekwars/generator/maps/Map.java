@@ -30,6 +30,8 @@ import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.State;
 import com.leekwars.generator.state.Team;
 
+import leekscript.ErrorManager;
+
 public class Map {
 
 	public final static byte NORTH = 0;// NE
@@ -39,6 +41,7 @@ public class Map {
 
 	private final static boolean DEBUG = false;
 
+	private final int id;
 	private final List<Cell> cells;
 	private final int height;
 	private final int width;
@@ -53,6 +56,8 @@ public class Map {
 	private JSONObject custom_map;
 	private HashMap<Entity, Cell> cellByEntity = new HashMap<>();
 	private HashMap<Cell, Entity> entityByCell = new HashMap<>();
+	private JSONArray pattern;
+	private State state;
 
 	public static Map generateMap(State state, int context, int width, int height, int obstacles_count, List<Team> teams, JSONObject custom_map) {
 
@@ -62,8 +67,10 @@ public class Map {
 
 		if (custom_map != null) {
 
-			map = new Map(width, height);
+			map = new Map(width, height, custom_map.getIntValue("id"));
 			map.custom_map = custom_map;
+			map.pattern = custom_map.getJSONArray("pattern");
+			map.state = state;
 
 			JSONObject obstacles = custom_map.getJSONObject("obstacles");
 			JSONArray team1 = custom_map.getJSONArray("team1");
@@ -73,21 +80,26 @@ public class Map {
 			for (int t = 0; t < teams.size(); ++t) {
 				int pos = 0;
 				for (Entity l : teams.get(t).getEntities()) {
+					if (l.isDead()) continue;
 					// Random cell
 					Cell c;
-					if (teams.size() == 2) { // 2 teams : 2 sides
-						c = map.getRandomCell(state, t == 0 ? 1 : 4);
-					} else { // 2+ teams : random
-						c = map.getRandomCell(state);
-					}
-					// User custom cell?
-					if (t < 2) {
-						JSONArray team = t == 0 ? team1 : team2;
-						if (team != null) {
-							if (pos < team.size()) {
-								int cell_id = team.getIntValue(pos++);
-								if (cell_id >= 0 || cell_id < map.nb_cells) {
-									c = map.getCell(cell_id);
+					if (map.id != 0 && l.getInitialCell() != null) {
+						c = map.getCell(l.getInitialCell());
+					} else {
+						if (teams.size() == 2) { // 2 teams : 2 sides
+							c = map.getRandomCell(state, t == 0 ? 1 : 4);
+						} else { // 2+ teams : random
+							c = map.getRandomCell(state);
+						}
+						// User custom cell?
+						if (t < 2) {
+							JSONArray team = t == 0 ? team1 : team2;
+							if (team != null) {
+								if (pos < team.size()) {
+									int cell_id = team.getIntValue(pos++);
+									if (cell_id >= 0 || cell_id < map.nb_cells) {
+										c = map.getCell(cell_id);
+									}
 								}
 							}
 						}
@@ -102,10 +114,46 @@ public class Map {
 					int cell_id = Integer.parseInt(c.getKey());
 					Cell cell = map.getCell(cell_id);
 					if (cell.available(map)) {
-						int id = c.getValue() instanceof Boolean ? 1 : (Integer) c.getValue();
-						cell.setObstacle(id, 1);
+						if (c.getValue() instanceof Boolean) {
+							cell.setObstacle(1, 1);
+						} else {
+							int id = (Integer) c.getValue();
+							ObstacleInfo info = ObstacleInfo.get(id);
+							if (info.size == 1) {
+								cell.setObstacle(id, info.size);
+							} else if (info.size == 2) {
+								cell.setObstacle(id, info.size);
+								Cell c2 = map.getCellByDir(cell, Pathfinding.EAST);
+								Cell c3 = map.getCellByDir(cell, Pathfinding.SOUTH);
+								Cell c4 = map.getCellByDir(c3, Pathfinding.EAST);
+								c2.setObstacle(0, -1);
+								c3.setObstacle(0, -2);
+								c4.setObstacle(0, -3);
+							} else if (info.size == 3) {
+								cell.setObstacle(id, info.size);
+								for (int x = -1; x <= 1; ++x) {
+									for (int y = -1; y <= 1; ++y) {
+										if (x != 0 || y != 0)
+											map.getNextCell(cell, x, y).setObstacle(0, -1);
+									}
+								}
+							} else if (info.size == 4) {
+								cell.setObstacle(id, info.size);
+								map.getNextCell(cell, -3, 0).setObstacle(0, -1);
+							} else if (info.size == 5) {
+								cell.setObstacle(id, info.size);
+								// [[0, -1], [0, 0], [0, 3], [2, -1], [2, 0], [2, 3]]
+								map.getNextCell(cell, 0, -1).setObstacle(0, -1);
+								map.getNextCell(cell, 0, 3).setObstacle(0, -1);
+								map.getNextCell(cell, 2, -1).setObstacle(0, -1);
+								map.getNextCell(cell, 2, 0).setObstacle(0, -1);
+								map.getNextCell(cell, 2, 3).setObstacle(0, -1);
+							}
+						}
 					}
-				} catch (Exception e) {}
+				} catch (Exception e) {
+					ErrorManager.exception(e);
+				}
 			}
 			map.computeComposantes();
 
@@ -114,6 +162,7 @@ public class Map {
 			while (!valid && nb < 63) {
 
 				map = new Map(width, height);
+				map.state = state;
 
 				for (int i = 0; i < obstacles_count; i++) {
 					Cell c = map.getCell(state.getRandom().getInt(0, map.getNbCell()));
@@ -191,15 +240,22 @@ public class Map {
 			map.setType(-1); // Nexus
 		} else if (context == State.CONTEXT_TOURNAMENT) {
 			map.setType(5); // Arena
+		} else if (custom_map != null && custom_map.containsKey("type")) {
+			map.setType(custom_map.getIntValue("type"));
 		}
 		// map.drawMap();
 		return map;
 	}
 
 	public Map(int width, int height) {
+		this(width, height, 0);
+	}
+
+	public Map(int width, int height, int id) {
 
 		this.width = width;
 		this.height = height;
+		this.id = id;
 
 		nb_cells = (width * 2 - 1) * height - (width - 1);
 
@@ -227,6 +283,7 @@ public class Map {
 	}
 
 	public Map(Map map, State state) {
+		this.id = map.id;
 		this.width = map.width;
 		this.height = map.height;
 		this.nb_cells = map.nb_cells;
@@ -1119,6 +1176,9 @@ public class Map {
 			return false;
 		}
 		// Ligne de vue
+		if (attack.getItemId() == 415) {
+			return true;
+		}
 		return verifyLoS(caster, target, attack, caster);
 	}
 
@@ -1197,5 +1257,15 @@ public class Map {
 		return (c1.getX() - c2.getX()) * (c1.getX() - c2.getX()) + (c1.getY() - c2.getY()) * (c1.getY() - c2.getY());
 	}
 
+	public int getId() {
+		return id;
+	}
 
+	public JSONArray getPattern() {
+		return pattern;
+	}
+
+	public State getState() {
+		return state;
+	}
 }

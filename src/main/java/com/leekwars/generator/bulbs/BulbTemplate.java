@@ -113,6 +113,8 @@ public class BulbTemplate {
 				base(mMinResistance, mMaxResistance, c, multiplier),
 				base(mMinScience, mMaxScience, c, multiplier),
 				base(mMinMagic, mMaxMagic, c, multiplier),
+				1,
+				6,
 				base(mMinTp, mMaxTp, c, multiplier),
 				base(mMinMp, mMaxMp, c, multiplier),
 				mId, 0);

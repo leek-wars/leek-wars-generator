@@ -37,6 +37,7 @@ public class EntityInfo {
 	public int farmer;
 	public int team;
 	public int level;
+	public boolean dead;
 	public int life;
 	public int tp;
 	public int mp;
@@ -47,15 +48,18 @@ public class EntityInfo {
 	public int resistance;
 	public int science;
 	public int magic;
+	public int cores;
+	public int ram;
 	public List<Integer> chips = new ArrayList<Integer>();
 	public List<Integer> weapons = new ArrayList<Integer>();
-	public int cell;
+	public Integer cell;
 	public boolean static_;
 	public int skin;
 	public int hat;
 	public boolean metal;
 	public int face;
 	public Class<?> customClass;
+	public int orientation;
 
 	public EntityInfo() {
 	}
@@ -80,6 +84,8 @@ public class EntityInfo {
 		resistance = e.getIntValue("resistance");
 		science = e.getIntValue("science");
 		magic = e.getIntValue("magic");
+		cores = e.getIntValue("cores");
+		ram = e.getIntValue("ram");
 		static_ = e.getBooleanValue("static");
 
 		JSONArray weapons = e.getJSONArray("weapons");
@@ -120,10 +126,14 @@ public class EntityInfo {
 		entity.setScience(science);
 		entity.setMagic(magic);
 		entity.setFrequency(frequency);
+		entity.setCores(cores);
+		entity.setRAM(ram);
 		entity.setTP(tp);
 		entity.setMP(mp);
 		entity.setStatic(static_);
 		entity.setFarmer(farmer);
+		entity.setDead(dead);
+		entity.setOrientation(orientation);
 		if (farmer >= 0) {
 			entity.setFarmerName(scenario.getFarmer(farmer).name);
 			entity.setFarmerCountry(scenario.getFarmer(farmer).country);
@@ -137,6 +147,7 @@ public class EntityInfo {
 		entity.setHat(hat);
 		entity.setMetal(metal);
 		entity.setFace(face);
+		entity.setInitialCell(cell);
 
 		for (Object w : weapons) {
 			var weapon = Weapons.getWeapon((Integer) w);
@@ -166,6 +177,8 @@ public class EntityInfo {
 		json.put("science", science);
 		json.put("magic", magic);
 		json.put("frequency", frequency);
+		json.put("cores", cores);
+		json.put("ram", ram);
 		json.put("tp", tp);
 		json.put("mp", mp);
 		json.put("static", static_);

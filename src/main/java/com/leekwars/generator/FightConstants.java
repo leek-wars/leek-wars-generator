@@ -22,6 +22,7 @@ public enum FightConstants implements ILeekConstant {
 	ENTITY_BULB(2, Type.INT),
 	ENTITY_TURRET(3, Type.INT),
 	ENTITY_CHEST(4, Type.INT),
+	ENTITY_MOB(5, Type.INT),
 
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, Type.INT),
@@ -109,8 +110,10 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_KILL_TO_TP(Effect.TYPE_KILL_TO_TP, Type.INT),
 	EFFECT_RAW_HEAL(Effect.TYPE_RAW_HEAL, Type.INT),
 	EFFECT_CRITICAL_TO_HEAL(Effect.TYPE_CRITICAL_TO_HEAL, Type.INT),
+	EFFECT_ADD_STATE(Effect.TYPE_ADD_STATE, Type.INT),
 
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
+	STATE_INVINCIBLE(EntityState.INVINCIBLE.ordinal(), Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
@@ -159,6 +162,9 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_UNSTABLE_DESTROYER(226, Type.INT),
 	WEAPON_SWORD(277, Type.INT),
 	WEAPON_HEAVY_SWORD(278, Type.INT),
+	WEAPON_ODACHI(408, Type.INT),
+	WEAPON_EXCALIBUR(409, Type.INT),
+	WEAPON_SCYTHE(410, Type.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, Type.INT),
@@ -316,6 +322,7 @@ public enum FightConstants implements ILeekConstant {
 	FIGHT_TYPE_FARMER(Fight.TYPE_FARMER, Type.INT),
 	FIGHT_TYPE_TEAM(Fight.TYPE_TEAM, Type.INT),
 	FIGHT_TYPE_BATTLE_ROYALE(Fight.TYPE_BATTLE_ROYALE, Type.INT),
+	FIGHT_TYPE_BOSS(Fight.TYPE_BOSS, Type.INT),
 
 	FIGHT_CONTEXT_TEST(Fight.CONTEXT_TEST, Type.INT),
 	FIGHT_CONTEXT_GARDEN(Fight.CONTEXT_GARDEN, Type.INT),

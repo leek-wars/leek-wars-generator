@@ -33,6 +33,7 @@ import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.effect.EffectParameters;
 import com.leekwars.generator.entity.Bulb;
+import com.leekwars.generator.items.Item;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.RegisterManager;
@@ -412,7 +413,9 @@ public class State {
 			}
 		}
 		for (Entity e : bootorder.compute(this)) {
-			this.order.addEntity(e);
+			if (e.isAlive()) {
+				this.order.addEntity(e);
+			}
 			actions.addEntity(e, false);
 			initialOrder.add(e);
 
@@ -465,13 +468,15 @@ public class State {
 		endTurn();
 	}
 
-	public void onPlayerDie(Entity entity, Entity killer) {
+	public void onPlayerDie(Entity entity, Entity killer, Item item) {
+
+		var killCell = entity.getCell();
 
 		order.removeEntity(entity);
 		this.map.removeEntity(entity);
 
 		actions.log(new ActionEntityDie(entity, killer));
-		statistics.kill(killer, entity);
+		statistics.kill(killer, entity, item, killCell);
 
 		// BR : give 10 (or 2 for bulb) power + 50% of power to the killer
 		if (this.type == State.TYPE_BATTLE_ROYALE && killer != null) {
@@ -801,7 +806,7 @@ public class State {
 		return result;
 	}
 
-	public int resurrectEntity(Entity caster, Cell target, Chip template, Entity target_entity) {
+	public int resurrectEntity(Entity caster, Cell target, Chip template, Entity target_entity, boolean fullLife) {
 
 		if (order.current() != caster) {
 			return Attack.USE_INVALID_TARGET;
@@ -816,7 +821,7 @@ public class State {
 			return Attack.USE_INVALID_COOLDOWN;
 		}
 		EffectParameters params = template.getAttack().getEffectParametersByType(Effect.TYPE_RESURRECT);
-		if (params == null || !target.available(map) || !target_entity.isDead() || target_entity.getTeam() != caster.getTeam()) {
+		if (params == null || !target.available(map) || !target_entity.isDead()) {
 			return Attack.USE_INVALID_TARGET;
 		}
 
@@ -835,7 +840,7 @@ public class State {
 		if (critical) caster.onCritical();
 
 		// Resurrect
-		resurrect(caster, target_entity, target, critical);
+		resurrect(caster, target_entity, target, critical, fullLife);
 		statistics.useChip(caster, template, target, new ArrayList<>(), null);
 		statistics.resurrect(caster, target_entity);
 
@@ -888,7 +893,7 @@ public class State {
 		}
 	}
 
-	public void resurrect(Entity owner, Entity entity, Cell cell, boolean critical) {
+	public void resurrect(Entity owner, Entity entity, Cell cell, boolean critical, boolean fullLife) {
 
 		Entity next = null;
 		boolean start = false;
@@ -911,7 +916,7 @@ public class State {
 		} else {
 			order.addEntity(order.getEntityTurnOrder(next) - 1, entity);
 		}
-		entity.resurrect(owner, critical ? Effect.CRITICAL_FACTOR : 1.0);
+		entity.resurrect(owner, critical ? Effect.CRITICAL_FACTOR : 1.0, fullLife);
 
 		// On met la cellule
 		this.map.setEntity(entity, cell);

@@ -5,6 +5,7 @@ import java.util.List;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
+import com.leekwars.generator.state.Entity;
 
 public abstract class Area {
 
@@ -23,6 +24,8 @@ public abstract class Area {
 	public final static int TYPE_SQUARE_1 = 11;
 	public final static int TYPE_SQUARE_2 = 12;
 	public final static int TYPE_FIRST_IN_LINE = 13;
+	public final static int TYPE_ENEMIES = 14;
+	public final static int TYPE_ALLIES = 15;
 
 	protected int mId;
 	protected Attack mAttack;
@@ -31,7 +34,7 @@ public abstract class Area {
 		mAttack = attack;
 	}
 
-	public abstract List<Cell> getArea(Map map, Cell launchCell, Cell targetCell);
+	public abstract List<Cell> getArea(Map map, Cell launchCell, Cell targetCell, Entity caster);
 
 	protected boolean isAvailable(Cell c, List<Cell> cells_to_ignore) {
 		if (c.isWalkable())
@@ -68,6 +71,10 @@ public abstract class Area {
 			return new AreaSquare2(attack);
 		else if (type == Area.TYPE_FIRST_IN_LINE)
 			return new AreaFirstInLine(attack);
+		else if (type == Area.TYPE_ALLIES)
+			return new AreaAllies(attack);
+		else if (type == Area.TYPE_ENEMIES)
+			return new AreaEnemies(attack);
 		return null;
 	}
 }

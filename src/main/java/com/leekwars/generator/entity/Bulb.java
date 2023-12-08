@@ -10,8 +10,8 @@ public class Bulb extends Entity {
 
 	protected Entity mOwner;
 
-	public Bulb(Entity owner, Integer id, String name, int level, int life, int strength, int wisdom, int agility, int resistance, int science, int magic, int tp, int mp, int skin, int hat) {
-		super(id, name, owner.getFarmer(), level, life, tp, mp, strength, agility, 0, wisdom, resistance, science, magic, skin, false, 0, owner.getTeamId(), owner.getTeamName(), owner.getAIId(), owner.getAIName(), owner.getFarmerName(), owner.getFarmerCountry(), hat);
+	public Bulb(Entity owner, Integer id, String name, int level, int life, int strength, int wisdom, int agility, int resistance, int science, int magic, int cores, int ram, int tp, int mp, int skin, int hat) {
+		super(id, name, owner.getFarmer(), level, life, tp, mp, strength, agility, 0, wisdom, resistance, science, magic, cores, ram, skin, false, 0, owner.getTeamId(), owner.getTeamName(), owner.getAIId(), owner.getAIName(), owner.getFarmerName(), owner.getFarmerCountry(), hat);
 
 		mOwner = owner;
 		state = mOwner.state;
@@ -33,8 +33,8 @@ public class Bulb extends Entity {
 	}
 
 	@Override
-	public void resurrect(Entity entity, double factor) {
-		super.resurrect(entity, factor);
+	public void resurrect(Entity entity, double factor, boolean fullLife) {
+		super.resurrect(entity, factor, fullLife);
 		mOwner = entity;
 	}
 

@@ -15,6 +15,7 @@ public class Weapon extends Item {
 
 	public Weapon(int id, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int template, String name, JSONArray passiveEffects) {
 		super(id, cost, name, template, new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, id));
+		this.attack.setItem(this);
 
 		for (Object e : passiveEffects) {
 			JSONObject effect = (JSONObject) e;
