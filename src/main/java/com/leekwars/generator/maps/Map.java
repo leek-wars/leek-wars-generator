@@ -76,38 +76,6 @@ public class Map {
 			JSONArray team1 = custom_map.getJSONArray("team1");
 			JSONArray team2 = custom_map.getJSONArray("team2");
 
-			// Set entities positions
-			for (int t = 0; t < teams.size(); ++t) {
-				int pos = 0;
-				for (Entity l : teams.get(t).getEntities()) {
-					if (l.isDead()) continue;
-					// Random cell
-					Cell c;
-					if (map.id != 0 && l.getInitialCell() != null) {
-						c = map.getCell(l.getInitialCell());
-					} else {
-						if (teams.size() == 2) { // 2 teams : 2 sides
-							c = map.getRandomCell(state, t == 0 ? 1 : 4);
-						} else { // 2+ teams : random
-							c = map.getRandomCell(state);
-						}
-						// User custom cell?
-						if (t < 2) {
-							JSONArray team = t == 0 ? team1 : team2;
-							if (team != null) {
-								if (pos < team.size()) {
-									int cell_id = team.getIntValue(pos++);
-									if (cell_id >= 0 || cell_id < map.nb_cells) {
-										c = map.getCell(cell_id);
-									}
-								}
-							}
-						}
-					}
-					map.setEntity(l, c);
-				}
-			}
-
 			// Obstacles
 			for (var c : obstacles.entrySet()) {
 				try {
@@ -155,6 +123,39 @@ public class Map {
 					ErrorManager.exception(e);
 				}
 			}
+
+			// Set entities positions
+			for (int t = 0; t < teams.size(); ++t) {
+				int pos = 0;
+				for (Entity l : teams.get(t).getEntities()) {
+					if (l.isDead()) continue;
+					// Random cell
+					Cell c;
+					if (map.id != 0 && l.getInitialCell() != null) {
+						c = map.getCell(l.getInitialCell());
+					} else {
+						if (teams.size() == 2) { // 2 teams : 2 sides
+							c = map.getRandomCell(state, t == 0 ? 1 : 4);
+						} else { // 2+ teams : random
+							c = map.getRandomCell(state);
+						}
+						// User custom cell?
+						if (t < 2) {
+							JSONArray team = t == 0 ? team1 : team2;
+							if (team != null) {
+								if (pos < team.size()) {
+									int cell_id = team.getIntValue(pos++);
+									if (cell_id >= 0 || cell_id < map.nb_cells) {
+										c = map.getCell(cell_id);
+									}
+								}
+							}
+						}
+					}
+					map.setEntity(l, c);
+				}
+			}
+
 			map.computeComposantes();
 
 		} else {

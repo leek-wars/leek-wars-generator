@@ -25,6 +25,7 @@ import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.EntityInfo;
 import com.leekwars.generator.scenario.Scenario;
+import com.leekwars.generator.state.Entity;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
@@ -112,6 +113,7 @@ public class Generator {
 		fight.getState().setRegisterManager(registerManager);
 		fight.setStatisticsManager(statisticsManager);
 		fight.setId(scenario.fightID);
+		fight.setBoss(scenario.boss);
 		fight.setMaxTurns(scenario.maxTurns);
 		fight.getState().setType(scenario.type);
 		fight.getState().setContext(scenario.context);
@@ -125,6 +127,7 @@ public class Generator {
 
 				// Create farmer logs
 				int aiOwner = entityInfo.aiOwner;
+				if (entityInfo.type == Entity.TYPE_MOB) aiOwner = 0;
 				if (!outcome.logs.containsKey(aiOwner)) {
 					outcome.logs.put(aiOwner, new FarmerLog(fight, entityInfo.farmer));
 				}

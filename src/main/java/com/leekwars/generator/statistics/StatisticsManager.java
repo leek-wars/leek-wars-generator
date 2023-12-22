@@ -66,7 +66,6 @@ public interface StatisticsManager {
 	public void registerWrite(Entity entity, String key, String value);
 	public void setWeapon(Entity entity, Weapon w);
 	public void chest();
-	public void chestKill();
 	public void chestKilled(Entity killer, Entity entity, Map<Integer, Integer> resources);
 	public Map<Integer, Map<Integer, Integer>> getLeekResources();
 	public long getChests();

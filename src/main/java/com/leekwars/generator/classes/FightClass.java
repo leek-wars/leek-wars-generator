@@ -1227,4 +1227,8 @@ public class FightClass {
 	public static long getFightID(EntityAI ai) {
 		return ai.getFight().getId();
 	}
+
+	public static long getFightBoss(EntityAI ai) {
+		return ai.getFight().getBoss();
+	}
 }

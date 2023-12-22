@@ -112,6 +112,7 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_CRITICAL_TO_HEAL(Effect.TYPE_CRITICAL_TO_HEAL, Type.INT),
 	EFFECT_ADD_STATE(Effect.TYPE_ADD_STATE, Type.INT),
 
+	// États
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
 	STATE_INVINCIBLE(EntityState.INVINCIBLE.ordinal(), Type.INT),
 
@@ -197,6 +198,8 @@ public enum FightConstants implements ILeekConstant {
 	AREA_SQUARE_1(11, Type.INT),
 	AREA_SQUARE_2(12, Type.INT),
 	AREA_FIRST_INLINE(13, Type.INT),
+	AREA_ENEMIES(14, Type.INT),
+	AREA_ALLIES(15, Type.INT),
 
 	// Mode de lancé
 	LAUNCH_TYPE_LINE(Attack.LAUNCH_TYPE_LINE, Type.INT),
@@ -309,6 +312,15 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_DOME(173, Type.INT),
 	CHIP_MANUMISSION(174, Type.INT),
 	CHIP_PRISM(276, Type.INT),
+	CHIP_SHURIKEN(411, Type.INT),
+	CHIP_KEMURIDAMA(412, Type.INT),
+	CHIP_FIRE_BALL(413, Type.INT),
+	CHIP_TREBUCHET(414, Type.INT),
+	CHIP_AWEKENING(415, Type.INT),
+	CHIP_THUNDER(416, Type.INT),
+	CHIP_KILL(417, Type.INT),
+	CHIP_APOCALYPSE(418, Type.INT),
+	CHIP_DIVINE_PROTECTION(419, Type.INT),
 
 	MAP_NEXUS(1, Type.INT),
 	MAP_FACTORY(2, Type.INT),
@@ -317,6 +329,9 @@ public enum FightConstants implements ILeekConstant {
 	MAP_GLACIER(5, Type.INT),
 	MAP_BEACH(6, Type.INT),
 	MAP_TEMPLE(7, Type.INT),
+	MAP_TEIEN(8, Type.INT),
+	MAP_CASTLE(9, Type.INT),
+	MAP_CEMETERY(10, Type.INT),
 
 	FIGHT_TYPE_SOLO(Fight.TYPE_SOLO, Type.INT),
 	FIGHT_TYPE_FARMER(Fight.TYPE_FARMER, Type.INT),
@@ -329,6 +344,11 @@ public enum FightConstants implements ILeekConstant {
 	FIGHT_CONTEXT_CHALLENGE(Fight.CONTEXT_CHALLENGE, Type.INT),
 	FIGHT_CONTEXT_TOURNAMENT(Fight.CONTEXT_TOURNAMENT, Type.INT),
 	FIGHT_CONTEXT_BATTLE_ROYALE(Fight.CONTEXT_BATTLE_ROYALE, Type.INT),
+
+	// Boss
+	BOSS_NASU_SAMOURAI(1, Type.INT),
+	BOSS_FENNEL_KING(2, Type.INT),
+	BOSS_EVIL_PUMPKIN(3, Type.INT),
 
 	SUMMON_LIMIT(Fight.SUMMON_LIMIT, Type.INT),
 	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, Type.REAL);

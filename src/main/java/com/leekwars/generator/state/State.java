@@ -489,7 +489,7 @@ public class State {
 		}
 
 		// Coffre ouvert
-		if (entity.getType() == Entity.TYPE_CHEST) {
+		if (entity.getType() == Entity.TYPE_CHEST && entity.getResurrected() == 0) {
 
 			if (this.context != State.CONTEXT_CHALLENGE) {
 				var resources = entity.loot(this);
@@ -512,11 +512,6 @@ public class State {
 		// Passive effect kill
 		if (killer != null) {
 			killer.onKill();
-		}
-
-		// Chest kill
-		if (killer != null && killer.getType() == Entity.TYPE_CHEST) {
-			statistics.chestKill();
 		}
 	}
 
@@ -634,7 +629,7 @@ public class State {
 		if (order.current() != caster) {
 			return Attack.USE_INVALID_TARGET;
 		}
-		if (template.getCost() > caster.getTP()) {
+		if (template.getCost() > 0 && template.getCost() > caster.getTP()) {
 			return Attack.USE_NOT_ENOUGH_TP;
 		}
 		if (hasCooldown(caster, template)) {

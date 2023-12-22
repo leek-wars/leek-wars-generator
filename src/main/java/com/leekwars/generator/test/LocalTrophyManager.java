@@ -320,12 +320,6 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void chestKill() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void setGeneratorFight(Fight fight) {
 		// TODO Auto-generated method stub
 	}

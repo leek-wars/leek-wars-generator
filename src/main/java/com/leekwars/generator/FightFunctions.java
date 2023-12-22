@@ -124,8 +124,8 @@ public class FightFunctions {
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
 		});
 		method("getStates", "Entity", 25, true, new CallableVersion[] {
-			new CallableVersion(Type.compound(Type.array(Type.INT), Type.NULL), new Type[] { Type.INT_OR_NULL }),
-			new CallableVersion(Type.array(Type.INT)),
+			new CallableVersion(Type.compound(Type.set(Type.INT), Type.NULL), new Type[] { Type.INT }),
+			new CallableVersion(Type.set(Type.INT)),
 		});
 		method("getLevel", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
@@ -448,6 +448,7 @@ public class FightFunctions {
 		method("getFightID", "Fight", 5, true, Type.INT, new Type[0]);
 		method("getFightType", "Fight", 10, true, Type.INT, new Type[0]);
 		method("getFightContext", "Fight", 10, true, Type.INT, new Type[0]);
+		method("getFightBoss", "Fight", 10, true, Type.INT, new Type[0]);
 		method("getCellsToUseWeapon", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),

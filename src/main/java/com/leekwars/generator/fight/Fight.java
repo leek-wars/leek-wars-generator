@@ -73,6 +73,7 @@ public class Fight {
 	private int mWinteam = -1;
 	public Generator generator;
 	private int mId;
+	private int mBoss;
 	private int mStartFarmer = -1;
 	private int max_turns = MAX_TURNS;
 	public long executionTime = 0;
@@ -125,6 +126,10 @@ public class Fight {
 
 	public int getId() {
 		return mId;
+	}
+
+	public int getBoss() {
+		return mBoss;
 	}
 
 	public void log(Action log) {
@@ -351,6 +356,10 @@ public class Fight {
 
 	public void setId(int f) {
 		mId = f;
+	}
+
+	public void setBoss(int b) {
+		mBoss = b;
 	}
 
 	public static int getFightContext(int type) {

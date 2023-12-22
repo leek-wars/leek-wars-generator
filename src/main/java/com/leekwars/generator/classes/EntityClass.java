@@ -15,6 +15,7 @@ import leekscript.AILog;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
+import leekscript.runner.values.SetLeekValue;
 
 public class EntityClass {
 
@@ -627,7 +628,6 @@ public class EntityClass {
 		return retour;
 	}
 
-
 	public static LegacyArrayLeekValue getEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
 		Entity l = null;
 		if (value == null) {
@@ -1053,11 +1053,35 @@ public class EntityClass {
 		return retour;
 	}
 
-	public static ArrayLeekValue getStates(EntityAI ai) throws LeekRunException {
-		Entity l = ai.getEntity();
-		var retour = new ArrayLeekValue(ai);
+	public static LegacyArrayLeekValue getStates_v1_3(EntityAI ai, long value) throws LeekRunException {
+		Entity l = ai.getFight().getEntity(value);
+		if (l == null) {
+			return null;
+		}
+		var retour = new LegacyArrayLeekValue(ai);
 		for (var state : l.getStates()) {
 			retour.push(ai, (long) state.ordinal());
+		}
+		return retour;
+	}
+
+	public static SetLeekValue getStates(EntityAI ai) throws LeekRunException {
+		Entity l = ai.getEntity();
+		var retour = new SetLeekValue(ai);
+		for (var state : l.getStates()) {
+			retour.add((long) state.ordinal());
+		}
+		return retour;
+	}
+
+	public static SetLeekValue getStates(EntityAI ai, long value) throws LeekRunException {
+		Entity l = ai.getFight().getEntity(value);
+		if (l == null) {
+			return null;
+		}
+		var retour = new SetLeekValue(ai);
+		for (var state : l.getStates()) {
+			retour.add((long) state.ordinal());
 		}
 		return retour;
 	}
