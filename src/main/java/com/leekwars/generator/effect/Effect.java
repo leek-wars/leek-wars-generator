@@ -73,6 +73,7 @@ public abstract class Effect implements Cloneable {
 	public final static int TYPE_RAW_HEAL = 57;
 	public final static int TYPE_CRITICAL_TO_HEAL = 58;
 	public final static int TYPE_ADD_STATE = 59;
+	public final static int TYPE_TOTAL_DEBUFF = 60;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies

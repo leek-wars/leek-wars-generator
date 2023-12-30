@@ -809,6 +809,21 @@ public abstract class Entity {
 		updateBuffStats();
 	}
 
+	public void reduceEffectsTotal(double percent, Entity caster) {
+		for (int i = 0; i < effects.size(); ++i) {
+			var effect = effects.get(i);
+
+			effect.reduce(percent, caster);
+			if (effect.value == 0) {
+				removeEffect(effects.get(i));
+				i--;
+			} else {
+				updateEffect(effects.get(i));
+			}
+		}
+		updateBuffStats();
+	}
+
 	public void clearPoisons(Entity caster) {
 		int poisonsRemoved = 0;
 		for (int i = 0; i < effects.size(); ++i) {
