@@ -3,11 +3,13 @@ package com.leekwars.generator.fight.entity;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.Date;
 import java.util.List;
 
 import com.leekwars.generator.action.ActionAIError;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.effect.EffectParameters;
+import com.leekwars.generator.entity.Say;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.State;
@@ -20,10 +22,12 @@ import com.leekwars.generator.scenario.EntityInfo;
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.LeekScriptException;
+import leekscript.compiler.Options;
 import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.runner.AI;
 import leekscript.runner.LeekOperations;
 import leekscript.runner.LeekRunException;
+import leekscript.runner.Session;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
@@ -81,7 +85,7 @@ public class EntityAI extends AI {
 	protected String ai_name = "";
 
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
-	protected final List<String> mSays = new ArrayList<String>();
+	protected final List<Say> mSays = new ArrayList<>();
 
 	protected boolean valid = false;
 	private boolean isFirstRuntimeError = true;
@@ -136,9 +140,13 @@ public class EntityAI extends AI {
 		Log.i(TAG, "Compile AI " + file.getPath() + " (id " + file.getId() + ")...");
 		EntityAI ai = null;
 		try {
-			file.setJavaClass("AI_" + file.getId());
-			file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-			ai = (EntityAI) file.compile(generator.use_leekscript_cache, true);
+			// Synchro sur le fichier pour ne pas compiler deux fois la même IA en parallèle
+			synchronized (file) {
+				file.setJavaClass("AI_" + file.getId());
+				file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
+				var options = new Options(file.getVersion(), file.isStrict(), generator.use_leekscript_cache, true, null, true);
+				ai = (EntityAI) file.compile(options);
+			}
 
 			Log.i(TAG, "AI " + file.getPath() + " compiled!");
 			ai.valid = true;
@@ -246,7 +254,7 @@ public class EntityAI extends AI {
 		mMessages.add(leekMessage);
 	}
 
-	public List<String> getSays() {
+	public List<Say> getSays() {
 		return mSays;
 	}
 
@@ -259,8 +267,6 @@ public class EntityAI extends AI {
 
 		long startTime = System.nanoTime();
 
-		mSays.clear();
-
 		try {
 
 			mEntity = mInitialEntity;
@@ -268,7 +274,7 @@ public class EntityAI extends AI {
 				staticInit();
 				staticInitialized = true;
 			}
-			runIA();
+			runIA(null);
 
 		} catch (StackOverflowError e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
@@ -356,6 +362,7 @@ public class EntityAI extends AI {
 			throw new RuntimeException("Erreur importante dans l'IA " + id + "  " + e.getMessage(), e);
 		}
 
+		mSays.clear();
 		mMessages.clear();
 
 		long endTime = System.nanoTime();
@@ -413,6 +420,11 @@ public class EntityAI extends AI {
 
 	@Override
 	public Object runIA() throws LeekRunException {
+		return runIA(null);
+	}
+
+	@Override
+	public Object runIA(Session session) throws LeekRunException {
 		return null;
 	}
 
@@ -446,5 +458,10 @@ public class EntityAI extends AI {
 		retour.push(this, (long) effect.getTarget().getFId());
 		retour.push(this, (long) effect.modifiers);
 		return retour;
+	}
+
+	@Override
+	public Date getDate() {
+		return getState().getDate();
 	}
 }

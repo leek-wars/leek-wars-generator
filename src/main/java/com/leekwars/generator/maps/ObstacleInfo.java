@@ -26,6 +26,7 @@ public class ObstacleInfo {
 		obstacles.put(57, new ObstacleInfo(1));
 		obstacles.put(59, new ObstacleInfo(1));
 		obstacles.put(62, new ObstacleInfo(1));
+		obstacles.put(32, new ObstacleInfo(1));
 
 		obstacles.put(11, new ObstacleInfo(2));
 		obstacles.put(17, new ObstacleInfo(2));
@@ -44,6 +45,7 @@ public class ObstacleInfo {
 		obstacles.put(56, new ObstacleInfo(2));
 		obstacles.put(58, new ObstacleInfo(2));
 		obstacles.put(61, new ObstacleInfo(2));
+		obstacles.put(31, new ObstacleInfo(1));
 
 		obstacles.put(51, new ObstacleInfo(3));
 

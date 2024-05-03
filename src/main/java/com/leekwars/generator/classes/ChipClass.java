@@ -5,6 +5,7 @@ import java.util.List;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
+import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;

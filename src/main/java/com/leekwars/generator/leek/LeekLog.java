@@ -68,4 +68,9 @@ public class LeekLog extends AILog {
 	public boolean isFull() {
 		return farmerLogs.isFull();
 	}
+
+	@Override
+	public void setStream(Stream stream) {
+
+	}
 }

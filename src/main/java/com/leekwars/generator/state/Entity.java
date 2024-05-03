@@ -360,7 +360,7 @@ public abstract class Entity {
 
 	public void setTotalLife(int vitality) {
 		mTotalLife = vitality;
-		mInitialLife = life;
+		mInitialLife = vitality;
 	}
 
 	public int getInitialLife() {
@@ -477,16 +477,17 @@ public abstract class Entity {
 			pv = life;
 		}
 		life -= pv;
+
+		// Add erosion
+		mTotalLife -= erosion;
+		if (mTotalLife < 1) mTotalLife = 1;
+
 		if (pv > 0) {
 			state.statistics.damage(this, attacker, pv, type, effect);
 		}
 		if (erosion > 0) {
 			state.statistics.damage(this, attacker, erosion, DamageType.NOVA, effect);
 		}
-
-		// Add erosion
-		mTotalLife -= erosion;
-		if (mTotalLife < 1) mTotalLife = 1;
 
 		if (life <= 0) {
 			state.onPlayerDie(this, attacker, item);
@@ -800,6 +801,7 @@ public abstract class Entity {
 
 			effect.reduce(percent, caster);
 			if (effect.value == 0) {
+				effect.getCaster().removeLaunchedEffect(effect);
 				removeEffect(effects.get(i));
 				i--;
 			} else {
@@ -815,10 +817,11 @@ public abstract class Entity {
 
 			effect.reduce(percent, caster);
 			if (effect.value == 0) {
-				removeEffect(effects.get(i));
+				effect.getCaster().removeLaunchedEffect(effect);
+				removeEffect(effect);
 				i--;
 			} else {
-				updateEffect(effects.get(i));
+				updateEffect(effect);
 			}
 		}
 		updateBuffStats();

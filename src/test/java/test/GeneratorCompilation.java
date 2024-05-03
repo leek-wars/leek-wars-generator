@@ -11,6 +11,7 @@ import com.leekwars.generator.leek.LeekLog;
 
 import leekscript.LSException;
 import leekscript.compiler.LeekScript;
+import leekscript.compiler.Options;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 
@@ -23,7 +24,8 @@ public class GeneratorCompilation {
 	}
 
 	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, Object s) throws Exception {
-		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", true);
+		var options = new Options(true);
+		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", options);
 		ai.setEntity(entity);
 		var fl = new FarmerLog(fight, 0);
 		ai.setLogs(new LeekLog(fl, entity));

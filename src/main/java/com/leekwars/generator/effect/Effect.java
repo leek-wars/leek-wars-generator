@@ -153,6 +153,7 @@ public abstract class Effect implements Cloneable {
 		EffectRawHeal.class, // 57
 		null, // 58
 		EffectAddState.class, // 59
+		EffectTotalDebuff.class, // 60
 	};
 
 	// Effect characteristics
@@ -216,6 +217,7 @@ public abstract class Effect implements Cloneable {
 				for (int i = 0; i < effects.size(); ++i) {
 					Effect e = effects.get(i);
 					if (e.getId() == id && (e.attack == null ? attack == null : attack != null && e.attack.getItemId() == attack.getItemId())) {
+						e.getCaster().removeLaunchedEffect(e);
 						target.removeEffect(e);
 						break;
 					}
@@ -321,7 +323,8 @@ public abstract class Effect implements Cloneable {
 		double reduction = 1 - percent;
 		value = (int) Math.round((double) value * reduction);
 		for (var stat : stats.stats.entrySet()) {
-			int newValue = (int) Math.round((double) stat.getValue() * reduction);
+			// abs(round(v * r)) * sign(v) pour l'arrondi si r = 0.5
+			int newValue = (int) (Math.round((double) Math.abs(stat.getValue()) * reduction) * Math.signum(stat.getValue()));
 			int delta = newValue - stat.getValue();
 			stats.updateStat(stat.getKey(), delta);
 			target.updateBuffStats(stat.getKey(), delta, caster);

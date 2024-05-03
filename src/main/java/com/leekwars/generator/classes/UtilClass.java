@@ -15,20 +15,6 @@ import leekscript.runner.values.MapLeekValue;
 
 public class UtilClass {
 
-	public static String getDate(EntityAI ai) {
-		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-		return df.format(ai.getState().getDate()).toString();
-	}
-
-	public static String getTime(EntityAI ai) {
-		DateFormat df = new SimpleDateFormat("HH:mm:ss");
-		return df.format(ai.getState().getDate()).toString();
-	}
-
-	public static long getTimestamp(EntityAI ai) {
-		return (ai.getState().getDate().getTime() / 1000);
-	}
-
 	public static LegacyArrayLeekValue getRegisters_v1_3(EntityAI ai) throws LeekRunException {
 		Map<String, String> registers;
 		if (ai.getEntity().isSummon()) {

@@ -3,6 +3,7 @@ package com.leekwars.generator.fight.entity;
 import com.leekwars.generator.state.Entity;
 
 import leekscript.runner.LeekRunException;
+import leekscript.runner.Session;
 import leekscript.runner.values.FunctionLeekValue;
 
 public class BulbAI extends EntityAI {
@@ -22,6 +23,11 @@ public class BulbAI extends EntityAI {
 
 	@Override
 	public Object runIA() throws LeekRunException {
+		return runIA(null);
+	}
+
+	@Override
+	public Object runIA(Session session) throws LeekRunException {
 		if (mAIFunction != null) {
 			mOwnerAI.mEntity = mEntity;
 			var argCount = mAIFunction.getArgumentsCount() == -1 ? 0 : mAIFunction.getArgumentsCount();

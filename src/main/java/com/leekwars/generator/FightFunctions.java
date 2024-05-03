@@ -203,6 +203,10 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		});
+		method("getSide", "Fight", 5, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
 
 		/**
 		 * Weapon
@@ -488,9 +492,6 @@ public class FightFunctions {
 		/**
 		 * Util
 		 */
-		method("getDate", "Util", 50, true, Type.STRING, new Type[0]);
-		method("getTime", "Util", 50, true, Type.STRING, new Type[0]);
-		method("getTimestamp", "Util", 5, true, Type.INT, new Type[0]);
 		method("mark", "Util", 164, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.compound(Type.ARRAY_INT, Type.INT), Type.INT, Type.INT }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.compound(Type.ARRAY_INT, Type.INT), Type.INT }),

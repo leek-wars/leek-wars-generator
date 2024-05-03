@@ -127,7 +127,7 @@ public class Generator {
 
 				// Create farmer logs
 				int aiOwner = entityInfo.aiOwner;
-				if (entityInfo.type == Entity.TYPE_MOB) aiOwner = 0;
+				// if (entityInfo.type == Entity.TYPE_MOB) aiOwner = 0;
 				if (!outcome.logs.containsKey(aiOwner)) {
 					outcome.logs.put(aiOwner, new FarmerLog(fight, entityInfo.farmer));
 				}

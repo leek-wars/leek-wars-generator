@@ -5,6 +5,7 @@ import com.leekwars.generator.action.ActionLama;
 import com.leekwars.generator.action.ActionSay;
 import com.leekwars.generator.action.ActionSetWeapon;
 import com.leekwars.generator.effect.Effect;
+import com.leekwars.generator.entity.Say;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.weapons.Weapons;
@@ -409,7 +410,12 @@ public class EntityClass {
 		}
 		message = Censorship.checkString(ai.getFight(), message);
 		ai.getFight().log(new ActionSay(message));
-		ai.getSays().add(message);
+		var sayData = new Say(ai.getEntity().getFId(), message);
+		for (var entity : ai.getState().getEntities().values()) {
+			if (entity != ai.getEntity() && entity.isAlive() && entity.getAI() != null) {
+				((EntityAI) entity.getAI()).getSays().add(sayData);
+			}
+		}
 		ai.getFight().getState().statistics.say(ai.getEntity(), message);
 		return true;
 	}
@@ -426,36 +432,22 @@ public class EntityClass {
 
 	public static LegacyArrayLeekValue listen_v1_3(EntityAI ai) throws LeekRunException {
 		var values = new LegacyArrayLeekValue(ai);
-		for (var e : ai.getState().getAllEntities(false)) {
-			if (e == null) {
-				continue;
-			}
-			if (e == ai.getEntity() || e.getAI() == null)
-				continue;
-			for (var say : ((EntityAI) e.getAI()).getSays()) {
-				var s = ai.newArray();
-				s.push(ai, (long) e.getFId());
-				s.push(ai, say);
-				values.pushNoClone(ai, s);
-			}
+		for (var say : ai.getSays()) {
+			var s = ai.newArray(2);
+			s.push(ai, say.id);
+			s.push(ai, say.message);
+			values.pushNoClone(ai, s);
 		}
 		return values;
 	}
 
 	public static ArrayLeekValue listen(EntityAI ai) throws LeekRunException {
 		var values = new ArrayLeekValue(ai);
-		for (var e : ai.getState().getAllEntities(false)) {
-			if (e == null) {
-				continue;
-			}
-			if (e == ai.getEntity() || e.getAI() == null)
-				continue;
-			for (var say : ((EntityAI) e.getAI()).getSays()) {
-				var s = ai.newArray();
-				s.push(ai, (long) e.getFId());
-				s.push(ai, say);
-				values.pushNoClone(ai, s);
-			}
+		for (var say : ai.getSays()) {
+			var s = ai.newArray(2);
+			s.push(ai, say.id);
+			s.push(ai, say.message);
+			values.pushNoClone(ai, s);
 		}
 		return values;
 	}
@@ -979,6 +971,21 @@ public class EntityClass {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
 			if (l != null)
 				return (long) l.getId();
+		}
+		return null;
+	}
+
+	public static long getSide(EntityAI ai) throws LeekRunException {
+		return (long) ai.getEntity().getTeam();
+	}
+
+	public static Long getSide(EntityAI ai, Object value) throws LeekRunException {
+		if (value == null)
+			return (long) ai.getEntity().getTeam();
+		if (value instanceof Number) {
+			var l = ai.getFight().getEntity(((Number) value).intValue());
+			if (l != null)
+				return (long) l.getTeam();
 		}
 		return null;
 	}

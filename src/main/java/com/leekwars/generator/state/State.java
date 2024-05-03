@@ -843,6 +843,11 @@ public class State {
 			addCooldown(caster, template);
 		}
 
+		// Hardcode awekening invulnerability
+		if (result > 0 && template.getId() == 415) {
+			Effect.createEffect(this, Effect.TYPE_ADD_STATE, -1, 1.0, 3.0, 3.0, critical, target_entity, caster, template.getAttack(), 1.0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+		}
+
 		caster.useTP(template.getCost());
 
 		return result;
