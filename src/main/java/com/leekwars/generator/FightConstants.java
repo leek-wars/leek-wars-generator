@@ -346,7 +346,8 @@ public enum FightConstants implements ILeekConstant {
 	FIGHT_CONTEXT_BATTLE_ROYALE(Fight.CONTEXT_BATTLE_ROYALE, Type.INT),
 
 	// Boss
-	BOSS_NASU_SAMOURAI(1, Type.INT),
+	BOSS_NASU_SAMOURAI(1, Type.INT), // Typo, to keep
+	BOSS_NASU_SAMURAI(1, Type.INT),
 	BOSS_FENNEL_KING(2, Type.INT),
 	BOSS_EVIL_PUMPKIN(3, Type.INT),
 
