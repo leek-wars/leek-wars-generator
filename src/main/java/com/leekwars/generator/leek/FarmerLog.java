@@ -171,13 +171,22 @@ public class FarmerLog {
 		if (!addSize(20 + message.length())) {
 			return;
 		}
+
+		var ai = (AI) leek.getAI();
+		var position = ai.getCurrentLeekScriptPosition();
+
 		JSONArray obj = new JSONArray();
 		obj.add(leek.getFId());
 		obj.add(type);
 		obj.add(message);
-		if (color != 0) {
+		if (color != 0 || position != null) {
 			obj.add(color);
 		}
+		if (position != null) {
+			obj.add(position.file());
+			obj.add(position.line());
+		}
+		
 		addAction(obj);
 	}
 
