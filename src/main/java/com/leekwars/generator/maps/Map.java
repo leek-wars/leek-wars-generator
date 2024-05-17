@@ -152,7 +152,9 @@ public class Map {
 							}
 						}
 					}
-					map.setEntity(l, c);
+					if (c != null) {
+						map.setEntity(l, c);
+					}
 				}
 			}
 
@@ -160,7 +162,7 @@ public class Map {
 
 		} else {
 
-			while (!valid && nb < 63) {
+			while (!valid && nb++ < 63) {
 
 				map = new Map(width, height);
 				map.state = state;
@@ -206,6 +208,7 @@ public class Map {
 								c = map.getRandomCell(state, t == 0 ? 1 : 4);
 							}
 						}
+						if (c == null) continue;
 
 						map.setEntity(l, c);
 						leeks.add(l);
@@ -230,7 +233,6 @@ public class Map {
 						}
 					}
 				}
-				nb++;
 			}
 		}
 
@@ -404,20 +406,24 @@ public class Map {
 
 	public Cell getRandomCell(State state) {
 		Cell retour = null;
+		int nb = 0;
 		while (retour == null || !retour.available(this)) {
 			retour = getCell(state.getRandom().getInt(0, nb_cells));
+			if (nb++ > 64) break;
 		}
 		return retour;
 	}
 
 	public Cell getRandomCell(State state, int part) {
 		Cell retour = null;
+		int nb = 0;
 		while (retour == null || !retour.available(this)) {
 			int y = state.getRandom().getInt(0, height - 1);
 			int x = state.getRandom().getInt(0, width / 4);
 			int cellid = y * (width * 2 - 1);
 			cellid += (part - 1) * width / 4 + x;
 			retour = getCell(cellid);
+			if (nb++ > 64) break;
 		}
 		return retour;
 	}
