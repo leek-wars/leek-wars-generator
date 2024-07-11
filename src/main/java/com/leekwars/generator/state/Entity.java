@@ -804,7 +804,7 @@ public abstract class Entity {
 			if ((effect.getModifiers() & Effect.MODIFIER_IRREDUCTIBLE) != 0) continue;
 
 			effect.reduce(percent, caster);
-			if (effect.value == 0) {
+			if (effect.value <= 0) {
 				effect.getCaster().removeLaunchedEffect(effect);
 				removeEffect(effects.get(i));
 				i--;
@@ -820,7 +820,7 @@ public abstract class Entity {
 			var effect = effects.get(i);
 
 			effect.reduce(percent, caster);
-			if (effect.value == 0) {
+			if (effect.value <= 0) {
 				effect.getCaster().removeLaunchedEffect(effect);
 				removeEffect(effect);
 				i--;

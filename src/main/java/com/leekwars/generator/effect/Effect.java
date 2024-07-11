@@ -320,7 +320,7 @@ public abstract class Effect implements Cloneable {
 	}
 
 	public void reduce(double percent, Entity caster) {
-		double reduction = 1 - percent;
+		double reduction = Math.max(0.0, 1.0 - percent);
 		value = (int) Math.round((double) value * reduction);
 		for (var stat : stats.stats.entrySet()) {
 			// abs(round(v * r)) * sign(v) pour l'arrondi si r = 0.5
