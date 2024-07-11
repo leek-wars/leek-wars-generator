@@ -5,10 +5,8 @@ import java.util.List;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
-import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.maps.Cell;
-import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
@@ -429,6 +427,16 @@ public class ChipClass {
 			Chip template = Chips.getChip(ai.integer(value));
 			if (template != null) {
 				return (long) template.getAttack().getArea();
+			}
+		}
+		return null;
+	}
+
+	public static Long getChipMaxUses(EntityAI ai, Object value) throws LeekRunException {
+		if (value instanceof Number) {
+			Chip template = Chips.getChip(ai.integer(value));
+			if (template != null) {
+				return (long) template.getAttack().getMaxUses();
 			}
 		}
 		return null;

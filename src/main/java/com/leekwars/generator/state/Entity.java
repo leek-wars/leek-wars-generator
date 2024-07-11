@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -108,6 +109,7 @@ public abstract class Entity {
 
 	private List<Weapon> mWeapons = null;
 	private Weapon weapon = null;
+	private HashMap<Integer, Integer> itemUses = new HashMap<>();
 
 	private int usedTP;
 	private int usedMP;
@@ -680,6 +682,8 @@ public abstract class Entity {
 		saysTurn = 0;
 		showsTurn = 0;
 
+		itemUses.clear();
+
 		// Propagation des effets
 		for (Effect effect : effects) {
 			if (effect.propagate > 0) {
@@ -1177,5 +1181,17 @@ public abstract class Entity {
 
 	public int getOrientation() {
 		return this.orientation;
+	}
+
+	public long getItemUses(int itemID) {
+		return this.itemUses.getOrDefault(itemID, 0);
+	}
+
+	public void addItemUse(int id) {
+		this.itemUses.merge(id, 1, Integer::sum);
+	}
+
+	public void startFight() {
+
 	}
 }

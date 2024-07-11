@@ -127,6 +127,7 @@ public enum FightConstants implements ILeekConstant {
 	USE_TOO_MUCH_SUMMONS(-5, Type.INT),
 	USE_TOO_MANY_SUMMONS(-5, Type.INT),
 	USE_RESURRECT_INVALID_ENTITY(-6, Type.INT),
+	USE_MAX_USES(-7, Type.INT),
 
 	// Armes
 	WEAPON_PISTOL(37, Type.INT),

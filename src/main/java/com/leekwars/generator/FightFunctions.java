@@ -207,6 +207,7 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		});
+		method("getItemUses", "Entity", 15, true, Type.INT, new Type[] { Type.INT });
 
 		/**
 		 * Weapon
@@ -281,6 +282,10 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
 		});
 		method("getAllWeapons", "Weapon", 200, true, Type.ARRAY_INT, new Type[0]);
+		method("getWeaponMaxUses", "Weapon", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.INT),
+		});
 
 		/**
 		 * Chip
@@ -322,6 +327,7 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 		});
 		method("getAllChips", "Chip", 200, true, Type.ARRAY_INT, new Type[0]);
+		method("getChipMaxUses", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
 
 		/**
 		 * Field

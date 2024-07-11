@@ -127,7 +127,7 @@ public class Generator {
 
 				// Create farmer logs
 				int aiOwner = entityInfo.aiOwner;
-				// if (entityInfo.type == Entity.TYPE_MOB) aiOwner = 0;
+				if (entityInfo.type == Entity.TYPE_MOB) aiOwner = 0;
 				if (!outcome.logs.containsKey(aiOwner)) {
 					outcome.logs.put(aiOwner, new FarmerLog(fight, entityInfo.farmer));
 				}
@@ -195,7 +195,7 @@ public class Generator {
 				Weapons.addWeapon(new Weapon(weapon.getInteger("item"), weapon.getInteger("cost"),
 						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
 						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
-						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects")));
+						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects"), weapon.getInteger("max_uses")));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
@@ -215,7 +215,7 @@ public class Generator {
 						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"),
 						chip.getByte("area"), chip.getBoolean("los"), chip.getInteger("cooldown"),
 						chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"),
-						chip.getInteger("template"), chip.getString("name"), ChipType.values()[chip.getInteger("type")]));
+						chip.getInteger("template"), chip.getString("name"), ChipType.values()[chip.getInteger("type")], chip.getInteger("max_uses")));
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {

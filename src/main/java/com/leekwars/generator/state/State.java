@@ -595,10 +595,18 @@ public class State {
 		}
 
 		Weapon weapon = launcher.getWeapon();
+
+		// Coût
 		if (weapon.getCost() > launcher.getTP()) {
 			return Attack.USE_NOT_ENOUGH_TP;
 		}
 
+		// Nombre d'utilisations par tour
+		if (weapon.getAttack().getMaxUses() != -1 && launcher.getItemUses(weapon.getId()) >= weapon.getAttack().getMaxUses()) {
+			return Attack.USE_MAX_USES;
+		}
+
+		// Position
 		if (!map.canUseAttack(launcher.getCell(), target, weapon.getAttack())) {
 			return Attack.USE_INVALID_POSITION;
 		}
@@ -615,6 +623,7 @@ public class State {
 		if (critical) statistics.critical(launcher);
 
 		launcher.useTP(weapon.getCost());
+		launcher.addItemUse(weapon.getId());
 
 		return result;
 	}
@@ -634,6 +643,10 @@ public class State {
 		}
 		if (hasCooldown(caster, template)) {
 			return Attack.USE_INVALID_COOLDOWN;
+		}
+		// Nombre d'utilisations par tour
+		if (template.getAttack().getMaxUses() != -1 && caster.getItemUses(template.getId()) >= template.getAttack().getMaxUses()) {
+			return Attack.USE_MAX_USES;
 		}
 		if (!target.isWalkable() || !map.canUseAttack(caster.getCell(), target, template.getAttack())) {
 			statistics.useInvalidPosition(caster, template.getAttack(), target);
@@ -674,6 +687,7 @@ public class State {
 		}
 
 		caster.useTP(template.getCost());
+		caster.addItemUse(template.getId());
 
 		return result;
 	}

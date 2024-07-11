@@ -11,7 +11,6 @@ import com.leekwars.generator.area.AreaAllies;
 import com.leekwars.generator.area.AreaEnemies;
 import com.leekwars.generator.area.AreaFirstInLine;
 import com.leekwars.generator.area.AreaLaserLine;
-import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.effect.EffectParameters;
 import com.leekwars.generator.items.Item;
@@ -34,6 +33,7 @@ public class Attack {
 	public final static int USE_INVALID_POSITION = -4;
 	public final static int USE_TOO_MANY_SUMMONS = -5;
 	public final static int USE_RESURRECT_INVALID_ENTIITY = -6;
+	public final static int USE_MAX_USES = -7;
 
 	// Launch types
 	public final static int LAUNCH_TYPE_LINE = 1;
@@ -61,8 +61,9 @@ public class Attack {
 	private Item item;
 	private final int areaID;
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
+	private final int maxUses;
 
-	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, JSONArray effects, int attackType, int itemID) {
+	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, JSONArray effects, int attackType, int itemID, int maxUses) {
 
 		this.minRange = minRange;
 		this.maxRange = maxRange;
@@ -70,6 +71,7 @@ public class Attack {
 		this.los = los;
 		this.attackType = attackType;
 		this.itemID = itemID;
+		this.maxUses = maxUses;
 
 		areaID = area;
 		this.area = Area.getArea(this, area);
@@ -354,5 +356,9 @@ public class Attack {
 
 	public Item getItem() {
 		return item;
+	}
+
+	public long getMaxUses() {
+		return maxUses;
 	}
 }

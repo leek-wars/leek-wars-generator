@@ -487,4 +487,18 @@ public class WeaponClass {
 		}
 		return retour;
 	}
+
+	public static long getWeaponMaxUses(EntityAI ai) {
+		Weapon template = ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon();
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMaxUses();
+	}
+
+	public static long getWeaponMaxUses(EntityAI ai, long id) {
+		Weapon template = id == -1 ? (ai.getEntity().getWeapon() == null ? null : ai.getEntity().getWeapon()) : Weapons.getWeapon((int) id);
+		if (template == null)
+			return -1l;
+		return (long) template.getAttack().getMaxUses();
+	}
 }

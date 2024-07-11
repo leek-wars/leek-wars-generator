@@ -1092,4 +1092,12 @@ public class EntityClass {
 		}
 		return retour;
 	}
+
+	public static long getItemUses(EntityAI ai, long item) throws LeekRunException {
+		Entity l = ai.getEntity();
+		if (l == null) {
+			return 0;
+		}
+		return l.getItemUses((int) item);
+	}
 }
