@@ -4,6 +4,7 @@ import com.leekwars.generator.Censorship;
 import com.leekwars.generator.action.ActionLama;
 import com.leekwars.generator.action.ActionSay;
 import com.leekwars.generator.action.ActionSetWeapon;
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.entity.Say;
 import com.leekwars.generator.state.Entity;
@@ -946,16 +947,16 @@ public class EntityClass {
 	}
 
 	public static boolean isStatic(EntityAI ai) throws LeekRunException {
-		return ai.getEntity().isStatic();
+		return ai.getEntity().hasState(EntityState.STATIC);
 	}
 
 	public static boolean isStatic(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
-			return ai.getEntity().isStatic();
+			return ai.getEntity().hasState(EntityState.STATIC);
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
 			if (l != null)
-				return l.isStatic();
+				return l.hasState(EntityState.STATIC);
 		}
 		return false;
 	}

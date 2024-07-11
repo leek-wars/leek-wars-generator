@@ -239,7 +239,7 @@ public abstract class Effect implements Cloneable {
 		}
 
 		// Add effect to the target and the caster
-		if (effect.getTurns() != 0 && (effect.value > 0 || effect.state != null)) {
+		if (effect.getTurns() != 0 && effect.value > 0) {
 			target.addEffect(effect);
 			caster.addLaunchedEffect(effect);
 			effect.addLog(state);

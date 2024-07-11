@@ -9,6 +9,7 @@ public class EffectAddState extends Effect {
 	@Override
 	public void apply(State state) {
 
+		this.value = (int) value1;
 		this.state = EntityState.values()[(int) value1];
 		target.addState(this.state);
 	}

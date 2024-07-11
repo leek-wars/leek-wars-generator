@@ -1031,13 +1031,6 @@ public abstract class Entity {
 	public void setTeamName(String name) {
 		this.mTeamName = name;
 	}
-	public void setStatic(boolean isStatic) {
-		this.mStatic = isStatic;
-	}
-
-	public boolean isStatic() {
-		return mStatic;
-	}
 
 	public void setSkin(int skin) {
 		mSkin = skin;

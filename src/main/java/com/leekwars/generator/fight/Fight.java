@@ -180,6 +180,9 @@ public class Fight {
 			// Check all entities characteristics
 			state.statistics.init(entity);
 			state.statistics.characteristics(entity);
+
+			// Start fight for entity
+			entity.startFight();
 		}
 
 		Log.i(TAG, "Turn 1");

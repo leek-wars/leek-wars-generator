@@ -28,6 +28,7 @@ import com.leekwars.generator.action.ActionUseChip;
 import com.leekwars.generator.action.ActionUseWeapon;
 import com.leekwars.generator.action.Actions;
 import com.leekwars.generator.attack.Attack;
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
@@ -665,10 +666,6 @@ public class State {
 			if (parameters.getId() == Effect.TYPE_TELEPORT && !target.available(map)) {
 				return Attack.USE_INVALID_TARGET;
 			}
-			// Impossible d'inverser une entité statique
-			if (parameters.getId() == Effect.TYPE_PERMUTATION && target.getPlayer(map) != null && target.getPlayer(map).isStatic()) {
-				return Attack.USE_INVALID_TARGET;
-			}
 		}
 
 		boolean critical = generateCritical(caster);
@@ -694,7 +691,7 @@ public class State {
 
 	public int moveEntity(Entity entity, List<Cell> path) {
 
-		if (entity.isStatic()) return 0; // Static entity cannot move.
+		if (entity.hasState(EntityState.STATIC)) return 0; // Static entity cannot move.
 
 		int size = path.size();
 		if (size == 0) {
@@ -715,7 +712,7 @@ public class State {
 
 	public void moveEntity(Entity entity, Cell cell) {
 
-		if (entity.isStatic()) return; // Static entity cannot move.
+		if (entity.hasState(EntityState.STATIC)) return; // Static entity cannot move.
 
 		this.map.moveEntity(entity, cell);
 	}
@@ -736,7 +733,7 @@ public class State {
 
 	public void slideEntity(Entity entity, Cell cell, Entity caster) {
 
-		if (entity.isStatic()) return;
+		if (entity.hasState(EntityState.STATIC)) return;
 
 		Cell start = entity.getCell();
 
@@ -751,7 +748,7 @@ public class State {
 
 	public void invertEntities(Entity caster, Entity target) {
 
-		if (target.isStatic()) return;
+		if (target.hasState(EntityState.STATIC)) return;
 
 		Cell start = caster.getCell();
 		Cell end = target.getCell();

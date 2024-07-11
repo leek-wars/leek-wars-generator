@@ -12,5 +12,5 @@ public enum EntityState {
 	CHAINED, // 8
 	ROOTED, // 9
 	PETRIFIED, // 10
-	STATUE, // 11
+	STATIC, // 11
 }
