@@ -734,14 +734,15 @@ public class Map {
 		return null;
 	}
 
-	public boolean verifyLoS(Cell start, Cell end, Attack attack, Cell leek_cell) {
+	public boolean verifyLoS(Cell start, Cell end, Attack attack) {
 
 		List<Cell> ignoredCells = new ArrayList<Cell>();
-		ignoredCells.add(leek_cell);
+		ignoredCells.add(start);
 
 		// Ignore first entity in area for Area first in line
 		if (attack.getArea() == Area.TYPE_FIRST_IN_LINE) {
 			Cell cell = getFirstEntity(start, end, attack.getMinRange(), attack.getMaxRange());
+			if (cell == end) return false;
 			if (cell != null) {
 				ignoredCells.add(cell);
 			}
@@ -1182,11 +1183,7 @@ public class Map {
 		if (!verifyRange(caster, target, attack)) {
 			return false;
 		}
-		// Ligne de vue
-		if (attack.getItemId() == 415) {
-			return true;
-		}
-		return verifyLoS(caster, target, attack, caster);
+		return verifyLoS(caster, target, attack);
 	}
 
 	public boolean verifyRange(Cell caster, Cell target, Attack attack) {
