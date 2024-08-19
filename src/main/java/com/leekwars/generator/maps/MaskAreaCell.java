@@ -31,33 +31,33 @@ public class MaskAreaCell {
 
 		if (min > max)
 			return null;
-		int cellsMin = 0;
-		if (min > 0) {
-			if (min > 1)
-				cellsMin = 1 + (min - 1) * (4 + 4 * (min - 1)) / 2;
-			else
-				cellsMin = 1;
-		}
-		int cellsMax = 1;
-		if (max > 0)
-			cellsMax = max * (4 + 4 * max) / 2 + 1;
 
-		int nbCells = cellsMax - cellsMin;
+		int nbCells = 2 * (min + max) * (max - min + 1);
+		if (min == 0) {
+			nbCells += 1;
+		}
 		int[][] retour = new int[nbCells][2];
 
 		int index = 0;
 		if (min == 0) {
-			retour[0] = new int[] { 0, 0 };
-			index++;
+			// Center first
+			retour[index++] = new int[] { 0, 0 };
 		}
 
+		// Go from cells closer to the center to the farther ones
 		for (int size = (min < 1 ? 1 : min); size <= max; size++) {
+			// Add cells counter-clockwise
 			for (int i = 0; i < size; i++) {
-				retour[index] = new int[] { i, size - i };
-				retour[index + 1] = new int[] { -i, -(size - i) };
-				retour[index + 2] = new int[] { size - i, -i };
-				retour[index + 3] = new int[] { -(size - i), i };
-				index += 4;
+				retour[index++] = new int[] { size - i, -i };
+			}
+			for (int i = 0; i < size; i++) {
+				retour[index++] = new int[] { -i, -(size - i) };
+			}
+			for (int i = 0; i < size; i++) {
+				retour[index++] = new int[] { -(size - i), i };
+			}
+			for (int i = 0; i < size; i++) {
+				retour[index++] = new int[] { i, size - i };
 			}
 		}
 		return retour;
@@ -68,15 +68,17 @@ public class MaskAreaCell {
 		int nbCells = 1 + radius * 4;
 		int[][] retour = new int[nbCells][2];
 
+		// Center first
 		retour[0] = new int[] { 0, 0 };
 
 		int index = 1;
+		// Go from cells closer to the center to the farther ones
 		for (int size = 1; size <= radius; size++) {
-			retour[index] = new int[] { size, 0 };
-			retour[index + 1] = new int[] { 0, -size };
-			retour[index + 2] = new int[] { -size, 0 };
-			retour[index + 3] = new int[] { 0, size };
-			index += 4;
+			// Add cells counter-clockwise
+			retour[index++] = new int[] { size, 0 };
+			retour[index++] = new int[] { 0, -size };
+			retour[index++] = new int[] { -size, 0 };
+			retour[index++] = new int[] { 0, size };
 		}
 		return retour;
 	}
@@ -86,15 +88,17 @@ public class MaskAreaCell {
 		int nbCells = 1 + radius * 4;
 		int[][] retour = new int[nbCells][2];
 
+		// Center first
 		retour[0] = new int[] { 0, 0 };
 
 		int index = 1;
+		// Go from cells closer to the center to the farther ones
 		for (int size = 1; size <= radius; size++) {
-			retour[index] = new int[] { size, size };
-			retour[index + 1] = new int[] { size, -size };
-			retour[index + 2] = new int[] { -size, size };
-			retour[index + 3] = new int[] { -size, -size };
-			index += 4;
+			// Add cells counter-clockwise
+			retour[index++] = new int[] { size, -size };
+			retour[index++] = new int[] { -size, -size };
+			retour[index++] = new int[] { -size, size };
+			retour[index++] = new int[] { size, size };
 		}
 		return retour;
 	}
@@ -104,10 +108,26 @@ public class MaskAreaCell {
 		int nbCells = (1 + 2 * radius) * (1 + 2 * radius);
 		int[][] retour = new int[nbCells][2];
 
+		// Go from cells closer to the center to the farther ones
+		// First, add cells in the inscribed circle
 		int index = 0;
-		for (int x = -radius; x <= radius; x++) {
-			for (int y = -radius; y <= radius; y++) {
-				retour[index++] = new int[] { x, y };
+		for (int[] cell : generateCircleMask(0, radius)) {
+			retour[index++] = cell;
+		}
+		// Then, the corners
+		for (int d = 0; d < radius; d++) {
+			// Add cells counter-clockwise
+			for (int i = 1; i <= radius - d; i++) {
+				retour[index++] = new int[] { radius + 1 - i, -(d + i) };
+			}
+			for (int i = 1; i <= radius - d; i++) {
+				retour[index++] = new int[] { -(d + i), -(radius + 1 - i) };
+			}
+			for (int i = 1; i <= radius - d; i++) {
+				retour[index++] = new int[] { -(radius + 1 - i), d + i };
+			}
+			for (int i = 1; i <= radius - d; i++) {
+				retour[index++] = new int[] { d + i, radius + 1 - i };
 			}
 		}
 		return retour;
