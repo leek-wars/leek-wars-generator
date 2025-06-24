@@ -32,12 +32,6 @@ public class Bulb extends Entity {
 		return Entity.TYPE_BULB;
 	}
 
-	@Override
-	public void resurrect(Entity entity, double factor, boolean fullLife) {
-		super.resurrect(entity, factor, fullLife);
-		mOwner = entity;
-	}
-
 	public static int base(int base, int bonus, double coeff) {
 		return (int) (base + Math.floor(bonus * coeff));
 	}
