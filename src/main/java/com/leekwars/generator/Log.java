@@ -28,6 +28,10 @@ public class Log {
 		if (enabled)
 			System.out.print("[" + Util.BLUE + tag + Util.END_COLOR + "] " + s);
 	}
+	public static void end() {
+		if (enabled)
+			System.out.println();
+	}
 	public static void end(String s) {
 		if (enabled)
 			System.out.println(s);

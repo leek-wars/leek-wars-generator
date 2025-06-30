@@ -1,6 +1,7 @@
 package com.leekwars.generator.test;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -17,6 +18,8 @@ import com.leekwars.generator.fight.StatisticsManager;
 import com.leekwars.generator.items.Item;
 
 public class LocalTrophyManager implements StatisticsManager {
+
+	private Map<Integer, Long> operationsByEntity = new HashMap<>();
 
 	@Override
 	public void say(Entity entity, String message) {}
@@ -92,9 +95,11 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void addTimes(Entity current, long l, long operations) {
-		// TODO Auto-generated method stub
+	public void addTimes(Entity entity, long time, long operations) {
 
+		int owner = entity.isSummon() ? entity.getSummoner().getFId() : entity.getFId();
+
+		this.operationsByEntity.merge(owner, operations, Long::sum);
 	}
 
 	@Override
@@ -111,7 +116,7 @@ public class LocalTrophyManager implements StatisticsManager {
 
 	@Override
 	public Map<Integer, Long> getOperationsByEntity() {
-		return new TreeMap<Integer, Long>();
+		return operationsByEntity;
 	}
 
 	@Override

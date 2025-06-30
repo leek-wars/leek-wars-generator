@@ -281,7 +281,7 @@ public class Fight {
 		if (listener != null) {
 			listener.newTurn(this);
 		}
-		Log.i(TAG, "Start turn of " + current.getName());
+		// Log.i(TAG, "Start turn of " + current.getName());
 
 		current.startTurn();
 

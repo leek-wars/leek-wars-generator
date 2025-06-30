@@ -199,7 +199,8 @@ public class Generator {
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
-			Log.e(TAG, "Error loading weapons!");
+			Log.end();
+			Log.e(TAG, "Error loading weapons! cwd: " + System.getProperty("user.dir") + ", e: " + e);
 			exception(e);
 		}
 	}
@@ -219,6 +220,8 @@ public class Generator {
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
+			Log.end();
+			Log.e(TAG, "Error loading chips! cwd: " + System.getProperty("user.dir") + ", e: " + e);
 			exception(e);
 		}
 	}
@@ -234,6 +237,8 @@ public class Generator {
 			}
 			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
+			Log.end();
+			Log.e(TAG, "Error loading summons! cwd: " + System.getProperty("user.dir") + ", e: " + e);
 			exception(e);
 		}
 	}
@@ -248,6 +253,8 @@ public class Generator {
 			}
 			Log.end(components.size() + " components loaded.");
 		} catch (Exception e) {
+			Log.end();
+			Log.e(TAG, "Error loading components! cwd: " + System.getProperty("user.dir") + ", e: " + e);
 			exception(e);
 		}
 	}
