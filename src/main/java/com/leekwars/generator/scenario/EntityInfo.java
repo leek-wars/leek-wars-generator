@@ -32,6 +32,7 @@ public class EntityInfo {
 	public int ai_folder;
 	public String ai_path;
 	public int ai_version;
+	public boolean ai_strict;
 	public int aiOwner;
 	public int type;
 	public int farmer;
@@ -70,6 +71,7 @@ public class EntityInfo {
 		ai_folder = e.getIntValue("ai_folder");
 		ai_path = e.getString("ai_path");
 		ai_version = e.getIntValue("ai_version");
+		ai_strict = e.getBooleanValue("ai_strict");
 		farmer = e.getIntValue("farmer");
 		team = e.getIntValue("team");
 		level = e.getIntValue("level");
