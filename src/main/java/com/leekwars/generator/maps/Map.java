@@ -262,7 +262,7 @@ public class Map {
 
 		nb_cells = (width * 2 - 1) * height - (width - 1);
 
-		cells = new ArrayList<Cell>();
+		cells = new ArrayList<Cell>(nb_cells);
 		for (int i = 0; i < nb_cells; i++) {
 			Cell c = new Cell(this, i);
 			cells.add(c);

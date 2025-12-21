@@ -382,7 +382,7 @@ public class EntityClass {
 		}
 
 		Weapon w = null;
-		for (Weapon w1 : ai.getEntity().getWeapons()) {
+		for (var w1 : ai.getEntity().getWeapons()) {
 			if (w1.getId() == weapon_id) {
 				w = w1;
 				break;

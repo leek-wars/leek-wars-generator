@@ -42,4 +42,9 @@ public class Chip extends Item {
 	public ChipType getChipType() {
 		return chipType;
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }

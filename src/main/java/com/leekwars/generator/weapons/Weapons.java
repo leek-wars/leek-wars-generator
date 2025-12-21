@@ -18,6 +18,10 @@ public class Weapons {
 		return weapons.get(id);
 	}
 
+	public static Weapon getWeapon(String name) {
+		return weapons.values().stream().filter(w -> w.getName().equals(name)).findFirst().get();
+	}
+
 	public static Map<Integer, Weapon> getTemplates() {
 		return weapons;
 	}

@@ -18,6 +18,10 @@ public class Chips {
 		return chips.get(id);
 	}
 
+	public static Chip getChip(String name) {
+		return chips.values().stream().filter(c -> c.getName().equals(name)).findFirst().get();
+	}
+
 	public static Map<Integer, Chip> getTemplates() {
 		return chips;
 	}
