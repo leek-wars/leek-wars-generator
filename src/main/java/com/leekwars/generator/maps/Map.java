@@ -1272,4 +1272,8 @@ public class Map {
 	public State getState() {
 		return state;
 	}
+
+	public HashMap<Entity, Cell> getEntities() {
+		return cellByEntity;
+	}
 }
