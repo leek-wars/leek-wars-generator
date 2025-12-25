@@ -1,7 +1,5 @@
 package com.leekwars.generator.effect;
 
-import java.util.List;
-
 import com.leekwars.generator.action.ActionAddEffect;
 import com.leekwars.generator.action.ActionStackEffect;
 import com.leekwars.generator.attack.Attack;

@@ -5,7 +5,6 @@ import java.util.List;
 
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
-import com.leekwars.generator.util.Json;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.effect.EffectParameters;
 import com.leekwars.generator.items.Item;
