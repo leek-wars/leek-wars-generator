@@ -2,8 +2,9 @@ package com.leekwars.generator.bulbs;
 
 import java.util.ArrayList;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.entity.Bulb;
@@ -46,43 +47,43 @@ public class BulbTemplate {
 	private final int mMinMp;
 	private final int mMaxMp;
 
-	public BulbTemplate(int id, String name, JSONArray chips, JSONObject characteristics) {
+	public BulbTemplate(int id, String name, ArrayNode chips, ObjectNode characteristics) {
 
 		mId = id;
 		mName = name;
 
-		mMinLife = characteristics.getJSONArray("life").getIntValue(0);
-		mMaxLife = characteristics.getJSONArray("life").getIntValue(1);
+		mMinLife = ((ArrayNode) characteristics.get("life")).get(0).intValue();
+		mMaxLife = ((ArrayNode) characteristics.get("life")).get(1).intValue();
 
-		mMinStrength = characteristics.getJSONArray("strength").getIntValue(0);
-		mMaxStrength = characteristics.getJSONArray("strength").getIntValue(1);
+		mMinStrength = ((ArrayNode) characteristics.get("strength")).get(0).intValue();
+		mMaxStrength = ((ArrayNode) characteristics.get("strength")).get(1).intValue();
 
-		mMinWisdom = characteristics.getJSONArray("wisdom").getIntValue(0);
-		mMaxWisdom = characteristics.getJSONArray("wisdom").getIntValue(1);
+		mMinWisdom = ((ArrayNode) characteristics.get("wisdom")).get(0).intValue();
+		mMaxWisdom = ((ArrayNode) characteristics.get("wisdom")).get(1).intValue();
 
-		mMinAgility = characteristics.getJSONArray("agility").getIntValue(0);
-		mMaxAgility = characteristics.getJSONArray("agility").getIntValue(1);
+		mMinAgility = ((ArrayNode) characteristics.get("agility")).get(0).intValue();
+		mMaxAgility = ((ArrayNode) characteristics.get("agility")).get(1).intValue();
 
-		mMinResistance = characteristics.getJSONArray("resistance").getIntValue(0);
-		mMaxResistance = characteristics.getJSONArray("resistance").getIntValue(1);
+		mMinResistance = ((ArrayNode) characteristics.get("resistance")).get(0).intValue();
+		mMaxResistance = ((ArrayNode) characteristics.get("resistance")).get(1).intValue();
 
-		mMinScience = characteristics.getJSONArray("science").getIntValue(0);
-		mMaxScience = characteristics.getJSONArray("science").getIntValue(1);
+		mMinScience = ((ArrayNode) characteristics.get("science")).get(0).intValue();
+		mMaxScience = ((ArrayNode) characteristics.get("science")).get(1).intValue();
 
-		mMinMagic = characteristics.getJSONArray("magic").getIntValue(0);
-		mMaxMagic = characteristics.getJSONArray("magic").getIntValue(1);
+		mMinMagic = ((ArrayNode) characteristics.get("magic")).get(0).intValue();
+		mMaxMagic = ((ArrayNode) characteristics.get("magic")).get(1).intValue();
 
-		mMinTp = characteristics.getJSONArray("tp").getIntValue(0);
-		mMaxTp = characteristics.getJSONArray("tp").getIntValue(1);
+		mMinTp = ((ArrayNode) characteristics.get("tp")).get(0).intValue();
+		mMaxTp = ((ArrayNode) characteristics.get("tp")).get(1).intValue();
 
-		mMinMp = characteristics.getJSONArray("mp").getIntValue(0);
-		mMaxMp = characteristics.getJSONArray("mp").getIntValue(1);
+		mMinMp = ((ArrayNode) characteristics.get("mp")).get(0).intValue();
+		mMaxMp = ((ArrayNode) characteristics.get("mp")).get(1).intValue();
 
 		mChips = new ArrayList<Chip>();
 		if (chips != null) {
-			for (Object i : chips) {
+			for (var i : chips) {
 				if (i != null) {
-					Chip template = Chips.getChip((Integer) i);
+					Chip template = Chips.getChip(i.intValue());
 					mChips.add(template);
 				}
 			}

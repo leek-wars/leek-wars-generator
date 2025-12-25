@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.area.Area;
 import com.leekwars.generator.area.AreaAllies;
 import com.leekwars.generator.area.AreaEnemies;
@@ -63,7 +63,7 @@ public class Attack {
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 	private final int maxUses;
 
-	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, JSONArray effects, int attackType, int itemID, int maxUses) {
+	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, ArrayNode effects, int attackType, int itemID, int maxUses) {
 
 		this.minRange = minRange;
 		this.maxRange = maxRange;
@@ -77,14 +77,14 @@ public class Attack {
 		this.area = Area.getArea(this, area);
 
 		// On charge ensuite la liste des effets
-		for (Object e : effects) {
-			JSONObject effect = (JSONObject) e;
-			int type = effect.getIntValue("id");
-			double value1 = effect.getDoubleValue("value1");
-			double value2 = effect.getDoubleValue("value2");
-			int turns = effect.getIntValue("turns");
-			int targets = effect.getIntValue("targets");
-			int modifiers = effect.getIntValue("modifiers");
+		for (var e : effects) {
+			ObjectNode effect = (ObjectNode) e;
+			int type = effect.get("id").intValue();
+			double value1 = effect.get("value1").doubleValue();
+			double value2 = effect.get("value2").doubleValue();
+			int turns = effect.get("turns").intValue();
+			int targets = effect.get("targets").intValue();
+			int modifiers = effect.get("modifiers").intValue();
 			if (type == Effect.TYPE_HEAL) {
 				healAttack |= targets;
 			}

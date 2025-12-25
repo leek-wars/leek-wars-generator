@@ -3,7 +3,6 @@ package com.leekwars;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import com.alibaba.fastjson.JSON;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
@@ -77,7 +76,7 @@ public class Main {
 				return;
 			}
 			Outcome outcome = generator.runScenario(scenario, null, new LocalDbRegisterManager(), new LocalTrophyManager());
-			System.out.println(JSON.toJSONString(outcome.toJson(), false));
+			System.out.println(outcome.toJson().toString());
 		}
 	}
 }

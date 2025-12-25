@@ -1,6 +1,6 @@
 package com.leekwars.generator.chips;
 
-import com.alibaba.fastjson.JSONArray;
+import tools.jackson.databind.node.ArrayNode;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.items.Item;
 
@@ -12,7 +12,7 @@ public class Chip extends Item {
 	private final int level;
 	private final ChipType chipType; // Type in market
 
-	public Chip(int id, int cost, int minRange, int maxRange, JSONArray effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name, ChipType chipType, int maxUses) {
+	public Chip(int id, int cost, int minRange, int maxRange, ArrayNode effects, byte launchType, byte area, boolean los, int cooldown, boolean teamCooldown, int initialCooldown, int level, int template, String name, ChipType chipType, int maxUses) {
 		super(id, cost, name, template, new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_CHIP, id, maxUses));
 		this.attack.setItem(this);
 

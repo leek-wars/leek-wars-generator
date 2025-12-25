@@ -11,8 +11,9 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.TreeMap;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.action.Action;
 import com.leekwars.generator.action.ActionChestOpened;
 import com.leekwars.generator.action.ActionEndTurn;
@@ -134,7 +135,7 @@ public class State {
 	private String mLeekDatas = "";
 	private int context;
 	private int type;
-	public JSONObject custom_map = null;
+	public ObjectNode custom_map = null;
 	public StatisticsManager statistics;
 	private RegisterManager registerManager;
 	public long executionTime = 0;
@@ -262,7 +263,7 @@ public class State {
 		return map;
 	}
 
-	public void setCustomMap(JSONObject map) {
+	public void setCustomMap(ObjectNode map) {
 		custom_map = map;
 	}
 
@@ -383,22 +384,22 @@ public class State {
 	public void init() {
 
 		// Create level/skin list
-		JSONObject list = new JSONObject();
+		ObjectNode list = Json.createObject();
 
 		for (Entity l : mEntities.values()) {
 
-			JSONArray data = new JSONArray();
+			ArrayNode data = Json.createArray();
 			data.add(l.getLevel());
 			data.add(l.getSkin());
 
 			if (l.getHat() > 0) {
 				data.add(l.getHat());
 			} else {
-				data.add(null);
+				data.addNull();
 			}
-			list.put(String.valueOf(l.getId()), data);
+			list.set(String.valueOf(l.getId()), data);
 		}
-		mLeekDatas = list.toJSONString();
+		mLeekDatas = list.toString();
 
 		int obstacle_count = getRandom().getInt(30, 80);
 
@@ -1060,8 +1061,8 @@ public class State {
 		return teams;
 	}
 
-	public JSONObject getDeadReport() {
-		JSONObject dead = new JSONObject();
+	public ObjectNode getDeadReport() {
+		ObjectNode dead = Json.createObject();
 		for (Team team : teams) {
 			for (Entity entity : team.getEntities()) {
 				dead.put(String.valueOf(entity.getId()), entity.isDead());

@@ -13,8 +13,9 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.HashSet;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
+import com.leekwars.generator.util.Json;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.JsonNode;
 
 public class Util {
 
@@ -42,26 +43,26 @@ public class Util {
 		return retour;
 	}
 
-	public static String[] jsonArrayToStringArray(JSONArray array) {
+	public static String[] jsonArrayToStringArray(ArrayNode array) {
 		String[] res = new String[array.size()];
 		for (int i = 0; i < array.size(); ++i) {
-			res[i] = array.getString(i);
+			res[i] = array.get(i).asText();
 		}
 		return res;
 	}
 
-	public static void save(JSON data, String file) {
+	public static void save(JsonNode data, String file) {
 		File f = new File(file);
 		try {
 			PrintWriter out = new PrintWriter(f);
-			out.append(data.toJSONString());
+			out.append(data.toString());
 			out.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static JSONArray readJSONArray(String file) {
+	public static ArrayNode readJSONArray(String file) {
 		File f = new File(file);
 		if (!f.exists())
 			return null;
@@ -74,7 +75,7 @@ public class Util {
 				datas.write(b, 0, len);
 			}
 			reader.close();
-			return JSON.parseArray(new String(datas.toByteArray()));
+			return Json.parseArray(new String(datas.toByteArray()));
 
 		} catch (Exception e) {
 			e.printStackTrace();

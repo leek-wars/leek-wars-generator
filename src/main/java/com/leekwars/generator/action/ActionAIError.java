@@ -1,6 +1,7 @@
 package com.leekwars.generator.action;
 
-import com.alibaba.fastjson.JSONArray;
+import tools.jackson.databind.node.ArrayNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.state.Entity;
 
 public class ActionAIError implements Action {
@@ -15,9 +16,9 @@ public class ActionAIError implements Action {
 	}
 
 	@Override
-	public JSONArray getJSON() {
+	public ArrayNode getJSON() {
 
-		JSONArray retour = new JSONArray();
+		ArrayNode retour = Json.createArray();
 		retour.add(Action.AI_ERROR);
 		retour.add(id);
 		return retour;

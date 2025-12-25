@@ -3,9 +3,9 @@ package com.leekwars.generator;
 import java.io.File;
 import java.util.List;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.leekwars.generator.util.Json;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.bulbs.BulbTemplate;
 import com.leekwars.generator.bulbs.Bulbs;
 import com.leekwars.generator.chips.Chip;
@@ -85,8 +85,8 @@ public class Generator {
 			// Create a result with internal error
 			AnalyzeResult result = new AnalyzeResult();
 			result.success = false;
-			result.informations = new JSONArray();
-			JSONArray error = new JSONArray();
+			result.informations = Json.createArray();
+			ArrayNode error = Json.createArray();
 			error.add(0);
 			error.add(ai != null ? ai.getId() : 0);
 			error.add(1);
@@ -165,7 +165,7 @@ public class Generator {
 			// Save registers
 			for (var entity : fight.getState().getEntities().values()) {
 				if (!entity.isSummon() && entity.getRegisters() != null	&& (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
-					registerManager.saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
+					registerManager.saveRegisters(entity.getId(), entity.getRegisters().toString(), entity.getRegisters().isNew());
 				}
 			}
 			Log.i(TAG, "SHA-1: " + Util.sha1(outcome.toString()));
@@ -189,13 +189,14 @@ public class Generator {
 	private void loadWeapons() {
 		try {
 			Log.start(TAG, "- Loading weapons... ");
-			JSONObject weapons = JSON.parseObject(Util.readFile("data/weapons.json"));
-			for (String id : weapons.keySet()) {
-				JSONObject weapon = weapons.getJSONObject(id);
-				Weapons.addWeapon(new Weapon(weapon.getInteger("item"), weapon.getInteger("cost"),
-						weapon.getInteger("min_range"), weapon.getInteger("max_range"), weapon.getJSONArray("effects"),
-						weapon.getByte("launch_type"), weapon.getByte("area"), weapon.getBoolean("los"),
-						weapon.getInteger("template"), weapon.getString("name"), weapon.getJSONArray("passive_effects"), weapon.getInteger("max_uses")));
+			ObjectNode weapons = Json.parseObject(Util.readFile("data/weapons.json"));
+			for (var entry : weapons.properties()) {
+				String id = entry.getKey();
+				ObjectNode weapon = (ObjectNode) entry.getValue();
+				Weapons.addWeapon(new Weapon(weapon.get("item").intValue(), weapon.get("cost").intValue(),
+						weapon.get("min_range").intValue(), weapon.get("max_range").intValue(), (ArrayNode) weapon.get("effects"),
+						(byte) weapon.get("launch_type").intValue(), (byte) weapon.get("area").intValue(), weapon.get("los").booleanValue(),
+						weapon.get("template").intValue(), weapon.get("name").asText(), (ArrayNode) weapon.get("passive_effects"), weapon.get("max_uses").intValue()));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
@@ -208,15 +209,16 @@ public class Generator {
 	private void loadChips() {
 		try {
 			Log.start(TAG, "- Loading chips... ");
-			JSONObject chips = JSON.parseObject(Util.readFile("data/chips.json"));
-			for (String id : chips.keySet()) {
-				JSONObject chip = chips.getJSONObject(id);
-				// System.out.println("New chip " + chip.getString("name") + " " + id + " " + chip.getInteger("template"));
-				Chips.addChip(new Chip(Integer.parseInt(id), chip.getInteger("cost"), chip.getInteger("min_range"),
-						chip.getInteger("max_range"), chip.getJSONArray("effects"), chip.getByte("launch_type"),
-						chip.getByte("area"), chip.getBoolean("los"), chip.getInteger("cooldown"),
-						chip.getBoolean("team_cooldown"), chip.getInteger("initial_cooldown"), chip.getInteger("level"),
-						chip.getInteger("template"), chip.getString("name"), ChipType.values()[chip.getInteger("type")], chip.getInteger("max_uses")));
+			ObjectNode chips = Json.parseObject(Util.readFile("data/chips.json"));
+			for (var entry : chips.properties()) {
+				String id = entry.getKey();
+				ObjectNode chip = (ObjectNode) entry.getValue();
+				// System.out.println("New chip " + chip.get("name").asText() + " " + id + " " + chip.get("template").intValue());
+				Chips.addChip(new Chip(Integer.parseInt(id), chip.get("cost").intValue(), chip.get("min_range").intValue(),
+						chip.get("max_range").intValue(), (ArrayNode) chip.get("effects"), (byte) chip.get("launch_type").intValue(),
+						(byte) chip.get("area").intValue(), chip.get("los").booleanValue(), chip.get("cooldown").intValue(),
+						chip.get("team_cooldown").booleanValue(), chip.get("initial_cooldown").intValue(), chip.get("level").intValue(),
+						chip.get("template").intValue(), chip.get("name").asText(), ChipType.values()[chip.get("type").intValue()], chip.get("max_uses").intValue()));
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
@@ -229,11 +231,12 @@ public class Generator {
 	private void loadSummons() {
 		try {
 			Log.start(TAG, "- Loading bulbs... ");
-			JSONObject summons = JSON.parseObject(Util.readFile("data/summons.json"));
-			for (String id : summons.keySet()) {
-				JSONObject summon = summons.getJSONObject(id);
-				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.getString("name"),
-						summon.getJSONArray("chips"), summon.getJSONObject("characteristics")));
+			ObjectNode summons = Json.parseObject(Util.readFile("data/summons.json"));
+			for (var entry : summons.properties()) {
+				String id = entry.getKey();
+				ObjectNode summon = (ObjectNode) entry.getValue();
+				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.get("name").asText(),
+						(ArrayNode) summon.get("chips"), (ObjectNode) summon.get("characteristics")));
 			}
 			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
@@ -246,10 +249,11 @@ public class Generator {
 	private void loadComponents() {
 		try {
 			Log.start(TAG, "- Loading components... ");
-			JSONObject components = JSON.parseObject(Util.readFile("data/components.json"));
-			for (String id : components.keySet()) {
-				JSONObject component = components.getJSONObject(id);
-				Components.addComponent(new Component(Integer.parseInt(id), component.getString("name"), component.getString("stats"), component.getInteger("template")));
+			ObjectNode components = Json.parseObject(Util.readFile("data/components.json"));
+			for (var entry : components.properties()) {
+				String id = entry.getKey();
+				ObjectNode component = (ObjectNode) entry.getValue();
+				Components.addComponent(new Component(Integer.parseInt(id), component.get("name").asText(), component.get("stats").asText(), component.get("template").intValue()));
 			}
 			Log.end(components.size() + " components loaded.");
 		} catch (Exception e) {

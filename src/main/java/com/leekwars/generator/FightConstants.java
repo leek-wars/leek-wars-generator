@@ -111,6 +111,8 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_RAW_HEAL(Effect.TYPE_RAW_HEAL, Type.INT),
 	EFFECT_CRITICAL_TO_HEAL(Effect.TYPE_CRITICAL_TO_HEAL, Type.INT),
 	EFFECT_ADD_STATE(Effect.TYPE_ADD_STATE, Type.INT),
+	EFFECT_TOTAL_DEBUFF(Effect.TYPE_TOTAL_DEBUFF, Type.INT),
+	EFFECT_STEAL_LIFE(Effect.TYPE_STEAL_LIFE, Type.INT),
 
 	// États
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
@@ -167,6 +169,7 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_ODACHI(408, Type.INT),
 	WEAPON_EXCALIBUR(409, Type.INT),
 	WEAPON_SCYTHE(410, Type.INT),
+	WEAPON_QUANTUM_RIFLE(428, Type.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, Type.INT),

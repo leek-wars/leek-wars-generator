@@ -3,7 +3,8 @@ package com.leekwars.generator.outcome;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.action.Actions;
 import com.leekwars.generator.statistics.StatisticsManager;
 import com.leekwars.generator.leek.FarmerLog;
@@ -40,14 +41,14 @@ public class Outcome {
 
 	public long executionTime = 0;
 
-	public JSONObject toJson() {
-		JSONObject json = new JSONObject();
-		JSONObject logsJSON = new JSONObject();
-		for (Integer farmer : logs.keySet()) {
-			logsJSON.put(String.valueOf(farmer), logs.get(farmer).toJSON());
+	public ObjectNode toJson() {
+		ObjectNode json = Json.createObject();
+		ObjectNode logsJSON = Json.createObject();
+		for (var entry : logs.entrySet()) {
+			logsJSON.set(String.valueOf(entry.getKey()), entry.getValue().toJSON());
 		}
-		json.put("fight", fight.toJSON());
-		json.put("logs", logsJSON);
+		json.set("fight", fight.toJSON());
+		json.set("logs", logsJSON);
 		json.put("winner", winner);
 		json.put("duration", duration);
 		json.put("analyze_time", analyzeTime);
@@ -57,6 +58,6 @@ public class Outcome {
 	}
 
 	public String toString() {
-		return toJson().toJSONString();
+		return toJson().toString();
 	}
 }

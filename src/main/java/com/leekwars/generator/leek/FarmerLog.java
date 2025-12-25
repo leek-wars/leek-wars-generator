@@ -1,7 +1,8 @@
 package com.leekwars.generator.leek;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.action.Actions;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.Util;
@@ -14,11 +15,11 @@ public class FarmerLog {
 
 	private final static int MAX_LENGTH = 500000;
 
-	private final JSONObject mObject;
+	private final ObjectNode mObject;
 	private Actions mLogs;
 	private int mAction = -1;
 	private int mNb = 0;
-	private JSONArray mCurArray;
+	private ArrayNode mCurArray;
 	private int mSize = 0;
 	private Fight fight;
 	private int farmer;
@@ -40,7 +41,7 @@ public class FarmerLog {
 
 	public FarmerLog(Fight fight, int farmer) {
 		super();
-		mObject = new JSONObject();
+		mObject = Json.createObject();
 		this.fight = fight;
 		this.farmer = farmer;
 	}
@@ -49,11 +50,11 @@ public class FarmerLog {
 		mLogs = logs;
 	}
 
-	public void addAction(JSONArray action) {
+	public void addAction(ArrayNode action) {
 		int id = mLogs == null ? 0 : Math.max(0, mLogs.getNextId() - 1);
 		if (mAction < id) {
-			mCurArray = new JSONArray();
-			mObject.put(String.valueOf(id), mCurArray);
+			mCurArray = Json.createArray();
+			mObject.set(String.valueOf(id), mCurArray);
 			mAction = id;
 		}
 		mNb++;
@@ -82,13 +83,17 @@ public class FarmerLog {
 				}
 			}
 		}
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(type);
 		obj.add(error);
 		obj.add(key);
 		if (parameters != null) {
-			obj.add(parametersString);
+			ArrayNode paramsArray = Json.createArray();
+			for (String param : parametersString) {
+				paramsArray.add(param);
+			}
+			obj.add(paramsArray);
 		}
 		addAction(obj);
 	}
@@ -105,13 +110,18 @@ public class FarmerLog {
 		if (!addSize(20 + paramSize)) {
 			return;
 		}
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(type);
 		obj.add(error);
 		obj.add(key);
-		if (parameters != null)
-			obj.add(parameters);
+		if (parameters != null) {
+			ArrayNode paramsArray = Json.createArray();
+			for (String param : parameters) {
+				paramsArray.add(param);
+			}
+			obj.add(paramsArray);
+		}
 		addAction(obj);
 	}
 
@@ -120,10 +130,14 @@ public class FarmerLog {
 		if (!addSize(cells.length * 5 + 8)) {
 			return;
 		}
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(MARK);
-		obj.add(cells);
+		ArrayNode cellsArray = Json.createArray();
+		for (int cell : cells) {
+			cellsArray.add(cell);
+		}
+		obj.add(cellsArray);
 		obj.add(Util.getHexaColor(color));
 		obj.add(duration);
 		addAction(obj);
@@ -134,7 +148,7 @@ public class FarmerLog {
 		if (!addSize(8)) {
 			return;
 		}
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(CLEAR_CELLS);
 		addAction(obj);
@@ -145,10 +159,14 @@ public class FarmerLog {
 		if (!addSize(cells.length * 5 + 8 + text.length())) {
 			return;
 		}
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(MARK_TEXT);
-		obj.add(cells);
+		ArrayNode cellsArray = Json.createArray();
+		for (int cell : cells) {
+			cellsArray.add(cell);
+		}
+		obj.add(cellsArray);
 		obj.add(text);
 		obj.add(Util.getHexaColor(color));
 		obj.add(duration);
@@ -175,7 +193,7 @@ public class FarmerLog {
 		var ai = (AI) leek.getAI();
 		var position = ai.getCurrentLeekScriptPosition();
 
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(type);
 		obj.add(message);
@@ -196,7 +214,7 @@ public class FarmerLog {
 				fight.getState().statistics.tooMuchDebug(farmer);
 
 				// Message : trop de logs
-				JSONArray obj = new JSONArray();
+				ArrayNode obj = Json.createArray();
 				obj.add(0);
 				obj.add(TOO_MUCH_DEBUG);
 				addAction(obj);
@@ -214,7 +232,7 @@ public class FarmerLog {
 		return mNb;
 	}
 
-	public JSONObject toJSON() {
+	public ObjectNode toJSON() {
 		return mObject;
 	}
 
@@ -222,7 +240,7 @@ public class FarmerLog {
 		if (!addSize(10)) {
 			return;
 		}
-		JSONArray obj = new JSONArray();
+		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
 		obj.add(PAUSE);
 		addAction(obj);

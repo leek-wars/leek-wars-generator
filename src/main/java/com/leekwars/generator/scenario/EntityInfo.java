@@ -4,8 +4,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.entity.Bulb;
 import com.leekwars.generator.leek.Leek;
@@ -64,43 +65,43 @@ public class EntityInfo {
 	public EntityInfo() {
 	}
 
-	public EntityInfo(JSONObject e) {
-		id = e.getIntValue("id");
-		name = e.getString("name");
-		ai = e.getString("ai");
-		ai_folder = e.getIntValue("ai_folder");
-		ai_path = e.getString("ai_path");
-		ai_version = e.getIntValue("ai_version");
-		ai_strict = e.getBooleanValue("ai_strict");
-		farmer = e.getIntValue("farmer");
-		team = e.getIntValue("team");
-		level = e.getIntValue("level");
-		life = e.getIntValue("life");
-		tp = e.getIntValue("tp");
-		mp = e.getIntValue("mp");
-		strength = e.getIntValue("strength");
-		agility = e.getIntValue("agility");
-		frequency = e.getIntValue("frequency");
-		wisdom = e.getIntValue("wisdom");
-		resistance = e.getIntValue("resistance");
-		science = e.getIntValue("science");
-		magic = e.getIntValue("magic");
-		cores = e.getIntValue("cores");
-		ram = e.getIntValue("ram");
+	public EntityInfo(ObjectNode e) {
+		id = e.get("id").intValue();
+		name = e.get("name").asText();
+		ai = e.get("ai").asText();
+		ai_folder = e.get("ai_folder").intValue();
+		ai_path = e.get("ai_path").asText();
+		ai_version = e.get("ai_version").intValue();
+		ai_strict = e.get("ai_strict").booleanValue();
+		farmer = e.get("farmer").intValue();
+		team = e.get("team").intValue();
+		level = e.get("level").intValue();
+		life = e.get("life").intValue();
+		tp = e.get("tp").intValue();
+		mp = e.get("mp").intValue();
+		strength = e.get("strength").intValue();
+		agility = e.get("agility").intValue();
+		frequency = e.get("frequency").intValue();
+		wisdom = e.get("wisdom").intValue();
+		resistance = e.get("resistance").intValue();
+		science = e.get("science").intValue();
+		magic = e.get("magic").intValue();
+		cores = e.get("cores").intValue();
+		ram = e.get("ram").intValue();
 
-		JSONArray weapons = e.getJSONArray("weapons");
+		ArrayNode weapons = (ArrayNode) e.get("weapons");
 		if (weapons != null) {
-			for (Object w : weapons) {
-				this.weapons.add((Integer) w);
+			for (var w : weapons) {
+				this.weapons.add(w.intValue());
 			}
 		}
-		JSONArray chips = e.getJSONArray("chips");
+		ArrayNode chips = (ArrayNode) e.get("chips");
 		if (chips != null) {
-			for (Object c : chips) {
-				this.chips.add((Integer) c);
+			for (var c : chips) {
+				this.chips.add(c.intValue());
 			}
 		}
-		cell = e.getIntValue("cell");
+		cell = e.get("cell").intValue();
 	}
 
 	public Entity createEntity(Generator generator, Scenario scenario, Fight fight) {
@@ -164,8 +165,8 @@ public class EntityInfo {
 		return entity;
 	}
 
-	public JSONObject toJson() {
-		JSONObject json = new JSONObject();
+	public ObjectNode toJson() {
+		ObjectNode json = Json.createObject();
 		json.put("id", id);
 		json.put("name", name);
 		json.put("level", level);
@@ -184,16 +185,16 @@ public class EntityInfo {
 		json.put("team", team);
 		json.put("ai", ai);
 		json.put("ai_owner", aiOwner);
-		JSONArray weapons = new JSONArray();
+		ArrayNode weapons = Json.createArray();
 		for (int weapon : this.weapons) {
 			weapons.add(weapon);
 		}
-		json.put("weapons", weapons);
-		JSONArray chips = new JSONArray();
+		json.set("weapons", weapons);
+		ArrayNode chips = Json.createArray();
 		for (int chip : this.chips) {
 			chips.add(chip);
 		}
-		json.put("chips", chips);
+		json.set("chips", chips);
 		return json;
 	}
 }

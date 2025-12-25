@@ -22,8 +22,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.area.Area;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.state.Entity;
@@ -53,13 +54,13 @@ public class Map {
 	private int max_x = -1;
 	private int min_y = -1;
 	private int max_y = -1;
-	private JSONObject custom_map;
+	private ObjectNode custom_map;
 	private HashMap<Entity, Cell> cellByEntity = new HashMap<>();
 	private HashMap<Cell, Entity> entityByCell = new HashMap<>();
-	private JSONArray pattern;
+	private ArrayNode pattern;
 	private State state;
 
-	public static Map generateMap(State state, int context, int width, int height, int obstacles_count, List<Team> teams, JSONObject custom_map) {
+	public static Map generateMap(State state, int context, int width, int height, int obstacles_count, List<Team> teams, ObjectNode custom_map) {
 
 		boolean valid = false;
 		int nb = 0;
@@ -67,25 +68,25 @@ public class Map {
 
 		if (custom_map != null) {
 
-			map = new Map(width, height, custom_map.getIntValue("id"));
+			map = new Map(width, height, custom_map.get("id").intValue());
 			map.custom_map = custom_map;
-			map.pattern = custom_map.getJSONArray("pattern");
+			map.pattern = (ArrayNode) custom_map.get("pattern");
 			map.state = state;
 
-			JSONObject obstacles = custom_map.getJSONObject("obstacles");
-			JSONArray team1 = custom_map.getJSONArray("team1");
-			JSONArray team2 = custom_map.getJSONArray("team2");
+			ObjectNode obstacles = (ObjectNode) custom_map.get("obstacles");
+			ArrayNode team1 = (ArrayNode) custom_map.get("team1");
+			ArrayNode team2 = (ArrayNode) custom_map.get("team2");
 
 			// Obstacles
-			for (var c : obstacles.entrySet()) {
+			for (var c : obstacles.properties()) {
 				try {
 					int cell_id = Integer.parseInt(c.getKey());
 					Cell cell = map.getCell(cell_id);
 					if (cell.available(map)) {
-						if (c.getValue() instanceof Boolean) {
+						if (c.getValue().isBoolean()) {
 							cell.setObstacle(1, 1);
 						} else {
-							int id = (Integer) c.getValue();
+							int id = c.getValue().intValue();
 							ObstacleInfo info = ObstacleInfo.get(id);
 							if (info.size == 1) {
 								cell.setObstacle(id, info.size);
@@ -141,10 +142,10 @@ public class Map {
 						}
 						// User custom cell?
 						if (t < 2) {
-							JSONArray team = t == 0 ? team1 : team2;
+							ArrayNode team = t == 0 ? team1 : team2;
 							if (team != null) {
 								if (pos < team.size()) {
-									int cell_id = team.getIntValue(pos++);
+									int cell_id = team.get(pos++).intValue();
 									if (cell_id >= 0 || cell_id < map.nb_cells) {
 										c = map.getCell(cell_id);
 									}
@@ -243,8 +244,8 @@ public class Map {
 			map.setType(-1); // Nexus
 		} else if (context == State.CONTEXT_TOURNAMENT) {
 			map.setType(5); // Arena
-		} else if (custom_map != null && custom_map.containsKey("type")) {
-			map.setType(custom_map.getIntValue("type"));
+		} else if (custom_map != null && custom_map.has("type")) {
+			map.setType(custom_map.get("type").intValue());
 		}
 		// map.drawMap();
 		return map;
@@ -1265,7 +1266,7 @@ public class Map {
 		return id;
 	}
 
-	public JSONArray getPattern() {
+	public ArrayNode getPattern() {
 		return pattern;
 	}
 

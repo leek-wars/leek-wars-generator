@@ -1,6 +1,7 @@
 package com.leekwars.generator.action;
 
-import com.alibaba.fastjson.JSONArray;
+import tools.jackson.databind.node.ArrayNode;
+import com.leekwars.generator.util.Json;
 
 public class ActionRemoveEffect implements Action {
 
@@ -11,8 +12,8 @@ public class ActionRemoveEffect implements Action {
 	}
 
 	@Override
-	public JSONArray getJSON() {
-		JSONArray retour = new JSONArray();
+	public ArrayNode getJSON() {
+		ArrayNode retour = Json.createArray();
 		retour.add(Action.REMOVE_EFFECT);
 		retour.add(id);
 		return retour;

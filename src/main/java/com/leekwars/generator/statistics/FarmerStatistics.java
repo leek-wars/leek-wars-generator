@@ -5,8 +5,9 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 
 /*
  * Object to keep track of farmer statistics during the fight
@@ -54,14 +55,14 @@ public class FarmerStatistics {
 			}
 			return retour;
 		}
-		public JSONObject toJson() {
-			JSONObject json = new JSONObject();
+		public ObjectNode toJson() {
+			ObjectNode json = Json.createObject();
 			for (Entry<Integer, HashSet<Long>> set : entrySet()) {
-				JSONArray array = new JSONArray();
+				ArrayNode array = Json.createArray();
 				for (Long value : set.getValue()) {
 					array.add(value);
 				}
-				json.put(String.valueOf(set.getKey()), array);
+				json.set(String.valueOf(set.getKey()), array);
 			}
 			return json;
 		}
@@ -72,8 +73,8 @@ public class FarmerStatistics {
 		public void set(int leek, long value) {
 			put(leek, value);
 		}
-		public JSONObject toJson() {
-			JSONObject json = new JSONObject();
+		public ObjectNode toJson() {
+			ObjectNode json = Json.createObject();
 			for (Entry<Integer, Long> value : entrySet()) {
 				json.put(String.valueOf(value.getKey()), value.getValue());
 			}
@@ -92,16 +93,16 @@ public class FarmerStatistics {
 			}
 			get(leek).set(index, true);
 		}
-		public JSONObject toJson() {
-			JSONObject json = new JSONObject();
+		public ObjectNode toJson() {
+			ObjectNode json = Json.createObject();
 			for (Entry<Integer, BitSet> entry : entrySet()) {
 				json.put(String.valueOf(entry.getKey()), entry.getValue().toString());
 			}
 			return json;
 		}
 
-		public JSONObject toDBJson() {
-			JSONObject json = new JSONObject();
+		public ObjectNode toDBJson() {
+			ObjectNode json = Json.createObject();
 
 			for (Entry<Integer, BitSet> entry : entrySet()) {
 				BitSet cells = entry.getValue();
@@ -132,8 +133,8 @@ public class FarmerStatistics {
 		}
 	}
 
-	public JSONObject toJson() {
-		JSONObject json = new JSONObject();
+	public ObjectNode toJson() {
+		ObjectNode json = Json.createObject();
 		json.put("teleporatations", teleportations);
 		json.put("summons", summons);
 		json.put("weaponShot", weaponShot);
@@ -149,20 +150,20 @@ public class FarmerStatistics {
 		json.put("damage", damage);
 		json.put("tooMuchOperations", tooMuchOperations);
 		json.put("stackOverflows", stackOverflows);
-		json.put("weaponsUsed", weaponsUsed.toJson());
-		json.put("chipsUsed", chipsUsed.toJson());
-		json.put("endCells", endCells.toJson());
-		json.put("endLifes", endLifes.toJson());
-		json.put("totalLifes", totalLifes.toJson());
-		json.put("walkedCells", walkedCells.toJson());
-		json.put("aiInstructions", aiInstructions.toJson());
-		json.put("aiOperations", aiOperations.toJson());
-		json.put("aiTimes", aiTimes.toJson());
+		json.set("weaponsUsed", weaponsUsed.toJson());
+		json.set("chipsUsed", chipsUsed.toJson());
+		json.set("endCells", endCells.toJson());
+		json.set("endLifes", endLifes.toJson());
+		json.set("totalLifes", totalLifes.toJson());
+		json.set("walkedCells", walkedCells.toJson());
+		json.set("aiInstructions", aiInstructions.toJson());
+		json.set("aiOperations", aiOperations.toJson());
+		json.set("aiTimes", aiTimes.toJson());
 		return json;
 	}
 
-	public JSONArray toDBJson() {
-		JSONArray array = new JSONArray();
+	public ArrayNode toDBJson() {
+		ArrayNode array = Json.createArray();
 		array.add(teleportations); // 1
 		array.add(summons); // 2
 		array.add(weaponShot); // 7

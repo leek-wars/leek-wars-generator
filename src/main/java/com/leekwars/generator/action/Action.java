@@ -1,6 +1,6 @@
 package com.leekwars.generator.action;
 
-import com.alibaba.fastjson.JSONArray;
+import tools.jackson.databind.node.ArrayNode;
 
 public interface Action {
 
@@ -60,5 +60,5 @@ public interface Action {
 	public final static int MAP = 1001;
 	public final static int AI_ERROR = 1002;
 
-	public JSONArray getJSON();
+	public ArrayNode getJSON();
 }

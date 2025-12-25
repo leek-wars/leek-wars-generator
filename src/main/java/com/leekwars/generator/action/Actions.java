@@ -3,8 +3,9 @@ package com.leekwars.generator.action;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.state.Entity;
@@ -15,11 +16,11 @@ public class Actions {
 	private final List<Action> actions;
 
 	private final List<Entity> entities = new ArrayList<Entity>();
-	private final JSONArray leeks = new JSONArray();
-	public final JSONObject map = new JSONObject();
-	public JSONObject dead = new JSONObject();
-	public JSONObject ops = new JSONObject();
-	public JSONObject times = new JSONObject();
+	private final ArrayNode leeks = Json.createArray();
+	public final ObjectNode map = Json.createObject();
+	public ObjectNode dead = Json.createObject();
+	public ObjectNode ops = Json.createObject();
+	public ObjectNode times = Json.createObject();
 
 	private int mNextEffectId = 0;
 
@@ -47,19 +48,19 @@ public class Actions {
 		return actions.size() - 1;
 	}
 
-	public JSONObject toJSON() {
+	public ObjectNode toJSON() {
 
-		JSONArray json = new JSONArray();
+		ArrayNode json = Json.createArray();
 
 		for (Action log : actions) {
 			json.add(log.getJSON());
 		}
-		JSONObject retour = new JSONObject();
-		retour.put("leeks", leeks);
-		retour.put("map", map);
-		retour.put("actions", json);
-		retour.put("dead", dead);
-		retour.put("ops", ops);
+		ObjectNode retour = Json.createObject();
+		retour.set("leeks", leeks);
+		retour.set("map", map);
+		retour.set("actions", json);
+		retour.set("dead", dead);
+		retour.set("ops", ops);
 
 		return retour;
 	}
@@ -74,7 +75,7 @@ public class Actions {
 
 		entities.add(entity);
 
-		JSONObject object = new JSONObject();
+		ObjectNode object = Json.createObject();
 
 		object.put("id", entity.getFId());
 		object.put("level", entity.getLevel());
@@ -112,7 +113,7 @@ public class Actions {
 
 	public void addMap(Map map) {
 
-		JSONObject obstacles = new JSONObject();
+		ObjectNode obstacles = Json.createObject();
 		for (int i = 0; i < (map.getWidth() * 2 - 1) * map.getHeight(); i++) {
 			Cell c = map.getCell(i);
 			if (c != null && !c.isWalkable() && c.getObstacleSize() > 0) {
@@ -120,23 +121,27 @@ public class Actions {
 				if (map.getId() != 0) {
 					obstacles.put(String.valueOf(c.getId()), c.getObstacle());
 				} else {
-					JSONArray obstacle = new JSONArray();
+					ArrayNode obstacle = Json.createArray();
 					obstacle.add(c.getObstacle());
 					obstacle.add(c.getObstacleSize());
 
-					obstacles.put(String.valueOf(c.getId()), map.isCustom() ? obstacle : c.getObstacleSize());
+					if (map.isCustom()) {
+						obstacles.set(String.valueOf(c.getId()), obstacle);
+					} else {
+						obstacles.put(String.valueOf(c.getId()), c.getObstacleSize());
+					}
 				}
 			}
 		}
 		if (map.getId() != 0) {
 			this.map.put("id", map.getId());
 		}
-		this.map.put("obstacles", obstacles);
+		this.map.set("obstacles", obstacles);
 		this.map.put("type", map.getType());
 		this.map.put("width", map.getWidth());
 		this.map.put("height", map.getWidth());
 		if (map.getPattern() != null) {
-			this.map.put("pattern", map.getPattern());
+			this.map.set("pattern", map.getPattern());
 		}
 	}
 }

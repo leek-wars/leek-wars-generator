@@ -1,6 +1,7 @@
 package com.leekwars.generator.action;
 
-import com.alibaba.fastjson.JSONArray;
+import tools.jackson.databind.node.ArrayNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.state.Entity;
 
 public class ActionEntityDie implements Action {
@@ -14,9 +15,9 @@ public class ActionEntityDie implements Action {
 	}
 
 	@Override
-	public JSONArray getJSON() {
+	public ArrayNode getJSON() {
 
-		JSONArray retour = new JSONArray();
+		ArrayNode retour = Json.createArray();
 		retour.add(Action.PLAYER_DEAD);
 		retour.add(id);
 		if (killer != -1) {

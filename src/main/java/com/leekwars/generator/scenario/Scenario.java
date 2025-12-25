@@ -6,9 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.leekwars.generator.util.Json;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.Util;
 
@@ -32,7 +32,7 @@ public class Scenario {
 	public Map<Integer, FarmerInfo> farmers = new HashMap<Integer, FarmerInfo>();
 	public Map<Integer, TeamInfo> teams = new HashMap<Integer, TeamInfo>();
 	public List<List<EntityInfo>> entities = new ArrayList<List<EntityInfo>>();
-	public JSONObject map = null;
+	public ObjectNode map = null;
 	/**
 	 * Si match nul, on regarde le poireau qui a le plus de vie (en absolu).
 	 */
@@ -47,31 +47,31 @@ public class Scenario {
 
         Scenario scenario = new Scenario();
 
-		JSONObject json = JSON.parseObject(Util.readFile(file));
+		ObjectNode json = Json.parseObject(Util.readFile(file));
 
-		if (json.containsKey("random_seed")) {
-            scenario.seed = json.getIntValue("random_seed");
+		if (json.has("random_seed")) {
+            scenario.seed = json.get("random_seed").intValue();
         }
-        if (json.containsKey("max_turns")) {
-			scenario.maxTurns = json.getIntValue("max_turns");
+        if (json.has("max_turns")) {
+			scenario.maxTurns = json.get("max_turns").intValue();
 		}
-		for (Object farmerJson : json.getJSONArray("farmers")) {
+		for (var farmerJson : (ArrayNode) json.get("farmers")) {
 			FarmerInfo farmer = new FarmerInfo();
-			farmer.id = ((JSONObject) farmerJson).getInteger("id");
-			farmer.name = ((JSONObject) farmerJson).getString("name");
-			farmer.country = ((JSONObject) farmerJson).getString("country");
+			farmer.id = ((ObjectNode) farmerJson).get("id").intValue();
+			farmer.name = ((ObjectNode) farmerJson).get("name").asText();
+			farmer.country = ((ObjectNode) farmerJson).get("country").asText();
 			scenario.farmers.put(farmer.id, farmer);
 		}
-		for (Object teamJson : json.getJSONArray("teams")) {
+		for (var teamJson : (ArrayNode) json.get("teams")) {
 			TeamInfo team = new TeamInfo();
-			team.id = ((JSONObject) teamJson).getInteger("id");
-			team.name = ((JSONObject) teamJson).getString("name");
+			team.id = ((ObjectNode) teamJson).get("id").intValue();
+			team.name = ((ObjectNode) teamJson).get("name").asText();
 			scenario.teams.put(team.id, team);
 		}
-		for (Object teamJson : json.getJSONArray("entities")) {
+		for (var teamJson : (ArrayNode) json.get("entities")) {
             List<EntityInfo> team = new ArrayList<EntityInfo>();
-			for (Object entityJson : (JSONArray) teamJson) {
-				JSONObject e = (JSONObject) entityJson;
+			for (var entityJson : (ArrayNode) teamJson) {
+				ObjectNode e = (ObjectNode) entityJson;
 				EntityInfo entity = new EntityInfo(e);
 				Log.i(TAG, "Created entity " + entity.name);
                 team.add(entity);
@@ -100,33 +100,33 @@ public class Scenario {
 		}
 	}
 
-	public JSONObject toJson() {
-		JSONObject json = new JSONObject();
-		JSONArray farmers = new JSONArray();
+	public ObjectNode toJson() {
+		ObjectNode json = Json.createObject();
+		ArrayNode farmers = Json.createArray();
 		for (FarmerInfo farmer : this.farmers.values()) {
 			farmers.add(farmer.toJson());
 		}
-		json.put("farmers", farmers);
-		JSONArray teams = new JSONArray();
+		json.set("farmers", farmers);
+		ArrayNode teams = Json.createArray();
 		for (TeamInfo team : this.teams.values()) {
 			teams.add(team.toJson());
 		}
-		json.put("teams", teams);
-		JSONArray entities = new JSONArray();
+		json.set("teams", teams);
+		ArrayNode entities = Json.createArray();
 		for (List<EntityInfo> list : this.entities) {
-			JSONArray team = new JSONArray();
+			ArrayNode team = Json.createArray();
 			for (EntityInfo entity : list) {
 				team.add(entity.toJson());
 			}
 			entities.add(team);
 		}
-		json.put("entities", entities);
+		json.set("entities", entities);
 		return json;
 	}
 
 	@Override
 	public String toString() {
-		return toJson().toJSONString();
+		return toJson().toString();
 	}
 
 	public FarmerInfo getFarmer(int farmer) {

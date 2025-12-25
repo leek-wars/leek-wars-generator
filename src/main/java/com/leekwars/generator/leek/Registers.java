@@ -4,7 +4,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 
 public class Registers {
 
@@ -68,18 +69,18 @@ public class Registers {
 	}
 
 	public String toJSONString() {
-		JSONObject datas = new JSONObject();
+		ObjectNode datas = Json.createObject();
 		for (Entry<String, String> entry : mValues.entrySet()) {
 			datas.put(entry.getKey(), entry.getValue());
 		}
-		return datas.toJSONString();
+		return datas.toString();
 	}
 
 	public static Registers fromJSONString(String value) {
-		JSONObject datas = JSONObject.parseObject(value);
+		ObjectNode datas = Json.parseObject(value);
 		Registers register = new Registers();
-		for (String key : datas.keySet()) {
-			register.mValues.put(key, datas.getString(key));
+		for (var entry : datas.properties()) {
+			register.mValues.put(entry.getKey(), entry.getValue().asText());
 		}
 		return register;
 	}

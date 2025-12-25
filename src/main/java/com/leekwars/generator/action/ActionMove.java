@@ -2,7 +2,8 @@ package com.leekwars.generator.action;
 
 import java.util.List;
 
-import com.alibaba.fastjson.JSONArray;
+import tools.jackson.databind.node.ArrayNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.state.Entity;
 
@@ -22,12 +23,16 @@ public class ActionMove implements Action {
 	}
 
 	@Override
-	public JSONArray getJSON() {
-		JSONArray retour = new JSONArray();
+	public ArrayNode getJSON() {
+		ArrayNode retour = Json.createArray();
 		retour.add(Action.MOVE_TO);
 		retour.add(leek);
 		retour.add(end);
-		retour.add(path);
+		ArrayNode pathArray = Json.createArray();
+		for (int cell : path) {
+			pathArray.add(cell);
+		}
+		retour.add(pathArray);
 		return retour;
 	}
 

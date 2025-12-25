@@ -2,8 +2,8 @@ package com.leekwars.generator.action;
 
 import java.util.Map;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ArrayNode;
+import com.leekwars.generator.util.Json;
 import com.leekwars.generator.state.Entity;
 
 public class ActionChestOpened implements Action {
@@ -19,14 +19,14 @@ public class ActionChestOpened implements Action {
 	}
 
 	@Override
-	public JSONArray getJSON() {
+	public ArrayNode getJSON() {
 
-		JSONArray retour = new JSONArray();
+		ArrayNode retour = Json.createArray();
 		retour.add(Action.CHEST_OPENED);
 		retour.add(killer.getFId());
 		retour.add(chest.getFId());
 
-		var res = new JSONObject();
+		var res = Json.createObject();
 		for (var r : resources.entrySet()) {
 			res.put(String.valueOf(r.getKey()), r.getValue());
 		}

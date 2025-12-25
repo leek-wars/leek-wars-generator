@@ -1,6 +1,7 @@
 package com.leekwars.generator.scenario;
 
-import com.alibaba.fastjson.JSONObject;
+import tools.jackson.databind.node.ObjectNode;
+import com.leekwars.generator.util.Json;
 
 public class TeamInfo {
 	public int id;
@@ -8,8 +9,8 @@ public class TeamInfo {
 	public int level;
 	public int turretAI;
 
-	public JSONObject toJson() {
-		JSONObject json = new JSONObject();
+	public ObjectNode toJson() {
+		ObjectNode json = Json.createObject();
 		json.put("id", id);
 		json.put("name", name);
 		json.put("level", level);
