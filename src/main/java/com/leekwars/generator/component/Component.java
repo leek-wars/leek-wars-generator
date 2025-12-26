@@ -2,7 +2,6 @@ package com.leekwars.generator.component;
 
 import java.util.HashMap;
 
-import com.leekwars.generator.util.Json;
 import tools.jackson.databind.node.ArrayNode;
 
 public class Component {
@@ -12,11 +11,11 @@ public class Component {
 	private final HashMap<String, Integer> stats = new HashMap<>();
 	private final int template;
 
-	public Component(int id, String name, String stats, int template) {
+	public Component(int id, String name, ArrayNode stats, int template) {
 		this.id = id;
 		this.name = name;
-		for (var stat : Json.parseArray(stats)) {
-			this.stats.put(((ArrayNode) stat).get(0).asText(), ((ArrayNode) stat).get(1).intValue());
+		for (var stat : stats) {
+			this.stats.put(((ArrayNode) stat).get(0).asString(), ((ArrayNode) stat).get(1).intValue());
 		}
 		// System.out.println(this.stats);
 		this.template = template;

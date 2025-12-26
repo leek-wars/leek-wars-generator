@@ -253,7 +253,7 @@ public class Generator {
 			for (var entry : components.properties()) {
 				String id = entry.getKey();
 				ObjectNode component = (ObjectNode) entry.getValue();
-				Components.addComponent(new Component(Integer.parseInt(id), component.get("name").asText(), component.get("stats").asText(), component.get("template").intValue()));
+				Components.addComponent(new Component(Integer.parseInt(id), component.get("name").asString(), (ArrayNode) component.get("stats"), component.get("template").intValue()));
 			}
 			Log.end(components.size() + " components loaded.");
 		} catch (Exception e) {
