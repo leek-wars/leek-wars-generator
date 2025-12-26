@@ -69,7 +69,9 @@ public class EntityInfo {
 		id = e.get("id").intValue();
 		name = e.get("name").asString();
 		ai = e.get("ai").asString();
-		ai_folder = e.get("ai_folder").intValue(0);
+		if (e.has("ai_folder")) {
+			ai_folder = e.get("ai_folder").intValue();
+		}
 		ai_path = e.get("ai_path").asString();
 		ai_version = e.get("ai_version").intValue();
 		ai_strict = e.get("ai_strict").booleanValue();
