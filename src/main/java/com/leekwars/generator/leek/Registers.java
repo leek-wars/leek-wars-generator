@@ -77,10 +77,14 @@ public class Registers {
 	}
 
 	public static Registers fromJSONString(String value) {
-		ObjectNode datas = Json.parseObject(value);
 		Registers register = new Registers();
-		for (var entry : datas.properties()) {
-			register.mValues.put(entry.getKey(), entry.getValue().asString());
+		try {
+			var datas = Json.parseObject(value);
+			for (var entry : datas.properties()) {
+				register.mValues.put(entry.getKey(), entry.getValue().asString());
+			}
+		} catch (Exception e) {
+			// Nothing to do, user fault
 		}
 		return register;
 	}
