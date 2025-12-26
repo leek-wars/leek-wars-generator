@@ -67,10 +67,10 @@ public class EntityInfo {
 
 	public EntityInfo(ObjectNode e) {
 		id = e.get("id").intValue();
-		name = e.get("name").asText();
-		ai = e.get("ai").asText();
-		ai_folder = e.get("ai_folder").intValue();
-		ai_path = e.get("ai_path").asText();
+		name = e.get("name").asString();
+		ai = e.get("ai").asString();
+		ai_folder = e.get("ai_folder").intValue(0);
+		ai_path = e.get("ai_path").asString();
 		ai_version = e.get("ai_version").intValue();
 		ai_strict = e.get("ai_strict").booleanValue();
 		farmer = e.get("farmer").intValue();
