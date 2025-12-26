@@ -24,7 +24,8 @@ jobs:
         java-version: '25'
         distribution: 'adopt'
     - name: Build
+      run: gradle jar
+    - name: Tests
       run: |
-        gradle jar
         java -jar generator.jar --analyze test/ai/basic.leek
         java -jar generator.jar test/scenario/scenario1.json

@@ -72,13 +72,13 @@ public class EntityInfo {
 		if (e.has("ai_folder")) {
 			ai_folder = e.get("ai_folder").intValue();
 		}
-		if (e.has("ai_path")) {
+		if (e.hasNonNull("ai_path")) {
 			ai_path = e.get("ai_path").asString();
 		}
-		if (e.has("ai_version")) {
+		if (e.hasNonNull("ai_version")) {
 			ai_version = e.get("ai_version").intValue();
 		}
-		if (e.has("ai_strict")) {
+		if (e.hasNonNull("ai_strict")) {
 			ai_strict = e.get("ai_strict").booleanValue();
 		}
 		farmer = e.get("farmer").intValue();
@@ -88,14 +88,30 @@ public class EntityInfo {
 		tp = e.get("tp").intValue();
 		mp = e.get("mp").intValue();
 		strength = e.get("strength").intValue();
-		agility = e.get("agility").intValue();
-		frequency = e.get("frequency").intValue();
-		wisdom = e.get("wisdom").intValue();
-		resistance = e.get("resistance").intValue();
-		science = e.get("science").intValue();
-		magic = e.get("magic").intValue();
-		cores = e.get("cores").intValue();
-		ram = e.get("ram").intValue();
+		if (e.has("agility")) {
+			agility = e.get("agility").intValue();
+		}
+		if (e.has("frequency")) {
+			frequency = e.get("frequency").intValue();
+		}
+		if (e.has("wisdom")) {
+			wisdom = e.get("wisdom").intValue();
+		}
+		if (e.has("resistance")) {
+			resistance = e.get("resistance").intValue();
+		}
+		if (e.has("science")) {
+			science = e.get("science").intValue();
+		}
+		if (e.has("magic")) {
+			magic = e.get("magic").intValue();
+		}
+		if (e.has("cores")) {
+			cores = e.get("cores").intValue();
+		}
+		if (e.has("ram")) {
+			ram = e.get("ram").intValue();
+		}
 
 		ArrayNode weapons = (ArrayNode) e.get("weapons");
 		if (weapons != null) {

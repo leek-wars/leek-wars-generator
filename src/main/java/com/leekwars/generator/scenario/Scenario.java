@@ -58,14 +58,14 @@ public class Scenario {
 		for (var farmerJson : (ArrayNode) json.get("farmers")) {
 			FarmerInfo farmer = new FarmerInfo();
 			farmer.id = ((ObjectNode) farmerJson).get("id").intValue();
-			farmer.name = ((ObjectNode) farmerJson).get("name").asText();
-			farmer.country = ((ObjectNode) farmerJson).get("country").asText();
+			farmer.name = ((ObjectNode) farmerJson).get("name").asString();
+			farmer.country = ((ObjectNode) farmerJson).get("country").asString();
 			scenario.farmers.put(farmer.id, farmer);
 		}
 		for (var teamJson : (ArrayNode) json.get("teams")) {
 			TeamInfo team = new TeamInfo();
 			team.id = ((ObjectNode) teamJson).get("id").intValue();
-			team.name = ((ObjectNode) teamJson).get("name").asText();
+			team.name = ((ObjectNode) teamJson).get("name").asString();
 			scenario.teams.put(team.id, team);
 		}
 		for (var teamJson : (ArrayNode) json.get("entities")) {
