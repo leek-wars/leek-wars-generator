@@ -72,9 +72,15 @@ public class EntityInfo {
 		if (e.has("ai_folder")) {
 			ai_folder = e.get("ai_folder").intValue();
 		}
-		ai_path = e.get("ai_path").asString();
-		ai_version = e.get("ai_version").intValue();
-		ai_strict = e.get("ai_strict").booleanValue();
+		if (e.has("ai_path")) {
+			ai_path = e.get("ai_path").asString();
+		}
+		if (e.has("ai_version")) {
+			ai_version = e.get("ai_version").intValue();
+		}
+		if (e.has("ai_strict")) {
+			ai_strict = e.get("ai_strict").booleanValue();
+		}
 		farmer = e.get("farmer").intValue();
 		team = e.get("team").intValue();
 		level = e.get("level").intValue();
