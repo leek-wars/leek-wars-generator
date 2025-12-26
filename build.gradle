@@ -36,11 +36,11 @@ repositories {
 }
 
 dependencies {
-	testImplementation 'junit:junit:4.12'
+	testImplementation 'junit:junit:4.13.2'
 	implementation project(':leekscript')
 	implementation platform('tools.jackson:jackson-bom:3.0.3')
 	implementation 'tools.jackson.core:jackson-databind'
 	implementation 'tools.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
-	implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.5'
+	implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.5'
 }
