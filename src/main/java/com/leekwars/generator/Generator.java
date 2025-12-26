@@ -165,7 +165,7 @@ public class Generator {
 			// Save registers
 			for (var entity : fight.getState().getEntities().values()) {
 				if (!entity.isSummon() && entity.getRegisters() != null	&& (entity.getRegisters().isModified() || entity.getRegisters().isNew())) {
-					registerManager.saveRegisters(entity.getId(), entity.getRegisters().toString(), entity.getRegisters().isNew());
+					registerManager.saveRegisters(entity.getId(), entity.getRegisters().toJSONString(), entity.getRegisters().isNew());
 				}
 			}
 			Log.i(TAG, "SHA-1: " + Util.sha1(outcome.toString()));
