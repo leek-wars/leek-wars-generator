@@ -80,7 +80,7 @@ public class Registers {
 		ObjectNode datas = Json.parseObject(value);
 		Registers register = new Registers();
 		for (var entry : datas.properties()) {
-			register.mValues.put(entry.getKey(), entry.getValue().asText());
+			register.mValues.put(entry.getKey(), entry.getValue().asString());
 		}
 		return register;
 	}
