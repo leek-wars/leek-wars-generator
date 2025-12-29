@@ -1078,37 +1078,20 @@ public class State {
 		this.type = type;
 	}
 
-	private double getMaxDeadRatio() {
+	/**
+	 * Calcule la progression du combat basée sur les dégâts infligés aux équipes.
+	 * Chaque équipe contribue à 1/(n-1) de la progression (n = nombre d'équipes).
+	 * La progression d'une équipe est son ratio de vie perdue.
+	 */
+	private double getFactionProgress() {
+		int teamCount = teams.size();
+		if (teamCount <= 1) return 0;
 
-		if (this.type == TYPE_BATTLE_ROYALE) {
-			double dead = 0;
-			for (Team team : teams) {
-				if (team.isDead()) {
-					dead++;
-				}
-			}
-			return dead / teams.size();
-		}
-
-		double max = 0;
+		double progress = 0;
 		for (Team team : teams) {
-			double ratio = team.getDeadRatio();
-			if (ratio > max) max = ratio;
+			progress += 1 - team.getLifeRatio();
 		}
-		return max;
-	}
-	private double getMaxLifeRatio() {
-
-		if (this.type == TYPE_BATTLE_ROYALE) {
-			return 0; // For BR, don't count this value
-		}
-
-		double max = 0;
-		for (Team team : teams) {
-			double ratio = 1 - team.getLifeRatio();
-			if (ratio > max) max = ratio;
-		}
-		return max;
+		return progress / (teamCount - 1);
 	}
 
 	public double getProgress() {
@@ -1116,14 +1099,12 @@ public class State {
 
 		int entityCount = this.order.getEntities().size();
 
-		// Nombre d'entités mortes
-		double d = getMaxDeadRatio();
+		// Progression basée sur les dégâts aux factions (équipes + coffres)
+		double f = getFactionProgress();
 		// Nombre de "tours d'entité", racine carrée
 		double t = Math.min(1, Math.pow((double) (this.getTurn() * entityCount + this.order.getPosition()) / (MAX_TURNS * entityCount), 0.5));
-		// Ratio de vie restante
-		double l = getMaxLifeRatio();
 
-		return Math.max(t, Math.max(d, l));
+		return Math.max(t, f);
 	}
 
 	public void seed(int seed) {
