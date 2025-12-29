@@ -24,7 +24,6 @@ import javax.swing.JLabel;
 
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
-import com.leekwars.generator.util.Json;
 import com.leekwars.generator.area.Area;
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.state.Entity;
@@ -68,7 +67,8 @@ public class Map {
 
 		if (custom_map != null) {
 
-			map = new Map(width, height, custom_map.get("id").intValue());
+			int mapId = custom_map.hasNonNull("id") ? custom_map.get("id").intValue() : 0;
+			map = new Map(width, height, mapId);
 			map.custom_map = custom_map;
 			map.pattern = (ArrayNode) custom_map.get("pattern");
 			map.state = state;
