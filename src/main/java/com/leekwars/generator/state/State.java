@@ -1089,9 +1089,9 @@ public class State {
 
 		double progress = 0;
 		for (Team team : teams) {
-			progress += 1 - team.getLifeRatio();
+			progress += team.getLifeRatio();
 		}
-		return progress / (teamCount - 1);
+		return 1 - progress / teamCount;
 	}
 
 	public double getProgress() {
