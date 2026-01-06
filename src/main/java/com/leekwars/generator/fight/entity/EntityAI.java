@@ -269,6 +269,7 @@ public class EntityAI extends AI {
 
 		try {
 
+			resetCounter();
 			mEntity = mInitialEntity;
 			if (!staticInitialized) {
 				staticInit();
