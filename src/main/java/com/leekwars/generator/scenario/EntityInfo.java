@@ -66,9 +66,13 @@ public class EntityInfo {
 	}
 
 	public EntityInfo(ObjectNode e) {
-		id = e.get("id").intValue();
+		if (e.has("id")) {
+			id = e.get("id").intValue();
+		}
 		name = e.get("name").asString();
-		ai = e.get("ai").asString();
+		if (e.has("ai")) {
+			ai = e.get("ai").asString();
+		}
 		if (e.has("ai_folder")) {
 			ai_folder = e.get("ai_folder").intValue();
 		}
@@ -81,8 +85,12 @@ public class EntityInfo {
 		if (e.hasNonNull("ai_strict")) {
 			ai_strict = e.get("ai_strict").booleanValue();
 		}
-		farmer = e.get("farmer").intValue();
-		team = e.get("team").intValue();
+		if (e.hasNonNull("farmer")) {
+			farmer = e.get("farmer").intValue();
+		}
+		if (e.hasNonNull("team")) {
+			team = e.get("team").intValue();
+		}
 		level = e.get("level").intValue();
 		life = e.get("life").intValue();
 		tp = e.get("tp").intValue();
@@ -125,7 +133,9 @@ public class EntityInfo {
 				this.chips.add(c.intValue());
 			}
 		}
-		cell = e.get("cell").intValue();
+		if (e.hasNonNull("cell")) {
+			cell = e.get("cell").intValue();
+		}
 	}
 
 	public Entity createEntity(Generator generator, Scenario scenario, Fight fight) {
