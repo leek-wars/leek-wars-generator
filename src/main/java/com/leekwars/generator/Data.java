@@ -48,7 +48,7 @@ public class Data {
 		System.out.println("Load fullmoon from API...");
 		ArrayNode f = Json.parseArray(get(api + "fight/fullmoon", ""));
 		for (var d : f) {
-			var dateUTC = ZonedDateTime.of(LocalDateTime.parse(d.asText()), ZoneOffset.UTC);
+			var dateUTC = ZonedDateTime.of(LocalDateTime.parse(d.asString()), ZoneOffset.UTC);
 			var dateLocal = dateUTC.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate();
 			fullmoon.add(dateLocal);
 		}

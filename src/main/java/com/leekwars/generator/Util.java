@@ -46,7 +46,7 @@ public class Util {
 	public static String[] jsonArrayToStringArray(ArrayNode array) {
 		String[] res = new String[array.size()];
 		for (int i = 0; i < array.size(); ++i) {
-			res[i] = array.get(i).asText();
+			res[i] = array.get(i).asString();
 		}
 		return res;
 	}

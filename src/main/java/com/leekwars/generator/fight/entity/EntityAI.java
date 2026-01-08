@@ -353,6 +353,7 @@ public class EntityAI extends AI {
 
 		} catch (Throwable e) { // Autre erreur, là c'est pas l'utilisateur
 
+			System.out.println("[EntityAI] Unknown error (Throwable)");
 			e.printStackTrace(System.out);
 			fight.getState().statistics.error(mEntity);
 			fight.log(new ActionAIError(mEntity));

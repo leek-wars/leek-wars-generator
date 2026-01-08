@@ -196,7 +196,7 @@ public class Generator {
 				Weapons.addWeapon(new Weapon(weapon.get("item").intValue(), weapon.get("cost").intValue(),
 						weapon.get("min_range").intValue(), weapon.get("max_range").intValue(), (ArrayNode) weapon.get("effects"),
 						(byte) weapon.get("launch_type").intValue(), (byte) weapon.get("area").intValue(), weapon.get("los").booleanValue(),
-						weapon.get("template").intValue(), weapon.get("name").asText(), (ArrayNode) weapon.get("passive_effects"), weapon.get("max_uses").intValue()));
+						weapon.get("template").intValue(), weapon.get("name").asString(), (ArrayNode) weapon.get("passive_effects"), weapon.get("max_uses").intValue()));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {
@@ -213,12 +213,12 @@ public class Generator {
 			for (var entry : chips.properties()) {
 				String id = entry.getKey();
 				ObjectNode chip = (ObjectNode) entry.getValue();
-				// System.out.println("New chip " + chip.get("name").asText() + " " + id + " " + chip.get("template").intValue());
+				// System.out.println("New chip " + chip.get("name").asString() + " " + id + " " + chip.get("template").intValue());
 				Chips.addChip(new Chip(Integer.parseInt(id), chip.get("cost").intValue(), chip.get("min_range").intValue(),
 						chip.get("max_range").intValue(), (ArrayNode) chip.get("effects"), (byte) chip.get("launch_type").intValue(),
 						(byte) chip.get("area").intValue(), chip.get("los").booleanValue(), chip.get("cooldown").intValue(),
 						chip.get("team_cooldown").booleanValue(), chip.get("initial_cooldown").intValue(), chip.get("level").intValue(),
-						chip.get("template").intValue(), chip.get("name").asText(), ChipType.values()[chip.get("type").intValue()], chip.get("max_uses").intValue()));
+						chip.get("template").intValue(), chip.get("name").asString(), ChipType.values()[chip.get("type").intValue()], chip.get("max_uses").intValue()));
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
@@ -235,7 +235,7 @@ public class Generator {
 			for (var entry : summons.properties()) {
 				String id = entry.getKey();
 				ObjectNode summon = (ObjectNode) entry.getValue();
-				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.get("name").asText(),
+				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.get("name").asString(),
 						(ArrayNode) summon.get("chips"), (ObjectNode) summon.get("characteristics")));
 			}
 			Log.end(summons.size() + " summons loaded.");
