@@ -327,7 +327,7 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 		});
 		method("getAllChips", "Chip", 200, true, Type.ARRAY_INT, new Type[0]);
-		method("getChipMaxUses", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
+		method("getChipMaxUses", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 
 		/**
 		 * Field
