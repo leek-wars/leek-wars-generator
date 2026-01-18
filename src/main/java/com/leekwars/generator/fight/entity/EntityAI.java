@@ -117,6 +117,9 @@ public class EntityAI extends AI {
 			} else {
 				// Accès au dossier ?
 				var folder = LeekScript.getFileSystem().getFolderById(entityInfo.ai_folder, entityInfo.aiOwner);
+				if (folder == null) {
+					throw new FileNotFoundException();
+				}
 				file = folder.resolve(entityInfo.ai);
 			}
 		} catch (FileNotFoundException e) {
