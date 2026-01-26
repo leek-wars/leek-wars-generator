@@ -163,9 +163,9 @@ public class EntityAI extends AI {
 		} catch (LeekScriptException e) {
 			// Java compilation error : server error
 			if (e.getType() == Error.CODE_TOO_LARGE) {
-				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE);
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE, new String[] { e.getLocation() });
 			} else if (e.getType() == Error.CODE_TOO_LARGE_FUNCTION) {
-				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION);
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.CODE_TOO_LARGE_FUNCTION, new String[] { e.getLocation() });
 			} else {
 				generator.exception(e, (Fight) entity.getFight(), entity.getFarmer(), file);
 				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { e.getLocation() });
