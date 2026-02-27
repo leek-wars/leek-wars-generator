@@ -4,6 +4,10 @@
 
 Leek Wars fight generator using [leekscript](https://github.com/leek-wars/leekscript) language.
 
+## Requirements
+- Java 25 (OpenJDK or Amazon Corretto)
+- Gradle 9.x
+
 ## Build
 ```
 gradle jar
