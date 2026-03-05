@@ -86,8 +86,23 @@ public class Order {
 		return leeks.get((position + 1) % leeks.size());
 	}
 
+	public Entity getNextPlayer(Entity entity) {
+		int index = leeks.indexOf(entity);
+		if (index == -1) return null;
+		return leeks.get((index + 1) % leeks.size());
+	}
+
 	public Entity getPreviousPlayer() {
 		int p = position - 1;
+		if (p < 0)
+			p += leeks.size();
+		return leeks.get(p);
+	}
+
+	public Entity getPreviousPlayer(Entity entity) {
+		int index = leeks.indexOf(entity);
+		if (index == -1) return null;
+		int p = index - 1;
 		if (p < 0)
 			p += leeks.size();
 		return leeks.get(p);

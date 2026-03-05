@@ -385,8 +385,14 @@ public class FightFunctions {
 		method("getAliveAlliesCount", "Fight", 100, true, Type.INT, new Type[0]);
 		method("getDeadAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAlliesCount", "Fight", 25, true, Type.INT, new Type[0]);
-		method("getNextPlayer", "Fight", 20, true, Type.INT, new Type[0]);
-		method("getPreviousPlayer", "Fight", 20, true, Type.INT, new Type[0]);
+		method("getNextPlayer", "Fight", 20, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
+		method("getPreviousPlayer", "Fight", 20, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
 		method("getCellToUseWeapon", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),

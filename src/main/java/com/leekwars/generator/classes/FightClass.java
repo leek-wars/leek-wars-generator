@@ -340,8 +340,34 @@ public class FightClass {
 		return ai.getFight().getOrder().getNextPlayer().getFId();
 	}
 
+	public static Long getNextPlayer(EntityAI ai, Object value) {
+		if (value == null)
+			return (long) ai.getFight().getOrder().getNextPlayer().getFId();
+		if (value instanceof Number) {
+			var entity = ai.getFight().getEntity(((Number) value).intValue());
+			if (entity != null) {
+				var next = ai.getFight().getOrder().getNextPlayer(entity);
+				if (next != null) return (long) next.getFId();
+			}
+		}
+		return null;
+	}
+
 	public static long getPreviousPlayer(EntityAI ai) {
 		return ai.getFight().getOrder().getPreviousPlayer().getFId();
+	}
+
+	public static Long getPreviousPlayer(EntityAI ai, Object value) {
+		if (value == null)
+			return (long) ai.getFight().getOrder().getPreviousPlayer().getFId();
+		if (value instanceof Number) {
+			var entity = ai.getFight().getEntity(((Number) value).intValue());
+			if (entity != null) {
+				var prev = ai.getFight().getOrder().getPreviousPlayer(entity);
+				if (prev != null) return (long) prev.getFId();
+			}
+		}
+		return null;
 	}
 
 	public static long getCellToUseWeapon(EntityAI ai, long value1) throws LeekRunException {
