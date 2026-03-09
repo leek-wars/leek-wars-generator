@@ -10,8 +10,8 @@ public class EffectAbsoluteShield extends Effect {
 
 		value = (int) Math.round((value1 + jet * value2) * (1 + caster.getResistance() / 100.0) * aoe * criticalPower);
 		if (value > 0) {
-			stats.setStat(Entity.CHARAC_ABSOLUTE_SHIELD, value);
-			target.updateBuffStats(Entity.CHARAC_ABSOLUTE_SHIELD, value, caster);
+			stats.setStat(Entity.STAT_ABSOLUTE_SHIELD, value);
+			target.updateBuffStats(Entity.STAT_ABSOLUTE_SHIELD, value, caster);
 		}
 	}
 }

@@ -10,8 +10,8 @@ public class EffectRawBuffMagic extends Effect {
 
 		value = (int) Math.round((value1 + jet * value2) * aoe * criticalPower);
 		if (value > 0) {
-			stats.setStat(Entity.CHARAC_MAGIC, value);
-			target.updateBuffStats(Entity.CHARAC_MAGIC, value, caster);
+			stats.setStat(Entity.STAT_MAGIC, value);
+			target.updateBuffStats(Entity.STAT_MAGIC, value, caster);
 		}
 	}
 }

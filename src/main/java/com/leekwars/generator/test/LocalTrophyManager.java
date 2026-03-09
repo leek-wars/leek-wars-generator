@@ -252,7 +252,7 @@ public class LocalTrophyManager implements StatisticsManager {
 	}
 
 	@Override
-	public void updateCharacteristic(Entity entity, int characteristic, int delta, Entity caster) {
+	public void updateStat(Entity entity, int characteristic, int delta, Entity caster) {
 		// TODO Auto-generated method stub
 
 	}

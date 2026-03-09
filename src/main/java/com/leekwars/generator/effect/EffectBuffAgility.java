@@ -10,8 +10,8 @@ public class EffectBuffAgility extends Effect {
 
 		value = (int) Math.round((value1 + value2 * jet) * (1 + (double) caster.getScience() / 100) * aoe * criticalPower);
 		if (value > 0) {
-			stats.setStat(Entity.CHARAC_AGILITY, value);
-			target.updateBuffStats(Entity.CHARAC_AGILITY, value, caster);
+			stats.setStat(Entity.STAT_AGILITY, value);
+			target.updateBuffStats(Entity.STAT_AGILITY, value, caster);
 		}
 	}
 }

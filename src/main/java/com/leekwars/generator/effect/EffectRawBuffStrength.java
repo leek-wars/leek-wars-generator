@@ -10,8 +10,8 @@ public class EffectRawBuffStrength extends Effect {
 
 		value = (int) Math.round((value1 + jet * value2) * aoe * criticalPower);
 		if (value > 0) {
-			stats.setStat(Entity.CHARAC_STRENGTH, value);
-			target.updateBuffStats(Entity.CHARAC_STRENGTH, value, caster);
+			stats.setStat(Entity.STAT_STRENGTH, value);
+			target.updateBuffStats(Entity.STAT_STRENGTH, value, caster);
 		}
 	}
 }

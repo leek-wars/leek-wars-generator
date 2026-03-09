@@ -42,23 +42,23 @@ public abstract class Entity {
 	public static final int TYPE_CHEST = 3;
 	public static final int TYPE_MOB = 4;
 
-	// Characteristics constants
-	public final static int CHARAC_LIFE = 0;
-	public final static int CHARAC_TP = 1;
-	public final static int CHARAC_MP = 2;
-	public final static int CHARAC_STRENGTH = 3;
-	public final static int CHARAC_AGILITY = 4;
-	public final static int CHARAC_FREQUENCY = 5;
-	public final static int CHARAC_WISDOM = 6;
-	public final static int CHARAC_ABSOLUTE_SHIELD = 9;
-	public final static int CHARAC_RELATIVE_SHIELD = 10;
-	public final static int CHARAC_RESISTANCE = 11;
-	public final static int CHARAC_SCIENCE = 12;
-	public final static int CHARAC_MAGIC = 13;
-	public final static int CHARAC_DAMAGE_RETURN = 14;
-	public final static int CHARAC_POWER = 15;
-	public final static int CHARAC_CORES = 16;
-	public final static int CHARAC_RAM = 17;
+	// Stats constants
+	public final static int STAT_LIFE = 0;
+	public final static int STAT_TP = 1;
+	public final static int STAT_MP = 2;
+	public final static int STAT_STRENGTH = 3;
+	public final static int STAT_AGILITY = 4;
+	public final static int STAT_FREQUENCY = 5;
+	public final static int STAT_WISDOM = 6;
+	public final static int STAT_ABSOLUTE_SHIELD = 9;
+	public final static int STAT_RELATIVE_SHIELD = 10;
+	public final static int STAT_RESISTANCE = 11;
+	public final static int STAT_SCIENCE = 12;
+	public final static int STAT_MAGIC = 13;
+	public final static int STAT_DAMAGE_RETURN = 14;
+	public final static int STAT_POWER = 15;
+	public final static int STAT_CORES = 16;
+	public final static int STAT_RAM = 17;
 
 	// Characteristics
 	protected Cell cell;
@@ -144,20 +144,20 @@ public abstract class Entity {
 
 		mBuffStats = new Stats();
 		mBaseStats = new Stats();
-		mBaseStats.setStat(CHARAC_LIFE, life);
-		mBaseStats.setStat(CHARAC_TP, turn_point);
-		mBaseStats.setStat(CHARAC_MP, move_point);
-		mBaseStats.setStat(CHARAC_STRENGTH, force);
-		mBaseStats.setStat(CHARAC_AGILITY, agility);
-		mBaseStats.setStat(CHARAC_FREQUENCY, frequency);
-		mBaseStats.setStat(CHARAC_WISDOM, wisdom);
-		mBaseStats.setStat(CHARAC_RESISTANCE, resistance);
-		mBaseStats.setStat(CHARAC_SCIENCE, science);
-		mBaseStats.setStat(CHARAC_MAGIC, magic);
-		mBaseStats.setStat(CHARAC_CORES, cores);
-		mBaseStats.setStat(CHARAC_RAM, ram);
+		mBaseStats.setStat(STAT_LIFE, life);
+		mBaseStats.setStat(STAT_TP, turn_point);
+		mBaseStats.setStat(STAT_MP, move_point);
+		mBaseStats.setStat(STAT_STRENGTH, force);
+		mBaseStats.setStat(STAT_AGILITY, agility);
+		mBaseStats.setStat(STAT_FREQUENCY, frequency);
+		mBaseStats.setStat(STAT_WISDOM, wisdom);
+		mBaseStats.setStat(STAT_RESISTANCE, resistance);
+		mBaseStats.setStat(STAT_SCIENCE, science);
+		mBaseStats.setStat(STAT_MAGIC, magic);
+		mBaseStats.setStat(STAT_CORES, cores);
+		mBaseStats.setStat(STAT_RAM, ram);
 
-		mTotalLife = mBaseStats.getStat(CHARAC_LIFE);
+		mTotalLife = mBaseStats.getStat(STAT_LIFE);
 		mInitialLife = mTotalLife;
 		this.life = mTotalLife;
 
@@ -183,20 +183,20 @@ public abstract class Entity {
 
 		mBuffStats = new Stats();
 		mBaseStats = new Stats();
-		mBaseStats.setStat(CHARAC_LIFE, 0);
-		mBaseStats.setStat(CHARAC_TP, 0);
-		mBaseStats.setStat(CHARAC_MP, 0);
-		mBaseStats.setStat(CHARAC_STRENGTH, 0);
-		mBaseStats.setStat(CHARAC_AGILITY, 0);
-		mBaseStats.setStat(CHARAC_FREQUENCY, 0);
-		mBaseStats.setStat(CHARAC_WISDOM, 0);
-		mBaseStats.setStat(CHARAC_RESISTANCE, 0);
-		mBaseStats.setStat(CHARAC_SCIENCE, 0);
-		mBaseStats.setStat(CHARAC_MAGIC, 0);
-		mBaseStats.setStat(CHARAC_CORES, 0);
-		mBaseStats.setStat(CHARAC_RAM, 0);
+		mBaseStats.setStat(STAT_LIFE, 0);
+		mBaseStats.setStat(STAT_TP, 0);
+		mBaseStats.setStat(STAT_MP, 0);
+		mBaseStats.setStat(STAT_STRENGTH, 0);
+		mBaseStats.setStat(STAT_AGILITY, 0);
+		mBaseStats.setStat(STAT_FREQUENCY, 0);
+		mBaseStats.setStat(STAT_WISDOM, 0);
+		mBaseStats.setStat(STAT_RESISTANCE, 0);
+		mBaseStats.setStat(STAT_SCIENCE, 0);
+		mBaseStats.setStat(STAT_MAGIC, 0);
+		mBaseStats.setStat(STAT_CORES, 0);
+		mBaseStats.setStat(STAT_RAM, 0);
 
-		mTotalLife = mBaseStats.getStat(CHARAC_LIFE);
+		mTotalLife = mBaseStats.getStat(STAT_LIFE);
 		this.life = mTotalLife;
 
 		mWeapons = new ArrayList<Weapon>();
@@ -380,59 +380,59 @@ public abstract class Entity {
 	}
 
 	public int getStrength() {
-		return getStat(Entity.CHARAC_STRENGTH);
+		return getStat(Entity.STAT_STRENGTH);
 	}
 
 	public int getAgility() {
-		return getStat(Entity.CHARAC_AGILITY);
+		return getStat(Entity.STAT_AGILITY);
 	}
 
 	public int getResistance() {
-		return getStat(Entity.CHARAC_RESISTANCE);
+		return getStat(Entity.STAT_RESISTANCE);
 	}
 
 	public int getScience() {
-		return getStat(Entity.CHARAC_SCIENCE);
+		return getStat(Entity.STAT_SCIENCE);
 	}
 
 	public int getMagic() {
-		return getStat(Entity.CHARAC_MAGIC);
+		return getStat(Entity.STAT_MAGIC);
 	}
 
 	public int getWisdom() {
-		return getStat(Entity.CHARAC_WISDOM);
+		return getStat(Entity.STAT_WISDOM);
 	}
 
 	public int getRelativeShield() {
-		return getStat(Entity.CHARAC_RELATIVE_SHIELD);
+		return getStat(Entity.STAT_RELATIVE_SHIELD);
 	}
 
 	public int getAbsoluteShield() {
-		return getStat(Entity.CHARAC_ABSOLUTE_SHIELD);
+		return getStat(Entity.STAT_ABSOLUTE_SHIELD);
 	}
 
 	public int getDamageReturn() {
-		return getStat(Entity.CHARAC_DAMAGE_RETURN);
+		return getStat(Entity.STAT_DAMAGE_RETURN);
 	}
 
 	public int getFrequency() {
-		return getStat(Entity.CHARAC_FREQUENCY);
+		return getStat(Entity.STAT_FREQUENCY);
 	}
 
 	public int getCores() {
-		return getStat(Entity.CHARAC_CORES);
+		return getStat(Entity.STAT_CORES);
 	}
 
 	public int getRAM() {
-		return getStat(Entity.CHARAC_RAM);
+		return getStat(Entity.STAT_RAM);
 	}
 
 	public int getTotalTP() {
-		return getStat(Entity.CHARAC_TP);
+		return getStat(Entity.STAT_TP);
 	}
 
 	public int getTotalMP() {
-		return getStat(Entity.CHARAC_MP);
+		return getStat(Entity.STAT_MP);
 	}
 
 	public int getMP() {
@@ -444,7 +444,7 @@ public abstract class Entity {
 	}
 
 	public int getPower() {
-		return getStat(Entity.CHARAC_POWER);
+		return getStat(Entity.STAT_POWER);
 	}
 
 	public int getTeam() {
@@ -753,7 +753,7 @@ public abstract class Entity {
 	public void updateBuffStats(int id, int delta, Entity caster) {
 		mBuffStats.updateStat(id, delta);
 		state.statistics.characteristics(this);
-		state.statistics.updateCharacteristic(this, id, delta, caster);
+		state.statistics.updateStat(this, id, delta, caster);
 	}
 
 	public void addEffect(Effect effect) {
@@ -977,41 +977,41 @@ public abstract class Entity {
 	}
 
 	public void setLife(int life) {
-		mBaseStats.setStat(CHARAC_LIFE, life);
+		mBaseStats.setStat(STAT_LIFE, life);
 		this.life = life;
 	}
 	public void setStrength(int strength) {
-		mBaseStats.setStat(CHARAC_STRENGTH, strength);
+		mBaseStats.setStat(STAT_STRENGTH, strength);
 	}
 	public void setAgility(int agility) {
-		mBaseStats.setStat(CHARAC_AGILITY, agility);
+		mBaseStats.setStat(STAT_AGILITY, agility);
 	}
 	public void setWisdom(int wisdom) {
-		mBaseStats.setStat(CHARAC_WISDOM, wisdom);
+		mBaseStats.setStat(STAT_WISDOM, wisdom);
 	}
 	public void setResistance(int resistance) {
-		mBaseStats.setStat(CHARAC_RESISTANCE, resistance);
+		mBaseStats.setStat(STAT_RESISTANCE, resistance);
 	}
 	public void setScience(int science) {
-		mBaseStats.setStat(CHARAC_SCIENCE, science);
+		mBaseStats.setStat(STAT_SCIENCE, science);
 	}
 	public void setMagic(int magic) {
-		mBaseStats.setStat(CHARAC_MAGIC, magic);
+		mBaseStats.setStat(STAT_MAGIC, magic);
 	}
 	public void setFrequency(int frequency) {
-		mBaseStats.setStat(CHARAC_FREQUENCY, frequency);
+		mBaseStats.setStat(STAT_FREQUENCY, frequency);
 	}
 	public void setCores(int cores) {
-		mBaseStats.setStat(CHARAC_CORES, cores);
+		mBaseStats.setStat(STAT_CORES, cores);
 	}
 	public void setRAM(int ram) {
-		mBaseStats.setStat(CHARAC_RAM, ram);
+		mBaseStats.setStat(STAT_RAM, ram);
 	}
 	public void setTP(int tp) {
-		mBaseStats.setStat(CHARAC_TP, tp);
+		mBaseStats.setStat(STAT_TP, tp);
 	}
 	public void setMP(int mp) {
-		mBaseStats.setStat(CHARAC_MP, mp);
+		mBaseStats.setStat(STAT_MP, mp);
 	}
 	public void setFarmer(int farmer) {
 		this.mFarmer = farmer;
@@ -1123,11 +1123,11 @@ public abstract class Entity {
 	}
 
 	public void setRelativeShield(int shield) {
-		this.mBaseStats.setStat(CHARAC_RELATIVE_SHIELD, shield);
+		this.mBaseStats.setStat(STAT_RELATIVE_SHIELD, shield);
 	}
 
 	public void setAbsoluteShield(int shield) {
-		this.mBaseStats.setStat(CHARAC_ABSOLUTE_SHIELD, shield);
+		this.mBaseStats.setStat(STAT_ABSOLUTE_SHIELD, shield);
 	}
 
 	public boolean hasState(EntityState state) {

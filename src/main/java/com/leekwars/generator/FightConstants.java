@@ -4,6 +4,7 @@ import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.state.Entity;
 
 import leekscript.common.Type;
 import leekscript.runner.ILeekConstant;
@@ -368,7 +369,25 @@ public enum FightConstants implements ILeekConstant {
 	BOSS_EVIL_PUMPKIN(3, Type.INT),
 
 	SUMMON_LIMIT(Fight.SUMMON_LIMIT, Type.INT),
-	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, Type.REAL);
+	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, Type.REAL),
+
+	// Stats
+	STAT_LIFE(Entity.STAT_LIFE, Type.INT),
+	STAT_TP(Entity.STAT_TP, Type.INT),
+	STAT_MP(Entity.STAT_MP, Type.INT),
+	STAT_STRENGTH(Entity.STAT_STRENGTH, Type.INT),
+	STAT_AGILITY(Entity.STAT_AGILITY, Type.INT),
+	STAT_FREQUENCY(Entity.STAT_FREQUENCY, Type.INT),
+	STAT_WISDOM(Entity.STAT_WISDOM, Type.INT),
+	STAT_ABSOLUTE_SHIELD(Entity.STAT_ABSOLUTE_SHIELD, Type.INT),
+	STAT_RELATIVE_SHIELD(Entity.STAT_RELATIVE_SHIELD, Type.INT),
+	STAT_RESISTANCE(Entity.STAT_RESISTANCE, Type.INT),
+	STAT_SCIENCE(Entity.STAT_SCIENCE, Type.INT),
+	STAT_MAGIC(Entity.STAT_MAGIC, Type.INT),
+	STAT_DAMAGE_RETURN(Entity.STAT_DAMAGE_RETURN, Type.INT),
+	STAT_POWER(Entity.STAT_POWER, Type.INT),
+	STAT_CORES(Entity.STAT_CORES, Type.INT),
+	STAT_RAM(Entity.STAT_RAM, Type.INT);
 
 	private double value;
 	private Type type;

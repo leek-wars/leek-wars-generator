@@ -10,8 +10,8 @@ public class EffectRawBuffScience extends Effect {
 
 		value = (int) Math.round((value1 + jet * value2) * aoe * criticalPower);
 		if (value > 0) {
-			stats.setStat(Entity.CHARAC_SCIENCE, value);
-			target.updateBuffStats(Entity.CHARAC_SCIENCE, value, caster);
+			stats.setStat(Entity.STAT_SCIENCE, value);
+			target.updateBuffStats(Entity.STAT_SCIENCE, value, caster);
 		}
 	}
 }

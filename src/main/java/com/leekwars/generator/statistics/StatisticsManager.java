@@ -20,7 +20,7 @@ public interface StatisticsManager {
 	public void teleportation(Entity entity, Entity caster, Cell start, Cell end);
 	public void lama(Entity entity);
 	public void characteristics(Entity entity);
-	public void updateCharacteristic(Entity entity, int characteristic, int delta, Entity caster);
+	public void updateStat(Entity entity, int characteristic, int delta, Entity caster);
 	public void tooMuchOperations(Entity entity);
 	public void stackOverflow(Entity entity);
 	public void damage(Entity entity, Entity attacker, int damage, DamageType direct, Effect effect);

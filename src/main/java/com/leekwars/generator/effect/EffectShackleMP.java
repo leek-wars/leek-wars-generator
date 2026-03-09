@@ -10,8 +10,8 @@ public class EffectShackleMP extends Effect {
 		// Base shackle : base × (1 + magic / 100)
 		value = (int) Math.round((value1 + jet * value2) * (1.0 + Math.max(0, caster.getMagic()) / 100.0) * aoe * criticalPower);
 		if (value > 0) {
-			stats.setStat(Entity.CHARAC_MP, -value);
-			target.updateBuffStats(Entity.CHARAC_MP, -value, caster);
+			stats.setStat(Entity.STAT_MP, -value);
+			target.updateBuffStats(Entity.STAT_MP, -value, caster);
 		}
 	}
 }

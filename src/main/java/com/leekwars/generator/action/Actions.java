@@ -85,13 +85,13 @@ public class Actions {
 		object.put("face", entity.getFace());
 
 		object.put("life", entity.getLife());
-		object.put("strength", entity.getStat(Entity.CHARAC_STRENGTH));
-		object.put("wisdom", entity.getStat(Entity.CHARAC_WISDOM));
-		object.put("agility", entity.getStat(Entity.CHARAC_AGILITY));
-		object.put("resistance", entity.getStat(Entity.CHARAC_RESISTANCE));
-		object.put("frequency", entity.getStat(Entity.CHARAC_FREQUENCY));
-		object.put("science", entity.getStat(Entity.CHARAC_SCIENCE));
-		object.put("magic", entity.getStat(Entity.CHARAC_MAGIC));
+		object.put("strength", entity.getStat(Entity.STAT_STRENGTH));
+		object.put("wisdom", entity.getStat(Entity.STAT_WISDOM));
+		object.put("agility", entity.getStat(Entity.STAT_AGILITY));
+		object.put("resistance", entity.getStat(Entity.STAT_RESISTANCE));
+		object.put("frequency", entity.getStat(Entity.STAT_FREQUENCY));
+		object.put("science", entity.getStat(Entity.STAT_SCIENCE));
+		object.put("magic", entity.getStat(Entity.STAT_MAGIC));
 		object.put("tp", entity.getTP());
 		object.put("mp", entity.getMP());
 

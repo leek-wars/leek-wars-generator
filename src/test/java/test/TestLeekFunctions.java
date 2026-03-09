@@ -81,17 +81,17 @@ public class TestLeekFunctions {
 
 		// Test getForce
 		codes.add("getForce()");
-		values.add(mLeek1.getStat(Entity.CHARAC_STRENGTH));
+		values.add(mLeek1.getStat(Entity.STAT_STRENGTH));
 		codes.add("getForce(" + mLeek2.getFId() + ")");
-		values.add(mLeek2.getStat(Entity.CHARAC_STRENGTH));
+		values.add(mLeek2.getStat(Entity.STAT_STRENGTH));
 		codes.add("getForce(-1)");
 		values.add(null);
 
 		// Test getAgility
 		codes.add("getAgility()");
-		values.add(mLeek1.getStat(Entity.CHARAC_AGILITY));
+		values.add(mLeek1.getStat(Entity.STAT_AGILITY));
 		codes.add("getAgility(" + mLeek2.getFId() + ")");
-		values.add(mLeek2.getStat(Entity.CHARAC_AGILITY));
+		values.add(mLeek2.getStat(Entity.STAT_AGILITY));
 		codes.add("getAgility(-1)");
 		values.add(null);
 
@@ -137,9 +137,9 @@ public class TestLeekFunctions {
 
 		// Test getTotalLife
 		codes.add("getTotalLife()");
-		values.add(mLeek1.getStat(Entity.CHARAC_LIFE));
+		values.add(mLeek1.getStat(Entity.STAT_LIFE));
 		codes.add("getTotalLife(" + mLeek2.getFId() + ")");
-		values.add(mLeek2.getStat(Entity.CHARAC_LIFE));
+		values.add(mLeek2.getStat(Entity.STAT_LIFE));
 		codes.add("getTotalLife(-1)");
 		values.add(null);
 
@@ -213,9 +213,9 @@ public class TestLeekFunctions {
 
 		// Test getFrequency
 		codes.add("getFrequency()");
-		values.add(mLeek1.getStat(Entity.CHARAC_FREQUENCY));
+		values.add(mLeek1.getStat(Entity.STAT_FREQUENCY));
 		codes.add("getFrequency(" + mLeek2.getFId() + ")");
-		values.add(mLeek2.getStat(Entity.CHARAC_FREQUENCY));
+		values.add(mLeek2.getStat(Entity.STAT_FREQUENCY));
 		codes.add("getFrequency(-1)");
 		values.add(null);
 

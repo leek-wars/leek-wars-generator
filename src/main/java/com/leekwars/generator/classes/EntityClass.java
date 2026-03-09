@@ -233,6 +233,21 @@ public class EntityClass {
 		return null;
 	}
 
+	public static long getStat(EntityAI ai, long stat) {
+		return (long) ai.getEntity().getStat((int) stat);
+	}
+
+	public static Long getStat(EntityAI ai, Object entity, long stat) {
+		if (entity == null)
+			return (long) ai.getEntity().getStat((int) stat);
+		if (entity instanceof Number) {
+			var l = ai.getFight().getEntity(((Number) entity).intValue());
+			if (l != null)
+				return (long) l.getStat((int) stat);
+		}
+		return null;
+	}
+
 	public static Long getCell(EntityAI ai) throws LeekRunException {
 		if (ai.getEntity().getCell() != null)
 			return (long) ai.getEntity().getCell().getId();

@@ -344,18 +344,18 @@ public abstract class Effect implements Cloneable {
 
 	public void applyStartTurn(State state) {}
 
-	public static int getEffectCharacteristic(int type) {
+	public static int getEffectStat(int type) {
 		switch (type) {
 			case TYPE_DAMAGE:
-				return Entity.CHARAC_STRENGTH;
+				return Entity.STAT_STRENGTH;
 			case TYPE_POISON:
 			case TYPE_SHACKLE_MAGIC:
 			case TYPE_SHACKLE_STRENGTH:
 			case TYPE_SHACKLE_MP:
 			case TYPE_SHACKLE_TP:
-				return Entity.CHARAC_MAGIC;
+				return Entity.STAT_MAGIC;
 			case TYPE_LIFE_DAMAGE:
-				return Entity.CHARAC_LIFE;
+				return Entity.STAT_LIFE;
 			case TYPE_NOVA_DAMAGE:
 			case TYPE_BUFF_AGILITY:
 			case TYPE_BUFF_STRENGTH:
@@ -363,15 +363,15 @@ public abstract class Effect implements Cloneable {
 			case TYPE_BUFF_TP:
 			case TYPE_BUFF_RESISTANCE:
 			case TYPE_BUFF_WISDOM:
-				return Entity.CHARAC_SCIENCE;
+				return Entity.STAT_SCIENCE;
 			case TYPE_DAMAGE_RETURN:
-				return Entity.CHARAC_AGILITY;
+				return Entity.STAT_AGILITY;
 			case TYPE_HEAL:
 			case TYPE_VITALITY:
-				return Entity.CHARAC_WISDOM;
+				return Entity.STAT_WISDOM;
 			case TYPE_RELATIVE_SHIELD:
 			case TYPE_ABSOLUTE_SHIELD:
-				return Entity.CHARAC_RESISTANCE;
+				return Entity.STAT_RESISTANCE;
 		}
 		return -1;
 	}

@@ -822,22 +822,22 @@ public class FightClass {
 		return null;
 	}
 
-	public static MapLeekValue getBulbCharacteristics(EntityAI ai, long id) throws LeekRunException {
+	public static MapLeekValue getBulbStats(EntityAI ai, long id) throws LeekRunException {
 		if (id > 0) {
 			Chip chip = Chips.getChip((int) id);
 			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
 				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
 				if (template != null) {
 					var map = new MapLeekValue(ai);
-					map.set(ai, (long) Entity.CHARAC_LIFE, makeRange(ai, template.getMinLife(), template.getMaxLife()));
-					map.set(ai, (long) Entity.CHARAC_STRENGTH, makeRange(ai, template.getMinStrength(), template.getMaxStrength()));
-					map.set(ai, (long) Entity.CHARAC_WISDOM, makeRange(ai, template.getMinWisdom(), template.getMaxWisdom()));
-					map.set(ai, (long) Entity.CHARAC_AGILITY, makeRange(ai, template.getMinAgility(), template.getMaxAgility()));
-					map.set(ai, (long) Entity.CHARAC_RESISTANCE, makeRange(ai, template.getMinResistance(), template.getMaxResistance()));
-					map.set(ai, (long) Entity.CHARAC_SCIENCE, makeRange(ai, template.getMinScience(), template.getMaxScience()));
-					map.set(ai, (long) Entity.CHARAC_MAGIC, makeRange(ai, template.getMinMagic(), template.getMaxMagic()));
-					map.set(ai, (long) Entity.CHARAC_TP, makeRange(ai, template.getMinTp(), template.getMaxTp()));
-					map.set(ai, (long) Entity.CHARAC_MP, makeRange(ai, template.getMinMp(), template.getMaxMp()));
+					map.set(ai, (long) Entity.STAT_LIFE, makeRange(ai, template.getMinLife(), template.getMaxLife()));
+					map.set(ai, (long) Entity.STAT_STRENGTH, makeRange(ai, template.getMinStrength(), template.getMaxStrength()));
+					map.set(ai, (long) Entity.STAT_WISDOM, makeRange(ai, template.getMinWisdom(), template.getMaxWisdom()));
+					map.set(ai, (long) Entity.STAT_AGILITY, makeRange(ai, template.getMinAgility(), template.getMaxAgility()));
+					map.set(ai, (long) Entity.STAT_RESISTANCE, makeRange(ai, template.getMinResistance(), template.getMaxResistance()));
+					map.set(ai, (long) Entity.STAT_SCIENCE, makeRange(ai, template.getMinScience(), template.getMaxScience()));
+					map.set(ai, (long) Entity.STAT_MAGIC, makeRange(ai, template.getMinMagic(), template.getMaxMagic()));
+					map.set(ai, (long) Entity.STAT_TP, makeRange(ai, template.getMinTp(), template.getMaxTp()));
+					map.set(ai, (long) Entity.STAT_MP, makeRange(ai, template.getMinMp(), template.getMaxMp()));
 					return map;
 				}
 			}
