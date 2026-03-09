@@ -37,10 +37,18 @@ public class Bulb extends Entity {
 	}
 
 	public static Bulb create(Entity owner, int id, int type, int level, boolean critical) {
+		return create(owner, id, type, level, critical, null);
+	}
+
+	public static Bulb create(Entity owner, int id, int type, int level, boolean critical, String name) {
 
 		BulbTemplate bulb_template = Bulbs.getInvocationTemplate(type);
 		if (bulb_template != null) {
-			return bulb_template.createInvocation(owner, id, level, critical);
+			Bulb bulb = bulb_template.createInvocation(owner, id, level, critical);
+			if (bulb != null && name != null && !name.isEmpty()) {
+				bulb.setName(name.length() > 20 ? name.substring(0, 20) : name);
+			}
+			return bulb;
 		} else {
 			// Log.e(TAG, "Invocation " + type + " inexistante");
 		}

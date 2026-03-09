@@ -243,6 +243,10 @@ public class ChipClass {
 	}
 
 	public static long summon(EntityAI ai, long chip, long cell, FunctionLeekValue summonAI) throws LeekRunException {
+		return summon(ai, chip, cell, summonAI, null);
+	}
+
+	public static long summon(EntityAI ai, long chip, long cell, FunctionLeekValue summonAI, String name) throws LeekRunException {
 
 		int success = -1;
 
@@ -264,7 +268,7 @@ public class ChipClass {
 		}
 
 		if (target != null && template != null) {
-			success = ai.getFight().summonEntity(ai.getEntity(), target, template, (FunctionLeekValue) summonAI);
+			success = ai.getFight().summonEntity(ai.getEntity(), target, template, (FunctionLeekValue) summonAI, name);
 		}
 		return success;
 	}

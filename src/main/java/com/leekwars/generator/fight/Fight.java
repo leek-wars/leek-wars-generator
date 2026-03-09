@@ -331,8 +331,12 @@ public class Fight {
 	}
 
 	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value) {
+		return summonEntity(caster, target, template, value, null);
+	}
 
-		int result = state.summonEntity(caster, target, template);
+	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value, String name) {
+
+		int result = state.summonEntity(caster, target, template, name);
 
 		// On assigne l'ia de l'invocation
 		if (result > 0) {

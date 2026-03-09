@@ -768,6 +768,10 @@ public class State {
 	}
 
 	public int summonEntity(Entity caster, Cell target, Chip template) {
+		return summonEntity(caster, target, template, null);
+	}
+
+	public int summonEntity(Entity caster, Cell target, Chip template, String name) {
 
 		EffectParameters params = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);
 		if (order.current() != caster || params == null) {
@@ -797,7 +801,7 @@ public class State {
 		if (critical) caster.onCritical();
 
 		// On invoque
-		Entity summon = createSummon(caster, (int) params.getValue1(), target, template.getLevel(), critical);
+		Entity summon = createSummon(caster, (int) params.getValue1(), target, template.getLevel(), critical, name);
 
 		// On balance l'action
 		actions.log(new ActionInvocation(summon, result));
@@ -870,9 +874,13 @@ public class State {
 	}
 
 	public Bulb createSummon(Entity owner, int type, Cell target, int level, boolean critical) {
+		return createSummon(owner, type, target, level, critical, null);
+	}
+
+	public Bulb createSummon(Entity owner, int type, Cell target, int level, boolean critical, String name) {
 
 		int fid = getNextEntityId();
-		Bulb invoc = Bulb.create(owner, -fid, type, level, critical);
+		Bulb invoc = Bulb.create(owner, -fid, type, level, critical, name);
 		invoc.setState(this, fid);
 
 		int team = owner.getTeam();
