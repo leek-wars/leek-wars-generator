@@ -20,6 +20,7 @@ import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
+import leekscript.runner.values.MapLeekValue;
 
 public class FightClass {
 
@@ -819,6 +820,36 @@ public class FightClass {
 			}
 		}
 		return null;
+	}
+
+	public static MapLeekValue getBulbCharacs(EntityAI ai, long id) throws LeekRunException {
+		if (id > 0) {
+			Chip chip = Chips.getChip((int) id);
+			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
+				var template = Bulbs.getInvocationTemplate((int) chip.getAttack().getEffects().get(0).getValue1());
+				if (template != null) {
+					var map = new MapLeekValue(ai);
+					map.set(ai, (long) Entity.CHARAC_LIFE, makeRange(ai, template.getMinLife(), template.getMaxLife()));
+					map.set(ai, (long) Entity.CHARAC_STRENGTH, makeRange(ai, template.getMinStrength(), template.getMaxStrength()));
+					map.set(ai, (long) Entity.CHARAC_WISDOM, makeRange(ai, template.getMinWisdom(), template.getMaxWisdom()));
+					map.set(ai, (long) Entity.CHARAC_AGILITY, makeRange(ai, template.getMinAgility(), template.getMaxAgility()));
+					map.set(ai, (long) Entity.CHARAC_RESISTANCE, makeRange(ai, template.getMinResistance(), template.getMaxResistance()));
+					map.set(ai, (long) Entity.CHARAC_SCIENCE, makeRange(ai, template.getMinScience(), template.getMaxScience()));
+					map.set(ai, (long) Entity.CHARAC_MAGIC, makeRange(ai, template.getMinMagic(), template.getMaxMagic()));
+					map.set(ai, (long) Entity.CHARAC_TP, makeRange(ai, template.getMinTp(), template.getMaxTp()));
+					map.set(ai, (long) Entity.CHARAC_MP, makeRange(ai, template.getMinMp(), template.getMaxMp()));
+					return map;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static ArrayLeekValue makeRange(EntityAI ai, int min, int max) throws LeekRunException {
+		var arr = new ArrayLeekValue(ai, 2);
+		arr.push(ai, (long) min);
+		arr.push(ai, (long) max);
+		return arr;
 	}
 
 	public static Long getEntityTurnOrder(EntityAI ai, Object value) {

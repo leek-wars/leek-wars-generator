@@ -130,4 +130,23 @@ public class BulbTemplate {
 	public ArrayList<Chip> getChips() {
 		return mChips;
 	}
+
+	public int getMinLife() { return mMinLife; }
+	public int getMaxLife() { return mMaxLife; }
+	public int getMinStrength() { return mMinStrength; }
+	public int getMaxStrength() { return mMaxStrength; }
+	public int getMinWisdom() { return mMinWisdom; }
+	public int getMaxWisdom() { return mMaxWisdom; }
+	public int getMinAgility() { return mMinAgility; }
+	public int getMaxAgility() { return mMaxAgility; }
+	public int getMinResistance() { return mMinResistance; }
+	public int getMaxResistance() { return mMaxResistance; }
+	public int getMinScience() { return mMinScience; }
+	public int getMaxScience() { return mMaxScience; }
+	public int getMinMagic() { return mMinMagic; }
+	public int getMaxMagic() { return mMaxMagic; }
+	public int getMinTp() { return mMinTp; }
+	public int getMaxTp() { return mMaxTp; }
+	public int getMinMp() { return mMinMp; }
+	public int getMaxMp() { return mMaxMp; }
 }
