@@ -371,6 +371,7 @@ public class FightFunctions {
 		 * Fight / Combat
 		 */
 		method("getBulbChips", "Fight", 40, true, Type.ARRAY_OR_NULL, new Type[] { Type.INT });
+		method("getBulbCharacteristics", "Fight", 40, true, Type.MAP, new Type[] { Type.INT });
 		method("getBulbStats", "Fight", 40, true, Type.MAP, new Type[] { Type.INT });
 		method("getBulbType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
