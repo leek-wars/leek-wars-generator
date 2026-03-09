@@ -822,7 +822,7 @@ public class FightClass {
 		return null;
 	}
 
-	public static MapLeekValue getBulbCharacs(EntityAI ai, long id) throws LeekRunException {
+	public static MapLeekValue getBulbCharacteristics(EntityAI ai, long id) throws LeekRunException {
 		if (id > 0) {
 			Chip chip = Chips.getChip((int) id);
 			if (chip != null && chip.getAttack().getEffects().get(0).getId() == Effect.TYPE_SUMMON) {
