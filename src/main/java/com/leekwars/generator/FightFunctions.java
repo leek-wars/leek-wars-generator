@@ -377,6 +377,10 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		});
+		method("getMobType", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
 		method("getNearestEnemy", "Fight", 25, true, Type.INT, new Type[0]);
 		method("getFarestEnemy", "Fight", 31, true, Type.INT, new Type[0]).setMaxVersion(3);
 		method("getFarthestEnemy", "Fight", 31, true, Type.INT, new Type[0]);
