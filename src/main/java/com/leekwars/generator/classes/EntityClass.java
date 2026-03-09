@@ -901,6 +901,32 @@ public class EntityClass {
 		return null;
 	}
 
+	public static long getBulbType(EntityAI ai) throws LeekRunException {
+		if (ai.getEntity().getType() == Entity.TYPE_BULB) {
+			return (long) ai.getEntity().getSkin();
+		}
+		return -1;
+	}
+
+	public static Long getBulbType(EntityAI ai, Object value) throws LeekRunException {
+		if (value == null) {
+			if (ai.getEntity().getType() == Entity.TYPE_BULB) {
+				return (long) ai.getEntity().getSkin();
+			}
+			return -1L;
+		}
+		if (value instanceof Number) {
+			var l = ai.getFight().getEntity(((Number) value).intValue());
+			if (l != null) {
+				if (l.getType() == Entity.TYPE_BULB) {
+					return (long) l.getSkin();
+				}
+				return -1L;
+			}
+		}
+		return null;
+	}
+
 	public static boolean isSummon(EntityAI ai) throws LeekRunException {
 		return ai.getEntity().isSummon();
 	}

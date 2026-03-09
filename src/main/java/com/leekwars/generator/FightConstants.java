@@ -24,6 +24,18 @@ public enum FightConstants implements ILeekConstant {
 	ENTITY_CHEST(4, Type.INT),
 	ENTITY_MOB(5, Type.INT),
 
+	// Bulb types
+	BULB_PUNY(1, Type.INT),
+	BULB_FIRE(2, Type.INT),
+	BULB_HEALER(3, Type.INT),
+	BULB_ROCKY(4, Type.INT),
+	BULB_ICED(5, Type.INT),
+	BULB_LIGHTNING(6, Type.INT),
+	BULB_METALLIC(7, Type.INT),
+	BULB_WIZARD(8, Type.INT),
+	BULB_TACTICIAN(11, Type.INT),
+	BULB_SAVANT(12, Type.INT),
+
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, Type.INT),
 	EFFECT_TARGET_ENEMIES(Effect.TARGET_ENEMIES, Type.INT),
