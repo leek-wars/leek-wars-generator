@@ -175,8 +175,8 @@ public class TestLeekFunctions {
 		codes.add("isAlive(-1)");
 		values.add(false);
 
-		// Test getLeek
-		codes.add("getLeek()");
+		// Test getEntity
+		codes.add("getEntity()");
 		values.add(mLeek1.getFId());
 
 		// Test getChips
@@ -288,7 +288,8 @@ public class TestLeekFunctions {
 			if (i != 0)
 				leekscript += ",";
 			leekscript += mCodes.get(i);
-			values[i] = mValues.get(i);
+			// Convert Integer to Long to match LeekScript runtime types
+			values[i] = mValues.get(i) instanceof Integer ? ((Integer) mValues.get(i)).longValue() : mValues.get(i);
 		}
 		leekscript += "];";
 		try {
@@ -296,8 +297,8 @@ public class TestLeekFunctions {
 		} catch (LSException e) {
 			int i = e.getIndex();
 			System.err.println("Erreur :\n" + mCodes.get(i));
-			System.err.println("Valeur attendue :\n" + ai.string(e.getThe()));
-			System.err.println("Valeur renvoyée :\n" + ai.string(e.getRun()));
+			System.err.println("Valeur attendue :\n" + ai.export(e.getThe()));
+			System.err.println("Valeur renvoyée :\n" + ai.export(e.getRun()));
 			return false;
 		}
 	}

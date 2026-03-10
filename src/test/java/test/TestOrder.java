@@ -68,34 +68,33 @@ public class TestOrder {
 	}
 
 	@Test
-	@Ignore
 	public void bootOrderTest() {
 
 		StartOrder order = new StartOrder();
 
 		// Ordre complet
 		Leek l = new Leek(1, "J1 T1");
-		l.setTeam(1);
+		l.setTeam(0);
 		l.getBaseStats().setStat(Entity.STAT_FREQUENCY, 500);
 		order.addEntity(l);
 		Leek l2 = new Leek(2, "J2 T1");
-		l2.setTeam(1);
+		l2.setTeam(0);
 		l2.getBaseStats().setStat(Entity.STAT_FREQUENCY, 800);
 		order.addEntity(l2);
 		Leek l3 = new Leek(3, "J3 T1");
-		l3.setTeam(1);
+		l3.setTeam(0);
 		l3.getBaseStats().setStat(Entity.STAT_FREQUENCY, 480);
 		order.addEntity(l3);
 		Leek l4 = new Leek(4, "J1 T2");
-		l4.setTeam(2);
+		l4.setTeam(1);
 		l4.getBaseStats().setStat(Entity.STAT_FREQUENCY, 360);
 		order.addEntity(l4);
 		Leek l5 = new Leek(5, "J2 T2");
-		l5.setTeam(2);
+		l5.setTeam(1);
 		l5.getBaseStats().setStat(Entity.STAT_FREQUENCY, 100);
 		order.addEntity(l5);
 		Leek l6 = new Leek(6, "J3 T2");
-		l6.setTeam(2);
+		l6.setTeam(1);
 		l6.getBaseStats().setStat(Entity.STAT_FREQUENCY, 130);
 		order.addEntity(l6);
 		var leeks = order.compute(fight.getState());

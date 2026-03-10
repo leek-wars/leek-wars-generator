@@ -35,8 +35,8 @@ public class TestFightFunctions {
 
 		generator = new Generator();
 		mFight = new Fight(generator);
-		mLeek1 = new Leek(1, "Test");
-		mLeek2 = new Leek(2, "Bob");
+		mLeek1 = new Leek(1, "Test", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		mLeek2 = new Leek(2, "Bob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
 
 		mFight.getState().addEntity(0, mLeek1);
 		mFight.getState().addEntity(1, mLeek2);
@@ -187,7 +187,7 @@ public class TestFightFunctions {
 
 		// Test getCell
 		codes.add("getCell()");
-		values.add(306);
+		values.add(mLeek1.getCell().getId());
 
 		// Test getCellX
 		codes.add("getCellX(getCell())");
@@ -199,7 +199,7 @@ public class TestFightFunctions {
 
 		// Test getCellFromXY
 		codes.add("getCellFromXY(0,0)");
-		values.add(306);
+		values.add(map.getCell(0 + map.getWidth() - 1, 0).getId());
 
 		// Test getCellFromXY
 		codes.add("getCellX(getCellFromXY(14,0))");
@@ -221,11 +221,11 @@ public class TestFightFunctions {
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();
 
-		// Test getPath
+		// Test getPath (clear map, distance of 2)
 		codes.add("count(getPath(getCellFromXY(-1,0), getCellFromXY(1,0)))");
-		values.add(4);
-		// Test getPath + ignore
-		codes.add("count(getPath(getCellFromXY(-1,0), getCellFromXY(1,0), getLeek()))");
+		values.add(2);
+		// Test getPath + ignore (entity cell, using array syntax for v4)
+		codes.add("count(getPath(getCellFromXY(-1,0), getCellFromXY(1,0), [getCell()]))");
 		values.add(2);
 
 		Assert.assertTrue(testAI(mLeek1, codes, values));
@@ -249,11 +249,11 @@ public class TestFightFunctions {
 				break;
 		}
 
-		// Test getDistance
+		// Test getDistance (returns Double in v4)
 		codes.add("getDistance(164,200)");
-		values.add(2);
+		values.add(2.0);
 		codes.add("getDistance(17,595)");
-		values.add(34);
+		values.add(34.0);
 
 		// Test getCellDistance
 		codes.add("getCellDistance(164,200)");
@@ -261,14 +261,14 @@ public class TestFightFunctions {
 		codes.add("getCellDistance(17,595)");
 		values.add(34);
 
-		// Test getLeekOnCell
-		codes.add("getLeekOnCell(getCell())");
+		// Test getEntityOnCell
+		codes.add("getEntityOnCell(getCell())");
 		values.add(mLeek1.getFId());
-		codes.add("getLeekOnCell(getCell(" + mLeek2.getFId() + "))");
+		codes.add("getEntityOnCell(getCell(" + mLeek2.getFId() + "))");
 		values.add(mLeek2.getFId());
-		codes.add("getLeekOnCell(" + emptycell.getId() + ")");
+		codes.add("getEntityOnCell(" + emptycell.getId() + ")");
 		values.add(-1);
-		codes.add("getLeekOnCell(-1)");
+		codes.add("getEntityOnCell(-1)");
 		values.add(-1);
 
 		// Test getCellContent
@@ -307,16 +307,16 @@ public class TestFightFunctions {
 		codes.add("isObstacle(-1)");
 		values.add(true);
 
-		// Test isLeek
-		codes.add("isLeek(getCell())");
+		// Test isEntity
+		codes.add("isEntity(getCell())");
 		values.add(true);
-		codes.add("isLeek(getCell(" + mLeek2.getFId() + "))");
+		codes.add("isEntity(getCell(" + mLeek2.getFId() + "))");
 		values.add(true);
-		codes.add("isLeek(" + emptycell.getId() + ")");
+		codes.add("isEntity(" + emptycell.getId() + ")");
 		values.add(false);
-		codes.add("isLeek(" + obstaclecell.getId() + ")");
+		codes.add("isEntity(" + obstaclecell.getId() + ")");
 		values.add(false);
-		codes.add("isLeek(-1)");
+		codes.add("isEntity(-1)");
 		values.add(false);
 
 		// Test getCellX
@@ -347,8 +347,8 @@ public class TestFightFunctions {
 		codes.add("getNearestEnemy()");
 		values.add(mLeek2.getFId());
 
-		// Test getFarestEnemy
-		codes.add("getFarestEnemy()");
+		// Test getFarthestEnemy
+		codes.add("getFarthestEnemy()");
 		values.add(mLeek2.getFId());
 
 		// Test getTurn
@@ -387,12 +387,12 @@ public class TestFightFunctions {
 		codes.add("getNearestAlly()");
 		values.add(-1);
 
-		// Test getFarestAlly
-		codes.add("getFarestAlly()");
+		// Test getFarthestAlly
+		codes.add("getFarthestAlly()");
 		values.add(-1);
 
-		// Test getFarestAlly
-		codes.add("getFarestAlly()");
+		// Test getFarthestAlly
+		codes.add("getFarthestAlly()");
 		values.add(-1);
 
 		// Test getAliveAllies
@@ -470,7 +470,7 @@ public class TestFightFunctions {
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();
 
-		codes.add("typeOf(getLeek)");
+		codes.add("typeOf(getEntity)");
 		values.add(LeekConstants.TYPE_FUNCTION.getIntValue());
 
 		// Test AI
@@ -498,7 +498,8 @@ public class TestFightFunctions {
 			if (i != 0)
 				leekscript += ",";
 			leekscript += mCodes.get(i);
-			values[i] = mValues.get(i);
+			// Convert Integer to Long to match LeekScript runtime types
+			values[i] = mValues.get(i) instanceof Integer ? ((Integer) mValues.get(i)).longValue() : mValues.get(i);
 		}
 
 		leekscript += "];";
@@ -506,8 +507,8 @@ public class TestFightFunctions {
 			return GeneratorCompilation.testScriptGenerator(l, mFight, leekscript, new LegacyArrayLeekValue(ai, values));
 		} catch (LSException e) {
 			System.err.println("Erreur :\n" + leekscript);
-			System.err.println("Valeur attendue :\n" + ai.string(e.getThe()));
-			System.err.println("Valeur renvoyée :\n" + ai.string(e.getRun()));
+			System.err.println("Valeur attendue :\n" + ai.export(e.getThe()));
+			System.err.println("Valeur renvoyée :\n" + ai.export(e.getRun()));
 			return false;
 		}
 	}

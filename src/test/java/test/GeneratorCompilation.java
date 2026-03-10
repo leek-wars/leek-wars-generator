@@ -23,17 +23,20 @@ public class GeneratorCompilation {
 		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
 	}
 
-	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, Object s) throws Exception {
+	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, Object expected) throws Exception {
 		var options = new Options(true);
 		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", options);
 		ai.setEntity(entity);
 		var fl = new FarmerLog(fight, 0);
 		ai.setLogs(new LeekLog(fl, entity));
 		ai.setFight(fight);
-		var v = ai.runIA();
-		System.out.println(ai.string(v));
-		if (!ai.eq(v, s)) {
-			throw new LSException(0, v, s);
+		var result = ai.runIA();
+		var resultStr = ai.export(result);
+		System.out.println(resultStr);
+		// Compare via export() to avoid type mismatches (Integer vs Long, ArrayLeekValue vs LegacyArrayLeekValue, etc.)
+		var expectedStr = ai.export(expected);
+		if (!resultStr.equals(expectedStr)) {
+			throw new LSException(0, result, expected);
 		}
 		return true;
 	}

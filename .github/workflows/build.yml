@@ -25,7 +25,9 @@ jobs:
         distribution: 'adopt'
     - name: Build
       run: gradle jar
-    - name: Tests
+    - name: Unit tests
+      run: gradle :test
+    - name: Integration tests
       run: |
         java -jar generator.jar --analyze test/ai/basic.leek
         java -jar generator.jar test/scenario/scenario1.json
