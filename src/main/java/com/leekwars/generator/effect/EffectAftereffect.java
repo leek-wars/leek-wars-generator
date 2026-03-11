@@ -24,6 +24,7 @@ public class EffectAftereffect extends Effect {
 
 		state.log(new ActionDamage(DamageType.AFTEREFFECT, target, value, erosion));
 		target.removeLife(value, erosion, caster, DamageType.AFTEREFFECT, this, getItem());
+		target.onNovaDamage(erosion);
 	}
 
 	@Override
@@ -36,5 +37,6 @@ public class EffectAftereffect extends Effect {
 
 		state.log(new ActionDamage(DamageType.AFTEREFFECT, target, value, erosion));
 		target.removeLife(value, erosion, caster, DamageType.AFTEREFFECT, this, getItem());
+		target.onNovaDamage(erosion);
 	}
 }
