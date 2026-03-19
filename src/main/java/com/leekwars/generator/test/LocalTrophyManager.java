@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.DamageType;
@@ -327,5 +326,11 @@ public class LocalTrophyManager implements StatisticsManager {
 	@Override
 	public void setGeneratorFight(Fight fight) {
 		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public Map<Integer, Map<Integer, Integer>> getItemUsageByEntity() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'getItemUsageByEntity'");
 	}
 }

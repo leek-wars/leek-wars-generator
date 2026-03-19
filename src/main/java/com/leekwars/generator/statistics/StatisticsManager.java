@@ -70,4 +70,5 @@ public interface StatisticsManager {
 	public Map<Integer, Map<Integer, Integer>> getLeekResources();
 	public long getChests();
 	public long getChestsKills();
+	public Map<Integer, Map<Integer, Integer>> getItemUsageByEntity();
 }
