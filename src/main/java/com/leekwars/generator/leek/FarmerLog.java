@@ -174,8 +174,7 @@ public class FarmerLog {
 	}
 
 	public void addLog(Entity leek, int type, String message) {
-
-		addLog(leek, type, message, 0);
+		addLog(leek, type, message, -1);
 	}
 
 	public void addLog(Entity leek, int type, String message, int color) {
@@ -197,14 +196,14 @@ public class FarmerLog {
 		obj.add(leek.getFId());
 		obj.add(type);
 		obj.add(message);
-		if (color != 0 || position != null) {
+		if (color >= 0 || position != null) {
 			obj.add(color);
 		}
 		if (position != null) {
 			obj.add(position.file());
 			obj.add(position.line());
 		}
-		
+
 		addAction(obj);
 	}
 
