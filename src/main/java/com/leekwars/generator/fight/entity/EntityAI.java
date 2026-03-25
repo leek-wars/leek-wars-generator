@@ -345,7 +345,7 @@ public class EntityAI extends AI {
 			try {
 				addSystemLog(LeekLog.ERROR, error.type.ordinal(), error.parameters, e);
 			} catch (LeekRunException e1) {
-				fight.generator.exception(e1, fight, mEntity.getFarmer(), getFile());
+				// LeekRunException is always a player error (ops limit, memory, etc.), not a system error
 			}
 			// On signale l'erreur si elle est inconnue
 			if (error.type == Error.UNKNOWN_ERROR && isFirstRuntimeError) {
