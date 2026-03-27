@@ -91,11 +91,14 @@ public class Scenario {
 		entities.get(teamID).add(entity);
 	}
 
-	public void setEntityAI(int team, int leek_id, String fullPath, int aiOwner) {
+	public void setEntityAI(int team, int leek_id, String aiName, int aiFolder, int aiOwner, int aiVersion, boolean aiStrict) {
 		for (EntityInfo entity : entities.get(team)) {
 			if (entity.id == leek_id) {
-				entity.ai = fullPath;
+				entity.ai = aiName;
+				entity.ai_folder = aiFolder;
 				entity.aiOwner = aiOwner;
+				entity.ai_version = aiVersion;
+				entity.ai_strict = aiStrict;
 			}
 		}
 	}

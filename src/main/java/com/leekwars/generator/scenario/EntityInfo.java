@@ -218,7 +218,10 @@ public class EntityInfo {
 		json.put("farmer", farmer);
 		json.put("team", team);
 		json.put("ai", ai);
+		json.put("ai_folder", ai_folder);
 		json.put("ai_owner", aiOwner);
+		json.put("ai_version", ai_version);
+		json.put("ai_strict", ai_strict);
 		ArrayNode weapons = Json.createArray();
 		for (int weapon : this.weapons) {
 			weapons.add(weapon);

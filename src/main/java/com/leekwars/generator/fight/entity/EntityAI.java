@@ -123,9 +123,9 @@ public class EntityAI extends AI {
 				file = folder.resolve(entityInfo.ai);
 			}
 		} catch (FileNotFoundException e) {
-			// Failed to resolve, not normal
+			// Should not happen after refacto (direct folder ID + name resolution)
 			generator.exception(e, (Fight) entity.getFight());
-			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA, new String[] { "Failed to resolve AI" });
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.AI_NOT_EXISTING, new String[] { entityInfo.ai != null ? entityInfo.ai : entityInfo.ai_path });
 		}
 		return file;
 	}
