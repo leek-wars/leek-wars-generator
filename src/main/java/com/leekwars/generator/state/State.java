@@ -468,11 +468,11 @@ public class State {
 		// Puis on ajoute le startfight
 		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
 
-		// Colossus: apply initial x4 multiply stats effect on team 2 (the colossus)
+		// Colossus: apply initial x3 multiply stats effect on team 2 (the colossus)
 		// Must be after ActionStartFight so the client processes it
 		// stackable=false so each turn's new effect replaces the previous one
 		if (type == TYPE_COLOSSUS && teams.size() > 1) {
-			colossusMultiplier = 4;
+			colossusMultiplier = 3;
 			for (Entity e : teams.get(1).getEntities()) {
 				Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 			}
