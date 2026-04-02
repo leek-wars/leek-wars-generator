@@ -65,6 +65,12 @@ public class State {
 	public static final int TYPE_FARMER_CHALLENGE = 11;
 	public static final int TYPE_FARMER_TEST = 12;
 	public static final int FULL_TYPE_BATTLE_ROYALE = 15;
+	public static final int FULL_TYPE_WAR_GARDEN = 20;
+	public static final int FULL_TYPE_WAR_AUTO = 21;
+	public static final int FULL_TYPE_CHEST_HUNT_GARDEN = 22;
+	public static final int FULL_TYPE_CHEST_HUNT_AUTO = 23;
+	public static final int FULL_TYPE_COLOSSUS_GARDEN = 24;
+	public static final int FULL_TYPE_COLOSSUS_AUTO = 25;
 
 	// Fight contexts
 	public final static int CONTEXT_TEST = 0;
@@ -78,6 +84,9 @@ public class State {
 	public final static int TYPE_FARMER = 1;
 	public final static int TYPE_TEAM = 2;
 	public final static int TYPE_BATTLE_ROYALE = 3;
+	public final static int TYPE_WAR = 5;
+	public final static int TYPE_CHEST_HUNT = 6;
+	public final static int TYPE_COLOSSUS = 7;
 
 	// Summon limit
 	public final static int SUMMON_LIMIT = 8;
@@ -129,6 +138,7 @@ public class State {
 	private final int fullType;
 	private int mStartFarmer = -1;
 	private int lastTurn = 0;
+	private int colossusMultiplier = 0;
 	private Date date;
 	private Map map;
 	private final Actions actions;
@@ -361,6 +371,19 @@ public class State {
 
 	public void computeWinner(boolean drawCheckLife) {
 		mWinteam = -1;
+
+		if (type == TYPE_CHEST_HUNT) {
+			// Chest hunt (free-for-all): all alive players win if all chests are dead
+			boolean chestsAlive = false;
+			for (var team : teams) {
+				if (team.containsChest() && team.isAlive()) { chestsAlive = true; break; }
+			}
+			if (!chestsAlive) {
+				mWinteam = -2; // Special: all alive players win
+			}
+			return;
+		}
+
 		int alive = 0;
 		for (int t = 0; t < teams.size(); ++t) {
 			if (!teams.get(t).isDead() && !teams.get(t).containsChest()) {
@@ -445,6 +468,16 @@ public class State {
 		// Puis on ajoute le startfight
 		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
 
+		// Colossus: apply initial x5 multiply stats effect on team 2 (the colossus)
+		// Must be after ActionStartFight so the client processes it
+		// stackable=false so each turn's new effect replaces the previous one
+		if (type == TYPE_COLOSSUS && teams.size() > 1) {
+			colossusMultiplier = 5;
+			for (Entity e : teams.get(1).getEntities()) {
+				Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+			}
+		}
+
 		this.mState = STATE_RUNNING;
 	}
 
@@ -522,6 +555,14 @@ public class State {
 	 */
 	public boolean isFinished() {
 
+		if (type == TYPE_CHEST_HUNT) {
+			// Chest hunt: finished when all chests are dead
+			for (Team team : teams) {
+				if (team.containsChest() && team.isAlive()) return false;
+			}
+			return true;
+		}
+
 		int aliveTeams = 0;
 		for (Team team : teams) {
 			if (team.isAlive() && !team.containsChest()) {
@@ -550,6 +591,15 @@ public class State {
 					// Battle Royale powers
 					if (type == State.TYPE_BATTLE_ROYALE) {
 						giveBRPower();
+					}
+					// Colossus: increase multiplier by 1 each turn (replaces previous effect)
+					if (type == State.TYPE_COLOSSUS && teams.size() > 1) {
+						colossusMultiplier++;
+						for (Entity e : teams.get(1).getEntities()) {
+							if (!e.isDead()) {
+								Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+							}
+						}
 					}
 				}
 
@@ -1030,11 +1080,11 @@ public class State {
 	}
 
 	public static int getFightContext(int type) {
-		if (type == TYPE_SOLO_GARDEN || type == TYPE_TEAM_GARDEN || type == TYPE_FARMER_GARDEN) {
+		if (type == TYPE_SOLO_GARDEN || type == TYPE_TEAM_GARDEN || type == TYPE_FARMER_GARDEN || type == FULL_TYPE_WAR_GARDEN || type == FULL_TYPE_CHEST_HUNT_GARDEN || type == FULL_TYPE_COLOSSUS_GARDEN) {
 			return CONTEXT_GARDEN;
 		} else if (type == TYPE_SOLO_TEST || type == TYPE_TEAM_TEST || type == TYPE_FARMER_TEST) {
 			return CONTEXT_TEST;
-		} else if (type == TYPE_TEAM_TOURNAMENT || type == TYPE_SOLO_TOURNAMENT || type == TYPE_FARMER_TOURNAMENT) {
+		} else if (type == TYPE_TEAM_TOURNAMENT || type == TYPE_SOLO_TOURNAMENT || type == TYPE_FARMER_TOURNAMENT || type == FULL_TYPE_WAR_AUTO || type == FULL_TYPE_CHEST_HUNT_AUTO || type == FULL_TYPE_COLOSSUS_AUTO) {
 			return CONTEXT_TOURNAMENT;
 		} else if (type == FULL_TYPE_BATTLE_ROYALE) {
 			return CONTEXT_BATTLE_ROYALE;
@@ -1049,6 +1099,12 @@ public class State {
 			return State.TYPE_FARMER;
 		} else if (type == FULL_TYPE_BATTLE_ROYALE) {
 			return State.TYPE_BATTLE_ROYALE;
+		} else if (type == FULL_TYPE_WAR_GARDEN || type == FULL_TYPE_WAR_AUTO) {
+			return State.TYPE_WAR;
+		} else if (type == FULL_TYPE_CHEST_HUNT_GARDEN || type == FULL_TYPE_CHEST_HUNT_AUTO) {
+			return State.TYPE_CHEST_HUNT;
+		} else if (type == FULL_TYPE_COLOSSUS_GARDEN || type == FULL_TYPE_COLOSSUS_AUTO) {
+			return State.TYPE_COLOSSUS;
 		}
 		return State.TYPE_TEAM;
 	}

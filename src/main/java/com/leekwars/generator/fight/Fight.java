@@ -60,6 +60,9 @@ public class Fight {
 	public final static int TYPE_TEAM = 2;
 	public final static int TYPE_BATTLE_ROYALE = 3;
 	public final static int TYPE_BOSS = 4;
+	public final static int TYPE_WAR = 5;
+	public final static int TYPE_CHEST_HUNT = 6;
+	public final static int TYPE_COLOSSUS = 7;
 
 	// Flags
 	public final static int FLAG_STATIC = 1;
@@ -221,6 +224,19 @@ public class Fight {
 
 	public void computeWinner(boolean drawCheckLife) {
 		mWinteam = -1;
+
+		if (state.getType() == State.TYPE_CHEST_HUNT) {
+			// Chest hunt (free-for-all): all alive players win if all chests are dead
+			boolean chestsAlive = false;
+			for (var team : state.getTeams()) {
+				if (team.containsChest() && team.isAlive()) { chestsAlive = true; break; }
+			}
+			if (!chestsAlive) {
+				mWinteam = -2; // Special: all alive players win
+			}
+			return;
+		}
+
 		int alive = 0;
 		for (int t = 0; t < state.getTeams().size(); ++t) {
 			if (!state.getTeams().get(t).isDead() && !state.getTeams().get(t).containsChest()) {
