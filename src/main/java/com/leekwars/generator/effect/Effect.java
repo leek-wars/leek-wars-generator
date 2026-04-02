@@ -73,6 +73,7 @@ public abstract class Effect implements Cloneable {
 	public final static int TYPE_ADD_STATE = 59;
 	public final static int TYPE_TOTAL_DEBUFF = 60;
 	public final static int TYPE_STEAL_LIFE = 61;
+	public final static int TYPE_MULTIPLY_STATS = 62;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -154,6 +155,7 @@ public abstract class Effect implements Cloneable {
 		EffectAddState.class, // 59
 		EffectTotalDebuff.class, // 60
 		EffectStealLife.class, // 61
+		EffectMultiplyStats.class, // 62
 	};
 
 	// Effect characteristics

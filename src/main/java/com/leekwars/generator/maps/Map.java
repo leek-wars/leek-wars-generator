@@ -203,8 +203,18 @@ public class Map {
 
 						} else { // 2 sides
 
-							if (l.getType() == Entity.TYPE_CHEST) {
-								c = map.getCellEqualDistance(state);
+							if (state.getType() == State.TYPE_CHEST_HUNT) {
+								// Chest hunt: chests at center (distance <= 5), players around (distance >= 10)
+								if (l.getType() == Entity.TYPE_CHEST) {
+									c = map.getRandomCellNearCenter(state, 3);
+								} else {
+									c = map.getRandomCellAwayFromCenter(state, 12);
+								}
+							} else if (l.getType() == Entity.TYPE_CHEST) {
+								// Classic chests: equal distance between teams
+								boolean team0HasCells = state.getTeamEntities(0).stream().anyMatch(e -> e.getCell() != null);
+								boolean team1HasCells = teams.size() > 1 && state.getTeamEntities(1).stream().anyMatch(e -> e.getCell() != null);
+								c = (team0HasCells && team1HasCells) ? map.getCellEqualDistance(state) : map.getRandomCell(state);
 							} else {
 								c = map.getRandomCell(state, t == 0 ? 1 : 4);
 							}
@@ -474,6 +484,34 @@ public class Map {
 			ty += entity.getCell().y;
 		}
 		return getCell(tx / entities.size(), ty / entities.size());
+	}
+
+	public Cell getRandomCellNearCenter(State state, int maxDistance) {
+		Cell center = getCell(nb_cells / 2);
+		var possible = new ArrayList<Cell>();
+		for (var cell : cells) {
+			if (cell.available(this) && Pathfinding.getCaseDistance(cell, center) <= maxDistance) {
+				possible.add(cell);
+			}
+		}
+		if (possible.size() > 0) {
+			return possible.get(state.getRandom().getInt(0, possible.size() - 1));
+		}
+		return getRandomCell(state);
+	}
+
+	public Cell getRandomCellAwayFromCenter(State state, int minDistance) {
+		Cell center = getCell(nb_cells / 2);
+		var possible = new ArrayList<Cell>();
+		for (var cell : cells) {
+			if (cell.available(this) && Pathfinding.getCaseDistance(cell, center) >= minDistance) {
+				possible.add(cell);
+			}
+		}
+		if (possible.size() > 0) {
+			return possible.get(state.getRandom().getInt(0, possible.size() - 1));
+		}
+		return getRandomCell(state);
 	}
 
 	public Cell getRandomCellAtDistance(Cell cell1, int distance) {

@@ -40,4 +40,5 @@ public class Stats {
 	public void updateStat(int id, int delta) {
 		stats.merge(id, delta, Integer::sum);
 	}
+
 }
