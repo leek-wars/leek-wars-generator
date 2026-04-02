@@ -592,8 +592,8 @@ public class State {
 					if (type == State.TYPE_BATTLE_ROYALE) {
 						giveBRPower();
 					}
-					// Colossus: increase multiplier by 1 each turn (replaces previous effect)
-					if (type == State.TYPE_COLOSSUS && teams.size() > 1) {
+					// Colossus: increase multiplier by 1 every 5 turns (replaces previous effect)
+					if (type == State.TYPE_COLOSSUS && teams.size() > 1 && order.getTurn() % 5 == 1) {
 						colossusMultiplier++;
 						for (Entity e : teams.get(1).getEntities()) {
 							if (!e.isDead()) {
