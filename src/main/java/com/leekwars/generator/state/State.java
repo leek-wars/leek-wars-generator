@@ -768,7 +768,7 @@ public class State {
 		this.map.moveEntity(entity, cell);
 	}
 
-	public void teleportEntity(Entity entity, Cell cell, Entity caster) {
+	public void teleportEntity(Entity entity, Cell cell, Entity caster, int itemId) {
 
 		Cell start = entity.getCell();
 		this.map.moveEntity(entity, cell);
@@ -779,7 +779,7 @@ public class State {
 			entity.onMoved(caster);
 		}
 
-		statistics.teleportation(entity, caster, start, cell);
+		statistics.teleportation(entity, caster, start, cell, itemId);
 	}
 
 	public void slideEntity(Entity entity, Cell cell, Entity caster) {

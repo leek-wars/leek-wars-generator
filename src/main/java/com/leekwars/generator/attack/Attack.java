@@ -199,7 +199,7 @@ public class Attack {
 
 			if (parameters.getId() == Effect.TYPE_TELEPORT) {
 
-				state.teleportEntity(caster, target, caster);
+				state.teleportEntity(caster, target, caster, itemID);
 				returnEntities.add(caster);
 
 			} else if (parameters.getId() == Effect.TYPE_PROPAGATION) {

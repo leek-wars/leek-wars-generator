@@ -24,7 +24,7 @@ public class LocalTrophyManager implements StatisticsManager {
 	public void say(Entity entity, String message) {}
 
 	@Override
-	public void teleportation(Entity entity, Entity caster, Cell start, Cell end) {}
+	public void teleportation(Entity entity, Entity caster, Cell start, Cell end, int itemId) {}
 
 	@Override
 	public void lama(Entity entity) {}

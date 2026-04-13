@@ -17,7 +17,7 @@ public interface StatisticsManager {
 
 	public void init(Entity entity);
 	public void say(Entity entity, String message);
-	public void teleportation(Entity entity, Entity caster, Cell start, Cell end);
+	public void teleportation(Entity entity, Entity caster, Cell start, Cell end, int itemId);
 	public void lama(Entity entity);
 	public void characteristics(Entity entity);
 	public void updateStat(Entity entity, int characteristic, int delta, Entity caster);
