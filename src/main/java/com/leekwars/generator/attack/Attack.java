@@ -88,7 +88,7 @@ public class Attack {
 			if (type == Effect.TYPE_HEAL) {
 				healAttack |= targets;
 			}
-			if (type == Effect.TYPE_DAMAGE) {
+			if (type == Effect.TYPE_DAMAGE || type == Effect.TYPE_POISON) {
 				dammageAttack |= targets;
 			}
 			this.effects.add(new EffectParameters(type, value1, value2, turns, targets, modifiers));
