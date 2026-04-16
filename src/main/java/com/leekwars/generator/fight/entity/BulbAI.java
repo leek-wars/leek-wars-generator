@@ -36,4 +36,9 @@ public class BulbAI extends EntityAI {
 		}
 		return null;
 	}
+
+	@Override
+	public String getErrorMessage(StackTraceElement[] elements) {
+		return mOwnerAI.getErrorMessage(elements);
+	}
 }
