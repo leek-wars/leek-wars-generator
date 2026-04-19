@@ -112,7 +112,7 @@ public class EntityAI extends AI {
 		AIFile file = null;
 		try {
 			if (entityInfo.ai_path != null) {
-				file = LeekScript.getNativeFileSystem().getRoot().resolve(entityInfo.ai_path);
+				file = LeekScript.getFileSystem().getRoot(entityInfo.aiOwner).resolve(entityInfo.ai_path);
 				file.setVersion(entityInfo.ai_version, entityInfo.ai_strict);
 			} else {
 				// Accès au dossier ?
