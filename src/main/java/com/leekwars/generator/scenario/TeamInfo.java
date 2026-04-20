@@ -7,7 +7,8 @@ public class TeamInfo {
 	public int id;
 	public String name = "";
 	public int level;
-	public int turretAI;
+	public String turretAIPath;
+	public int turretAIOwner;
 
 	public ObjectNode toJson() {
 		ObjectNode json = Json.createObject();
