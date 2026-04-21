@@ -151,6 +151,10 @@ public class FightFunctions {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
 		});
+		method("getCompositionName", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.STRING),
+		});
 		method("getFarmerName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),

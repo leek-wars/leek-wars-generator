@@ -176,6 +176,7 @@ public class EntityInfo {
 		entity.setTeamID(team);
 		if (team > 0) {
 			entity.setTeamName(scenario.teams.get(team).name);
+			entity.setCompositionName(scenario.teams.get(team).compositionName);
 		}
 		entity.setSkin(skin);
 		entity.setHat(hat);

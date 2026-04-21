@@ -789,6 +789,21 @@ public class EntityClass {
 		return null;
 	}
 
+	public static String getCompositionName(EntityAI ai) throws LeekRunException {
+		return ai.getEntity().getCompositionName();
+	}
+
+	public static String getCompositionName(EntityAI ai, Object value) throws LeekRunException {
+		if (value == null)
+			return ai.getEntity().getCompositionName();
+		if (value instanceof Number) {
+			var l = ai.getFight().getEntity(ai.integer(value));
+			if (l != null && l.getCompositionName() != null)
+				return l.getCompositionName();
+		}
+		return null;
+	}
+
 	public static String getFarmerName(EntityAI ai) throws LeekRunException {
 		return ai.getEntity().getFarmerName();
 	}

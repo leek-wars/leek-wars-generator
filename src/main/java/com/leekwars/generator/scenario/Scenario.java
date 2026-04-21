@@ -66,6 +66,9 @@ public class Scenario {
 			TeamInfo team = new TeamInfo();
 			team.id = ((ObjectNode) teamJson).get("id").intValue();
 			team.name = ((ObjectNode) teamJson).get("name").asString();
+			if (((ObjectNode) teamJson).hasNonNull("composition_name")) {
+				team.compositionName = ((ObjectNode) teamJson).get("composition_name").asString();
+			}
 			scenario.teams.put(team.id, team);
 		}
 		for (var teamJson : (ArrayNode) json.get("entities")) {

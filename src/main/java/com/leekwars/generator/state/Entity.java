@@ -75,6 +75,7 @@ public abstract class Entity {
 	protected String mFarmerName = "";
 	protected String mFarmerCountry;
 	protected String mTeamName = "";
+	protected String mCompositionName = null;
 	protected String mAIName;
 	protected int mTeamId;
 	protected int mAIId;
@@ -295,6 +296,10 @@ public abstract class Entity {
 
 	public String getTeamName() {
 		return mTeamName;
+	}
+
+	public String getCompositionName() {
+		return mCompositionName;
 	}
 
 	public String getAIName() {
@@ -1030,6 +1035,9 @@ public abstract class Entity {
 	}
 	public void setTeamName(String name) {
 		this.mTeamName = name;
+	}
+	public void setCompositionName(String name) {
+		this.mCompositionName = name;
 	}
 
 	public void setSkin(int skin) {
