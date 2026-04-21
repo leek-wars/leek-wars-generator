@@ -92,6 +92,11 @@ public abstract class Effect implements Cloneable {
 	// Power in case of critical hit
 	public static final double CRITICAL_FACTOR = 1.3;
 
+	// Erosion rates
+	public static final double EROSION_DAMAGE = 0.05;
+	public static final double EROSION_POISON = 0.10;
+	public static final double EROSION_CRITICAL_MODIFIER = 0.10;
+
 	// Array of effect classes
 	public final static Class<?>[] effects = {
 		EffectDamage.class, // 1
@@ -205,8 +210,8 @@ public abstract class Effect implements Cloneable {
 		effect.target = target;
 		effect.attack = attack;
 		effect.jet = jet;
-		effect.erosionRate = id == TYPE_POISON ? 0.10 : 0.05;
-		if (critical) effect.erosionRate += 0.10;
+		effect.erosionRate = id == TYPE_POISON ? EROSION_POISON : EROSION_DAMAGE;
+		if (critical) effect.erosionRate += EROSION_CRITICAL_MODIFIER;
 		effect.previousEffectTotalValue = previousEffectTotalValue;
 		effect.targetCount = targetCount;
 		effect.propagate = propagate;
