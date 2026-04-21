@@ -14,6 +14,7 @@ import leekscript.runner.LeekRunException;
 public class FarmerLog {
 
 	private final static int MAX_LENGTH = 500000;
+	private final static int MAX_SYSTEM_LOGS_AFTER_LIMIT = 10;
 
 	private final ObjectNode mObject;
 	private Actions mLogs;
@@ -21,6 +22,7 @@ public class FarmerLog {
 	private int mNb = 0;
 	private ArrayNode mCurArray;
 	private int mSize = 0;
+	private int systemLogsAfterLimit = 0;
 	private Fight fight;
 	private int farmer;
 
@@ -65,10 +67,21 @@ public class FarmerLog {
 		throw new RuntimeException("not implemented");
 	}
 
+	// Keep stack traces flowing past the debug budget so crashes after TOO_MUCH_DEBUG remain diagnosable.
+	private boolean tryBypassLimitForSystemLog() {
+		if (systemLogsAfterLimit >= MAX_SYSTEM_LOGS_AFTER_LIMIT) {
+			return false;
+		}
+		systemLogsAfterLimit++;
+		return true;
+	}
+
 	public void addSystemLog(AI ai, Entity leek, int type, String error, int key, Object[] parameters) throws LeekRunException {
 
+		boolean afterLimit = false;
 		if (!addSize(20)) {
-			return;
+			if (!tryBypassLimitForSystemLog()) return;
+			afterLimit = true;
 		}
 
 		String[] parametersString = parameters != null ? new String[parameters.length] : null;
@@ -76,10 +89,10 @@ public class FarmerLog {
 		if (parameters != null) {
 			for (int p = 0; p < parameters.length; ++p) {
 				var parameterString = ai.string(parameters[p]);
-				if (!addSize(parameterString.length())) {
-					parametersString[p] = "[...]";
-				} else {
+				if (afterLimit || addSize(parameterString.length())) {
 					parametersString[p] = parameterString;
+				} else {
+					parametersString[p] = "[...]";
 				}
 			}
 		}
@@ -108,7 +121,7 @@ public class FarmerLog {
 			}
 		}
 		if (!addSize(20 + paramSize)) {
-			return;
+			if (!tryBypassLimitForSystemLog()) return;
 		}
 		ArrayNode obj = Json.createArray();
 		obj.add(leek.getFId());
