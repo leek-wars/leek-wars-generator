@@ -128,6 +128,9 @@ public class Generator {
 				// Create farmer logs
 				int aiOwner = entityInfo.aiOwner;
 				if (entityInfo.type == Entity.TYPE_MOB) aiOwner = 0;
+				// Turret logs are keyed by -team so all team members can see
+				// them, regardless of the AI owner's per-farmer logs_level.
+				if (entityInfo.type == Entity.TYPE_TURRET && entityInfo.team > 0) aiOwner = -entityInfo.team;
 				if (!outcome.logs.containsKey(aiOwner)) {
 					outcome.logs.put(aiOwner, new FarmerLog(fight, entityInfo.farmer));
 				}
