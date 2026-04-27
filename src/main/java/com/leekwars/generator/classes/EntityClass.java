@@ -23,6 +23,11 @@ public class EntityClass {
 
 	private static final int SAY_LENGTH_LIMIT = 100;
 
+	// During beforeFight(), AIs cannot read equipment / stats of other entities (symmetry of execution order).
+	private static boolean isMaskedByBeforeFight(EntityAI ai, Entity target) {
+		return ai.isInBeforeFightHook() && target != ai.getEntity();
+	}
+
 	public static long getLife(EntityAI ai) {
 		return (long) ai.getEntity().getLife();
 	}
@@ -32,8 +37,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getLife();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getLife();
+			}
 		}
 		return null;
 	}
@@ -47,8 +54,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getStrength();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getStrength();
+			}
 		}
 		return null;
 	}
@@ -62,8 +71,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getStrength();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getStrength();
+			}
 		}
 		return null;
 	}
@@ -77,8 +88,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getWisdom();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getWisdom();
+			}
 		}
 		return null;
 	}
@@ -92,8 +105,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getResistance();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getResistance();
+			}
 		}
 		return null;
 	}
@@ -107,8 +122,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getAgility();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getAgility();
+			}
 		}
 		return null;
 	}
@@ -122,8 +139,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getScience();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getScience();
+			}
 		}
 		return null;
 	}
@@ -137,8 +156,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getMagic();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getMagic();
+			}
 		}
 		return null;
 	}
@@ -152,8 +173,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getAbsoluteShield();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getAbsoluteShield();
+			}
 		}
 		return null;
 	}
@@ -167,8 +190,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getRelativeShield();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getRelativeShield();
+			}
 		}
 		return null;
 	}
@@ -182,8 +207,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getDamageReturn();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getDamageReturn();
+			}
 		}
 		return null;
 	}
@@ -197,8 +224,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getFrequency();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getFrequency();
+			}
 		}
 		return null;
 	}
@@ -212,8 +241,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getCores();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getCores();
+			}
 		}
 		return null;
 	}
@@ -227,8 +258,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getRAM();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getRAM();
+			}
 		}
 		return null;
 	}
@@ -242,8 +275,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getStat((int) stat);
 		if (entity instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) entity).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getStat((int) stat);
+			}
 		}
 		return null;
 	}
@@ -280,8 +315,10 @@ public class EntityClass {
 		}
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null && l.getWeapon() != null)
+			if (l != null && l.getWeapon() != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getWeapon().getId();
+			}
 		}
 		return null;
 	}
@@ -319,8 +356,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getMP();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getMP();
+			}
 		}
 		return null;
 	}
@@ -334,8 +373,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getTP();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getTP();
+			}
 		}
 		return null;
 	}
@@ -350,6 +391,7 @@ public class EntityClass {
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
 			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getTotalMP();
 			}
 		}
@@ -366,6 +408,7 @@ public class EntityClass {
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
 			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getTotalTP();
 			}
 		}
@@ -382,8 +425,10 @@ public class EntityClass {
 		}
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getPower();
+			}
 		}
 		return null;
 	}
@@ -494,6 +539,7 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (var weapon : l.getWeapons()) {
 			retour.push(ai, (long) weapon.getId());
@@ -509,6 +555,7 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new ArrayLeekValue(ai);
 		for (var weapon : l.getWeapons()) {
 			retour.push(ai, (long) weapon.getId());
@@ -578,6 +625,7 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var result = new ArrayLeekValue(ai);
 		for (var chip : l.getChips()) {
 			result.push(ai, (long) chip.getId());
@@ -594,6 +642,7 @@ public class EntityClass {
 			l = ai.getFight().getEntity(((Number) value).intValue());
 		if (l == null)
 			return null;
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var result = new LegacyArrayLeekValue(ai);
 		for (var chip : l.getChips()) {
 			result.push(ai, (long) chip.getId());
@@ -629,6 +678,7 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new ArrayLeekValue(ai, l.getEffects().size());
 		for (Effect effect : l.getEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -646,6 +696,7 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (Effect effect : l.getEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -681,6 +732,7 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new ArrayLeekValue(ai, l.getLaunchedEffects().size());
 		for (var effect : l.getLaunchedEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -699,6 +751,7 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (var effect : l.getLaunchedEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -734,6 +787,7 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new ArrayLeekValue(ai);
 		for (var feature : l.getPassiveEffects()) {
 			retour.pushNoClone(ai, ai.getFeatureArray(feature));
@@ -751,6 +805,7 @@ public class EntityClass {
 		if (l == null) {
 			return null;
 		}
+		if (isMaskedByBeforeFight(ai, l)) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (var feature : l.getPassiveEffects()) {
 			retour.pushNoClone(ai, ai.getFeatureArray(feature));
@@ -1082,8 +1137,10 @@ public class EntityClass {
 			return (long) ai.getEntity().getTotalLife();
 		if (value instanceof Number) {
 			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null)
+			if (l != null) {
+				if (isMaskedByBeforeFight(ai, l)) return null;
 				return (long) l.getTotalLife();
+			}
 		}
 		return null;
 	}

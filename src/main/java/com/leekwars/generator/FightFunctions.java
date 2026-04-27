@@ -509,6 +509,10 @@ public class FightFunctions {
 		method("getNearestAllyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getNearestAllyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 
+		// Hooks beforeFight() / afterFight()
+		method("setLoadout", "Fight", 100, true, Type.BOOL, new Type[] { Type.STRING });
+		method("getWinner", "Fight", 5, true, Type.INT, new Type[0]);
+
 		/**
 		 * Network / Réseau
 		 */

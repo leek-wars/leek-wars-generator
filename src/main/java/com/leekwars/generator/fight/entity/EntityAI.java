@@ -91,6 +91,23 @@ public class EntityAI extends AI {
 	private boolean isFirstRuntimeError = true;
 	private boolean staticInitialized = false;
 
+	public enum HookPhase { NONE, BEFORE_FIGHT, AFTER_FIGHT }
+	private HookPhase hookPhase = HookPhase.NONE;
+
+	public HookPhase getHookPhase() {
+		return hookPhase;
+	}
+
+	public boolean isInBeforeFightHook() {
+		return hookPhase == HookPhase.BEFORE_FIGHT;
+	}
+
+	public boolean isInAfterFightHook() {
+		return hookPhase == HookPhase.AFTER_FIGHT;
+	}
+
+	private static final int HOOK_OPS_BONUS = 1_000_000;
+
 	public EntityAI(int instructions, int version) {
 		super(instructions, version);
 	}
@@ -372,6 +389,74 @@ public class EntityAI extends AI {
 
 		long endTime = System.nanoTime();
 		mIARunTime += (endTime - startTime);
+	}
+
+	public boolean hasHook(String name) {
+		return findHookMethod(this.getClass(), name) != null;
+	}
+
+	private static java.lang.reflect.Method findHookMethod(Class<?> clazz, String hookName) {
+		String methodName = "f_" + hookName;
+		Class<?> current = clazz;
+		while (current != null) {
+			for (var m : current.getDeclaredMethods()) {
+				if (m.getName().equals(methodName) && m.getParameterCount() == 0) {
+					m.setAccessible(true);
+					return m;
+				}
+			}
+			current = current.getSuperclass();
+		}
+		return null;
+	}
+
+	public void runHook(String name, HookPhase phase) {
+
+		var method = findHookMethod(this.getClass(), name);
+		if (method == null) return;
+
+		long startTime = System.nanoTime();
+		long savedMaxOps = getMaxOperations();
+		setMaxOperations((int) Math.min(Integer.MAX_VALUE, savedMaxOps + HOOK_OPS_BONUS));
+
+		try {
+			resetCounter();
+			mEntity = mInitialEntity;
+			if (!staticInitialized) {
+				staticInit();
+				staticInitialized = true;
+			}
+			hookPhase = phase;
+			method.invoke(this);
+
+		} catch (StackOverflowError e) {
+			fight.log(new ActionAIError(mEntity));
+			addSystemLog(LeekLog.ERROR, Error.STACKOVERFLOW, e.getStackTrace());
+			fight.getState().statistics.stackOverflow(mEntity);
+			fight.getState().statistics.error(mEntity);
+		} catch (java.lang.reflect.InvocationTargetException ite) {
+			Throwable cause = ite.getCause();
+			if (cause instanceof LeekRunException) {
+				handleLeekRunException((LeekRunException) cause);
+			} else if (cause instanceof StackOverflowError) {
+				fight.log(new ActionAIError(mEntity));
+				addSystemLog(LeekLog.ERROR, Error.STACKOVERFLOW, cause.getStackTrace());
+				fight.getState().statistics.error(mEntity);
+			} else {
+				fight.log(new ActionAIError(mEntity));
+				fight.getState().statistics.error(mEntity);
+				addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { cause == null ? "Hook error" : String.valueOf(cause.getMessage()) }, cause == null ? new StackTraceElement[0] : cause.getStackTrace());
+			}
+		} catch (Throwable e) {
+			fight.log(new ActionAIError(mEntity));
+			fight.getState().statistics.error(mEntity);
+			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) }, e.getStackTrace());
+		} finally {
+			hookPhase = HookPhase.NONE;
+			setMaxOperations((int) Math.min(Integer.MAX_VALUE, savedMaxOps));
+			long endTime = System.nanoTime();
+			mIARunTime += (endTime - startTime);
+		}
 	}
 
 	public void handleLeekRunException(LeekRunException e) {

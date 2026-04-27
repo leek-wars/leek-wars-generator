@@ -188,6 +188,8 @@ public class Fight {
 			entity.startFight();
 		}
 
+		runHooks("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
 		Log.i(TAG, "Turn 1");
 
 		// On lance les tours
@@ -214,6 +216,8 @@ public class Fight {
 
 		// Calcul de l'équipe gagnante
 		computeWinner(drawCheckLife);
+
+		runHooks("afterFight", EntityAI.HookPhase.AFTER_FIGHT);
 
 		state.statistics.endFight(state.getEntities().values());
 		if (listener != null) {
@@ -284,6 +288,18 @@ public class Fight {
 
 	public void finishFight() {
 		state.setState(State.STATE_FINISHED);
+	}
+
+	private void runHooks(String name, EntityAI.HookPhase phase) {
+		for (var entity : state.getEntities().values()) {
+			var ai = entity.getAI();
+			if (!(ai instanceof EntityAI)) continue;
+			var entityAI = (EntityAI) ai;
+			if (!entityAI.isValid()) continue;
+			if (!entityAI.hasHook(name)) continue;
+			entityAI.setEntity(entity);
+			entityAI.runHook(name, phase);
+		}
 	}
 
 	public void startTurn() throws Exception {

@@ -1292,4 +1292,25 @@ public class FightClass {
 	public static long getFightBoss(EntityAI ai) {
 		return ai.getFight().getBoss();
 	}
+
+	// Hooks beforeFight() / afterFight()
+
+	public static long getWinner(EntityAI ai) {
+		return ai.getFight().getWinner();
+	}
+
+	public static boolean setLoadout(EntityAI ai, Object nameObject) throws LeekRunException {
+		if (!ai.isInBeforeFightHook()) {
+			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_OUT_OF_HOOK, new String[0]);
+			return false;
+		}
+		String name = ai.string(nameObject);
+		var loadout = ai.getEntity().getLoadout(name);
+		if (loadout == null) {
+			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
+			return false;
+		}
+		ai.getEntity().applyLoadout(loadout);
+		return true;
+	}
 }

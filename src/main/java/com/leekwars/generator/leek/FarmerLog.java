@@ -38,6 +38,8 @@ public class FarmerLog {
 	public static final int WEAPON_NOT_EXISTS = 1003;
 	public static final int WEAPON_NOT_EQUIPPED = 1004;
 	public static final int BULB_WITHOUT_AI = 1005;
+	public static final int LOADOUT_NOT_FOUND = 1006;
+	public static final int SET_LOADOUT_OUT_OF_HOOK = 1007;
 
 	private boolean tooMuchDebug = false;
 

@@ -29,7 +29,9 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.Registers;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.weapons.Weapon;
+import com.leekwars.generator.weapons.Weapons;
 
 public abstract class Entity {
 
@@ -111,6 +113,7 @@ public abstract class Entity {
 	private List<Weapon> mWeapons = null;
 	private Weapon weapon = null;
 	private HashMap<Integer, Integer> itemUses = new HashMap<>();
+	private HashMap<String, FightLoadout> mLoadouts = new HashMap<>();
 
 	private int usedTP;
 	private int usedMP;
@@ -324,6 +327,41 @@ public abstract class Entity {
 	public void addWeapon(Weapon w) {
 		mWeapons.add(w);
 		passiveEffects.addAll(w.getPassiveEffects());
+	}
+
+	public void addLoadout(FightLoadout loadout) {
+		mLoadouts.put(loadout.getName(), loadout);
+	}
+
+	public FightLoadout getLoadout(String name) {
+		return mLoadouts.get(name);
+	}
+
+	public void applyLoadout(FightLoadout loadout) {
+		mWeapons.clear();
+		mChips.clear();
+		passiveEffects.clear();
+		weapon = null;
+
+		for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
+			mBaseStats.setStat(e.getKey(), e.getValue());
+		}
+
+		if (loadout.getWeapons() != null) {
+			for (Integer weaponId : loadout.getWeapons()) {
+				Weapon w = Weapons.getWeapon(weaponId);
+				if (w != null) addWeapon(w);
+			}
+		}
+		if (loadout.getChips() != null) {
+			for (Integer chipId : loadout.getChips()) {
+				addChip(Chips.getChip(chipId));
+			}
+		}
+
+		mTotalLife = mBaseStats.getStat(STAT_LIFE);
+		mInitialLife = mTotalLife;
+		life = mTotalLife;
 	}
 
 	public Stats getBaseStats() {
