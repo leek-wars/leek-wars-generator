@@ -187,8 +187,8 @@ public abstract class Effect implements Cloneable {
 
 	public static int createEffect(State state, int id, int turns, double aoe, double value1, double value2, boolean critical, Entity target, Entity caster, Attack attack, double jet, boolean stackable, int previousEffectTotalValue, int targetCount, int propagate, int modifiers) {
 
-		// Invalid effect id
-		if (id < 0 || id > effects.length) {
+		// Invalid effect id (effect IDs are 1-based — id 0 would index effects[-1])
+		if (id <= 0 || id > effects.length) {
 			return 0;
 		}
 

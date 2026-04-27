@@ -518,6 +518,8 @@ public abstract class Entity {
 
 		if (isDead()) return;
 
+		if (pv < 0) pv = 0;
+		if (erosion < 0) erosion = 0;
 		if (pv > life) {
 			pv = life;
 		}
@@ -666,6 +668,7 @@ public abstract class Entity {
 	}
 
 	public void addLife(Entity healer, int pv) {
+		if (pv < 0) pv = 0;
 		if (pv > getTotalLife() - life) {
 			pv = getTotalLife() - life;
 		}
