@@ -3,72 +3,33 @@ package test;
 import java.util.HashMap;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.generator.Generator;
 import com.leekwars.generator.attack.DamageType;
-import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
-import com.leekwars.generator.leek.LeekLog;
-import com.leekwars.generator.leek.RegisterManager;
-import com.leekwars.generator.test.LocalTrophyManager;
-
-import leekscript.compiler.AIFile;
-import leekscript.compiler.LeekScript;
 
 /**
  * Damage and life management — addLife/removeLife edge cases, death detection,
  * life caps, vitality, totalLife behaviors.
  */
-public class TestFightDamage {
+public class TestFightDamage extends FightTestBase {
 
-	private Generator generator;
-	private Fight fight;
 	private Leek leek1;
 	private Leek leek2;
-	private FarmerLog farmerLog;
-	private final HashMap<Integer, String> registerStore = new HashMap<>();
-	private static final java.util.concurrent.atomic.AtomicLong AI_COUNTER = new java.util.concurrent.atomic.AtomicLong(5_000_000);
 
-	@Before
-	public void setUp() {
-		generator = new Generator();
-		fight = new Fight(generator);
-		fight.getState().setRegisterManager(new RegisterManager() {
-			@Override public String getRegisters(int leek) { return registerStore.get(leek); }
-			@Override public void saveRegisters(int leek, String registers, boolean is_new) { registerStore.put(leek, registers); }
-		});
-		fight.setStatisticsManager(new LocalTrophyManager());
-		leek1 = new Leek(1, "L1", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
-		leek2 = new Leek(2, "L2", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
+	@Override
+	protected void createLeeks() {
+		leek1 = defaultLeek(1, "L1");
+		leek2 = defaultLeek(2, "L2");
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);
-		farmerLog = new FarmerLog(fight, 0);
-	}
-
-	private void attachAI(Leek leek, String code) {
-		long uid = AI_COUNTER.incrementAndGet();
-		AIFile file = new AIFile("<dmg_" + uid + ">", code, System.currentTimeMillis(),
-			LeekScript.LATEST_VERSION, leek.getId(), false);
-		leek.setAIFile(file);
-		leek.setLogs(new LeekLog(farmerLog, leek));
-		leek.setFight(fight);
-		leek.setBirthTurn(1);
-	}
-
-	private void runFight() throws Exception {
-		fight.startFight(true);
 	}
 
 	// ---------- removeLife edge cases ----------
 
 	@Test
 	public void removeLifeBasicWorks() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		int before = leek1.getLife();
 		leek1.removeLife(50, 0, leek2, DamageType.DIRECT, null, null);
 		Assert.assertEquals(before - 50, leek1.getLife());
@@ -76,9 +37,7 @@ public class TestFightDamage {
 
 	@Test
 	public void removeLifeCapsAtCurrentLife() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		// Damage > current life — life caps at 0, leek dies
 		leek1.removeLife(99999, 0, leek2, DamageType.DIRECT, null, null);
 		Assert.assertEquals(0, leek1.getLife());
@@ -87,9 +46,7 @@ public class TestFightDamage {
 
 	@Test
 	public void removeLifeOnDeadLeekIsNoOp() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		leek1.removeLife(leek1.getLife(), 0, leek2, DamageType.DIRECT, null, null);
 		Assert.assertTrue(leek1.isDead());
 		// Second removeLife on a dead leek
@@ -102,9 +59,7 @@ public class TestFightDamage {
 
 	@Test
 	public void removeLifeWithErosionReducesTotalLife() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		int total = leek1.getTotalLife();
 		leek1.removeLife(0, 100, leek2, DamageType.DIRECT, null, null);
 		Assert.assertEquals(total - 100, leek1.getTotalLife());
@@ -113,9 +68,7 @@ public class TestFightDamage {
 	@Test
 	public void erosionCapsAtMinimumOne() throws Exception {
 		// Spec: mTotalLife floor is 1, never 0 (so leek can never have 0 max life).
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		leek1.removeLife(0, 99999, leek2, DamageType.DIRECT, null, null);
 		Assert.assertEquals(1, leek1.getTotalLife());
 	}
@@ -124,9 +77,7 @@ public class TestFightDamage {
 
 	@Test
 	public void addLifeCapsAtTotalLife() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		// Damage first, then over-heal
 		leek1.removeLife(200, 0, leek2, DamageType.DIRECT, null, null);
 		int afterDmg = leek1.getLife();
@@ -137,9 +88,7 @@ public class TestFightDamage {
 
 	@Test
 	public void addLifeAtFullDoesNothing() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		int before = leek1.getLife();
 		leek1.addLife(leek2, 100);
 		Assert.assertEquals(before, leek1.getLife());
@@ -149,18 +98,14 @@ public class TestFightDamage {
 
 	@Test
 	public void aliveAtStartOfFight() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		Assert.assertTrue(leek1.isAlive());
 		Assert.assertFalse(leek1.isDead());
 	}
 
 	@Test
 	public void deadFlagsAreMutuallyExclusive() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		Assert.assertNotEquals(leek1.isAlive(), leek1.isDead());
 		leek1.removeLife(leek1.getLife(), 0, leek2, DamageType.DIRECT, null, null);
 		Assert.assertNotEquals(leek1.isAlive(), leek1.isDead());
@@ -238,9 +183,7 @@ public class TestFightDamage {
 	@Test
 	public void removeLifeWithNegativePvIsNoOp() throws Exception {
 		// Negative pv is clamped to 0 (no accidental heal via removeLife).
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		int before = leek1.getLife();
 		int totalBefore = leek1.getTotalLife();
 		leek1.removeLife(-100, -50, leek2, DamageType.DIRECT, null, null);
@@ -252,9 +195,7 @@ public class TestFightDamage {
 	@Test
 	public void addLifeWithNegativePvIsNoOp() throws Exception {
 		// Negative pv is clamped to 0 (no accidental damage via addLife).
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		// Damage first so heal has room
 		leek1.removeLife(100, 0, leek2, DamageType.DIRECT, null, null);
 		int before = leek1.getLife();
@@ -266,9 +207,7 @@ public class TestFightDamage {
 
 	@Test
 	public void addTotalLifeIncreasesMax() throws Exception {
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		int totalBefore = leek1.getTotalLife();
 		leek1.addTotalLife(200, leek2);
 		Assert.assertEquals(totalBefore + 200, leek1.getTotalLife());
@@ -277,9 +216,7 @@ public class TestFightDamage {
 	@Test
 	public void addTotalLifeDoesNotChangeCurrentLife() throws Exception {
 		// addTotalLife only changes max, not current.
-		attachAI(leek1, "");
-		attachAI(leek2, "");
-		runFight();
+		initFightOnly();
 		int currentBefore = leek1.getLife();
 		leek1.addTotalLife(200, leek2);
 		Assert.assertEquals("addTotalLife shouldn't change current life",

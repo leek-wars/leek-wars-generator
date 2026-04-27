@@ -3,70 +3,28 @@ package test;
 import java.util.HashMap;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.generator.Generator;
-import com.leekwars.generator.fight.Fight;
-import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
-import com.leekwars.generator.leek.LeekLog;
-import com.leekwars.generator.leek.RegisterManager;
-import com.leekwars.generator.test.LocalTrophyManager;
-
-import leekscript.compiler.AIFile;
-import leekscript.compiler.LeekScript;
 
 /**
  * Multi-leek (2v2) team fights — exercises turn order, team queries, hooks
  * fired for each entity, ally/enemy disambiguation.
  */
-public class TestFightTeam {
+public class TestFightTeam extends FightTestBase {
 
-	private Generator generator;
-	private Fight fight;
 	private Leek a1, a2, b1, b2;
-	private FarmerLog farmerLog;
-	private final HashMap<Integer, String> registerStore = new HashMap<>();
-	private static final java.util.concurrent.atomic.AtomicLong AI_COUNTER = new java.util.concurrent.atomic.AtomicLong(4_000_000);
 
-	@Before
-	public void setUp() {
-		generator = new Generator();
-		fight = new Fight(generator);
-		fight.getState().setRegisterManager(new RegisterManager() {
-			@Override public String getRegisters(int leek) { return registerStore.get(leek); }
-			@Override public void saveRegisters(int leek, String registers, boolean is_new) { registerStore.put(leek, registers); }
-		});
-		fight.setStatisticsManager(new LocalTrophyManager());
-		// Two leeks per team, 8 cores so AIs have ample budget.
-		a1 = leek(1, "A1");
-		a2 = leek(2, "A2");
-		b1 = leek(3, "B1");
-		b2 = leek(4, "B2");
+	@Override
+	protected void createLeeks() {
+		a1 = defaultLeek(1, "A1");
+		a2 = defaultLeek(2, "A2");
+		b1 = defaultLeek(3, "B1");
+		b2 = defaultLeek(4, "B2");
 		fight.getState().addEntity(0, a1);
 		fight.getState().addEntity(0, a2);
 		fight.getState().addEntity(1, b1);
 		fight.getState().addEntity(1, b2);
-		farmerLog = new FarmerLog(fight, 0);
-	}
-
-	private Leek leek(int id, String name) {
-		return new Leek(id, name, 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
-	}
-
-	private void attachAI(Leek leek, String code) {
-		long uid = AI_COUNTER.incrementAndGet();
-		AIFile file = new AIFile("<team_" + uid + ">", code, System.currentTimeMillis(),
-			LeekScript.LATEST_VERSION, leek.getId(), false);
-		leek.setAIFile(file);
-		leek.setLogs(new LeekLog(farmerLog, leek));
-		leek.setFight(fight);
-		leek.setBirthTurn(1);
-	}
-
-	private void runFight() throws Exception {
-		fight.startFight(true);
 	}
 
 	// ---------- Team membership ----------

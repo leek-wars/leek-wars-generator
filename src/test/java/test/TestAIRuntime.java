@@ -1,65 +1,26 @@
 package test;
 
-import java.util.HashMap;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.leekwars.generator.Generator;
-import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
-import com.leekwars.generator.leek.LeekLog;
-import com.leekwars.generator.leek.RegisterManager;
-import com.leekwars.generator.test.LocalTrophyManager;
-
-import leekscript.compiler.AIFile;
-import leekscript.compiler.LeekScript;
 
 /**
  * AI runtime quirks — ops budget, RAM, recursion, exceptions, global state,
  * debug spam, and how the engine recovers from misbehaved AIs.
  */
-public class TestAIRuntime {
+public class TestAIRuntime extends FightTestBase {
 
-	private Generator generator;
-	private Fight fight;
 	private Leek leek1;
 	private Leek leek2;
-	private FarmerLog farmerLog;
-	private final HashMap<Integer, String> registerStore = new HashMap<>();
-	private static final java.util.concurrent.atomic.AtomicLong AI_COUNTER = new java.util.concurrent.atomic.AtomicLong(7_000_000);
 
-	@Before
-	public void setUp() {
-		generator = new Generator();
-		fight = new Fight(generator);
-		fight.getState().setRegisterManager(new RegisterManager() {
-			@Override public String getRegisters(int leek) { return registerStore.get(leek); }
-			@Override public void saveRegisters(int leek, String registers, boolean is_new) { registerStore.put(leek, registers); }
-		});
-		fight.setStatisticsManager(new LocalTrophyManager());
-		leek1 = new Leek(1, "L1", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
-		leek2 = new Leek(2, "L2", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
+	@Override
+	protected void createLeeks() {
+		leek1 = defaultLeek(1, "L1");
+		leek2 = defaultLeek(2, "L2");
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);
-		farmerLog = new FarmerLog(fight, 0);
-	}
-
-	private void attachAI(Leek leek, String code) {
-		long uid = AI_COUNTER.incrementAndGet();
-		AIFile file = new AIFile("<rt_" + uid + ">", code, System.currentTimeMillis(),
-			LeekScript.LATEST_VERSION, leek.getId(), false);
-		leek.setAIFile(file);
-		leek.setLogs(new LeekLog(farmerLog, leek));
-		leek.setFight(fight);
-		leek.setBirthTurn(1);
-	}
-
-	private void runFight() throws Exception {
-		fight.startFight(true);
 	}
 
 	// ---------- Ops budget ----------
