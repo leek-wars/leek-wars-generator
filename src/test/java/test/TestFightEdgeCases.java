@@ -111,6 +111,60 @@ public class TestFightEdgeCases {
 		Assert.assertNotNull(leek1.getRegister("use_result"));
 	}
 
+	@Test
+	public void useChipInBeforeFightReturnsMinusOneAndDoesNotMutate() throws Exception {
+		// Combat actions are gated: useChip during beforeFight must return -1 and not
+		// consume TP / trigger effects.
+		attachAI(leek1, ""
+			+ "function beforeFight() {"
+			+ "  var initial_tp = getTP();"
+			+ "  var result = useChip(0, getEnemies()[0]);"
+			+ "  setRegister('result', '' + result);"
+			+ "  setRegister('tp_unchanged', getTP() == initial_tp ? 'true' : 'false');"
+			+ "}");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("-1", leek1.getRegister("result"));
+		Assert.assertEquals("true", leek1.getRegister("tp_unchanged"));
+	}
+
+	@Test
+	public void useWeaponInBeforeFightReturnsMinusOne() throws Exception {
+		attachAI(leek1, ""
+			+ "function beforeFight() {"
+			+ "  setRegister('result', '' + useWeapon(getEnemies()[0]));"
+			+ "}");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("-1", leek1.getRegister("result"));
+	}
+
+	@Test
+	public void moveTowardCellInBeforeFightDoesNotMove() throws Exception {
+		// Combat action moveTowardCell must not actually move during beforeFight.
+		attachAI(leek1, ""
+			+ "function beforeFight() {"
+			+ "  setRegister('cell_before', '' + getCell());"
+			+ "  moveTowardCell(getCell(getEnemies()[0]));"
+			+ "  setRegister('cell_after', '' + getCell());"
+			+ "}");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals(leek1.getRegister("cell_before"), leek1.getRegister("cell_after"));
+	}
+
+	@Test
+	public void setWeaponInBeforeFightReturnsFalse() throws Exception {
+		attachAI(leek1, ""
+			+ "function beforeFight() {"
+			+ "  setRegister('result', setWeapon(37) ? 'true' : 'false');"
+			+ "}");
+		attachAI(leek2, "");
+		runFight();
+		// setWeapon during a hook returns false (gated)
+		Assert.assertEquals("false", leek1.getRegister("result"));
+	}
+
 	// ---------- getTurn behavior ----------
 
 	@Test

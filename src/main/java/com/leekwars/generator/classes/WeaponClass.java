@@ -18,8 +18,15 @@ import leekscript.runner.values.LegacyArrayLeekValue;
 
 public class WeaponClass {
 
+	private static boolean denyDuringHook(EntityAI ai, String funcName) {
+		if (!ai.isInHook()) return false;
+		ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
+		return true;
+	}
+
 	// ----- Fonctions Weapon -----
 	public static long useWeapon(EntityAI ai, long leek_id) throws LeekRunException {
+		if (denyDuringHook(ai, "useWeapon")) return -1;
 		int success = -1;
 		var target = ai.getFight().getEntity(leek_id);
 		if (target != null && target != ai.getEntity() && !target.isDead()) {
@@ -36,6 +43,7 @@ public class WeaponClass {
 	}
 
 	public static long useWeaponOnCell(EntityAI ai, long cell_id) throws LeekRunException {
+		if (denyDuringHook(ai, "useWeaponOnCell")) return -1;
 		int success = -1;
 		Cell target = ai.getState().getMap().getCell((int) cell_id);
 		if (target != null && target != ai.getEntity().getCell()) {

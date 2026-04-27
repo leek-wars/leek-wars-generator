@@ -20,6 +20,14 @@ import leekscript.common.Error;
 
 public class ChipClass {
 
+	// Combat actions are denied during beforeFight()/afterFight() hooks — no turn is
+	// active, so consuming TP / triggering effects would corrupt fight state.
+	private static boolean denyDuringHook(EntityAI ai, String funcName) {
+		if (!ai.isInHook()) return false;
+		ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
+		return true;
+	}
+
 	// ---- Fonctions Chip ----
 
 	public static Object getCurrentCooldown(EntityAI ai, long chip_id) throws LeekRunException {
@@ -58,6 +66,8 @@ public class ChipClass {
 
 	public static long useChip(EntityAI ai, long chip_id, long leek_id) throws LeekRunException {
 
+		if (denyDuringHook(ai, "useChip")) return -1;
+
 		long success = -1;
 		var target = ai.getFight().getEntity(leek_id);
 		Chip chip = ai.getEntity().getChip((int) chip_id);
@@ -82,6 +92,8 @@ public class ChipClass {
 	}
 
 	public static long useChipOnCell(EntityAI ai, long chip_id, long cell_id) throws LeekRunException {
+
+		if (denyDuringHook(ai, "useChipOnCell")) return -1;
 
 		long success = -1;
 		Cell target = ai.getState().getMap().getCell((int) cell_id);

@@ -273,6 +273,11 @@ public class EntityClass {
 
 	public static boolean setWeapon(EntityAI ai, long weapon_id) throws LeekRunException {
 
+		if (ai.isInHook()) {
+			ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { "setWeapon" });
+			return false;
+		}
+
 		var weapon = Weapons.getWeapon((int) weapon_id);
 		if (weapon == null) {
 			ai.addSystemLog(AILog.WARNING, FarmerLog.WEAPON_NOT_EXISTS, new String[] { String.valueOf(weapon_id) });

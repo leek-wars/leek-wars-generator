@@ -24,6 +24,13 @@ import leekscript.runner.values.MapLeekValue;
 
 public class FightClass {
 
+	private static boolean denyDuringHook(EntityAI ai, String funcName) {
+		if (!ai.isInHook()) return false;
+		ai.addSystemLog(leekscript.AILog.WARNING,
+			com.leekwars.generator.leek.FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
+		return true;
+	}
+
 	// ---- Fonctions Fight ----
 	public static long getNearestEnemy(EntityAI ai) throws LeekRunException {
 		if (ai.getEntity().getCell() == null)
@@ -539,6 +546,7 @@ public class FightClass {
 	}
 
 	public static long moveToward(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveToward")) return 0;
 
 		ai.ops(2000);
 
@@ -550,6 +558,7 @@ public class FightClass {
 	}
 
 	public static long moveTowardCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveTowardCell")) return 0;
 		return ai.getState().moveTowardCell(ai.getEntity(), cell_id, pm_to_use);
 	}
 
@@ -566,6 +575,7 @@ public class FightClass {
 	}
 
 	public static long moveTowardLeeks(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveTowardLeeks")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -593,6 +603,7 @@ public class FightClass {
 	}
 
 	public static long moveTowardCells(EntityAI ai, GenericArrayLeekValue cells, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveTowardCells")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -620,6 +631,7 @@ public class FightClass {
 	}
 
 	public static long moveAwayFrom(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveAwayFrom")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -643,6 +655,7 @@ public class FightClass {
 	}
 
 	public static long moveAwayFromCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveAwayFromCell")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();

@@ -106,6 +106,11 @@ public class EntityAI extends AI {
 		return hookPhase == HookPhase.AFTER_FIGHT;
 	}
 
+	/** Combat actions (useChip, useWeapon, moveToward...) are gated when in a hook phase. */
+	public boolean isInHook() {
+		return hookPhase != HookPhase.NONE;
+	}
+
 	private static final int HOOK_OPS_BONUS = 1_000_000;
 
 	public EntityAI(int instructions, int version) {
