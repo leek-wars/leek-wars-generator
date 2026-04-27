@@ -395,11 +395,15 @@ public class EntityAI extends AI {
 		return findHookMethod(this.getClass(), name) != null;
 	}
 
-	private static final java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> hookMethodCache = new java.util.concurrent.ConcurrentHashMap<>();
+	private static final java.util.WeakHashMap<Class<?>, java.util.Map<String, java.util.Optional<java.lang.reflect.Method>>> hookMethodCache = new java.util.WeakHashMap<>();
 
 	private static java.lang.reflect.Method findHookMethod(Class<?> clazz, String hookName) {
-		String key = clazz.getName() + ":" + hookName;
-		var cached = hookMethodCache.get(key);
+		java.util.Map<String, java.util.Optional<java.lang.reflect.Method>> classCache;
+		java.util.Optional<java.lang.reflect.Method> cached;
+		synchronized (hookMethodCache) {
+			classCache = hookMethodCache.get(clazz);
+			cached = classCache != null ? classCache.get(hookName) : null;
+		}
 		if (cached != null) return cached.orElse(null);
 
 		String methodName = "f_" + hookName;
@@ -416,7 +420,10 @@ public class EntityAI extends AI {
 			}
 			current = current.getSuperclass();
 		}
-		hookMethodCache.put(key, java.util.Optional.ofNullable(found));
+		synchronized (hookMethodCache) {
+			classCache = hookMethodCache.computeIfAbsent(clazz, k -> new java.util.HashMap<>());
+			classCache.put(hookName, java.util.Optional.ofNullable(found));
+		}
 		return found;
 	}
 
