@@ -291,7 +291,9 @@ public class Fight {
 	}
 
 	private void runHooks(String name, EntityAI.HookPhase phase) {
-		for (var entity : state.getEntities().values()) {
+		// Iterate in turn order (deterministic) rather than state.getEntities()
+		// (HashMap, non-deterministic).
+		for (var entity : state.getOrder().getEntities()) {
 			var ai = entity.getAI();
 			if (!(ai instanceof EntityAI)) continue;
 			var entityAI = (EntityAI) ai;

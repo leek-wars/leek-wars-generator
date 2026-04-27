@@ -434,7 +434,10 @@ public class EntityAI extends AI {
 
 		long startTime = System.nanoTime();
 		long savedMaxOps = getMaxOperations();
-		setMaxOperations((int) Math.min(Integer.MAX_VALUE, savedMaxOps + HOOK_OPS_BONUS));
+		long boosted = savedMaxOps + HOOK_OPS_BONUS;
+		// Guard against overflow when savedMaxOps is large and against negative cast.
+		if (boosted < savedMaxOps || boosted > Integer.MAX_VALUE) boosted = Integer.MAX_VALUE;
+		setMaxOperations((int) boosted);
 
 		try {
 			resetCounter();
@@ -470,7 +473,7 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) }, e.getStackTrace());
 		} finally {
 			hookPhase = HookPhase.NONE;
-			setMaxOperations((int) Math.min(Integer.MAX_VALUE, savedMaxOps));
+			setMaxOperations((int) Math.min((long) Integer.MAX_VALUE, savedMaxOps));
 			long endTime = System.nanoTime();
 			mIARunTime += (endTime - startTime);
 		}
