@@ -209,4 +209,23 @@ public class TestHooks {
 		Assert.assertEquals(100, leek1.getStat(Entity.STAT_STRENGTH));
 		Assert.assertEquals(500, leek1.getTotalLife());
 	}
+
+	@Test
+	public void entityInfoParsesLoadoutsFromJson() throws Exception {
+		// Mirrors the JSON shape produced by Worker's Entity.toEntityInfo() →
+		// EntityInfo.toJson(), focusing on the loadouts field.
+		String json = "{\"id\":42,\"name\":\"test\",\"level\":10,\"life\":500,\"tp\":6,\"mp\":7,\"strength\":100,"
+			+ "\"loadouts\":[{\"name\":\"Boss\",\"weapons\":[37,38],\"chips\":[3,33],"
+			+ "\"stats\":{\"3\":250,\"0\":800}}]}";
+		var parsed = new com.leekwars.generator.scenario.EntityInfo(
+			(tools.jackson.databind.node.ObjectNode) com.leekwars.generator.util.Json.parse(json));
+
+		Assert.assertEquals(1, parsed.loadouts.size());
+		var ld = parsed.loadouts.get(0);
+		Assert.assertEquals("Boss", ld.name);
+		Assert.assertEquals(java.util.Arrays.asList(37, 38), ld.weapons);
+		Assert.assertEquals(java.util.Arrays.asList(3, 33), ld.chips);
+		Assert.assertEquals(Integer.valueOf(250), ld.stats.get(Entity.STAT_STRENGTH));
+		Assert.assertEquals(Integer.valueOf(800), ld.stats.get(Entity.STAT_LIFE));
+	}
 }

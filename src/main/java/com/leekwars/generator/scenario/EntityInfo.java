@@ -2,7 +2,9 @@ package com.leekwars.generator.scenario;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -11,6 +13,7 @@ import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.entity.Bulb;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.turret.Turret;
 import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.Generator;
@@ -54,7 +57,22 @@ public class EntityInfo {
 	public int ram;
 	public List<Integer> chips = new ArrayList<Integer>();
 	public List<Integer> weapons = new ArrayList<Integer>();
+	public List<LoadoutData> loadouts = new ArrayList<>();
 	public Integer cell;
+
+	public static class LoadoutData {
+		public String name;
+		public List<Integer> weapons;
+		public List<Integer> chips;
+		public Map<Integer, Integer> stats; // Entity.STAT_* → final value (absolute)
+
+		public LoadoutData(String name, List<Integer> weapons, List<Integer> chips, Map<Integer, Integer> stats) {
+			this.name = name;
+			this.weapons = weapons;
+			this.chips = chips;
+			this.stats = stats;
+		}
+	}
 	public int skin;
 	public int hat;
 	public boolean metal;
@@ -136,6 +154,27 @@ public class EntityInfo {
 		if (e.hasNonNull("cell")) {
 			cell = e.get("cell").intValue();
 		}
+		ArrayNode loadouts = (ArrayNode) e.get("loadouts");
+		if (loadouts != null) {
+			for (var l : loadouts) {
+				ObjectNode lo = (ObjectNode) l;
+				String name = lo.get("name").asString();
+				List<Integer> ws = new ArrayList<>();
+				ArrayNode lw = (ArrayNode) lo.get("weapons");
+				if (lw != null) for (var w : lw) ws.add(w.intValue());
+				List<Integer> cs = new ArrayList<>();
+				ArrayNode lc = (ArrayNode) lo.get("chips");
+				if (lc != null) for (var c : lc) cs.add(c.intValue());
+				Map<Integer, Integer> ss = new HashMap<>();
+				ObjectNode ls = (ObjectNode) lo.get("stats");
+				if (ls != null) {
+					for (var entry : ls.properties()) {
+						ss.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
+					}
+				}
+				this.loadouts.add(new LoadoutData(name, ws, cs, ss));
+			}
+		}
 	}
 
 	public Entity createEntity(Generator generator, Scenario scenario, Fight fight) {
@@ -196,6 +235,9 @@ public class EntityInfo {
 			Integer chip = (Integer) c;
 			entity.addChip(Chips.getChip(chip));
 		}
+		for (LoadoutData ld : loadouts) {
+			entity.addLoadout(new FightLoadout(ld.name, ld.weapons, ld.chips, ld.stats));
+		}
 
 		return entity;
 	}
@@ -233,6 +275,26 @@ public class EntityInfo {
 			chips.add(chip);
 		}
 		json.set("chips", chips);
+		if (!loadouts.isEmpty()) {
+			ArrayNode loadoutsJson = Json.createArray();
+			for (LoadoutData ld : loadouts) {
+				ObjectNode lj = Json.createObject();
+				lj.put("name", ld.name);
+				ArrayNode lw = Json.createArray();
+				for (int w : ld.weapons) lw.add(w);
+				lj.set("weapons", lw);
+				ArrayNode lc = Json.createArray();
+				for (int c : ld.chips) lc.add(c);
+				lj.set("chips", lc);
+				ObjectNode ls = Json.createObject();
+				for (var entry : ld.stats.entrySet()) {
+					ls.put(String.valueOf(entry.getKey()), entry.getValue());
+				}
+				lj.set("stats", ls);
+				loadoutsJson.add(lj);
+			}
+			json.set("loadouts", loadoutsJson);
+		}
 		return json;
 	}
 }
