@@ -23,9 +23,17 @@ public class EntityClass {
 
 	private static final int SAY_LENGTH_LIMIT = 100;
 
-	// During beforeFight(), AIs cannot read equipment / stats of other entities (symmetry of execution order).
-	private static boolean isMaskedByBeforeFight(EntityAI ai, Entity target) {
-		return ai.isInBeforeFightHook() && target != ai.getEntity();
+	// Resolve a target entity for an equipment- or stat-dependent native, returning null
+	// when the target doesn't exist or when masked by beforeFight() — see spec §2.2 :
+	// during beforeFight(), AIs cannot read equipment/stats of other entities (symmetry
+	// of execution order). Self queries (value == null) and afterFight() are unmasked.
+	private static Entity resolveStatTarget(EntityAI ai, Object value) {
+		if (value == null) return ai.getEntity();
+		if (!(value instanceof Number)) return null;
+		Entity l = ai.getFight().getEntity(((Number) value).intValue());
+		if (l == null) return null;
+		if (ai.isInBeforeFightHook() && l != ai.getEntity()) return null;
+		return l;
 	}
 
 	public static long getLife(EntityAI ai) {
@@ -33,16 +41,8 @@ public class EntityClass {
 	}
 
 	public static Long getLife(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getLife();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getLife();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getLife();
 	}
 
 	public static long getForce(EntityAI ai) {
@@ -50,16 +50,8 @@ public class EntityClass {
 	}
 
 	public static Long getForce(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getStrength();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getStrength();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getStrength();
 	}
 
 	public static long getStrength(EntityAI ai) {
@@ -67,16 +59,8 @@ public class EntityClass {
 	}
 
 	public static Long getStrength(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getStrength();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getStrength();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getStrength();
 	}
 
 	public static long getWisdom(EntityAI ai) {
@@ -84,16 +68,8 @@ public class EntityClass {
 	}
 
 	public static Long getWisdom(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getWisdom();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getWisdom();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getWisdom();
 	}
 
 	public static long getResistance(EntityAI ai) {
@@ -101,16 +77,8 @@ public class EntityClass {
 	}
 
 	public static Long getResistance(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getResistance();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getResistance();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getResistance();
 	}
 
 	public static long getAgility(EntityAI ai) {
@@ -118,16 +86,8 @@ public class EntityClass {
 	}
 
 	public static Long getAgility(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getAgility();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getAgility();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getAgility();
 	}
 
 	public static long getScience(EntityAI ai) {
@@ -135,16 +95,8 @@ public class EntityClass {
 	}
 
 	public static Long getScience(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getScience();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getScience();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getScience();
 	}
 
 	public static long getMagic(EntityAI ai) {
@@ -152,16 +104,8 @@ public class EntityClass {
 	}
 
 	public static Long getMagic(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getMagic();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getMagic();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getMagic();
 	}
 
 	public static long getAbsoluteShield(EntityAI ai) {
@@ -169,16 +113,8 @@ public class EntityClass {
 	}
 
 	public static Long getAbsoluteShield(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getAbsoluteShield();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getAbsoluteShield();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getAbsoluteShield();
 	}
 
 	public static long getRelativeShield(EntityAI ai) {
@@ -186,16 +122,8 @@ public class EntityClass {
 	}
 
 	public static Long getRelativeShield(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getRelativeShield();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getRelativeShield();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getRelativeShield();
 	}
 
 	public static long getDamageReturn(EntityAI ai) {
@@ -203,16 +131,8 @@ public class EntityClass {
 	}
 
 	public static Long getDamageReturn(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getDamageReturn();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getDamageReturn();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getDamageReturn();
 	}
 
 	public static long getFrequency(EntityAI ai) {
@@ -220,16 +140,8 @@ public class EntityClass {
 	}
 
 	public static Long getFrequency(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getFrequency();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getFrequency();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getFrequency();
 	}
 
 	public static long getCores(EntityAI ai) {
@@ -237,16 +149,8 @@ public class EntityClass {
 	}
 
 	public static Long getCores(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getCores();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getCores();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getCores();
 	}
 
 	public static long getRAM(EntityAI ai) {
@@ -254,16 +158,8 @@ public class EntityClass {
 	}
 
 	public static Long getRAM(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getRAM();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getRAM();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getRAM();
 	}
 
 	public static long getStat(EntityAI ai, long stat) {
@@ -271,16 +167,8 @@ public class EntityClass {
 	}
 
 	public static Long getStat(EntityAI ai, Object entity, long stat) {
-		if (entity == null)
-			return (long) ai.getEntity().getStat((int) stat);
-		if (entity instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) entity).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getStat((int) stat);
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, entity);
+		return l == null ? null : (long) l.getStat((int) stat);
 	}
 
 	public static Long getCell(EntityAI ai) throws LeekRunException {
@@ -309,18 +197,9 @@ public class EntityClass {
 	}
 
 	public static Long getWeapon(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null) {
-			if (ai.getEntity().getWeapon() != null)
-				return (long) ai.getEntity().getWeapon().getId();
-		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null && l.getWeapon() != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getWeapon().getId();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null || l.getWeapon() == null) return null;
+		return (long) l.getWeapon().getId();
 	}
 
 	public static String getName(EntityAI ai) throws LeekRunException {
@@ -352,16 +231,8 @@ public class EntityClass {
 	 * @throws LeekRunException
 	 */
 	public static Long getMP(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getMP();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getMP();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getMP();
 	}
 
 	public static long getTP(EntityAI ai) {
@@ -369,16 +240,8 @@ public class EntityClass {
 	}
 
 	public static Long getTP(EntityAI ai, Object value) {
-		if (value == null)
-			return (long) ai.getEntity().getTP();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getTP();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getTP();
 	}
 
 	public static long getTotalMP(EntityAI ai) throws LeekRunException {
@@ -386,16 +249,8 @@ public class EntityClass {
 	}
 
 	public static Long getTotalMP(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return (long) ai.getEntity().getTotalMP();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getTotalMP();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getTotalMP();
 	}
 
 	public static long getTotalTP(EntityAI ai) throws LeekRunException {
@@ -403,16 +258,8 @@ public class EntityClass {
 	}
 
 	public static Long getTotalTP(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return (long) ai.getEntity().getTotalTP();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getTotalTP();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getTotalTP();
 	}
 
 	public static long getPower(EntityAI ai) throws LeekRunException {
@@ -420,17 +267,8 @@ public class EntityClass {
 	}
 
 	public static Long getPower(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null) {
-			return (long) ai.getEntity().getPower();
-		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getPower();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getPower();
 	}
 
 	public static boolean setWeapon(EntityAI ai, long weapon_id) throws LeekRunException {
@@ -532,14 +370,8 @@ public class EntityClass {
 	}
 
 	public static LegacyArrayLeekValue getWeapons_v1_3(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null)
-			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
-		if (l == null)
-			return null;
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (var weapon : l.getWeapons()) {
 			retour.push(ai, (long) weapon.getId());
@@ -548,14 +380,8 @@ public class EntityClass {
 	}
 
 	public static ArrayLeekValue getWeapons(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null)
-			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
-		if (l == null)
-			return null;
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new ArrayLeekValue(ai);
 		for (var weapon : l.getWeapons()) {
 			retour.push(ai, (long) weapon.getId());
@@ -618,14 +444,8 @@ public class EntityClass {
 	}
 
 	public static ArrayLeekValue getChips(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null)
-			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
-		if (l == null)
-			return null;
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var result = new ArrayLeekValue(ai);
 		for (var chip : l.getChips()) {
 			result.push(ai, (long) chip.getId());
@@ -635,14 +455,8 @@ public class EntityClass {
 
 
 	public static LegacyArrayLeekValue getChips_v1_3(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null)
-			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
-		if (l == null)
-			return null;
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var result = new LegacyArrayLeekValue(ai);
 		for (var chip : l.getChips()) {
 			result.push(ai, (long) chip.getId());
@@ -669,16 +483,8 @@ public class EntityClass {
 	}
 
 	public static ArrayLeekValue getEffects(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null) {
-			l = ai.getEntity();
-		} else if (value instanceof Number) {
-			l = ai.getFight().getEntity(ai.integer(value));
-		}
-		if (l == null) {
-			return null;
-		}
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new ArrayLeekValue(ai, l.getEffects().size());
 		for (Effect effect : l.getEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -687,16 +493,8 @@ public class EntityClass {
 	}
 
 	public static LegacyArrayLeekValue getEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null) {
-			l = ai.getEntity();
-		} else if (value instanceof Number) {
-			l = ai.getFight().getEntity(ai.integer(value));
-		}
-		if (l == null) {
-			return null;
-		}
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (Effect effect : l.getEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -723,16 +521,8 @@ public class EntityClass {
 	}
 
 	public static ArrayLeekValue getLaunchedEffects(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null) {
-			l = ai.getEntity();
-		} else if (value instanceof Number) {
-			l = ai.getFight().getEntity(ai.integer(value));
-		}
-		if (l == null) {
-			return null;
-		}
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new ArrayLeekValue(ai, l.getLaunchedEffects().size());
 		for (var effect : l.getLaunchedEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -742,16 +532,8 @@ public class EntityClass {
 
 
 	public static LegacyArrayLeekValue getLaunchedEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null) {
-			l = ai.getEntity();
-		} else if (value instanceof Number) {
-			l = ai.getFight().getEntity(ai.integer(value));
-		}
-		if (l == null) {
-			return null;
-		}
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (var effect : l.getLaunchedEffects()) {
 			retour.pushNoClone(ai, ai.getEffectArray(effect));
@@ -778,16 +560,8 @@ public class EntityClass {
 	}
 
 	public static ArrayLeekValue getPassiveEffects(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null) {
-			l = ai.getEntity();
-		} else if (value instanceof Number) {
-			l = ai.getFight().getEntity(ai.integer(value));
-		}
-		if (l == null) {
-			return null;
-		}
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new ArrayLeekValue(ai);
 		for (var feature : l.getPassiveEffects()) {
 			retour.pushNoClone(ai, ai.getFeatureArray(feature));
@@ -796,16 +570,8 @@ public class EntityClass {
 	}
 
 	public static LegacyArrayLeekValue getPassiveEffects_v1_3(EntityAI ai, Object value) throws LeekRunException {
-		Entity l = null;
-		if (value == null) {
-			l = ai.getEntity();
-		} else if (value instanceof Number) {
-			l = ai.getFight().getEntity(ai.integer(value));
-		}
-		if (l == null) {
-			return null;
-		}
-		if (isMaskedByBeforeFight(ai, l)) return null;
+		var l = resolveStatTarget(ai, value);
+		if (l == null) return null;
 		var retour = new LegacyArrayLeekValue(ai);
 		for (var feature : l.getPassiveEffects()) {
 			retour.pushNoClone(ai, ai.getFeatureArray(feature));
@@ -1133,16 +899,8 @@ public class EntityClass {
 	}
 
 	public static Long getTotalLife(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return (long) ai.getEntity().getTotalLife();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
-			if (l != null) {
-				if (isMaskedByBeforeFight(ai, l)) return null;
-				return (long) l.getTotalLife();
-			}
-		}
-		return null;
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : (long) l.getTotalLife();
 	}
 
 	public static long getLevel(EntityAI ai) throws LeekRunException {

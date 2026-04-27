@@ -395,19 +395,29 @@ public class EntityAI extends AI {
 		return findHookMethod(this.getClass(), name) != null;
 	}
 
+	private static final java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> hookMethodCache = new java.util.concurrent.ConcurrentHashMap<>();
+
 	private static java.lang.reflect.Method findHookMethod(Class<?> clazz, String hookName) {
+		String key = clazz.getName() + ":" + hookName;
+		var cached = hookMethodCache.get(key);
+		if (cached != null) return cached.orElse(null);
+
 		String methodName = "f_" + hookName;
+		java.lang.reflect.Method found = null;
 		Class<?> current = clazz;
+		outer:
 		while (current != null) {
 			for (var m : current.getDeclaredMethods()) {
 				if (m.getName().equals(methodName) && m.getParameterCount() == 0) {
 					m.setAccessible(true);
-					return m;
+					found = m;
+					break outer;
 				}
 			}
 			current = current.getSuperclass();
 		}
-		return null;
+		hookMethodCache.put(key, java.util.Optional.ofNullable(found));
+		return found;
 	}
 
 	public void runHook(String name, HookPhase phase) {
