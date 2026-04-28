@@ -13,7 +13,7 @@ import com.leekwars.generator.maps.Pathfinding;
 
 /**
  * Pathfinding edge cases via the Java Map API: A* result for trivial / blocked
- * / unreachable inputs, isLine / getCaseDistance helpers, getPathBeetween with
+ * / unreachable inputs, isLine / getCaseDistance helpers, getPathBetween with
  * cells_to_ignore.
  */
 public class TestFightPathfinding extends FightTestBase {
@@ -203,11 +203,11 @@ public class TestFightPathfinding extends FightTestBase {
 	}
 
 	@Test
-	public void getPathBeetweenIsConsistentWithAStar() throws Exception {
+	public void getPathBetweenIsConsistentWithAStar() throws Exception {
 		initFightOnly();
 		Cell start = leek1.getCell();
 		Cell end = leek2.getCell();
-		List<Cell> p1 = map().getPathBeetween(start, end, null);
+		List<Cell> p1 = map().getPathBetween(start, end, null);
 		List<Cell> p2 = map().getAStarPath(start, new Cell[] { end });
 		if (p1 == null || p2 == null) {
 			Assert.assertEquals(p1 == null, p2 == null);
@@ -217,11 +217,11 @@ public class TestFightPathfinding extends FightTestBase {
 	}
 
 	@Test
-	public void getPathBeetweenWithNullEndReturnsNull() throws Exception {
+	public void getPathBetweenWithNullEndReturnsNull() throws Exception {
 		initFightOnly();
 		Cell start = leek1.getCell();
-		Assert.assertNull(map().getPathBeetween(start, null, null));
-		Assert.assertNull(map().getPathBeetween(null, start, null));
+		Assert.assertNull(map().getPathBetween(start, null, null));
+		Assert.assertNull(map().getPathBetween(null, start, null));
 	}
 
 	// ---------- A* with player blocking ----------

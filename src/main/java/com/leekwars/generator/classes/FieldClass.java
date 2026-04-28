@@ -66,7 +66,7 @@ public class FieldClass {
 			ai.putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
 		}
 
-		var path = ai.getState().getMap().getPathBeetween(cell1, cell2, ignore);
+		var path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
 		if (path == null) {
 			return null;
 		}
@@ -109,7 +109,7 @@ public class FieldClass {
 				ignore.add(l.getCell());
 			}
 		}
-		List<Cell> path = ai.getState().getMap().getPathBeetween(cell1, cell2, ignore);
+		List<Cell> path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
 		if (path == null)
 			return null;
 		var retour = new LegacyArrayLeekValue(ai);
@@ -147,7 +147,7 @@ public class FieldClass {
 				ignore.add(l.getCell());
 			}
 		}
-		List<Cell> path = ai.getState().getMap().getPathBeetween(cell1, cell2, ignore);
+		List<Cell> path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
 		if (path == null)
 			return null;
 		var retour = new ArrayLeekValue(ai, path.size());

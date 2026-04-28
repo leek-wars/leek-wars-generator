@@ -1230,7 +1230,7 @@ public class State {
 		if (pm > 0) {
 			var target = getEntity(leek_id);
 			if (target != null && !target.isDead()) {
-				var path = getMap().getPathBeetween(entity.getCell(), target.getCell(), null);
+				var path = getMap().getPathBetween(entity.getCell(), target.getCell(), null);
 				if (path != null) {
 					used_pm = moveEntity(entity, path.subList(0, Math.min(path.size(), pm)));
 				}
@@ -1257,7 +1257,7 @@ public class State {
 				if (!target.isWalkable())
 					path = map.getAStarPath(entity.getCell(), map.getValidCellsAroundObstacle(target), null);
 				else
-					path = getMap().getPathBeetween(entity.getCell(), target, null);
+					path = getMap().getPathBetween(entity.getCell(), target, null);
 
 				if (path != null) {
 					used_pm = moveEntity(entity, path.subList(0, Math.min(pm, path.size())));

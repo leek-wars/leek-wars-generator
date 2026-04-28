@@ -700,7 +700,7 @@ public class Map {
 //		mPathCache.clear();
 	}
 
-	public List<Cell> getPathBeetween(Cell start, Cell end, List<Cell> cells_to_ignore) {
+	public List<Cell> getPathBetween(Cell start, Cell end, List<Cell> cells_to_ignore) {
 		if (start == null || end == null)
 			return null;
 		/*
