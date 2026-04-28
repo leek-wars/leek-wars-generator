@@ -325,6 +325,57 @@ public class TestFightPathfinding extends FightTestBase {
 
 	// ---------- moveEntity ----------
 
+	// ---------- A* determinism (regression coverage for the TreeSet→PQ refactor) ----------
+
+	@Test
+	public void aStarPathIsDeterministicAcrossCalls() throws Exception {
+		// Repeated calls with the same start/end must return identical paths.
+		// The previous TreeSet implementation used a non-strict comparator
+		// (returning -1 for equal weights), which could pick different cells
+		// of equal weight on different calls. PriorityQueue with Float.compare
+		// is stable enough for our needs; the generational reset doesn't shuffle
+		// cell state.
+		initFightOnly();
+		Cell start = leek1.getCell();
+		Cell end = leek2.getCell();
+		List<Cell> first = map().getAStarPath(start, new Cell[] { end });
+		for (int i = 0; i < 10; i++) {
+			List<Cell> next = map().getAStarPath(start, new Cell[] { end });
+			Assert.assertEquals("Same length on repeat", first == null ? 0 : first.size(), next == null ? 0 : next.size());
+			if (first != null) {
+				for (int j = 0; j < first.size(); j++) {
+					Assert.assertEquals("Same cell at index " + j, first.get(j).getId(), next.get(j).getId());
+				}
+			}
+		}
+	}
+
+	@Test
+	public void aStarMultiTargetReachesNearestCell() throws Exception {
+		// Multi-target A* must pick the closest target, not the first one in the list.
+		// The previous implementation biased its heuristic toward endCells.get(0).
+		initFightOnly();
+		Cell start = leek1.getCell();
+		// Build a list of end cells: leek2's cell (likely far) and a closer cell.
+		Cell far = leek2.getCell();
+		Cell near = null;
+		for (Cell c : map().getCellsAround(start)) {
+			if (c != null && c.isWalkable() && c.getPlayer(map()) == null) {
+				near = c;
+				break;
+			}
+		}
+		if (near == null) return;
+		List<Cell> targets = new ArrayList<>();
+		targets.add(far);  // first in list — what the old heuristic would prefer
+		targets.add(near);
+		List<Cell> path = map().getAStarPath(start, targets);
+		Assert.assertNotNull(path);
+		// Path should reach the closer target (path size 1) not the far one
+		Assert.assertEquals("A* picks the nearest target, not the first", 1, path.size());
+		Assert.assertEquals(near.getId(), path.get(0).getId());
+	}
+
 	@Test
 	public void moveEntityUpdatesCell() throws Exception {
 		initFightOnly();
