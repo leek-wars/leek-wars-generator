@@ -116,13 +116,14 @@ public class Team {
 
 	// Decrement cooldowns
 	public void applyCoolDown() {
-		Map<Integer, Integer> cooldown = new TreeMap<Integer, Integer>();
-		cooldown.putAll(cooldowns);
-		for (Entry<Integer, Integer> chip : cooldown.entrySet()) {
-			if (chip.getValue() <= 1)
-				cooldowns.remove(chip.getKey());
-			else
-				cooldowns.put(chip.getKey(), chip.getValue() - 1);
+		var it = cooldowns.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<Integer, Integer> chip = it.next();
+			if (chip.getValue() <= 1) {
+				it.remove();
+			} else {
+				chip.setValue(chip.getValue() - 1);
+			}
 		}
 	}
 

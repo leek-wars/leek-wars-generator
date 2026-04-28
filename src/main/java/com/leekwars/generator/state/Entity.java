@@ -903,13 +903,14 @@ public abstract class Entity {
 	}
 
 	public void applyCoolDown() {
-		Map<Integer, Integer> cooldown = new TreeMap<Integer, Integer>();
-		cooldown.putAll(mCooldown);
-		for (Entry<Integer, Integer> chip : cooldown.entrySet()) {
-			if (chip.getValue() <= 1)
-				mCooldown.remove(chip.getKey());
-			else
-				mCooldown.put(chip.getKey(), chip.getValue() - 1);
+		var it = mCooldown.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<Integer, Integer> chip = it.next();
+			if (chip.getValue() <= 1) {
+				it.remove();
+			} else {
+				chip.setValue(chip.getValue() - 1);
+			}
 		}
 	}
 
