@@ -130,7 +130,6 @@ public class State {
 	private final List<Team> teams;
 	private final List<Entity> initialOrder;
 	private int mNextEntityId = 0;
-	private int mWinteam = -1;
 	private final java.util.Map<Integer, Entity> mEntities;
 	private int mId;
 	public int mState = STATE_INIT;
@@ -211,7 +210,6 @@ public class State {
 		this.type = state.type;
 		this.context = state.context;
 		this.mNextEntityId = state.mNextEntityId;
-		this.mWinteam = state.mWinteam;
 		this.mStartFarmer = state.mStartFarmer;
 		this.lastTurn = state.lastTurn;
 		this.date = state.date;
@@ -226,10 +224,6 @@ public class State {
 
 	public HashSet<Integer> getFlags(int team) {
 		return teams.get(team).getFlags();
-	}
-
-	public int getWinner() {
-		return mWinteam;
 	}
 
 	public void setTeamID(int team, int id) {
@@ -367,41 +361,6 @@ public class State {
 
 	public Entity getEntity(long id) {
 		return mEntities.get((int) id);
-	}
-
-	public void computeWinner(boolean drawCheckLife) {
-		mWinteam = -1;
-
-		if (type == TYPE_CHEST_HUNT) {
-			// Chest hunt (free-for-all): all alive players win if all chests are dead
-			boolean chestsAlive = false;
-			for (var team : teams) {
-				if (team.containsChest() && team.isAlive()) { chestsAlive = true; break; }
-			}
-			if (!chestsAlive) {
-				mWinteam = -2; // Special: all alive players win
-			}
-			return;
-		}
-
-		int alive = 0;
-		for (int t = 0; t < teams.size(); ++t) {
-			if (!teams.get(t).isDead() && !teams.get(t).containsChest()) {
-				alive++;
-				mWinteam = t;
-			}
-		}
-		if (alive != 1) {
-			mWinteam = -1;
-		}
-		// Égalité : on regarde la vie des équipes
-		if (mWinteam == -1 && drawCheckLife) {
-			if (teams.get(0).getLife() > teams.get(1).getLife()) {
-				mWinteam = 0;
-			} else if (teams.get(1).getLife() > teams.get(0).getLife()) {
-				mWinteam = 1;
-			}
-		}
 	}
 
 	public void init() {
