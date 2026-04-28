@@ -64,9 +64,8 @@ public class Attack {
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 	private final int maxUses;
 
-	// Volatile to ensure safe publication of the lazily-built mask under JMM
-	// (without it, another thread could see the reference before generateMask's
-	// internal writes are visible).
+	// volatile so racing threads observe a fully-published list. The mask depends
+	// only on final fields, so racing threads compute the same result — no DCL needed.
 	private volatile List<int[]> cachedCastMask;
 
 	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, ArrayNode effects, int attackType, int itemID, int maxUses) {
