@@ -7,12 +7,9 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.state.Order;
 
 /**
- * Direct unit tests on {@link com.leekwars.generator.state.Order}. Probes the
- * mutator semantics (next, addSummon, removeEntity position adjustment, turn
- * rollback when the last entity is removed).
- *
- * Frequency-based starting order is tested through Fight runs in
- * TestFightConfig#sameSeedProducesSameResult.
+ * Direct unit tests on {@link com.leekwars.generator.state.Order}: mutator
+ * semantics (next, addSummon, removeEntity position adjustment, turn rollback
+ * when the last entity is removed).
  */
 public class TestFightOrder extends FightTestBase {
 
@@ -30,6 +27,12 @@ public class TestFightOrder extends FightTestBase {
 		fight.getState().addEntity(1, d);
 	}
 
+	private Order orderOf(Leek... entities) {
+		Order o = new Order();
+		for (Leek l : entities) o.addEntity(l);
+		return o;
+	}
+
 	// ---------- Empty Order ----------
 
 	@Test
@@ -42,7 +45,6 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void getEntityTurnOrderForUnknownReturnsZero() {
-		// indexOf returns -1 → +1 → 0
 		Order o = new Order();
 		Assert.assertEquals(0, o.getEntityTurnOrder(a));
 	}
@@ -51,12 +53,10 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void nextWrapsAndIncrementsTurn() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
+		Order o = orderOf(a, b);
 		Assert.assertEquals(a, o.current());
 		Assert.assertEquals(1, o.getTurn());
-		Assert.assertFalse("next on first→second is not a turn boundary", o.next());
+		Assert.assertFalse("next on first to second is not a turn boundary", o.next());
 		Assert.assertEquals(b, o.current());
 		Assert.assertEquals(1, o.getTurn());
 		Assert.assertTrue("next from last to first signals new turn", o.next());
@@ -66,34 +66,25 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void getNextPlayerWrapsAround() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
-		Assert.assertEquals(b, o.getNextPlayer()); // pos=0 → next is index 1
+		Order o = orderOf(a, b, c);
+		Assert.assertEquals(b, o.getNextPlayer());
 		o.next();
-		Assert.assertEquals(c, o.getNextPlayer()); // pos=1 → next is 2
+		Assert.assertEquals(c, o.getNextPlayer());
 		o.next();
-		Assert.assertEquals(a, o.getNextPlayer()); // pos=2 → wraps to 0
+		Assert.assertEquals(a, o.getNextPlayer());
 	}
 
 	@Test
 	public void getPreviousPlayerWrapsAround() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
-		Assert.assertEquals(c, o.getPreviousPlayer()); // pos=0 → wraps to 2
+		Order o = orderOf(a, b, c);
+		Assert.assertEquals(c, o.getPreviousPlayer());
 		o.next();
 		Assert.assertEquals(a, o.getPreviousPlayer());
 	}
 
 	@Test
 	public void getNextPlayerByEntityWrapsAround() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
+		Order o = orderOf(a, b, c);
 		Assert.assertEquals(b, o.getNextPlayer(a));
 		Assert.assertEquals(c, o.getNextPlayer(b));
 		Assert.assertEquals(a, o.getNextPlayer(c));
@@ -101,18 +92,14 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void getNextPlayerForUnknownReturnsNull() {
-		Order o = new Order();
-		o.addEntity(a);
+		Order o = orderOf(a);
 		Assert.assertNull(o.getNextPlayer(b));
 		Assert.assertNull(o.getPreviousPlayer(b));
 	}
 
 	@Test
 	public void getEntityTurnOrderIsOneIndexed() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
+		Order o = orderOf(a, b, c);
 		Assert.assertEquals(1, o.getEntityTurnOrder(a));
 		Assert.assertEquals(2, o.getEntityTurnOrder(b));
 		Assert.assertEquals(3, o.getEntityTurnOrder(c));
@@ -121,27 +108,20 @@ public class TestFightOrder extends FightTestBase {
 	// ---------- addEntity(index, ...) ----------
 
 	@Test
-	public void addEntityAtIndexShiftsPositionWhenInserted_atOrBeforeCurrent() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
-		o.next(); // position = 1 (b)
+	public void addEntityAtIndexShiftsPositionWhenInsertedAtOrBeforeCurrent() {
+		Order o = orderOf(a, b, c);
+		o.next();
 		Assert.assertEquals(b, o.current());
 		o.addEntity(0, d);
-		// Inserting at 0 (≤ position=1) bumps position to 2 — current still b
 		Assert.assertEquals("Insert before current preserves current entity", b, o.current());
 		Assert.assertEquals(2, o.getPosition());
 	}
 
 	@Test
 	public void addEntityAtIndexAfterCurrentDoesNotShift() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
-		o.next(); // position = 1 (b)
-		o.addEntity(3, d); // append after c
+		Order o = orderOf(a, b, c);
+		o.next();
+		o.addEntity(3, d);
 		Assert.assertEquals(b, o.current());
 		Assert.assertEquals(1, o.getPosition());
 		Assert.assertEquals(d, o.getEntities().get(3));
@@ -151,10 +131,7 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void addSummonInsertsAfterOwner() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
+		Order o = orderOf(a, b, c);
 		o.addSummon(b, d);
 		Assert.assertEquals(a, o.getEntities().get(0));
 		Assert.assertEquals(b, o.getEntities().get(1));
@@ -164,22 +141,18 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void addSummonForUnknownOwnerIsNoOp() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addSummon(b, d); // b not in order
+		Order o = orderOf(a);
+		o.addSummon(b, d);
 		Assert.assertEquals(1, o.getEntities().size());
 	}
 
 	@Test
 	public void addSummonDoesNotShiftPositionWhenOwnerIsCurrent() {
-		// Quirk: addSummon uses raw List.add(idx, ...) — doesn't bump `position` like
-		// addEntity(int, Entity) does. When owner == current, summon is at idx+1
-		// (after position), so `current()` is unchanged. This is the production behavior.
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c); // pos=0 (a)
-		o.next(); // pos=1 (b)
+		// Quirk: addSummon uses raw List.add(idx, ...), so position isn't bumped like
+		// addEntity(int, Entity) does. Summon lands at idx+1 (after position),
+		// leaving current() unchanged. Locks in the production behavior.
+		Order o = orderOf(a, b, c);
+		o.next();
 		o.addSummon(b, d);
 		Assert.assertEquals(b, o.current());
 		Assert.assertEquals(1, o.getPosition());
@@ -190,12 +163,9 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void removeEntityBeforePositionDecrementsPosition() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
+		Order o = orderOf(a, b, c);
 		o.next();
-		o.next(); // pos=2 (c)
+		o.next();
 		o.removeEntity(a);
 		Assert.assertEquals("Removing before current keeps current entity", c, o.current());
 		Assert.assertEquals(1, o.getPosition());
@@ -203,27 +173,17 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void removeEntityAtPositionShiftsToNext() {
-		// Removing the current entity: position is decremented (covering removed slot
-		// in the < position case actually fires for ==), then list.remove() naturally
-		// moves the next entity into the freed index.
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
-		o.next(); // pos=1 (b)
+		Order o = orderOf(a, b, c);
+		o.next();
 		o.removeEntity(b);
-		// b removed: list = [a, c], position = 0 (decremented from 1 because <= 1)
 		Assert.assertEquals(a, o.current());
 		Assert.assertEquals(0, o.getPosition());
 	}
 
 	@Test
 	public void removeEntityAfterPositionDoesNotMove() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		o.addEntity(c);
-		o.next(); // pos=1 (b)
+		Order o = orderOf(a, b, c);
+		o.next();
 		o.removeEntity(c);
 		Assert.assertEquals(b, o.current());
 		Assert.assertEquals(1, o.getPosition());
@@ -231,23 +191,19 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void removeFirstEntityOnFirstTurnRollsTurnBack() {
-		// Edge case: remove the only remaining entity at position 0 → position becomes
-		// -1, code resets to size-1 and decrements turn.
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
-		Assert.assertEquals(a, o.current()); // pos=0
-		o.removeEntity(a); // pos becomes -1 → resets to 0 (size-1=0), turn-- to 0
+		// Edge case: removing entity at pos=0 makes position -1; code resets to
+		// size-1 and decrements turn so the caller's next() reaches turn 1 again.
+		Order o = orderOf(a, b);
+		Assert.assertEquals(a, o.current());
+		o.removeEntity(a);
 		Assert.assertEquals(b, o.current());
 		Assert.assertEquals(0, o.getPosition());
-		Assert.assertEquals("Turn was decremented (caller will increment via next())", 0, o.getTurn());
+		Assert.assertEquals(0, o.getTurn());
 	}
 
 	@Test
 	public void removeUnknownEntityIsNoOp() {
-		Order o = new Order();
-		o.addEntity(a);
-		o.addEntity(b);
+		Order o = orderOf(a, b);
 		o.removeEntity(c);
 		Assert.assertEquals(2, o.getEntities().size());
 		Assert.assertEquals(0, o.getPosition());
@@ -257,7 +213,6 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void copyConstructorPreservesState() throws Exception {
-		// Use the Fight's State which has a real Order populated by initFight.
 		initFightOnly();
 		Order original = fight.getState().getOrder();
 		original.next();
@@ -277,20 +232,16 @@ public class TestFightOrder extends FightTestBase {
 
 	@Test
 	public void turnAdvancesAfterEachLeekActs() throws Exception {
-		// Each leek records `getTurn()` once. After all four have acted, getTurn is 1
-		// for the entire turn 1 — turn 2 starts only after entity #4 ends turn.
 		String aiCode = "global t = ''; t = t + getTurn() + ','; setRegister('turns', t);";
 		attachAI(a, aiCode);
 		attachAI(b, aiCode);
 		attachAI(c, aiCode);
 		attachAI(d, aiCode);
-		// Set max_turns=2 so we can see turns 1 and 2 only
 		fight.setMaxTurns(2);
 		runFight();
-		// Each leek runs once per turn, so each should have "1,2,"
 		String aTurns = a.getRegister("turns");
 		Assert.assertNotNull(aTurns);
-		Assert.assertTrue("a should see turns 1 then 2: " + aTurns, aTurns.startsWith("1,"));
+		Assert.assertTrue("a should see turn 1: " + aTurns, aTurns.startsWith("1,"));
 		Assert.assertTrue("a should see turn 2: " + aTurns, aTurns.contains("2,"));
 	}
 
@@ -298,7 +249,6 @@ public class TestFightOrder extends FightTestBase {
 	public void deathRemovesEntityFromOrder() throws Exception {
 		initFightOnly();
 		int sizeBefore = fight.getState().getOrder().getEntities().size();
-		// Kill `a` directly
 		fight.getState().onPlayerDie(a, b, null);
 		Assert.assertEquals(sizeBefore - 1, fight.getState().getOrder().getEntities().size());
 		Assert.assertFalse("Dead entity removed from order",
