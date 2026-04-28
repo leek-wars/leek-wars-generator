@@ -130,7 +130,7 @@ public class TestFightDamage extends FightTestBase {
 		var stats = new HashMap<Integer, Integer>();
 		stats.put(com.leekwars.generator.state.Entity.STAT_LIFE, 1234);
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("hp",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		attachAI(leek1, ""
 			+ "function beforeFight() { setLoadout('hp'); }"
 			+ "global once = false;"

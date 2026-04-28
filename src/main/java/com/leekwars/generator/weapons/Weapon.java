@@ -12,10 +12,12 @@ import com.leekwars.generator.items.Item;
 public class Weapon extends Item {
 
 	private final List<EffectParameters> passiveEffects = new ArrayList<EffectParameters>();
+	private final boolean forgotten;
 
-	public Weapon(int id, int cost, int minRange, int maxRange, ArrayNode effects, byte launchType, byte area, boolean los, int template, String name, ArrayNode passiveEffects, int maxUses) {
+	public Weapon(int id, int cost, int minRange, int maxRange, ArrayNode effects, byte launchType, byte area, boolean los, int template, String name, ArrayNode passiveEffects, int maxUses, boolean forgotten) {
 		super(id, cost, name, template, new Attack(minRange, maxRange, launchType, area, los, effects, Attack.TYPE_WEAPON, id, maxUses));
 		this.attack.setItem(this);
+		this.forgotten = forgotten;
 
 		for (var e : passiveEffects) {
 			ObjectNode effect = (ObjectNode) e;
@@ -27,6 +29,10 @@ public class Weapon extends Item {
 			int modifiers = effect.get("modifiers").intValue();
 			this.passiveEffects.add(new EffectParameters(etype, value1, value2, turns, targets, modifiers));
 		}
+	}
+
+	public boolean isForgotten() {
+		return forgotten;
 	}
 
 	public int getId() {

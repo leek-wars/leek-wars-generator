@@ -1318,12 +1318,32 @@ public class FightClass {
 			return false;
 		}
 		String name = ai.string(nameObject);
-		var loadout = ai.getEntity().getLoadout(name);
+		var entity = ai.getEntity();
+		var loadout = entity.getLoadout(name);
 		if (loadout == null) {
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
 			return false;
 		}
-		ai.getEntity().applyLoadout(loadout);
+		// Forgotten weapons are unique per farmer: collect those already equipped on
+		// other entities of the same farmer so we don't duplicate them on this leek.
+		// applyLoadout will pick the first non-reserved candidate from the loadout's
+		// forgotten alternatives (with stickiness on the currently-equipped one).
+		var reservedForgotten = new java.util.HashSet<Integer>();
+		int farmerId = entity.getFarmer();
+		if (farmerId > 0) {
+			for (var other : ai.getFight().getState().getAllEntities(true)) {
+				if (other == entity) continue;
+				if (other.getFarmer() != farmerId) continue;
+				for (Weapon w : other.getWeapons()) {
+					if (w.isForgotten()) reservedForgotten.add(w.getId());
+				}
+			}
+		}
+		var result = entity.applyLoadout(loadout, reservedForgotten);
+		if (result.noForgottenAvailable) {
+			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_FORGOTTEN_ALREADY_EQUIPPED,
+				new String[] { name });
+		}
 		return true;
 	}
 }

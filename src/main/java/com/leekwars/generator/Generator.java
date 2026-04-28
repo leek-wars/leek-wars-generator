@@ -199,7 +199,8 @@ public class Generator {
 				Weapons.addWeapon(new Weapon(weapon.get("item").intValue(), weapon.get("cost").intValue(),
 						weapon.get("min_range").intValue(), weapon.get("max_range").intValue(), (ArrayNode) weapon.get("effects"),
 						(byte) weapon.get("launch_type").intValue(), (byte) weapon.get("area").intValue(), weapon.get("los").booleanValue(),
-						weapon.get("template").intValue(), weapon.get("name").asString(), (ArrayNode) weapon.get("passive_effects"), weapon.get("max_uses").intValue()));
+						weapon.get("template").intValue(), weapon.get("name").asString(), (ArrayNode) weapon.get("passive_effects"), weapon.get("max_uses").intValue(),
+						weapon.has("forgotten") && weapon.get("forgotten").booleanValue()));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
 		} catch (Exception e) {

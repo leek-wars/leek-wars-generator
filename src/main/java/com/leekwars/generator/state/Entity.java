@@ -1,6 +1,7 @@
 package com.leekwars.generator.state;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,21 +91,20 @@ public abstract class Entity {
 	public int showsTurn = 0;
 	protected int mBirthTurn = 1;
 
-	// Current effects on the entity
+	// Current effects on the entity (effects and launchedEffects are final;
+	// passiveEffects and mCooldown are reassigned in the copy constructor, so
+	// their views are non-final and must be rebound there).
 	protected final ArrayList<Effect> effects = new ArrayList<Effect>();
-	private final List<Effect> effectsView = java.util.Collections.unmodifiableList(effects);
+	private final List<Effect> effectsView = Collections.unmodifiableList(effects);
 
-	// Effects created by the entity
 	private final ArrayList<Effect> launchedEffects = new ArrayList<Effect>();
-	private final List<Effect> launchedEffectsView = java.util.Collections.unmodifiableList(launchedEffects);
+	private final List<Effect> launchedEffectsView = Collections.unmodifiableList(launchedEffects);
 
-	// Passive effects
 	private ArrayList<EffectParameters> passiveEffects = new ArrayList<EffectParameters>();
-	private final List<EffectParameters> passiveEffectsView = java.util.Collections.unmodifiableList(passiveEffects);
+	private List<EffectParameters> passiveEffectsView = Collections.unmodifiableList(passiveEffects);
 
-	// Current cooldowns of the entity
 	protected Map<Integer, Integer> mCooldown = new TreeMap<Integer, Integer>();
-	private final Map<Integer, Integer> mCooldownView = java.util.Collections.unmodifiableMap(mCooldown);
+	private Map<Integer, Integer> cooldownsView = Collections.unmodifiableMap(mCooldown);
 
 	private Set<EntityState> states = new HashSet<EntityState>();
 
@@ -234,9 +234,11 @@ public abstract class Entity {
 		mChips = entity.mChips; // immutable
 		this.weapon = entity.weapon;
 		this.mCooldown = new TreeMap<Integer, Integer>(entity.mCooldown);
+		this.cooldownsView = Collections.unmodifiableMap(this.mCooldown);
 		this.usedTP = entity.usedTP;
 		this.usedMP = entity.usedMP;
 		this.passiveEffects = entity.passiveEffects; // immutable
+		this.passiveEffectsView = Collections.unmodifiableList(this.passiveEffects);
 
 		// protected final ArrayList<Effect> effects = new ArrayList<Effect>();
 		// private final ArrayList<Effect> launchedEffects = new ArrayList<Effect>();
@@ -341,7 +343,28 @@ public abstract class Entity {
 		return mLoadouts.get(name);
 	}
 
-	public void applyLoadout(FightLoadout loadout) {
+	public static class LoadoutApplyResult {
+		/** Picked forgotten weapon id (or null if none — either no candidates listed
+		 * or all candidates were reserved by teammates). */
+		public final Integer chosenForgotten;
+		/** True iff the loadout had forgotten candidates but none were available. */
+		public final boolean noForgottenAvailable;
+		public LoadoutApplyResult(Integer chosenForgotten, boolean noForgottenAvailable) {
+			this.chosenForgotten = chosenForgotten;
+			this.noForgottenAvailable = noForgottenAvailable;
+		}
+	}
+
+	public LoadoutApplyResult applyLoadout(FightLoadout loadout, Set<Integer> reservedForgottenWeaponIds) {
+		Set<Integer> reserved = reservedForgottenWeaponIds == null ? Collections.emptySet() : reservedForgottenWeaponIds;
+
+		// Snapshot the currently-equipped forgotten weapon (max one per leek) before
+		// clearing — needed for the sticky check below.
+		Integer currentForgotten = null;
+		for (Weapon w : mWeapons) {
+			if (w.isForgotten()) { currentForgotten = w.getId(); break; }
+		}
+
 		mWeapons.clear();
 		mChips.clear();
 		passiveEffects.clear();
@@ -351,11 +374,35 @@ public abstract class Entity {
 			mBaseStats.setStat(e.getKey(), e.getValue());
 		}
 
+		// Resolve which forgotten weapon (if any) this leek ends up with.
+		// Sticky: if the leek already wore one of the listed candidates and it isn't
+		// reserved by a teammate, keep it (avoids disruptive swaps).
+		// Otherwise: take the first candidate that isn't reserved.
+		Integer chosenForgotten = null;
+		List<Integer> alts = loadout.getForgottenWeapons();
+		if (alts != null && !alts.isEmpty()) {
+			if (currentForgotten != null && alts.contains(currentForgotten) && !reserved.contains(currentForgotten)) {
+				chosenForgotten = currentForgotten;
+			} else {
+				for (Integer alt : alts) {
+					if (!reserved.contains(alt)) {
+						chosenForgotten = alt;
+						break;
+					}
+				}
+			}
+		}
+		boolean noForgottenAvailable = (alts != null && !alts.isEmpty() && chosenForgotten == null);
+
 		if (loadout.getWeapons() != null) {
 			for (Integer weaponId : loadout.getWeapons()) {
 				Weapon w = Weapons.getWeapon(weaponId);
 				if (w != null) addWeapon(w);
 			}
+		}
+		if (chosenForgotten != null) {
+			Weapon w = Weapons.getWeapon(chosenForgotten);
+			if (w != null) addWeapon(w);
 		}
 		if (loadout.getChips() != null) {
 			for (Integer chipId : loadout.getChips()) {
@@ -366,6 +413,7 @@ public abstract class Entity {
 		mTotalLife = mBaseStats.getStat(STAT_LIFE);
 		mInitialLife = mTotalLife;
 		life = mTotalLife;
+		return new LoadoutApplyResult(chosenForgotten, noForgottenAvailable);
 	}
 
 	public Stats getBaseStats() {
@@ -951,7 +999,7 @@ public abstract class Entity {
 	}
 
 	public Map<Integer, Integer> getCooldowns() {
-		return mCooldownView;
+		return cooldownsView;
 	}
 
 	public int getFarmer() {

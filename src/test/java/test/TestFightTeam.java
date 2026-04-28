@@ -118,7 +118,7 @@ public class TestFightTeam extends FightTestBase {
 		var stats = new HashMap<Integer, Integer>();
 		stats.put(com.leekwars.generator.state.Entity.STAT_STRENGTH, 800);
 		a1.addLoadout(new com.leekwars.generator.state.FightLoadout("super",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		attachAI(a1, "function beforeFight() { setLoadout('super'); }");
 		attachAI(a2, "setRegister('s', '' + getStrength());");
 		attachAI(b1, "");

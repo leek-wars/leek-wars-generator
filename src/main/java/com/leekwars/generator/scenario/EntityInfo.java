@@ -63,12 +63,14 @@ public class EntityInfo {
 	public static class LoadoutData {
 		public String name;
 		public List<Integer> weapons;
+		public List<Integer> forgottenWeapons;
 		public List<Integer> chips;
 		public Map<Integer, Integer> stats; // Entity.STAT_* → final value (absolute)
 
-		public LoadoutData(String name, List<Integer> weapons, List<Integer> chips, Map<Integer, Integer> stats) {
+		public LoadoutData(String name, List<Integer> weapons, List<Integer> forgottenWeapons, List<Integer> chips, Map<Integer, Integer> stats) {
 			this.name = name;
 			this.weapons = weapons;
+			this.forgottenWeapons = forgottenWeapons == null ? new ArrayList<>() : forgottenWeapons;
 			this.chips = chips;
 			this.stats = stats;
 		}
@@ -162,6 +164,9 @@ public class EntityInfo {
 				List<Integer> ws = new ArrayList<>();
 				ArrayNode lw = (ArrayNode) lo.get("weapons");
 				if (lw != null) for (var w : lw) ws.add(w.intValue());
+				List<Integer> fws = new ArrayList<>();
+				ArrayNode lfw = (ArrayNode) lo.get("forgotten_weapons");
+				if (lfw != null) for (var w : lfw) fws.add(w.intValue());
 				List<Integer> cs = new ArrayList<>();
 				ArrayNode lc = (ArrayNode) lo.get("chips");
 				if (lc != null) for (var c : lc) cs.add(c.intValue());
@@ -172,7 +177,7 @@ public class EntityInfo {
 						ss.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
 					}
 				}
-				this.loadouts.add(new LoadoutData(name, ws, cs, ss));
+				this.loadouts.add(new LoadoutData(name, ws, fws, cs, ss));
 			}
 		}
 	}
@@ -236,7 +241,7 @@ public class EntityInfo {
 			entity.addChip(Chips.getChip(chip));
 		}
 		for (LoadoutData ld : loadouts) {
-			entity.addLoadout(new FightLoadout(ld.name, ld.weapons, ld.chips, ld.stats));
+			entity.addLoadout(new FightLoadout(ld.name, ld.weapons, ld.forgottenWeapons, ld.chips, ld.stats));
 		}
 
 		return entity;
@@ -283,6 +288,11 @@ public class EntityInfo {
 				ArrayNode lw = Json.createArray();
 				for (int w : ld.weapons) lw.add(w);
 				lj.set("weapons", lw);
+				if (ld.forgottenWeapons != null && !ld.forgottenWeapons.isEmpty()) {
+					ArrayNode lfw = Json.createArray();
+					for (int w : ld.forgottenWeapons) lfw.add(w);
+					lj.set("forgotten_weapons", lfw);
+				}
 				ArrayNode lc = Json.createArray();
 				for (int c : ld.chips) lc.add(c);
 				lj.set("chips", lc);

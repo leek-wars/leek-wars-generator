@@ -120,11 +120,15 @@ public class TestHooks {
 	}
 
 	private static FightLoadout loadout(String name, Integer[] weapons, Integer[] chips, int life, int strength, int agility) {
+		return loadout(name, weapons, new Integer[] {}, chips, life, strength, agility);
+	}
+
+	private static FightLoadout loadout(String name, Integer[] weapons, Integer[] forgottenWeapons, Integer[] chips, int life, int strength, int agility) {
 		var stats = new HashMap<Integer, Integer>();
 		stats.put(Entity.STAT_LIFE, life);
 		stats.put(Entity.STAT_STRENGTH, strength);
 		stats.put(Entity.STAT_AGILITY, agility);
-		return new FightLoadout(name, java.util.Arrays.asList(weapons), java.util.Arrays.asList(chips), stats);
+		return new FightLoadout(name, java.util.Arrays.asList(weapons), java.util.Arrays.asList(forgottenWeapons), java.util.Arrays.asList(chips), stats);
 	}
 
 	@Test
@@ -215,7 +219,7 @@ public class TestHooks {
 		// Mirrors the JSON shape produced by Worker's Entity.toEntityInfo() →
 		// EntityInfo.toJson(), focusing on the loadouts field.
 		String json = "{\"id\":42,\"name\":\"test\",\"level\":10,\"life\":500,\"tp\":6,\"mp\":7,\"strength\":100,"
-			+ "\"loadouts\":[{\"name\":\"Boss\",\"weapons\":[37,38],\"chips\":[3,33],"
+			+ "\"loadouts\":[{\"name\":\"Boss\",\"weapons\":[37,38],\"forgotten_weapons\":[117,118],\"chips\":[3,33],"
 			+ "\"stats\":{\"3\":250,\"0\":800}}]}";
 		var parsed = new com.leekwars.generator.scenario.EntityInfo(
 			(tools.jackson.databind.node.ObjectNode) com.leekwars.generator.util.Json.parse(json));
@@ -224,8 +228,175 @@ public class TestHooks {
 		var ld = parsed.loadouts.get(0);
 		Assert.assertEquals("Boss", ld.name);
 		Assert.assertEquals(java.util.Arrays.asList(37, 38), ld.weapons);
+		Assert.assertEquals(java.util.Arrays.asList(117, 118), ld.forgottenWeapons);
 		Assert.assertEquals(java.util.Arrays.asList(3, 33), ld.chips);
 		Assert.assertEquals(Integer.valueOf(250), ld.stats.get(Entity.STAT_STRENGTH));
 		Assert.assertEquals(Integer.valueOf(800), ld.stats.get(Entity.STAT_LIFE));
+	}
+
+	// data/weapons.json doesn't always parse cleanly under tests (missing max_uses
+	// in the bundled snapshot), so register synthetic weapons manually for these tests.
+	private static final int FORGOTTEN_W1 = 9001;
+	private static final int FORGOTTEN_W2 = 9002;
+	private static final int FORGOTTEN_W3 = 9003;
+	private static final int REGULAR_W = 9004;
+
+	private static void registerSyntheticWeapons() {
+		registerWeapon(FORGOTTEN_W1, "test_forgotten_1", true);
+		registerWeapon(FORGOTTEN_W2, "test_forgotten_2", true);
+		registerWeapon(FORGOTTEN_W3, "test_forgotten_3", true);
+		registerWeapon(REGULAR_W, "test_regular", false);
+	}
+
+	private static void registerWeapon(int id, String name, boolean forgotten) {
+		if (com.leekwars.generator.weapons.Weapons.getWeapon(id) == null) {
+			com.leekwars.generator.weapons.Weapons.addWeapon(new com.leekwars.generator.weapons.Weapon(
+				id, 5, 1, 6, com.leekwars.generator.util.Json.createArray(),
+				(byte) 1, (byte) 1, true, id, name,
+				com.leekwars.generator.util.Json.createArray(), 0, forgotten));
+		}
+	}
+
+	private Leek makeLeekWithFarmer(int id, int farmerId) {
+		return new Leek(id, "L" + id, farmerId, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+	}
+
+	@Test
+	public void setLoadoutFirstFreeForgottenAttribution() throws Exception {
+		registerSyntheticWeapons();
+
+		// Two leeks, same farmer. Both have the same single-candidate loadout —
+		// only the first to apply gets the forgotten weapon, the second falls back
+		// to no forgotten weapon (and emits a "no available alternative" warning).
+		var allyA = makeLeekWithFarmer(101, 42);
+		var allyB = makeLeekWithFarmer(102, 42);
+		fight.getState().addEntity(0, allyA);
+		fight.getState().addEntity(0, allyB);
+		fight.initFight();
+
+		Integer[] forgotten = { FORGOTTEN_W1 };
+		allyA.addLoadout(loadout("boss", new Integer[] {}, forgotten, new Integer[] {}, 500, 100, 0));
+		allyB.addLoadout(loadout("boss", new Integer[] {}, forgotten, new Integer[] {}, 500, 100, 0));
+
+		EntityAI aiA = compile("function beforeFight() { setLoadout('boss'); }", allyA);
+		aiA.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		EntityAI aiB = compile("function beforeFight() { setLoadout('boss'); }", allyB);
+		aiB.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		Assert.assertTrue(allyA.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+		Assert.assertFalse(allyB.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+	}
+
+	@Test
+	public void setLoadoutAllowsSameForgottenAcrossDifferentFarmers() throws Exception {
+		registerSyntheticWeapons();
+
+		var farmerA = makeLeekWithFarmer(201, 1);
+		var farmerB = makeLeekWithFarmer(202, 2);
+		fight.getState().addEntity(0, farmerA);
+		fight.getState().addEntity(1, farmerB);
+		fight.initFight();
+
+		Integer[] forgotten = { FORGOTTEN_W1 };
+		farmerA.addLoadout(loadout("kit", new Integer[] {}, forgotten, new Integer[] {}, 500, 100, 0));
+		farmerB.addLoadout(loadout("kit", new Integer[] {}, forgotten, new Integer[] {}, 500, 100, 0));
+
+		EntityAI aiA = compile("function beforeFight() { setLoadout('kit'); }", farmerA);
+		aiA.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		EntityAI aiB = compile("function beforeFight() { setLoadout('kit'); }", farmerB);
+		aiB.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		Assert.assertTrue(farmerA.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+		Assert.assertTrue(farmerB.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+	}
+
+	@Test
+	public void setLoadoutDistributesAlternativesAcrossTeammates() throws Exception {
+		registerSyntheticWeapons();
+
+		// Two leeks, same farmer, same loadout listing two alternatives.
+		// Each should get a distinct forgotten weapon — leek A picks W1 (first free),
+		// leek B sees W1 reserved and falls back to W2.
+		var allyA = makeLeekWithFarmer(301, 50);
+		var allyB = makeLeekWithFarmer(302, 50);
+		fight.getState().addEntity(0, allyA);
+		fight.getState().addEntity(0, allyB);
+		fight.initFight();
+
+		Integer[] alts = { FORGOTTEN_W1, FORGOTTEN_W2 };
+		allyA.addLoadout(loadout("boss", new Integer[] {}, alts, new Integer[] {}, 500, 100, 0));
+		allyB.addLoadout(loadout("boss", new Integer[] {}, alts, new Integer[] {}, 500, 100, 0));
+
+		compile("function beforeFight() { setLoadout('boss'); }", allyA)
+			.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		compile("function beforeFight() { setLoadout('boss'); }", allyB)
+			.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		Assert.assertTrue(allyA.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+		Assert.assertFalse(allyA.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W2));
+		Assert.assertFalse(allyB.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+		Assert.assertTrue(allyB.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W2));
+	}
+
+	@Test
+	public void setLoadoutStickyKeepsCurrentForgottenWhenListed() throws Exception {
+		registerSyntheticWeapons();
+
+		// Leek already wears W2 (e.g. from default equipment). Loadout lists [W1, W2]
+		// as alternatives. Sticky: keep W2, don't switch to W1 even though it's first.
+		var leek = makeLeekWithFarmer(401, 60);
+		fight.getState().addEntity(0, leek);
+		fight.initFight();
+		leek.addWeapon(com.leekwars.generator.weapons.Weapons.getWeapon(FORGOTTEN_W2));
+
+		Integer[] alts = { FORGOTTEN_W1, FORGOTTEN_W2 };
+		leek.addLoadout(loadout("boss", new Integer[] {}, alts, new Integer[] {}, 500, 100, 0));
+
+		EntityAI ai = compile("function beforeFight() { setLoadout('boss'); }", leek);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		Assert.assertTrue("sticky: leek should still wear W2",
+			leek.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W2));
+		Assert.assertFalse("sticky: should not have grabbed W1",
+			leek.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+	}
+
+	@Test
+	public void setLoadoutEmptyForgottenListClearsCurrentForgotten() throws Exception {
+		registerSyntheticWeapons();
+
+		// Loadout with empty forgotten_weapons list = "no forgotten for this build".
+		var leek = makeLeekWithFarmer(501, 70);
+		fight.getState().addEntity(0, leek);
+		fight.initFight();
+		leek.addWeapon(com.leekwars.generator.weapons.Weapons.getWeapon(FORGOTTEN_W1));
+
+		leek.addLoadout(loadout("clean", new Integer[] {}, new Integer[] {}, new Integer[] {}, 500, 100, 0));
+
+		EntityAI ai = compile("function beforeFight() { setLoadout('clean'); }", leek);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		Assert.assertFalse(leek.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
+	}
+
+	@Test
+	public void setLoadoutFixedWeaponsIgnoreForgottenList() throws Exception {
+		registerSyntheticWeapons();
+
+		// A regular weapon listed in the fixed weapons slot is always equipped.
+		var leek = makeLeekWithFarmer(601, 80);
+		fight.getState().addEntity(0, leek);
+		fight.initFight();
+
+		Integer[] fixed = { REGULAR_W };
+		Integer[] forgotten = { FORGOTTEN_W1 };
+		leek.addLoadout(loadout("mix", fixed, forgotten, new Integer[] {}, 500, 100, 0));
+
+		EntityAI ai = compile("function beforeFight() { setLoadout('mix'); }", leek);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+
+		Assert.assertTrue(leek.getWeapons().stream().anyMatch(w -> w.getId() == REGULAR_W));
+		Assert.assertTrue(leek.getWeapons().stream().anyMatch(w -> w.getId() == FORGOTTEN_W1));
 	}
 }

@@ -186,9 +186,9 @@ public class TestFightEdgeCases extends FightTestBase {
 		stats.put(com.leekwars.generator.state.Entity.STAT_LIFE, 800);
 		stats.put(com.leekwars.generator.state.Entity.STAT_STRENGTH, 250);
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("a",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("b",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		// Lots of swaps — should be fine, each call resets equipment from scratch
 		attachAI(leek1, ""
 			+ "function beforeFight() {"
@@ -301,7 +301,7 @@ public class TestFightEdgeCases extends FightTestBase {
 		var stats = new HashMap<Integer, Integer>();
 		stats.put(com.leekwars.generator.state.Entity.STAT_LIFE, 800);
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("any",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		attachAI(leek1, "function afterFight() { setRegister('result', setLoadout('any') ? 'true' : 'false'); }");
 		attachAI(leek2, "");
 		runFight();
@@ -437,7 +437,7 @@ public class TestFightEdgeCases extends FightTestBase {
 		var stats = new HashMap<Integer, Integer>();
 		stats.put(com.leekwars.generator.state.Entity.STAT_LIFE, 1234);
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("hp",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		attachAI(leek1, ""
 			+ "function beforeFight() {"
 			+ "  setLoadout('hp');"
@@ -482,7 +482,7 @@ public class TestFightEdgeCases extends FightTestBase {
 		stats.put(com.leekwars.generator.state.Entity.STAT_LIFE, 800);
 		// Loadout with numeric-looking name
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("123",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats));
 		// Pass a number — should be coerced to string "123"
 		attachAI(leek1, "function beforeFight() { setRegister('result', setLoadout(123) ? 'true' : 'false'); }");
 		attachAI(leek2, "");
@@ -498,9 +498,9 @@ public class TestFightEdgeCases extends FightTestBase {
 		var stats2 = new HashMap<Integer, Integer>();
 		stats2.put(com.leekwars.generator.state.Entity.STAT_STRENGTH, 999);
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("dup",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats1));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats1));
 		leek1.addLoadout(new com.leekwars.generator.state.FightLoadout("dup",
-			java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats2));
+			java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats2));
 		attachAI(leek1, "function beforeFight() { setLoadout('dup'); setRegister('s', '' + getStrength()); }");
 		attachAI(leek2, "");
 		runFight();

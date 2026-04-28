@@ -34,7 +34,7 @@ public class TestHooksFight extends FightTestBase {
 		stats.put(Entity.STAT_LIFE, life);
 		stats.put(Entity.STAT_STRENGTH, strength);
 		stats.put(Entity.STAT_AGILITY, agility);
-		return new FightLoadout(name, java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats);
+		return new FightLoadout(name, java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats);
 	}
 
 	// ---------- Hook orchestration ----------
