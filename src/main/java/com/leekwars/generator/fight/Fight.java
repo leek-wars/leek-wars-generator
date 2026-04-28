@@ -253,10 +253,24 @@ public class Fight {
 		}
 		// Égalité : on regarde la vie des équipes
 		if (mWinteam == -1 && drawCheckLife) {
-			if (state.getTeams().get(0).getLife() > state.getTeams().get(1).getLife()) {
-				mWinteam = 0;
-			} else if (state.getTeams().get(1).getLife() > state.getTeams().get(0).getLife()) {
-				mWinteam = 1;
+			// Find the team with the strictly highest life among all teams. This generalizes
+			// the 1v1 tiebreaker to BR / multi-team fights — the previous implementation only
+			// compared teams 0 and 1, leaving teams 2+ unable to win on a life tiebreaker.
+			int maxLife = Integer.MIN_VALUE;
+			int winners = 0;
+			int candidate = -1;
+			for (int t = 0; t < state.getTeams().size(); ++t) {
+				int life = state.getTeams().get(t).getLife();
+				if (life > maxLife) {
+					maxLife = life;
+					candidate = t;
+					winners = 1;
+				} else if (life == maxLife) {
+					winners++;
+				}
+			}
+			if (winners == 1) {
+				mWinteam = candidate;
 			}
 		}
 	}
