@@ -17,6 +17,7 @@ import com.leekwars.generator.items.Item;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
+import com.leekwars.generator.maps.MaskAreaCell;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.State;
@@ -62,6 +63,10 @@ public class Attack {
 	private final int areaID;
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 	private final int maxUses;
+
+	// Cached cast mask: depends only on (launchType, minRange, maxRange), all final.
+	// Computed on first use and shared across getPossibleCastCellsForTarget calls.
+	private List<int[]> cachedCastMask;
 
 	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, ArrayNode effects, int attackType, int itemID, int maxUses) {
 
@@ -309,6 +314,21 @@ public class Attack {
 
 	public byte getLaunchType() {
 		return launchType;
+	}
+
+	/**
+	 * Cast mask cells (offsets from target) for non-LINE launch types. Computed
+	 * lazily on first use; the result depends only on the final fields launchType,
+	 * minRange and maxRange so a benign race on `cachedCastMask` returns the same
+	 * value either way.
+	 */
+	public List<int[]> getCastMask() {
+		List<int[]> mask = cachedCastMask;
+		if (mask == null) {
+			mask = MaskAreaCell.generateMask(launchType, minRange, maxRange);
+			cachedCastMask = mask;
+		}
+		return mask;
 	}
 
 	public boolean needLos() {

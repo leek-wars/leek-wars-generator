@@ -1161,7 +1161,7 @@ public class Map {
 					}
 				}
 			} else {
-				var mask = MaskAreaCell.generateMask(attack.getLaunchType(), attack.getMinRange(), attack.getMaxRange());
+				var mask = attack.getCastMask();
 				int x = target.getX();
 				int y = target.getY();
 				Cell cell;
