@@ -1053,8 +1053,9 @@ public class Map {
 		if (endCells.contains(c1))
 			return null;
 
-		// Wrap-around: when the run counter would hit MAX_VALUE, do a one-shot reset
-		// so cells defaulted to run=0 don't get false-positive matches after wrap.
+		// Wrap-around guard: at MAX_VALUE, reset all cell run-ids to 0 and restart
+		// at 1 — otherwise the next ++astarRun would overflow to MIN_VALUE then
+		// eventually back to 0, colliding with the default value of fresh cells.
 		if (++astarRun == Integer.MAX_VALUE) {
 			for (Cell c : cells) {
 				c.astarVisitedRun = 0;

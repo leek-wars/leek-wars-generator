@@ -333,12 +333,12 @@ public class State {
 
 	public List<Entity> getTeamEntities(int team, boolean dead) {
 		if (team >= teams.size()) return java.util.Collections.emptyList();
-		List<Entity> all = teams.get(team).getEntities();
-		// When the caller wants deads OR no one is dead, return an unmodifiable view
-		// of the raw team list. Avoids ~12k ArrayList allocations per combat from
-		// natives like getNearestEnemy / getEnemies.
+		Team t = teams.get(team);
+		List<Entity> all = t.getEntities();
+		// Reuse Team's cached read-only view when no filtering is needed — avoids
+		// allocating a fresh wrapper on every getNearestEnemy / getEnemies call.
 		if (dead || !anyDead(all)) {
-			return java.util.Collections.unmodifiableList(all);
+			return t.getEntitiesView();
 		}
 		List<Entity> filtered = new ArrayList<Entity>(all.size());
 		for (Entity e : all) {

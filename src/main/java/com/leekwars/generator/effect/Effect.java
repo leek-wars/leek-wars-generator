@@ -200,7 +200,14 @@ public abstract class Effect implements Cloneable {
 		if (factory == null) {
 			return 0;
 		}
-		Effect effect = factory.get();
+		// Defensive try/catch matches the previous reflection-based code: a buggy
+		// Effect constructor must not propagate out of createEffect into the action loop.
+		Effect effect;
+		try {
+			effect = factory.get();
+		} catch (Exception e) {
+			return 0;
+		}
 		effect.setId(id);
 		effect.turns = turns;
 		effect.aoe = aoe;

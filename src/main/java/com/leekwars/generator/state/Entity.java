@@ -239,9 +239,7 @@ public abstract class Entity {
 		this.usedMP = entity.usedMP;
 		this.passiveEffects = entity.passiveEffects; // immutable
 		this.passiveEffectsView = Collections.unmodifiableList(this.passiveEffects);
-
-		// protected final ArrayList<Effect> effects = new ArrayList<Effect>();
-		// private final ArrayList<Effect> launchedEffects = new ArrayList<Effect>();
+		// effects and launchedEffects are final fields — each Entity gets a fresh empty list.
 	}
 
 	public Leek getLeek() {

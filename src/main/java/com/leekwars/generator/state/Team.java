@@ -1,6 +1,7 @@
 package com.leekwars.generator.state;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +14,13 @@ public class Team {
 
 	private int id;
 	private final List<Entity> entities;
+	private final List<Entity> entitiesView;
 	private final TreeMap<Integer, Integer> cooldowns;
 	private final HashSet<Integer> flags;
 
 	public Team() {
 		entities = new ArrayList<Entity>();
+		entitiesView = Collections.unmodifiableList(entities);
 		cooldowns = new TreeMap<Integer, Integer>();
 		flags = new HashSet<Integer>();
 	}
@@ -27,6 +30,7 @@ public class Team {
 		for (var entity : team.entities) {
 			this.entities.add(state.getEntity(entity.getFId()));
 		}
+		this.entitiesView = Collections.unmodifiableList(entities);
 		this.cooldowns = new TreeMap<Integer, Integer>(team.cooldowns);
 		this.flags = new HashSet<Integer>(team.flags);
 	}
@@ -37,6 +41,11 @@ public class Team {
 
 	public List<Entity> getEntities() {
 		return entities;
+	}
+
+	/** Read-only view of {@link #getEntities()} — same reference reused across calls. */
+	public List<Entity> getEntitiesView() {
+		return entitiesView;
 	}
 
 	public HashSet<Integer> getFlags() {
