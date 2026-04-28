@@ -301,7 +301,12 @@ public class State {
 	}
 
 	public List<Entity> getEnemiesEntities(int team, boolean get_deads) {
-
+		// Fast path for the dominant 1v1 case: a single enemy team means the result
+		// is just the other team's entities, which getTeamEntities can already serve
+		// without allocation when no one is dead.
+		if (teams.size() == 2) {
+			return getTeamEntities(1 - team, get_deads);
+		}
 		List<Entity> enemies = new ArrayList<Entity>();
 		for (int t = 0; t < teams.size(); ++t) {
 			if (t != team) {
@@ -327,30 +332,45 @@ public class State {
 	}
 
 	public List<Entity> getTeamEntities(int team, boolean dead) {
+		if (team >= teams.size()) return java.util.Collections.emptyList();
+		List<Entity> all = teams.get(team).getEntities();
+		// When the caller wants deads OR no one is dead, return an unmodifiable view
+		// of the raw team list. Avoids ~12k ArrayList allocations per combat from
+		// natives like getNearestEnemy / getEnemies.
+		if (dead || !anyDead(all)) {
+			return java.util.Collections.unmodifiableList(all);
+		}
+		List<Entity> filtered = new ArrayList<Entity>(all.size());
+		for (Entity e : all) {
+			if (!e.isDead()) filtered.add(e);
+		}
+		return filtered;
+	}
 
-		List<Entity> leeks = new ArrayList<Entity>();
-
-		if (team < teams.size()) {
-			for (Entity e : teams.get(team).getEntities()) {
-				if (dead || !e.isDead())
-					leeks.add(e);
+	public List<Entity> getAllEntities(boolean get_deads) {
+		// When no team has anyone dead (or deads are wanted), we still need to
+		// concatenate teams — but skip filtering and over-pre-size the dest list.
+		int total = 0;
+		for (Team t : teams) total += t.getEntities().size();
+		List<Entity> leeks = new ArrayList<Entity>(total);
+		for (Team t : teams) {
+			List<Entity> teamEntities = t.getEntities();
+			if (get_deads) {
+				leeks.addAll(teamEntities);
+			} else {
+				for (Entity e : teamEntities) {
+					if (!e.isDead()) leeks.add(e);
+				}
 			}
 		}
 		return leeks;
 	}
 
-	public List<Entity> getAllEntities(boolean get_deads) {
-
-		List<Entity> leeks = new ArrayList<Entity>();
-
-		for (Team t : teams) {
-			for (Entity e : t.getEntities()) {
-				if (get_deads || !e.isDead()) {
-					leeks.add(e);
-				}
-			}
+	private static boolean anyDead(List<Entity> entities) {
+		for (Entity e : entities) {
+			if (e.isDead()) return true;
 		}
-		return leeks;
+		return false;
 	}
 
 	public Entity getEntity(int id) {
