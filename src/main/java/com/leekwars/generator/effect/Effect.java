@@ -1,5 +1,7 @@
 package com.leekwars.generator.effect;
 
+import java.util.function.Supplier;
+
 import com.leekwars.generator.action.ActionAddEffect;
 import com.leekwars.generator.action.ActionStackEffect;
 import com.leekwars.generator.attack.Attack;
@@ -97,70 +99,73 @@ public abstract class Effect implements Cloneable {
 	public static final double EROSION_POISON = 0.10;
 	public static final double EROSION_CRITICAL_BONUS = 0.10;
 
-	// Array of effect classes
-	public final static Class<?>[] effects = {
-		EffectDamage.class, // 1
-		EffectHeal.class, // 2
-		EffectBuffStrength.class, // 3
-		EffectBuffAgility.class, // 4
-		EffectRelativeShield.class, // 5
-		EffectAbsoluteShield.class, // 6
-		EffectBuffMP.class, // 7
-		EffectBuffTP.class, // 8
-		EffectDebuff.class, // 9
-		EffectTeleport.class, // 10
-		EffectPermutation.class, // 11
-		EffectVitality.class, // 12
-		EffectPoison.class, // 13
-		EffectSummon.class, // 14
-		EffectResurrect.class, // 15
-		EffectKill.class, // 16
-		EffectShackleMP.class, // 17
-		EffectShackleTP.class, // 18
-		EffectShackleStrength.class, // 19
-		EffectDamageReturn.class, // 20
-		EffectBuffResistance.class, // 21
-		EffectBuffWisdom.class, // 22
-		EffectAntidote.class, // 23
-		EffectShackleMagic.class, // 24
-		EffectAftereffect.class, // 25
-		EffectVulnerability.class, // 26
-		EffectAbsoluteVulnerability.class, // 27
-		EffectLifeDamage.class, // 28
-		EffectStealAbsoluteShield.class, // 29
-		EffectNovaDamage.class, // 30
-		EffectRawBuffMP.class, // 31
-		EffectRawBuffTP.class, // 32
+	// Effect factories indexed by effect id (1-based). Used by createEffect to
+	// avoid getDeclaredConstructor().newInstance() reflection on every buff/debuff,
+	// which the JIT can't easily inline.
+	@SuppressWarnings("unchecked")
+	public final static Supplier<Effect>[] effects = new Supplier[] {
+		(Supplier<Effect>) EffectDamage::new, // 1
+		(Supplier<Effect>) EffectHeal::new, // 2
+		(Supplier<Effect>) EffectBuffStrength::new, // 3
+		(Supplier<Effect>) EffectBuffAgility::new, // 4
+		(Supplier<Effect>) EffectRelativeShield::new, // 5
+		(Supplier<Effect>) EffectAbsoluteShield::new, // 6
+		(Supplier<Effect>) EffectBuffMP::new, // 7
+		(Supplier<Effect>) EffectBuffTP::new, // 8
+		(Supplier<Effect>) EffectDebuff::new, // 9
+		(Supplier<Effect>) EffectTeleport::new, // 10
+		(Supplier<Effect>) EffectPermutation::new, // 11
+		(Supplier<Effect>) EffectVitality::new, // 12
+		(Supplier<Effect>) EffectPoison::new, // 13
+		(Supplier<Effect>) EffectSummon::new, // 14
+		(Supplier<Effect>) EffectResurrect::new, // 15
+		(Supplier<Effect>) EffectKill::new, // 16
+		(Supplier<Effect>) EffectShackleMP::new, // 17
+		(Supplier<Effect>) EffectShackleTP::new, // 18
+		(Supplier<Effect>) EffectShackleStrength::new, // 19
+		(Supplier<Effect>) EffectDamageReturn::new, // 20
+		(Supplier<Effect>) EffectBuffResistance::new, // 21
+		(Supplier<Effect>) EffectBuffWisdom::new, // 22
+		(Supplier<Effect>) EffectAntidote::new, // 23
+		(Supplier<Effect>) EffectShackleMagic::new, // 24
+		(Supplier<Effect>) EffectAftereffect::new, // 25
+		(Supplier<Effect>) EffectVulnerability::new, // 26
+		(Supplier<Effect>) EffectAbsoluteVulnerability::new, // 27
+		(Supplier<Effect>) EffectLifeDamage::new, // 28
+		(Supplier<Effect>) EffectStealAbsoluteShield::new, // 29
+		(Supplier<Effect>) EffectNovaDamage::new, // 30
+		(Supplier<Effect>) EffectRawBuffMP::new, // 31
+		(Supplier<Effect>) EffectRawBuffTP::new, // 32
 		null, // 33
 		null, // 34
 		null, // 35
 		null, // 36
-		EffectRawAbsoluteShield.class, // 37
-		EffectRawBuffStrength.class, // 38
-		EffectRawBuffMagic.class, // 39
-		EffectRawBuffScience.class, // 40
-		EffectRawBuffAgility.class, // 41
-		EffectRawBuffResistance.class, // 42
+		(Supplier<Effect>) EffectRawAbsoluteShield::new, // 37
+		(Supplier<Effect>) EffectRawBuffStrength::new, // 38
+		(Supplier<Effect>) EffectRawBuffMagic::new, // 39
+		(Supplier<Effect>) EffectRawBuffScience::new, // 40
+		(Supplier<Effect>) EffectRawBuffAgility::new, // 41
+		(Supplier<Effect>) EffectRawBuffResistance::new, // 42
 		null, // 43
-		EffectRawBuffWisdom.class, // 44
-		EffectNovaVitality.class, // 45
-		EffectAttract.class, // 46
-		EffectShackleAgility.class, // 47
-		EffectShackleWisdom.class, // 48
-		EffectRemoveShackles.class, // 49
+		(Supplier<Effect>) EffectRawBuffWisdom::new, // 44
+		(Supplier<Effect>) EffectNovaVitality::new, // 45
+		(Supplier<Effect>) EffectAttract::new, // 46
+		(Supplier<Effect>) EffectShackleAgility::new, // 47
+		(Supplier<Effect>) EffectShackleWisdom::new, // 48
+		(Supplier<Effect>) EffectRemoveShackles::new, // 49
 		null, // 50
-		EffectPush.class, // 51
-		EffectRawBuffPower.class, // 52
-		EffectRepel.class, // 53
-		EffectRawRelativeShield.class, // 54
+		(Supplier<Effect>) EffectPush::new, // 51
+		(Supplier<Effect>) EffectRawBuffPower::new, // 52
+		(Supplier<Effect>) EffectRepel::new, // 53
+		(Supplier<Effect>) EffectRawRelativeShield::new, // 54
 		null, // 55
 		null, // 56
-		EffectRawHeal.class, // 57
+		(Supplier<Effect>) EffectRawHeal::new, // 57
 		null, // 58
-		EffectAddState.class, // 59
-		EffectTotalDebuff.class, // 60
-		EffectStealLife.class, // 61
-		EffectMultiplyStats.class, // 62
+		(Supplier<Effect>) EffectAddState::new, // 59
+		(Supplier<Effect>) EffectTotalDebuff::new, // 60
+		(Supplier<Effect>) EffectStealLife::new, // 61
+		(Supplier<Effect>) EffectMultiplyStats::new, // 62
 	};
 
 	// Effect characteristics
@@ -191,14 +196,11 @@ public abstract class Effect implements Cloneable {
 		if (id <= 0 || id > effects.length) {
 			return 0;
 		}
-
-		// Create the effect
-		Effect effect;
-		try {
-			effect = (Effect) effects[id - 1].getDeclaredConstructor().newInstance();
-		} catch (Exception e) {
+		Supplier<Effect> factory = effects[id - 1];
+		if (factory == null) {
 			return 0;
 		}
+		Effect effect = factory.get();
 		effect.setId(id);
 		effect.turns = turns;
 		effect.aoe = aoe;
