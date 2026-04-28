@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.TreeMap;
 
@@ -41,7 +40,6 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
-import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.statistics.StatisticsManager;
 import com.leekwars.generator.util.RandomGenerator;
 import com.leekwars.generator.weapons.Weapon;

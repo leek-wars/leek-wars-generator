@@ -1,6 +1,8 @@
 package com.leekwars.generator.util;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.StreamReadConstraints;
+import tools.jackson.core.json.JsonFactory;
 import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -15,7 +17,13 @@ import tools.jackson.databind.node.ObjectNode;
  */
 public class Json {
 
-    private static final ObjectMapper mapper = JsonMapper.builder()
+    // Cap nesting depth: persisted register data (Registers#parse) and other
+    // sandbox-originated payloads come through this mapper.
+    private static final JsonFactory factory = JsonFactory.builder()
+        .streamReadConstraints(StreamReadConstraints.builder().maxNestingDepth(64).build())
+        .build();
+
+    private static final ObjectMapper mapper = JsonMapper.builder(factory)
         .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
         .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
         .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)

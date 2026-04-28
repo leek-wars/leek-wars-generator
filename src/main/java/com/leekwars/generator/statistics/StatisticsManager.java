@@ -26,7 +26,7 @@ public interface StatisticsManager {
 	public void damage(Entity entity, Entity attacker, int damage, DamageType direct, Effect effect);
 	public void summon(Entity entity, Entity summon);
 	public void useTP(int tp);
-	default public void useMP(int mp) {}
+	public default void useMP(int mp) {}
 	public void heal(Entity healer, Entity entity, int pv);
 	public void error(Entity entity);
 	public void useChip(Entity caster, Chip chip, Cell cell, List<Entity> targets, Entity cellEntity);

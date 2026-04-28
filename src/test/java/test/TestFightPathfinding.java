@@ -330,11 +330,6 @@ public class TestFightPathfinding extends FightTestBase {
 	@Test
 	public void aStarPathIsDeterministicAcrossCalls() throws Exception {
 		// Repeated calls with the same start/end must return identical paths.
-		// The previous TreeSet implementation used a non-strict comparator
-		// (returning -1 for equal weights), which could pick different cells
-		// of equal weight on different calls. PriorityQueue with Float.compare
-		// is stable enough for our needs; the generational reset doesn't shuffle
-		// cell state.
 		initFightOnly();
 		Cell start = leek1.getCell();
 		Cell end = leek2.getCell();

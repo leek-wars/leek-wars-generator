@@ -60,10 +60,9 @@ public class Map {
 	private HashMap<Cell, Entity> entityByCell = new HashMap<>();
 	private ArrayNode pattern;
 	private State state;
-	// Incremented at each A* call so Cell.astarVisitedRun / Cell.astarClosedRun
-	// can be compared against it instead of reset to false. Starts at 1 so
-	// freshly-allocated cells (run = 0) are never falsely "visited".
 	private int astarRun = 0;
+
+	private static final Comparator<Cell> ASTAR_WEIGHT = (a, b) -> Float.compare(a.weight, b.weight);
 
 	public static Map generateMap(State state, int context, int width, int height, int obstacles_count, List<Team> teams, ObjectNode custom_map) {
 
@@ -1054,9 +1053,8 @@ public class Map {
 		if (endCells.contains(c1))
 			return null;
 
-		// Generational reset: bumping astarRun makes every cell's stored visited/closed
-		// flags stale. Wrap-around at MAX_VALUE drops back to 1 with a one-shot reset
-		// so freshly-defaulted run=0 cells stay sentinel.
+		// Wrap-around: when the run counter would hit MAX_VALUE, do a one-shot reset
+		// so cells defaulted to run=0 don't get false-positive matches after wrap.
 		if (++astarRun == Integer.MAX_VALUE) {
 			for (Cell c : cells) {
 				c.astarVisitedRun = 0;
@@ -1066,11 +1064,14 @@ public class Map {
 		}
 		final int run = astarRun;
 
-		// HashSet lookups instead of List.contains (linear) inside the inner loop.
-		Set<Cell> endSet = new HashSet<>(endCells);
-		Set<Cell> ignoreSet = cells_to_ignore == null ? Set.of() : new HashSet<>(cells_to_ignore);
+		// Skip HashSet allocation for the common single-target / no-ignore case;
+		// List.contains on a 1-element ArrayList is just one ref-equality check.
+		final boolean smallEnd = endCells.size() <= 4;
+		final Set<Cell> endSet = smallEnd ? null : new HashSet<>(endCells);
+		final boolean smallIgnore = cells_to_ignore == null || cells_to_ignore.size() <= 4;
+		final Set<Cell> ignoreSet = smallIgnore ? null : new HashSet<>(cells_to_ignore);
 
-		PriorityQueue<Cell> open = new PriorityQueue<>((o1, o2) -> Float.compare(o1.weight, o2.weight));
+		PriorityQueue<Cell> open = new PriorityQueue<>(ASTAR_WEIGHT);
 		c1.cost = 0;
 		c1.weight = 0;
 		c1.astarVisitedRun = run;
@@ -1080,7 +1081,7 @@ public class Map {
 			Cell u = open.poll();
 			u.astarClosedRun = run;
 
-			if (endSet.contains(u)) {
+			if (smallEnd ? endCells.contains(u) : endSet.contains(u)) {
 				List<Cell> result = new ArrayList<>(u.cost);
 				int s = u.cost;
 				while (s-- >= 1) {
@@ -1089,7 +1090,10 @@ public class Map {
 				}
 				Collections.reverse(result);
 				Cell last = result.get(result.size() - 1);
-				if (last.getPlayer(this) != null && !ignoreSet.contains(last)) {
+				boolean inIgnore = smallIgnore
+					? (cells_to_ignore != null && cells_to_ignore.contains(last))
+					: ignoreSet.contains(last);
+				if (last.getPlayer(this) != null && !inIgnore) {
 					result.remove(result.size() - 1);
 				}
 				return result;
@@ -1097,12 +1101,18 @@ public class Map {
 
 			for (Cell c : getCellsAround(u)) {
 				if (c == null || c.astarClosedRun == run || !c.isWalkable()) continue;
-				if (c.getPlayer(this) != null && !ignoreSet.contains(c) && !endSet.contains(c)) continue;
+				if (c.getPlayer(this) != null) {
+					boolean inIgnore = smallIgnore
+						? (cells_to_ignore != null && cells_to_ignore.contains(c))
+						: ignoreSet.contains(c);
+					boolean inEnd = smallEnd ? endCells.contains(c) : endSet.contains(c);
+					if (!inIgnore && !inEnd) continue;
+				}
 
 				boolean visited = c.astarVisitedRun == run;
 				if (!visited || u.cost + 1 < c.cost) {
 					c.cost = (short) (u.cost + 1);
-					c.weight = c.cost + heuristicToClosest(c, endCells);
+					c.weight = c.cost + Pathfinding.getCaseDistance(c, endCells);
 					c.parent = u;
 					if (!visited) {
 						c.astarVisitedRun = run;
@@ -1112,21 +1122,6 @@ public class Map {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Manhattan distance to the nearest end cell. Manhattan is the admissible-optimal
-	 * heuristic on this 4-neighbour grid (the previous Euclidean heuristic with
-	 * Math.sqrt was admissible but loose, exploring more nodes than needed).
-	 * Multi-target: pick the min so A* is unbiased toward endCells.get(0).
-	 */
-	private static float heuristicToClosest(Cell c, List<Cell> endCells) {
-		int best = Pathfinding.getCaseDistance(c, endCells.get(0));
-		for (int i = 1; i < endCells.size(); i++) {
-			int d = Pathfinding.getCaseDistance(c, endCells.get(i));
-			if (d < best) best = d;
-		}
-		return best;
 	}
 
 

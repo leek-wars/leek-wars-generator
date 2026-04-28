@@ -17,8 +17,7 @@ public class Cell {
 
 	int x, y;
 	int composante;
-	// A* generational tracking: a cell is "visited"/"closed" iff its run id matches
-	// Map.astarRun. Lets getAStarPath skip the O(n_cells) reset every call.
+	// Generational A* tracking: cell is visited/closed iff field matches Map.astarRun.
 	int astarVisitedRun = 0;
 	int astarClosedRun = 0;
 	short cost = 0;
