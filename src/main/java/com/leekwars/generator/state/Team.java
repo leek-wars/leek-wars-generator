@@ -116,15 +116,7 @@ public class Team {
 
 	// Decrement cooldowns
 	public void applyCoolDown() {
-		var it = cooldowns.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<Integer, Integer> chip = it.next();
-			if (chip.getValue() <= 1) {
-				it.remove();
-			} else {
-				chip.setValue(chip.getValue() - 1);
-			}
-		}
+		Entity.decrementOrRemove(cooldowns);
 	}
 
 	public int getSummonCount() {

@@ -64,9 +64,10 @@ public class Attack {
 	private final List<EffectParameters> effects = new ArrayList<EffectParameters>();
 	private final int maxUses;
 
-	// Cached cast mask: depends only on (launchType, minRange, maxRange), all final.
-	// Computed on first use and shared across getPossibleCastCellsForTarget calls.
-	private List<int[]> cachedCastMask;
+	// Volatile to ensure safe publication of the lazily-built mask under JMM
+	// (without it, another thread could see the reference before generateMask's
+	// internal writes are visible).
+	private volatile List<int[]> cachedCastMask;
 
 	public Attack(int minRange, int maxRange, byte launchType, byte area, boolean los, ArrayNode effects, int attackType, int itemID, int maxUses) {
 
@@ -316,12 +317,7 @@ public class Attack {
 		return launchType;
 	}
 
-	/**
-	 * Cast mask cells (offsets from target) for non-LINE launch types. Computed
-	 * lazily on first use; the result depends only on the final fields launchType,
-	 * minRange and maxRange so a benign race on `cachedCastMask` returns the same
-	 * value either way.
-	 */
+	/** Lazily-computed cast mask for non-LINE launch types. Race-safe via volatile. */
 	public List<int[]> getCastMask() {
 		List<int[]> mask = cachedCastMask;
 		if (mask == null) {

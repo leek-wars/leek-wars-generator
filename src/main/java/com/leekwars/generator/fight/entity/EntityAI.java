@@ -237,18 +237,6 @@ public class EntityAI extends AI {
 		addSystemLog(type, error, parameters, captureAITrace());
 	}
 
-	// `getErrorMessage` only iterates frames whose class name starts with "AI_"
-	// (compiled user code). StackWalker lets us walk lazily and stop at the first
-	// 51 AI frames, avoiding the cost of allocating a StackTraceElement[] for the
-	// full stack — a real win when an AI floods warnings or runs deeply nested.
-	private static StackTraceElement[] captureAITrace() {
-		return java.lang.StackWalker.getInstance().walk(stream ->
-			stream.filter(f -> f.getClassName().startsWith("AI_"))
-				.limit(51)
-				.map(java.lang.StackWalker.StackFrame::toStackTraceElement)
-				.toArray(StackTraceElement[]::new));
-	}
-
 	public void addSystemLog(int type, Error error, StackTraceElement[] elements) {
 		addSystemLog(type, error.ordinal(), new String[0], elements);
 	}

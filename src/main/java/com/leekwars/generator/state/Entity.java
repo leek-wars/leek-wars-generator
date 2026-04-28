@@ -92,15 +92,19 @@ public abstract class Entity {
 
 	// Current effects on the entity
 	protected final ArrayList<Effect> effects = new ArrayList<Effect>();
+	private final List<Effect> effectsView = java.util.Collections.unmodifiableList(effects);
 
 	// Effects created by the entity
 	private final ArrayList<Effect> launchedEffects = new ArrayList<Effect>();
+	private final List<Effect> launchedEffectsView = java.util.Collections.unmodifiableList(launchedEffects);
 
 	// Passive effects
 	private ArrayList<EffectParameters> passiveEffects = new ArrayList<EffectParameters>();
+	private final List<EffectParameters> passiveEffectsView = java.util.Collections.unmodifiableList(passiveEffects);
 
 	// Current cooldowns of the entity
 	protected Map<Integer, Integer> mCooldown = new TreeMap<Integer, Integer>();
+	private final Map<Integer, Integer> mCooldownView = java.util.Collections.unmodifiableMap(mCooldown);
 
 	private Set<EntityState> states = new HashSet<EntityState>();
 
@@ -903,7 +907,12 @@ public abstract class Entity {
 	}
 
 	public void applyCoolDown() {
-		var it = mCooldown.entrySet().iterator();
+		decrementOrRemove(mCooldown);
+	}
+
+	/** Decrement every cooldown by 1; remove entries that reach 0. Shared with Team. */
+	static void decrementOrRemove(Map<Integer, Integer> cooldowns) {
+		var it = cooldowns.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<Integer, Integer> chip = it.next();
 			if (chip.getValue() <= 1) {
@@ -942,7 +951,7 @@ public abstract class Entity {
 	}
 
 	public Map<Integer, Integer> getCooldowns() {
-		return mCooldown;
+		return mCooldownView;
 	}
 
 	public int getFarmer() {
@@ -970,15 +979,15 @@ public abstract class Entity {
 	}
 
 	public List<Effect> getEffects() {
-		return effects;
+		return effectsView;
 	}
 
 	public List<Effect> getLaunchedEffects() {
-		return launchedEffects;
+		return launchedEffectsView;
 	}
 
 	public List<EffectParameters> getPassiveEffects() {
-		return passiveEffects;
+		return passiveEffectsView;
 	}
 
 	public void setLevel(int level) {
