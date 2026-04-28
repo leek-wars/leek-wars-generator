@@ -514,7 +514,7 @@ public class Map {
 		return getRandomCell(state);
 	}
 
-	public Cell getRandomCellAtDistance(Cell cell1, int distance) {
+	public Cell getRandomCellAtDistance(State state, Cell cell1, int distance) {
 		var result = new ArrayList<Cell>();
 		for (var cell : cells) {
 			if (cell.isWalkable() && Pathfinding.getCaseDistance(cell, cell1) == distance) {
@@ -522,7 +522,7 @@ public class Map {
 			}
 		}
 		if (result.size() == 0) return null;
-		return result.get((int) (result.size() * Math.random()));
+		return result.get(state.getRandom().getInt(0, result.size() - 1));
 	}
 
 	public void computeComposantes() {

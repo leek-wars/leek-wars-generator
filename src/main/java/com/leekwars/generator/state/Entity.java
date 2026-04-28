@@ -1002,7 +1002,7 @@ public abstract class Entity {
 
 	public void useMP(int mp) {
 		usedMP += mp;
-		state.statistics.useTP(mp);
+		state.statistics.useMP(mp);
 	}
 
 	@Override
