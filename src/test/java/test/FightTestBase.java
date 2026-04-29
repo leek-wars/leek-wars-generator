@@ -1,5 +1,6 @@
 package test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -12,7 +13,11 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
+import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.test.LocalTrophyManager;
+import com.leekwars.generator.util.Json;
+import com.leekwars.generator.weapons.Weapon;
+import com.leekwars.generator.weapons.Weapons;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
@@ -93,5 +98,27 @@ public abstract class FightTestBase {
 	 */
 	protected void initFightOnly() throws Exception {
 		fight.initFight();
+	}
+
+	/**
+	 * Register a synthetic Weapon for tests. Idempotent: returns the existing
+	 * registration when the id is already known. Use ids in the high range (≥ 88000)
+	 * to avoid collisions with the real catalog.
+	 */
+	protected static Weapon registerWeapon(int id, String name, boolean forgotten) {
+		Weapon existing = Weapons.getWeapon(id);
+		if (existing != null) return existing;
+		Weapon w = new Weapon(
+			id, 5, 1, 6, Json.createArray(),
+			(byte) 1, (byte) 1, true, id, name, Json.createArray(), 0, forgotten);
+		Weapons.addWeapon(w);
+		return w;
+	}
+
+	/** Empty FightLoadout — clears equipment when applied. */
+	protected static FightLoadout emptyLoadout(String name) {
+		return new FightLoadout(name,
+			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
+			new HashMap<>());
 	}
 }
