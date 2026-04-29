@@ -230,14 +230,17 @@ public abstract class Entity {
 		resurrected = entity.resurrected;
 		this.cell = entity.cell;
 		this.life = entity.getLife();
-		mWeapons = entity.mWeapons; // immutable
-		mChips = entity.mChips; // immutable
+		// Copy collections (don't share refs): addWeapon and applyLoadout mutate
+		// mWeapons / mChips / passiveEffects, so a shared ref would let the original
+		// observe — or be wiped by — the clone's setLoadout, and vice-versa.
+		this.mWeapons = new ArrayList<Weapon>(entity.mWeapons);
+		this.mChips = new TreeMap<Integer, Chip>(entity.mChips);
 		this.weapon = entity.weapon;
 		this.mCooldown = new TreeMap<Integer, Integer>(entity.mCooldown);
 		this.cooldownsView = Collections.unmodifiableMap(this.mCooldown);
 		this.usedTP = entity.usedTP;
 		this.usedMP = entity.usedMP;
-		this.passiveEffects = entity.passiveEffects; // immutable
+		this.passiveEffects = new ArrayList<EffectParameters>(entity.passiveEffects);
 		this.passiveEffectsView = Collections.unmodifiableList(this.passiveEffects);
 		// effects and launchedEffects are final fields — each Entity gets a fresh empty list.
 	}
