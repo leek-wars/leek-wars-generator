@@ -190,6 +190,11 @@ public class Fight {
 
 		runHooks("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
 
+		// Snapshot of initial entity state (life, stats, equipment) sent to the client
+		// is captured here so that any setLoadout() applied in beforeFight() is reflected
+		// in the report's max-life / displayed stats.
+		state.recordInitialState();
+
 		Log.i(TAG, "Turn 1");
 
 		// On lance les tours

@@ -130,6 +130,25 @@ public class TestHooksFight extends FightTestBase {
 	}
 
 	@Test
+	public void setLoadoutInBeforeFightReflectedInActionsSnapshot() throws Exception {
+		// Regression: the `leeks` snapshot in actions JSON (consumed by the client to seed
+		// initial life / max-life display) must reflect post-beforeFight stats, not the
+		// leek's pre-loadout values. Otherwise the report shows a wrong max-life bar.
+		leek1.addLoadout(statsLoadout("pvp", 800, 250, 50));
+		attachAI(leek1, "function beforeFight() { setLoadout('pvp'); }");
+		attachAI(leek2, "");
+		runFight();
+		var leeksJson = fight.getState().getActions().toJSON().get("leeks");
+		tools.jackson.databind.JsonNode leek1Json = null;
+		for (var node : leeksJson) {
+			if (node.get("name").asString().equals("L1")) { leek1Json = node; break; }
+		}
+		Assert.assertNotNull(leek1Json);
+		Assert.assertEquals(800, leek1Json.get("life").intValue());
+		Assert.assertEquals(250, leek1Json.get("strength").intValue());
+	}
+
+	@Test
 	public void setLoadoutDoesNotAffectOtherLeeks() throws Exception {
 		leek1.addLoadout(statsLoadout("pvp", 800, 250, 50));
 		attachAI(leek1, "function beforeFight() { setLoadout('pvp'); }");

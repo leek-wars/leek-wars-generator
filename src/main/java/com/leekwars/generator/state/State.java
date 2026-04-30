@@ -418,7 +418,6 @@ public class State {
 			if (e.isAlive()) {
 				this.order.addEntity(e);
 			}
-			actions.addEntity(e, false);
 			initialOrder.add(e);
 
 			// Coffre ?
@@ -426,9 +425,6 @@ public class State {
 				statistics.chest();
 			}
 		}
-
-		// On ajoute la map
-		actions.addMap(map);
 
 		// Cooldowns initiaux
 		for (Entry<Integer, Chip> entry : Chips.getTemplates().entrySet()) {
@@ -442,7 +438,20 @@ public class State {
 			}
 		}
 
-		// Puis on ajoute le startfight
+		this.mState = STATE_RUNNING;
+	}
+
+	/**
+	 * Emits the initial-state actions (entity snapshots, map, ActionStartFight, Colossus init effect).
+	 *
+	 * Called by Fight#startFight after beforeFight() hooks run, so that any setLoadout()
+	 * is reflected in the snapshot the client uses to seed initial life / stats / equipment.
+	 */
+	public void recordInitialState() {
+		for (Entity e : initialOrder) {
+			actions.addEntity(e, false);
+		}
+		actions.addMap(map);
 		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));
 
 		// Colossus: apply initial x3 multiply stats effect on team 2 (the colossus)
@@ -454,8 +463,6 @@ public class State {
 				Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 			}
 		}
-
-		this.mState = STATE_RUNNING;
 	}
 
 	public void startTurn() throws Exception {
