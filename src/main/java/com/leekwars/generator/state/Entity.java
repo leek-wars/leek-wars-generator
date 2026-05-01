@@ -354,7 +354,15 @@ public abstract class Entity {
 		}
 	}
 
-	public LoadoutApplyResult applyLoadout(FightLoadout loadout, Set<Integer> reservedForgottenWeaponIds) {
+	/** True si au moins une stat finale du loadout diffère des stats actuelles de l'entity. */
+	public boolean loadoutStatsDiffer(FightLoadout loadout) {
+		for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
+			if (mBaseStats.getStat(e.getKey()) != e.getValue()) return true;
+		}
+		return false;
+	}
+
+	public LoadoutApplyResult applyLoadout(FightLoadout loadout, Set<Integer> reservedForgottenWeaponIds, boolean applyStats) {
 		Set<Integer> reserved = reservedForgottenWeaponIds == null ? Collections.emptySet() : reservedForgottenWeaponIds;
 
 		// Snapshot the currently-equipped forgotten weapon (max one per leek) before
@@ -369,8 +377,10 @@ public abstract class Entity {
 		passiveEffects.clear();
 		weapon = null;
 
-		for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
-			mBaseStats.setStat(e.getKey(), e.getValue());
+		if (applyStats) {
+			for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
+				mBaseStats.setStat(e.getKey(), e.getValue());
+			}
 		}
 
 		// Resolve which forgotten weapon (if any) this leek ends up with.

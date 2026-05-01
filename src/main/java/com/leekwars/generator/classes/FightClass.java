@@ -1313,11 +1313,16 @@ public class FightClass {
 	}
 
 	public static boolean setLoadout(EntityAI ai, Object nameObject) throws LeekRunException {
+		return setLoadout(ai, nameObject, true);
+	}
+
+	public static boolean setLoadout(EntityAI ai, Object nameObject, Object changeStatsObject) throws LeekRunException {
 		if (!ai.isInBeforeFightHook()) {
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_OUT_OF_HOOK, new String[0]);
 			return false;
 		}
 		String name = ai.string(nameObject);
+		boolean changeStats = ai.bool(changeStatsObject);
 		var entity = ai.getEntity();
 		var loadout = entity.getLoadout(name);
 		if (loadout == null) {
@@ -1339,7 +1344,14 @@ public class FightClass {
 				}
 			}
 		}
-		var result = entity.applyLoadout(loadout, reservedForgotten);
+		// Pré-check statsDiffer pour ne pas gaspiller une potion sur un loadout identique.
+		boolean applyStats = changeStats && entity.loadoutStatsDiffer(loadout);
+		if (applyStats && !ai.getFight().getState().consumeRestatPotion(farmerId)) {
+			applyStats = false;
+			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_NO_RESTAT_POTION,
+				new String[] { name });
+		}
+		var result = entity.applyLoadout(loadout, reservedForgotten, applyStats);
 		if (result.noForgottenAvailable) {
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_FORGOTTEN_ALREADY_EQUIPPED,
 				new String[] { name });

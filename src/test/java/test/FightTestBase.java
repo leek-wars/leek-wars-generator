@@ -53,6 +53,10 @@ public abstract class FightTestBase {
 		fight.setStatisticsManager(new LocalTrophyManager());
 		createLeeks();
 		farmerLog = new FarmerLog(fight, 0);
+		// Tous les tests poireaux ont farmer=0 ; on donne un pool large par défaut pour
+		// que setLoadout(name) n'échoue pas faute de potion. Les tests qui veulent
+		// vérifier le comportement "pas de potion" peuvent override à 0.
+		fight.getState().setRestatPotionsAvailable(0, 999);
 	}
 
 	/** Subclasses populate fight teams here. Default: 1v1 with two stock leeks. */

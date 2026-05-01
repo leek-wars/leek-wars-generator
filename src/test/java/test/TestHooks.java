@@ -41,6 +41,7 @@ public class TestHooks {
 		leek2 = new Leek(2, "Bob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);
+		fight.getState().setRestatPotionsAvailable(0, 999);
 		fight.initFight();
 	}
 

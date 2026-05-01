@@ -60,6 +60,9 @@ public class Scenario {
 			farmer.id = ((ObjectNode) farmerJson).get("id").intValue();
 			farmer.name = ((ObjectNode) farmerJson).get("name").asString();
 			farmer.country = ((ObjectNode) farmerJson).get("country").asString();
+			if (((ObjectNode) farmerJson).has("restat_potions")) {
+				farmer.restatPotions = ((ObjectNode) farmerJson).get("restat_potions").intValue();
+			}
 			scenario.farmers.put(farmer.id, farmer);
 		}
 		for (var teamJson : (ArrayNode) json.get("teams")) {

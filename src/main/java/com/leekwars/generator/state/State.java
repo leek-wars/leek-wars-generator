@@ -214,6 +214,35 @@ public class State {
 		this.mLeekDatas = state.mLeekDatas;
 		this.executionTime = state.executionTime;
 		this.seed = state.seed;
+		this.mRestatPotionsAvailable = new HashMap<>(state.mRestatPotionsAvailable);
+		this.mRestatPotionsConsumed = new HashMap<>(state.mRestatPotionsConsumed);
+	}
+
+	// Potions de restat disponibles / consommées par farmer pendant le combat.
+	// setLoadout(name, true) avec stats qui diffèrent décrémente available et incrémente consumed ;
+	// le worker lit consumed après le combat pour débiter l'inventaire en BDD.
+	private java.util.Map<Integer, Integer> mRestatPotionsAvailable = new HashMap<>();
+	private java.util.Map<Integer, Integer> mRestatPotionsConsumed = new HashMap<>();
+
+	public void setRestatPotionsAvailable(int farmer, int count) {
+		mRestatPotionsAvailable.put(farmer, count);
+	}
+
+	public int getRestatPotionsAvailable(int farmer) {
+		return mRestatPotionsAvailable.getOrDefault(farmer, 0);
+	}
+
+	/** True si une potion a été consommée, false si stock épuisé. */
+	public boolean consumeRestatPotion(int farmer) {
+		int available = mRestatPotionsAvailable.getOrDefault(farmer, 0);
+		if (available <= 0) return false;
+		mRestatPotionsAvailable.put(farmer, available - 1);
+		mRestatPotionsConsumed.merge(farmer, 1, Integer::sum);
+		return true;
+	}
+
+	public java.util.Map<Integer, Integer> getRestatPotionsConsumed() {
+		return mRestatPotionsConsumed;
 	}
 
 	public void addFlag(int team, int flag) {

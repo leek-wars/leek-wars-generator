@@ -42,6 +42,7 @@ public class FarmerLog {
 	public static final int SET_LOADOUT_OUT_OF_HOOK = 1007;
 	public static final int ACTION_DENIED_IN_HOOK = 1008;
 	public static final int LOADOUT_FORGOTTEN_ALREADY_EQUIPPED = 1009;
+	public static final int SET_LOADOUT_NO_RESTAT_POTION = 1010;
 
 	private boolean tooMuchDebug = false;
 

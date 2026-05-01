@@ -46,7 +46,7 @@ public class TestEntityCopy extends FightTestBase {
 		leek.addWeapon(w1);
 		leek.addWeapon(w2);
 		Leek copy = new Leek(leek);
-		leek.applyLoadout(emptyLoadout("empty"), Collections.emptySet());
+		leek.applyLoadout(emptyLoadout("empty"), Collections.emptySet(), true);
 		Assert.assertEquals("Original cleared by applyLoadout", 0, leek.getWeapons().size());
 		Assert.assertEquals("Copy retains both weapons", 2, copy.getWeapons().size());
 	}

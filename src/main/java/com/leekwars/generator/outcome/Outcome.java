@@ -41,6 +41,9 @@ public class Outcome {
 
 	public long executionTime = 0;
 
+	/** Potions de restat consommées via setLoadout() pendant le combat, par farmer id. */
+	public Map<Integer, Integer> restatPotionsConsumed = new TreeMap<>();
+
 	public ObjectNode toJson() {
 		ObjectNode json = Json.createObject();
 		ObjectNode logsJSON = Json.createObject();

@@ -181,6 +181,53 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertEquals("100", leek1.getRegister("s"));
 	}
 
+	@Test
+	public void setLoadoutWithChangeStatsFalseKeepsStatsApplyItems() throws Exception {
+		// changeStats=false : items appliqués mais stats non touchées (et pas de potion consommée).
+		fight.getState().setRestatPotionsAvailable(0, 0);
+		leek1.addLoadout(statsLoadout("pvp", 800, 250, 50));
+		attachAI(leek1, "function beforeFight() { setLoadout('pvp', false); }"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("100", leek1.getRegister("s"));
+	}
+
+	@Test
+	public void setLoadoutWithoutPotionAppliesItemsOnly() throws Exception {
+		// Pas de potion + stats qui diffèrent → items appliqués, stats inchangées, warning.
+		fight.getState().setRestatPotionsAvailable(0, 0);
+		leek1.addLoadout(statsLoadout("pvp", 800, 250, 50));
+		attachAI(leek1, "function beforeFight() { setLoadout('pvp'); }"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("100", leek1.getRegister("s"));
+	}
+
+	@Test
+	public void setLoadoutConsumesOnePotionPerStatsChange() throws Exception {
+		fight.getState().setRestatPotionsAvailable(0, 1);
+		leek1.addLoadout(statsLoadout("pvp", 800, 250, 50));
+		attachAI(leek1, "function beforeFight() { setLoadout('pvp'); }");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals(Integer.valueOf(1), fight.getState().getRestatPotionsConsumed().get(0));
+		Assert.assertEquals(0, fight.getState().getRestatPotionsAvailable(0));
+	}
+
+	@Test
+	public void setLoadoutWithSameStatsDoesNotConsumePotion() throws Exception {
+		fight.getState().setRestatPotionsAvailable(0, 1);
+		// Loadout identique aux stats actuelles → pas de consommation.
+		leek1.addLoadout(statsLoadout("same", 500, 100, 100));
+		attachAI(leek1, "function beforeFight() { setLoadout('same'); }");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertNull(fight.getState().getRestatPotionsConsumed().get(0));
+		Assert.assertEquals(1, fight.getState().getRestatPotionsAvailable(0));
+	}
+
 	// ---------- getWinner ----------
 
 	@Test

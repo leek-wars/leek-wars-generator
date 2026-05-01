@@ -119,6 +119,9 @@ public class Generator {
 		fight.getState().setContext(scenario.context);
 		fight.getState().setCustomMap(scenario.map);
 		fight.getState().seed(scenario.seed);
+		for (var farmer : scenario.farmers.values()) {
+			fight.getState().setRestatPotionsAvailable(farmer.id, farmer.restatPotions);
+		}
 
 		// Create logs and compile AIs
 		int t = 0;
@@ -157,6 +160,7 @@ public class Generator {
 			outcome.winner = fight.getWinner();
 			outcome.duration = fight.getState().getDuration();
 			outcome.statistics = statisticsManager;
+			outcome.restatPotionsConsumed.putAll(fight.getState().getRestatPotionsConsumed());
 			for (var entity : fight.getState().getEntities().values()) {
 				if (entity.getAI() != null) {
 					outcome.analyzeTime += ((EntityAI) entity.getAI()).getAnalyzeTime();
