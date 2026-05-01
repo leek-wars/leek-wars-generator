@@ -187,6 +187,26 @@ public class TestHooks {
 	}
 
 	@Test
+	public void beforeFightLeavesPublicLobbyInfoVisible() throws Exception {
+		// Per spec §2.2: only equipment/stats/effects are masked in beforeFight to
+		// preserve symmetry of execution order. Public lobby info (cell/name/team/
+		// level/IDs) stays visible — these are not loadout-dependent and the AI
+		// could read them via getOpponent*() helpers anyway.
+		String code = "function beforeFight() {"
+				+ "  setRegister('cell', getCell(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
+				+ "  setRegister('name', getName(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
+				+ "  setRegister('teamID', getTeamID(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
+				+ "  setRegister('level', getLevel(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
+				+ "}";
+		EntityAI ai = compile(code, leek1);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		Assert.assertEquals("visible", leek1.getRegister("cell"));
+		Assert.assertEquals("visible", leek1.getRegister("name"));
+		Assert.assertEquals("visible", leek1.getRegister("teamID"));
+		Assert.assertEquals("visible", leek1.getRegister("level"));
+	}
+
+	@Test
 	public void normalPlayDoesNotMaskOpponentStats() throws Exception {
 		// runIA (no hook) — normal play, opponent stats fully visible
 		String code = "return getForce(" + leek2.getFId() + ");";

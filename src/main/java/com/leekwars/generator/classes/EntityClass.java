@@ -23,10 +23,28 @@ public class EntityClass {
 
 	private static final int SAY_LENGTH_LIMIT = 100;
 
-	// Resolve a target entity for an equipment- or stat-dependent native, returning null
-	// when the target doesn't exist or when masked by beforeFight() — see spec §2.2 :
-	// during beforeFight(), AIs cannot read equipment/stats of other entities (symmetry
-	// of execution order). Self queries (value == null) and afterFight() are unmasked.
+	/**
+	 * Target resolver for equipment- and stat-dependent natives. Returns null when
+	 * the target doesn't exist or when masked by the beforeFight() hook.
+	 *
+	 * Spec §2.2 (symmetry of execution order): AIs running beforeFight() cannot read
+	 * equipment / stats / effects of other entities, so the second-to-execute can't
+	 * react to the first's setLoadout choice. Self queries (value == null) and the
+	 * afterFight() hook are unmasked.
+	 *
+	 * Masked via this helper: getLife, getForce/Strength, getWisdom, getResistance,
+	 * getAgility, getScience, getMagic, getAbsoluteShield, getRelativeShield,
+	 * getDamageReturn, getFrequency, getCores, getRAM, getStat, getMP, getTP,
+	 * getTotalMP, getTotalTP, getPower, getTotalLife, getWeapon, getWeapons,
+	 * getChips, getEffects, getLaunchedEffects, getPassiveEffects.
+	 *
+	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
+	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
+	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType,
+	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
+	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
+	 * the lobby or fixed at fight init regardless of loadout.
+	 */
 	private static Entity resolveStatTarget(EntityAI ai, Object value) {
 		if (value == null) return ai.getEntity();
 		if (!(value instanceof Number)) return null;
