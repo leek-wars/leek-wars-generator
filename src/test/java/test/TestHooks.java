@@ -188,10 +188,9 @@ public class TestHooks {
 
 	@Test
 	public void beforeFightLeavesPublicLobbyInfoVisible() throws Exception {
-		// Per spec §2.2: only equipment/stats/effects are masked in beforeFight to
-		// preserve symmetry of execution order. Public lobby info (cell/name/team/
-		// level/IDs) stays visible — these are not loadout-dependent and the AI
-		// could read them via getOpponent*() helpers anyway.
+		// beforeFight masks only loadout-dependent data: equipment, stats, effects.
+		// Public lobby info (cell/name/team/level/IDs) stays visible because it's
+		// not loadout-dependent and is already exposed via getOpponent*() helpers.
 		String code = "function beforeFight() {"
 				+ "  setRegister('cell', getCell(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
 				+ "  setRegister('name', getName(" + leek2.getFId() + ") == null ? 'null' : 'visible');"

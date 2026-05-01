@@ -400,15 +400,19 @@ public class EntityAI extends AI {
 		return findHookMethod(this.getClass(), name) != null;
 	}
 
-	private static final java.util.WeakHashMap<Class<?>, java.util.Map<String, java.util.Optional<java.lang.reflect.Method>>> hookMethodCache = new java.util.WeakHashMap<>();
+	// ClassValue tied to the AI Class so the entry dies with the class. WeakHashMap
+	// would leak via Method->Class strong refs (same anti-pattern fix as AI.java's
+	// methodCache). Inner ConcurrentHashMap covers concurrent hook lookups.
+	private static final ClassValue<java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>>> hookMethodCache = new ClassValue<>() {
+		@Override
+		protected java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> computeValue(Class<?> clazz) {
+			return new java.util.concurrent.ConcurrentHashMap<>();
+		}
+	};
 
 	private static java.lang.reflect.Method findHookMethod(Class<?> clazz, String hookName) {
-		java.util.Map<String, java.util.Optional<java.lang.reflect.Method>> classCache;
-		java.util.Optional<java.lang.reflect.Method> cached;
-		synchronized (hookMethodCache) {
-			classCache = hookMethodCache.get(clazz);
-			cached = classCache != null ? classCache.get(hookName) : null;
-		}
+		var classCache = hookMethodCache.get(clazz);
+		var cached = classCache.get(hookName);
 		if (cached != null) return cached.orElse(null);
 
 		String methodName = "f_" + hookName;
@@ -425,10 +429,7 @@ public class EntityAI extends AI {
 			}
 			current = current.getSuperclass();
 		}
-		synchronized (hookMethodCache) {
-			classCache = hookMethodCache.computeIfAbsent(clazz, k -> new java.util.HashMap<>());
-			classCache.put(hookName, java.util.Optional.ofNullable(found));
-		}
+		classCache.put(hookName, java.util.Optional.ofNullable(found));
 		return found;
 	}
 
