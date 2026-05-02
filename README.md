@@ -13,6 +13,11 @@ Leek Wars fight generator using [leekscript](https://github.com/leek-wars/leeksc
 gradle jar
 ```
 
+## Test
+```
+gradle test
+```
+
 ## AI analysis task
 ```
 java -jar generator.jar --analyze test/ai/basic.leek
@@ -27,4 +32,4 @@ java -jar generator.jar test/scenario/scenario1.json
 ![Fight generation task](https://github.com/leek-wars/leek-wars-generator-v1/blob/master/doc/fight_task.svg)
 
 ## Credits
-Developed by Dawyde & Pilow © 2012-2021
+Developed by Dawyde & Pilow © 2012-2026
