@@ -338,21 +338,21 @@ public abstract class Effect implements Cloneable {
 	public void reduce(double percent, Entity caster) {
 		double reduction = Math.max(0.0, 1.0 - percent);
 		value = (int) Math.round((double) value * reduction);
-		for (var stat : stats.stats.entrySet()) {
+		stats.forEach((statId, statValue) -> {
 			// abs(round(v * r)) * sign(v) pour l'arrondi si r = 0.5
-			int newValue = (int) (Math.round((double) Math.abs(stat.getValue()) * reduction) * Math.signum(stat.getValue()));
-			int delta = newValue - stat.getValue();
-			stats.updateStat(stat.getKey(), delta);
-			target.updateBuffStats(stat.getKey(), delta, caster);
-		}
+			int newValue = (int) (Math.round((double) Math.abs(statValue) * reduction) * Math.signum(statValue));
+			int delta = newValue - statValue;
+			stats.updateStat(statId, delta);
+			target.updateBuffStats(statId, delta, caster);
+		});
 	}
 
 	public void mergeWith(Effect effect) {
 		value += effect.value;
-		for (var stat : stats.stats.entrySet()) {
-			int signum = stat.getValue() > 0 ? 1 : -1;
-			stats.updateStat(stat.getKey(), effect.value * signum);
-		}
+		stats.forEach((statId, statValue) -> {
+			int signum = statValue > 0 ? 1 : -1;
+			stats.updateStat(statId, effect.value * signum);
+		});
 	}
 
 	// Abstract methods
