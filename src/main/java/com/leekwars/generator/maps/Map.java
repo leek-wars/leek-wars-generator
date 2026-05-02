@@ -519,17 +519,6 @@ public class Map {
 		return getRandomCell(state);
 	}
 
-	public Cell getRandomCellAtDistance(State state, Cell cell1, int distance) {
-		var result = new ArrayList<Cell>();
-		for (var cell : cells) {
-			if (cell.isWalkable() && Pathfinding.getCaseDistance(cell, cell1) == distance) {
-				result.add(cell);
-			}
-		}
-		if (result.size() == 0) return null;
-		return result.get(state.getRandom().getInt(0, result.size() - 1));
-	}
-
 	public void computeComposantes() {
 		var connexe = new int[this.coord.length][this.coord[0].length];
 		int x, y, x2, y2, ni = 1;
