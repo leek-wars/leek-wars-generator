@@ -47,8 +47,8 @@ public class EntityClass {
 	 */
 	private static Entity resolveStatTarget(EntityAI ai, Object value) {
 		if (value == null) return ai.getEntity();
-		if (!(value instanceof Number)) return null;
-		Entity l = ai.getFight().getEntity(((Number) value).intValue());
+		if (!(value instanceof Number n)) return null;
+		Entity l = ai.getFight().getEntity(n.intValue());
 		if (l == null) return null;
 		if (ai.isInBeforeFightHook() && l != ai.getEntity()) return null;
 		return l;
@@ -200,8 +200,8 @@ public class EntityClass {
 			if (ai.getEntity().getCell() != null)
 				return (long) ai.getEntity().getCell().getId();
 		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null && l.getCell() != null)
 				return (long) l.getCell().getId();
 		}
@@ -227,8 +227,8 @@ public class EntityClass {
 	public static String getName(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().getName();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return l.getName();
 		}
@@ -610,7 +610,7 @@ public class EntityClass {
 		if (value == null) {
 			return ai.getEntity().getAIName();
 		}
-		if (value instanceof Number) {
+		if (value instanceof Number n) {
 			var l = ai.getFight().getEntity(ai.integer(value));
 			if (l != null)
 				return l.getAIName();
@@ -625,7 +625,7 @@ public class EntityClass {
 	public static String getTeamName(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().getTeamName();
-		if (value instanceof Number) {
+		if (value instanceof Number n) {
 			var l = ai.getFight().getEntity(ai.integer(value));
 			if (l != null && l.getTeamName() != null)
 				return l.getTeamName();
@@ -640,7 +640,7 @@ public class EntityClass {
 	public static String getCompositionName(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().getCompositionName();
-		if (value instanceof Number) {
+		if (value instanceof Number n) {
 			var l = ai.getFight().getEntity(ai.integer(value));
 			if (l != null && l.getCompositionName() != null)
 				return l.getCompositionName();
@@ -655,7 +655,7 @@ public class EntityClass {
 	public static String getFarmerName(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().getFarmerName();
-		if (value instanceof Number) {
+		if (value instanceof Number n) {
 			var l = ai.getFight().getEntity(ai.integer(value));
 			if (l != null)
 				return l.getFarmerName();
@@ -671,8 +671,8 @@ public class EntityClass {
 		if (value == null) {
 			return ai.getEntity().getFarmerCountry();
 		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return l.getFarmerCountry();
 		}
@@ -686,8 +686,8 @@ public class EntityClass {
 	public static Long getFarmerID(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getEntity().getFarmer();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) l.getFarmer();
 		}
@@ -701,8 +701,8 @@ public class EntityClass {
 	public static Long getTeamID(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getEntity().getTeamId();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) l.getTeamId();
 		}
@@ -731,8 +731,8 @@ public class EntityClass {
 		Entity l = null;
 		if (value == null)
 			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
+		else if (value instanceof Number n)
+			l = ai.getFight().getEntity(n.intValue());
 		if (l == null)
 			return null;
 		var result = new ArrayLeekValue(ai);
@@ -747,8 +747,8 @@ public class EntityClass {
 		Entity l = null;
 		if (value == null)
 			l = ai.getEntity();
-		else if (value instanceof Number)
-			l = ai.getFight().getEntity(((Number) value).intValue());
+		else if (value instanceof Number n)
+			l = ai.getFight().getEntity(n.intValue());
 		if (l == null)
 			return null;
 		var result = new LegacyArrayLeekValue(ai);
@@ -766,8 +766,8 @@ public class EntityClass {
 		if (value == null) {
 			return (long) ai.getEntity().getType() + 1;
 		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null) {
 				return (long) l.getType() + 1;
 			}
@@ -789,8 +789,8 @@ public class EntityClass {
 			}
 			return -1L;
 		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null) {
 				if (l.getType() == Entity.TYPE_MOB) {
 					return (long) l.getSkin();
@@ -815,8 +815,8 @@ public class EntityClass {
 			}
 			return -1L;
 		}
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null) {
 				if (l.getType() == Entity.TYPE_BULB) {
 					return (long) l.getSkin();
@@ -834,8 +834,8 @@ public class EntityClass {
 	public static Boolean isSummon(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().isSummon();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return l.isSummon();
 		}
@@ -849,8 +849,8 @@ public class EntityClass {
 	public static Long getBirthTurn(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getEntity().getBirthTurn();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) l.getBirthTurn();
 		}
@@ -864,8 +864,8 @@ public class EntityClass {
 	public static Long getSummoner(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().isSummon() ? (long) ai.getEntity().getSummoner().getFId(): -1l;
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return l.isSummon() ? (long) l.getSummoner().getFId(): -1l;
 		}
@@ -879,8 +879,8 @@ public class EntityClass {
 	public static boolean isStatic(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return ai.getEntity().hasState(EntityState.STATIC);
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return l.hasState(EntityState.STATIC);
 		}
@@ -894,8 +894,8 @@ public class EntityClass {
 	public static Long getLeekID(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getEntity().getId();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) l.getId();
 		}
@@ -909,8 +909,8 @@ public class EntityClass {
 	public static Long getSide(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getEntity().getTeam();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) l.getTeam();
 		}
@@ -933,8 +933,8 @@ public class EntityClass {
 	public static Long getLevel(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getEntity().getLevel();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) l.getLevel();
 		}
@@ -948,8 +948,8 @@ public class EntityClass {
 	public static Long getEntityTurnOrder(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getFight().getOrder().getEntityTurnOrder(ai.getEntity());
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null && !l.isDead())
 				return (long) ai.getFight().getOrder().getEntityTurnOrder(l);
 		}
@@ -963,8 +963,8 @@ public class EntityClass {
 	public static Long getAIID(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getId();
-		if (value instanceof Number) {
-			var l = ai.getFight().getEntity(((Number) value).intValue());
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null)
 				return (long) ((EntityAI) l.getAI()).getId();
 		}
