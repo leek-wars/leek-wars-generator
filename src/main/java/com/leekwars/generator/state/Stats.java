@@ -1,20 +1,14 @@
 package com.leekwars.generator.state;
 
 /**
- * Compact stat container. Indexed by Entity.STAT_* constants (range 0..17).
- *
- * Hot path: getStat is called on every damage / range / effect computation. The
- * previous TreeMap<Integer,Integer> implementation paid boxing + log-lookup at
- * every read. The int[] backing makes get/set zero-allocation and O(1).
- *
- * setMask tracks which stats have been explicitly set. forEach iterates only
- * those, preserving the TreeMap.entrySet() semantics needed by Effect.reduce /
- * Effect.mergeWith (an untouched stat is NOT visited, even though its value is
- * zero, because the old code distinguished "absent" from "set to 0").
+ * Compact stat container indexed by Entity.STAT_* (0..17). forEach visits only
+ * stats touched via set/update — untouched stats with implicit value 0 are
+ * skipped, matching the "absent vs explicit zero" distinction expected by
+ * Effect.reduce / Effect.mergeWith.
  */
 public class Stats {
 
-	private static final int SIZE = 18;
+	private static final int SIZE = 18; // Entity.STAT_RAM + 1
 
 	private final int[] values;
 	private long setMask;
@@ -34,6 +28,8 @@ public class Stats {
 	}
 
 	public void setStat(int key, int value) {
+		// Bounds-checked because Entity.applyLoadout / EntityInfo can feed JSON-parsed
+		// stat ids (cf. Entity.java:381, EntityInfo.java:177).
 		if (key < 0 || key >= SIZE) return;
 		values[key] = value;
 		setMask |= 1L << key;
@@ -46,12 +42,7 @@ public class Stats {
 	}
 
 	public void addStats(Stats toAdd) {
-		long mask = toAdd.setMask;
-		while (mask != 0) {
-			int i = Long.numberOfTrailingZeros(mask);
-			updateStat(i, toAdd.values[i]);
-			mask &= mask - 1;
-		}
+		toAdd.forEach(this::updateStat);
 	}
 
 	public void clear() {
@@ -59,12 +50,15 @@ public class Stats {
 		setMask = 0L;
 	}
 
-	@FunctionalInterface
 	public interface StatVisitor {
 		void visit(int statId, int value);
 	}
 
-	/** Visit every set stat in ascending id order. */
+	/**
+	 * Visit every set stat in ascending id order. Snapshot semantics: setMask is
+	 * captured at entry, so stats marked set during the visit are not observed
+	 * (callers can safely call updateStat from within the visitor).
+	 */
 	public void forEach(StatVisitor visitor) {
 		long mask = setMask;
 		while (mask != 0) {
