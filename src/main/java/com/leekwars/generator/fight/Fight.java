@@ -29,48 +29,40 @@ public class Fight {
 
 	public final static String TAG = Fight.class.getSimpleName();
 
-	// Maximum number of turns
-	public final static int MAX_TURNS = 64;
+	// Shared constants are sourced from State (single source of truth).
+	// Re-exported here for the natives that reference Fight.X publicly.
+	public final static int MAX_TURNS = State.MAX_TURNS;
+	public static final int TYPE_SOLO_GARDEN = State.TYPE_SOLO_GARDEN;
+	public static final int TYPE_SOLO_TEST = State.TYPE_SOLO_TEST;
+	public static final int TYPE_NORMAL_WHAT = State.TYPE_NORMAL_WHAT;
+	public static final int TYPE_TEAM_GARDEN = State.TYPE_TEAM_GARDEN;
+	public static final int TYPE_SOLO_CHALLENGE = State.TYPE_SOLO_CHALLENGE;
+	public static final int TYPE_FARMER_GARDEN = State.TYPE_FARMER_GARDEN;
+	public static final int TYPE_SOLO_TOURNAMENT = State.TYPE_SOLO_TOURNAMENT;
+	public static final int TYPE_TEAM_TEST = State.TYPE_TEAM_TEST;
+	public static final int TYPE_FARMER_TOURNAMENT = State.TYPE_FARMER_TOURNAMENT;
+	public static final int TYPE_TEAM_TOURNAMENT = State.TYPE_TEAM_TOURNAMENT;
+	public static final int TYPE_FARMER_CHALLENGE = State.TYPE_FARMER_CHALLENGE;
+	public static final int TYPE_FARMER_TEST = State.TYPE_FARMER_TEST;
+	public static final int FULL_TYPE_BATTLE_ROYALE = State.FULL_TYPE_BATTLE_ROYALE;
+	public final static int CONTEXT_TEST = State.CONTEXT_TEST;
+	public final static int CONTEXT_CHALLENGE = State.CONTEXT_CHALLENGE;
+	public final static int CONTEXT_GARDEN = State.CONTEXT_GARDEN;
+	public final static int CONTEXT_TOURNAMENT = State.CONTEXT_TOURNAMENT;
+	public final static int CONTEXT_BATTLE_ROYALE = State.CONTEXT_BATTLE_ROYALE;
+	public final static int TYPE_SOLO = State.TYPE_SOLO;
+	public final static int TYPE_FARMER = State.TYPE_FARMER;
+	public final static int TYPE_TEAM = State.TYPE_TEAM;
+	public final static int TYPE_BATTLE_ROYALE = State.TYPE_BATTLE_ROYALE;
+	public final static int TYPE_WAR = State.TYPE_WAR;
+	public final static int TYPE_CHEST_HUNT = State.TYPE_CHEST_HUNT;
+	public final static int TYPE_COLOSSUS = State.TYPE_COLOSSUS;
+	public final static int SUMMON_LIMIT = State.SUMMON_LIMIT;
 
-	// Fight full types (type + context)
-	public static final int TYPE_SOLO_GARDEN = 1;
-	public static final int TYPE_SOLO_TEST = 2;
-	public static final int TYPE_NORMAL_WHAT = 3;
-	public static final int TYPE_TEAM_GARDEN = 4;
-	public static final int TYPE_SOLO_CHALLENGE = 5;
-	public static final int TYPE_FARMER_GARDEN = 6;
-	public static final int TYPE_SOLO_TOURNAMENT = 7;
-	public static final int TYPE_TEAM_TEST = 8;
-	public static final int TYPE_FARMER_TOURNAMENT = 9;
-	public static final int TYPE_TEAM_TOURNAMENT = 10;
-	public static final int TYPE_FARMER_CHALLENGE = 11;
-	public static final int TYPE_FARMER_TEST = 12;
-	public static final int FULL_TYPE_BATTLE_ROYALE = 15;
-
-	// Fight contexts
-	public final static int CONTEXT_TEST = 0;
-	public final static int CONTEXT_CHALLENGE = 1;
-	public final static int CONTEXT_GARDEN = 2;
-	public final static int CONTEXT_TOURNAMENT = 3;
-	public final static int CONTEXT_BATTLE_ROYALE = 5;
-
-	// Fight types
-	public final static int TYPE_SOLO = 0;
-	public final static int TYPE_FARMER = 1;
-	public final static int TYPE_TEAM = 2;
-	public final static int TYPE_BATTLE_ROYALE = 3;
+	// Fight-specific constants
 	public final static int TYPE_BOSS = 4;
-	public final static int TYPE_WAR = 5;
-	public final static int TYPE_CHEST_HUNT = 6;
-	public final static int TYPE_COLOSSUS = 7;
-
-	// Flags
 	public final static int FLAG_STATIC = 1;
 	public final static int FLAG_PERFECT = 2;
-
-	// Summon limit
-	public final static int SUMMON_LIMIT = 8;
-
 	public final static int MAX_LOG_COUNT = 5000;
 
 	private int mWinteam = -1;
