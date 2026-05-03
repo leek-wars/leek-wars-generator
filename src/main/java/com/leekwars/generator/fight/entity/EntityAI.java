@@ -145,8 +145,10 @@ public class EntityAI extends AI {
 				file = folder.resolve(entityInfo.ai);
 			}
 		} catch (FileNotFoundException e) {
-			// Should not happen after refacto (direct folder ID + name resolution)
-			generator.exception(e, (Fight) entity.getFight());
+			// Peut arriver si leek.ai_path est périmé (rename/move avant syncEquippedPath).
+			generator.exception(new FileNotFoundException(
+				entityInfo.ai_path != null ? entityInfo.ai_path : entityInfo.ai
+			).initCause(e), (Fight) entity.getFight(), entityInfo.aiOwner, file);
 			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.AI_NOT_EXISTING, new String[] { entityInfo.ai != null ? entityInfo.ai : entityInfo.ai_path });
 		}
 		return file;
