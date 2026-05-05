@@ -391,6 +391,11 @@ public enum FightConstants implements ILeekConstant {
 	MOB_HUBBARD(11, Type.INT),
 	MOB_OFFSPRING(12, Type.INT),
 
+	// Chest types
+	CHEST_WOOD(1, Type.INT),
+	CHEST_IRON(2, Type.INT),
+	CHEST_DIAMOND(3, Type.INT),
+
 	SUMMON_LIMIT(Fight.SUMMON_LIMIT, Type.INT),
 	CRITICAL_FACTOR(Effect.CRITICAL_FACTOR, Type.REAL),
 	EROSION_DAMAGE(Effect.EROSION_DAMAGE, Type.REAL),
