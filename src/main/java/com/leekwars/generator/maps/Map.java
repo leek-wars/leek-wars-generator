@@ -151,14 +151,14 @@ public class Map {
 							if (team != null) {
 								if (pos < team.size()) {
 									int cell_id = team.get(pos++).intValue();
-									if (cell_id >= 0 || cell_id < map.nb_cells) {
+									if (cell_id >= 0 && cell_id < map.nb_cells) {
 										c = map.getCell(cell_id);
 									}
 								}
 							}
 						}
 					}
-					if (c != null) {
+					if (c != null && c.available(map)) {
 						map.setEntity(l, c);
 					}
 				}
