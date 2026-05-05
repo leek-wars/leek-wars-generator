@@ -27,10 +27,13 @@ import com.leekwars.generator.scenario.EntityInfo;
 import com.leekwars.generator.scenario.Scenario;
 import com.leekwars.generator.state.Entity;
 
+import java.util.Map;
+
 import leekscript.compiler.AIFile;
 import leekscript.compiler.IACompiler;
-import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
+import leekscript.compiler.IACompiler.MultiAnalyzeResult;
+import leekscript.compiler.LeekScript;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.LeekFunctions;
 import leekscript.common.Error;
@@ -51,6 +54,38 @@ public class Generator {
 		loadChips();
 		loadSummons();
 		loadComponents();
+	}
+
+	/**
+	 * Analyse un fichier en tenant compte de tous ses entrypoints (includes transitifs).
+	 * Orchestre la compilation multi-entrypoints et la déduplication des erreurs.
+	 * Les opérations spécifiques au daemon (invalidateFile, trophées) restent à la charge de l'appelant.
+	 */
+	public MultiAnalyzeResult analyzeFile(AIFile ai, int farmer) {
+		Log.i(TAG, "Analyze file " + ai + "..." + ai.hashCode());
+		try {
+			long t = System.currentTimeMillis();
+			var result = IACompiler.analyzeWithIncludes(ai);
+			for (var ep : result.perEntrypoint.values()) {
+				if (ep.tooMuchErrors != null) errorManager.exception(ep.tooMuchErrors, -1, farmer, ai);
+			}
+			long time = System.currentTimeMillis() - t;
+			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+			Log.e(TAG, "AI " + ai + " not analyzed");
+			errorManager.exception(e, 0, farmer, ai);
+			var result = new AnalyzeResult();
+			result.success = false;
+			result.informations = Json.createArray();
+			ArrayNode error = Json.createArray();
+			error.add(0); error.add(ai != null ? ai.getPath() : "");
+			error.add(1); error.add(0); error.add(1); error.add(0);
+			error.add(Error.INTERNAL_ERROR.ordinal());
+			result.informations.add(error);
+			return new MultiAnalyzeResult(result, Map.of(ai, result));
+		}
 	}
 
 	/**
