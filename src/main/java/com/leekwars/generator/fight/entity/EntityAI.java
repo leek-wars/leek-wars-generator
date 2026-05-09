@@ -145,11 +145,9 @@ public class EntityAI extends AI {
 				file = folder.resolve(entityInfo.ai);
 			}
 		} catch (FileNotFoundException e) {
-			// Peut arriver si leek.ai_path est périmé (rename/move avant syncEquippedPath).
-			generator.exception(new FileNotFoundException(
-				entityInfo.ai_path != null ? entityInfo.ai_path : entityInfo.ai
-			).initCause(e), (Fight) entity.getFight(), entityInfo.aiOwner, file);
-			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.AI_NOT_EXISTING, new String[] { entityInfo.ai != null ? entityInfo.ai : entityInfo.ai_path });
+			// État attendu côté joueur (fichier supprimé / opération git / leek.ai_path
+			// périmé) : on n'en fait qu'un log de combat, pas une exception serveur.
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.AI_NOT_EXISTING, new String[] { entityInfo.ai_path != null ? entityInfo.ai_path : entityInfo.ai });
 		}
 		return file;
 	}
