@@ -10,3 +10,12 @@ generator.jar
 build/
 bin/
 .vscode
+
+# Secrets
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.env
+.env.local
+.env.*.local
