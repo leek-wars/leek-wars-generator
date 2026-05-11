@@ -25,6 +25,10 @@ public class TestBenchAnalyze {
 
 	private static final String DEFAULT_ROOT = "/home/pierre/dev/leek-wars/server/filesystem/1/ia";
 	private static final String ENTRYPOINT = "Quantum";
+	// BENCH_RESET_INCLUDES=0 mime la prod réelle (édition de l'entrypoint sans
+	// toucher aux 124 inclus) → seul Quantum.leek se fait re-lex à chaque itération.
+	// Par défaut on reset tout (cold path = worst case).
+	private static boolean RESET_INCLUDES = !"0".equals(System.getenv().getOrDefault("BENCH_RESET_INCLUDES", "1"));
 
 	public static void main(String[] args) throws Exception {
 		int warmup = args.length > 1 ? Integer.parseInt(args[1]) : 5;
@@ -130,9 +134,11 @@ public class TestBenchAnalyze {
 	 */
 	private static void resetTokens(AIFile mainAi) {
 		mainAi.setCode(mainAi.getCode());
-		var included = mainAi.getIncludedAIs();
-		if (included != null) {
-			for (var inc : included) inc.setCode(inc.getCode());
+		if (RESET_INCLUDES) {
+			var included = mainAi.getIncludedAIs();
+			if (included != null) {
+				for (var inc : included) inc.setCode(inc.getCode());
+			}
 		}
 		mainAi.clearErrors();
 	}
