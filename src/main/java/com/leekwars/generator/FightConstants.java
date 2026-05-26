@@ -126,6 +126,7 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_ADD_STATE(Effect.TYPE_ADD_STATE, Type.INT),
 	EFFECT_TOTAL_DEBUFF(Effect.TYPE_TOTAL_DEBUFF, Type.INT),
 	EFFECT_STEAL_LIFE(Effect.TYPE_STEAL_LIFE, Type.INT),
+	EFFECT_DAMAGE_TO_RESISTANCE(Effect.TYPE_DAMAGE_TO_RESISTANCE, Type.INT),
 
 	// États
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),

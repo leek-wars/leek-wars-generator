@@ -684,6 +684,11 @@ public abstract class Entity {
 			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
 			Effect.createEffect(this.state, Effect.TYPE_RAW_BUFF_STRENGTH, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
 		}
+		else if (effect.getId() == Effect.TYPE_DAMAGE_TO_RESISTANCE) {
+			double value = inputValue * (effect.getValue1() / 100);
+			boolean stackable = (effect.getModifiers() & Effect.MODIFIER_STACKABLE) != 0;
+			Effect.createEffect(this.state, Effect.TYPE_RAW_BUFF_RESISTANCE, effect.getTurns(), 1, value, 0, false, this, this, attack, 0, stackable, 0, 0, 0, effect.getModifiers());
+		}
 	}
 
 	public void activateOnNovaDamagePassiveEffect(EffectParameters effect, Attack attack, int inputValue) {
