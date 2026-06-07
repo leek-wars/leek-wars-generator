@@ -16,6 +16,7 @@ sourceSets {
 test {
 	testLogging {
 		events "passed", "skipped", "failed"
+		showStandardStreams = true
 	}
 }
 
@@ -43,4 +44,9 @@ dependencies {
 	implementation 'tools.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
 	implementation 'org.postgresql:postgresql:42.7.5'
+
+	// GraalVM Polyglot (support IA en JavaScript / Python pour les groupes pro)
+	// 25.0.x est la premiere serie compatible JDK 25. js-community = licence OSS (EPL/UPL).
+	implementation 'org.graalvm.polyglot:polyglot:25.0.2'
+	implementation 'org.graalvm.polyglot:js-community:25.0.2'
 }
