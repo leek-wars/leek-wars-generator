@@ -93,7 +93,11 @@ public class Map {
 						} else {
 							int id = c.getValue().intValue();
 							ObstacleInfo info = ObstacleInfo.get(id);
-							if (info.size == 1) {
+							if (info == null) {
+								// Marqueur générique de l'éditeur de map de test (valeur 1)
+								// ou id d'obstacle inconnu : obstacle de taille 1 par défaut.
+								cell.setObstacle(1, 1);
+							} else if (info.size == 1) {
 								cell.setObstacle(id, info.size);
 							} else if (info.size == 2) {
 								cell.setObstacle(id, info.size);
