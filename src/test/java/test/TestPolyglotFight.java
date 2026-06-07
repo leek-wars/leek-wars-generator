@@ -257,6 +257,40 @@ public class TestPolyglotFight extends FightTestBase {
 	}
 
 	@Test
+	public void twoJsAisMoveTowardEachOtherInRealFight() throws Exception {
+		// Demo : deux IA JS qui se rapprochent l'une de l'autre dans un VRAI combat
+		// (vraie boucle de tours, pathfinding, consommation de MP). On affiche le deroule.
+		String moverAi =
+			"function turn() {"
+			+ "  var e = getNearestEnemy();"
+			+ "  var before = getCellDistance(getCell(), getCell(e));"
+			+ "  if (getRegister('startDist') == null) setRegister('startDist', '' + before);"
+			+ "  moveToward(e);"
+			+ "  setRegister('endDist', '' + getCellDistance(getCell(), getCell(e)));"
+			+ "  setRegister('cell', '' + getCell());"
+			+ "}";
+		attachJsAI(leek1, moverAi);
+		attachJsAI(leek2, moverAi);
+		runFight();
+
+		int start1 = Integer.parseInt(leek1.getRegister("startDist"));
+		int end1 = Integer.parseInt(leek1.getRegister("endDist"));
+		int start2 = Integer.parseInt(leek2.getRegister("startDist"));
+		int end2 = Integer.parseInt(leek2.getRegister("endDist"));
+
+		System.out.println("[demo] === Combat avec 2 IA JavaScript ===");
+		System.out.println("[demo] IA (les deux poireaux) :\n" + moverAi);
+		System.out.println("[demo] leek1 : distance ennemi " + start1 + " -> " + end1 + " (cellule finale " + leek1.getRegister("cell") + ")");
+		System.out.println("[demo] leek2 : distance ennemi " + start2 + " -> " + end2 + " (cellule finale " + leek2.getRegister("cell") + ")");
+		System.out.println("[demo] tours joues : " + fight.getState().getOrder().getTurn());
+
+		Assert.assertTrue("leek1 (JS) doit s'etre rapproche : " + start1 + " -> " + end1, end1 < start1);
+		Assert.assertTrue("leek2 (JS) doit s'etre rapproche : " + start2 + " -> " + end2, end2 < start2);
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		Assert.assertTrue(leek2.getAI() instanceof PolyglotEntityAI);
+	}
+
+	@Test
 	public void disposeReleasesContextWithoutError() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
