@@ -291,6 +291,43 @@ public class TestPolyglotFight extends FightTestBase {
 	}
 
 	@Test
+	public void flatJsAiWithLetRunsEveryTurn() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// IA plate (sans turn()) utilisant let : doit tourner CHAQUE tour sans "already declared".
+			PolyglotEntityAI ai = buildAI(sandbox, "let me = getLife(); setRegister('seen', '' + me);");
+			ai.runIA();
+			ai.runIA(); // avant le fix : SyntaxError "Variable me has already been declared"
+			ai.runIA();
+			Assert.assertEquals("" + leek1.getLife(), leek1.getRegister("seen"));
+		}
+	}
+
+	@Test
+	public void flatJsAiUsingReservedLikeNameRunsEveryTurn() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// Regression : une IA plate qui declare un let nomme comme un eventuel wrapper interne
+			// ne doit pas entrer en collision (on rejoue via une IIFE anonyme, sans nom interne).
+			PolyglotEntityAI ai = buildAI(sandbox, "let __lw_turn = getLife(); setRegister('v', '' + __lw_turn);");
+			ai.runIA();
+			ai.runIA();
+			ai.runIA();
+			Assert.assertEquals("" + leek1.getLife(), leek1.getRegister("v"));
+		}
+	}
+
+	@Test
+	public void invalidJsSyntaxMakesAiInert() throws Exception {
+		// Source JS invalide -> rejete au build (parse), comme une IA LeekScript qui ne compile pas.
+		attachJsAI(leek1, "function turn() { return 1"); // accolade manquante
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertFalse("une IA JS au source invalide ne doit pas devenir polyglot",
+			leek1.getAI() instanceof PolyglotEntityAI);
+	}
+
+	@Test
 	public void disposeReleasesContextWithoutError() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {

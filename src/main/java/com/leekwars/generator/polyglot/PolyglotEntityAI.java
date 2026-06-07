@@ -23,6 +23,13 @@ import leekscript.runner.Session;
  * {@link EntityAI} (le moteur de combat l'utilise sans le savoir), mais
  * {@link #runIA(Session)} delegue a {@code context.eval(languageId, source)}.
  *
+ * Modele d'execution multi-tours (le contexte est reutilise tout le combat) :
+ *   - IA avec etat : definir une fonction {@code turn()}. Le source est evalue une fois (classes,
+ *     champs static = memoire persistante), puis {@code turn()} est rejouee chaque tour.
+ *   - IA simple : ecrire le code directement (sans {@code turn()}). Il est rejoue chaque tour ;
+ *     les variables top-level sont fraiches a chaque tour (pas de persistance). turn() est donc
+ *     OPTIONNELLE. (Limitation JS : pas de {@code return} au top-level d'une IA plate ; utiliser turn().)
+ *
  * Deux gardes complementaires bornent l'execution d'une IA non fiable :
  *   - le statement limit GraalVM (cf {@link PolyglotSandbox}) borne les boucles pures guest ;
  *   - le comptage d'operations LeekScript reste ACTIF (on n'override pas {@code ops()}) :
@@ -33,7 +40,7 @@ import leekscript.runner.Session;
  */
 public class PolyglotEntityAI extends EntityAI {
 
-	/** Nom de la fonction d'entree appelee a chaque tour (style LeekScript : corps re-execute). */
+	/** Nom de la fonction d'entree (optionnelle) appelee a chaque tour, pour un etat persistant. */
 	private static final String TURN_FUNCTION = "turn";
 
 	private final String languageId;
@@ -71,6 +78,18 @@ public class PolyglotEntityAI extends EntityAI {
 		try {
 			Fight fight = (Fight) entity.getFight();
 			PolyglotSandbox sandbox = fight.getPolyglotSandbox(languageId);
+
+			// Validation syntaxique au build (parite avec LeekScript qui valide a la compilation) :
+			// une erreur de syntaxe -> IA invalide (no-op), comme une IA LeekScript qui ne compile pas.
+			try (Context probe = sandbox.createContext(languageId)) {
+				probe.parse(languageId, file.getCode());
+			} catch (PolyglotException e) {
+				// Toute erreur de parse vient du code joueur (syntaxe...) -> IA invalide (erreur
+				// utilisateur), jamais le chemin "erreur serveur" du catch externe.
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
+				return new EntityAI(entity, (LeekLog) entity.getLogs());
+			}
+
 			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, file.getCode(), sandbox);
 			ai.setEntity(entity);
 			ai.setLogs((LeekLog) entity.getLogs());
@@ -117,21 +136,26 @@ public class PolyglotEntityAI extends EntityAI {
 			Value value;
 			if (!initialized) {
 				// 1er tour : on evalue tout le source une fois (definit classes + fonction turn()).
-				// staticInit style LeekScript : les statics de classe persistent entre les tours.
 				Value top = context.eval(languageId, source);
-				Value fn = context.getBindings(languageId).getMember(TURN_FUNCTION);
-				entry = (fn != null && fn.canExecute()) ? fn : null;
+				Value turnFn = context.getBindings(languageId).getMember(TURN_FUNCTION);
 				initialized = true;
-				// turn() definie -> le top-level n'etait que du setup, on joue le 1er tour ;
-				// sinon le source "plat" EST la logique de tour, on renvoie son resultat.
-				value = entry != null ? entry.execute() : top;
+				if (turnFn != null && turnFn.canExecute()) {
+					// IA avec etat : le top-level (classes + statics) n'etait que du setup execute
+					// une fois ; turn() est rejouee chaque tour (les statics de classe persistent).
+					entry = turnFn;
+					value = entry.execute();
+				} else {
+					// IA "plate" (sans turn()) : le source EST la logique de tour, et vient de
+					// s'executer. turn() est donc OPTIONNELLE.
+					value = top;
+				}
 			} else if (entry != null) {
-				value = entry.execute(); // tours suivants : on rejoue turn()
+				value = entry.execute(); // IA avec etat : turn() rejouee chaque tour
 			} else {
-				// Source plat (sans turn()) : re-evalue chaque tour. Limitation JS : un let/const/class
-				// au top-level leve "already declared" au 2e tour (le contexte est reutilise).
-				// Pour une IA multi-tours, definir une fonction turn() (cf doc de classe).
-				value = context.eval(languageId, source);
+				// IA plate, tours suivants : on rejoue le source dans une IIFE anonyme (scope frais).
+				// Evite la collision "already declared" d'une re-eval top-level (let/const/class) dans
+				// le contexte reutilise, sans nom interne susceptible d'entrer en collision.
+				value = context.eval(languageId, "(function(){" + source + "\n})()");
 			}
 			// Peut lever LeekRunException (marshalling du retour : ops/profondeur) : propagee telle quelle.
 			return TypeMarshaller.toJava(value, this);
