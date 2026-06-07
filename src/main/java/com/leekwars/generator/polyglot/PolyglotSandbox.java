@@ -1,0 +1,82 @@
+package com.leekwars.generator.polyglot;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.ResourceLimits;
+import org.graalvm.polyglot.io.IOAccess;
+
+/**
+ * Fabrique de contextes GraalVM verrouilles pour l'execution d'IA en JS/Python.
+ *
+ * Un {@link Engine} est partage (idealement un par combat) pour amortir le warmup
+ * Truffle entre les entites. Chaque entite recoit son propre {@link Context} (scope
+ * global isole) construit via {@link #createContext(String)}.
+ *
+ * Securite : pas d'acces hote, pas d'IO, pas de threads, pas de natif, pas de process.
+ * Les boucles pures guest sont bornees par un compteur de statements ; le travail
+ * cote hote (fonctions de combat couteuses) reste borne par le comptage d'operations
+ * LeekScript ({@code ai.ops(...)}), que {@link PolyglotEntityAI} laisse ACTIF (le
+ * statement limit ne compte pas le temps passe dans le code hote).
+ *
+ * Le sandbox possede les contextes qu'il cree et les ferme tous a {@link #close()},
+ * pour ne pas fuiter de {@link Context} si {@link PolyglotEntityAI#dispose()} n'est
+ * pas appele.
+ */
+public class PolyglotSandbox implements AutoCloseable {
+
+	/** Limite par defaut : 20M statements guest (cf. issue #3179). */
+	public static final long DEFAULT_STATEMENT_LIMIT = 20_000_000L;
+
+	private final Engine engine;
+	private final ResourceLimits limits;
+	private final List<Context> contexts = Collections.synchronizedList(new ArrayList<>());
+
+	public PolyglotSandbox(String... languages) {
+		this(DEFAULT_STATEMENT_LIMIT, languages);
+	}
+
+	public PolyglotSandbox(long statementLimit, String... languages) {
+		String[] permitted = languages.length == 0 ? new String[] { "js" } : languages;
+		this.engine = Engine.newBuilder(permitted).build();
+		this.limits = ResourceLimits.newBuilder()
+				.statementLimit(statementLimit, null)
+				.build();
+	}
+
+	/** Construit un contexte isole et verrouille pour le langage donne (et le suit pour la fermeture). */
+	public Context createContext(String languageId) {
+		Context context = Context.newBuilder(languageId)
+				.engine(engine)
+				.allowHostAccess(HostAccess.NONE)
+				.allowAllAccess(false)
+				.allowIO(IOAccess.NONE)
+				.allowCreateThread(false)
+				.allowNativeAccess(false)
+				.allowCreateProcess(false)
+				.allowHostClassLoading(false)
+				.resourceLimits(limits)
+				.build();
+		contexts.add(context);
+		return context;
+	}
+
+	@Override
+	public void close() {
+		synchronized (contexts) {
+			for (Context context : contexts) {
+				try {
+					context.close(true); // cancelIfExecuting : ne relance pas si epuise
+				} catch (Exception ignore) {
+					// best effort
+				}
+			}
+			contexts.clear();
+		}
+		engine.close();
+	}
+}
