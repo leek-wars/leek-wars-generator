@@ -123,6 +123,60 @@ public class TestPolyglotFight extends FightTestBase {
 	}
 
 	@Test
+	public void jsReceivesArrayFromApi() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// getEnemies() -> ArrayLeekValue marshalle en ProxyArray cote JS (length + indexation).
+			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "getEnemies().length;").runIA()).longValue());
+			Assert.assertEquals((long) leek2.getFId(),
+				((Number) buildAI(sandbox, "getEnemies()[0];").runIA()).longValue());
+			// Iteration cote guest sur le tableau renvoye par l'API.
+			Object sum = buildAI(sandbox,
+				"var e = getEnemies(); var s = 0; for (var i = 0; i < e.length; i++) s += e[i]; s;").runIA();
+			Assert.assertEquals((long) leek2.getFId(), ((Number) sum).longValue());
+		}
+	}
+
+	@Test
+	public void jsPassesArrayToApi() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// Un tableau JS passe a une fonction attendant un GenericArrayLeekValue.
+			// getMessageAuthor lit l'index 0, getMessageType l'index 1 (taille 3 requise).
+			Assert.assertEquals(5L, ((Number) buildAI(sandbox, "getMessageAuthor([5, 7, 99]);").runIA()).longValue());
+			Assert.assertEquals(7L, ((Number) buildAI(sandbox, "getMessageType([5, 7, 99]);").runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void jsMapRoundTrip() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// setRegister (args string) puis getRegisters() -> MapLeekValue marshalle en ProxyObject.
+			Object value = buildAI(sandbox, "setRegister('foo', 'bar'); getRegisters()['foo'];").runIA();
+			Assert.assertEquals("bar", value);
+		}
+	}
+
+	@Test(timeout = 30_000)
+	public void cyclicGuestArrayIsBounded() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// Tableau auto-reference renvoye par l'IA : le marshalling doit s'arreter
+			// proprement (LeekRunException), pas en StackOverflowError non controle.
+			EntityAI ai = buildAI(sandbox, "var a = []; a[0] = a; a;");
+			try {
+				ai.runIA();
+				Assert.fail("le marshalling d'un tableau cyclique aurait du etre interrompu");
+			} catch (LeekRunException e) {
+				// Profondeur (STACKOVERFLOW) ou largeur/budget (TOO_MUCH_OPERATIONS).
+				Assert.assertTrue("erreur de ressource attendue, recue: " + e.getError(),
+					e.getError() == Error.STACKOVERFLOW || e.getError() == Error.TOO_MUCH_OPERATIONS);
+			}
+		}
+	}
+
+	@Test
 	public void disposeReleasesContextWithoutError() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {

@@ -118,7 +118,7 @@ public class PolyglotAPIBridge {
 			callArgs[0] = ai;
 			for (int i = 1; i < params.length; i++) {
 				Value a = (i - 1) < args.length ? args[i - 1] : null;
-				callArgs[i] = TypeMarshaller.coerce(a, params[i]);
+				callArgs[i] = TypeMarshaller.coerce(a, params[i], ai);
 			}
 			try {
 				return TypeMarshaller.toGuest(m.invoke(null, callArgs));

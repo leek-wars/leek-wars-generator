@@ -59,9 +59,14 @@ public class PolyglotEntityAI extends EntityAI {
 		context.resetLimits();
 		try {
 			Value result = context.eval(languageId, source);
-			return TypeMarshaller.toJava(result);
+			// Peut lever LeekRunException (marshalling du retour : ops/profondeur) : propagee telle quelle.
+			return TypeMarshaller.toJava(result, this);
 		} catch (PolyglotException e) {
 			throw mapException(e);
+		} catch (RuntimeException e) {
+			// Filet : erreur hote inattendue pendant le marshalling du retour (hors eval).
+			LeekRunException unwrapped = unwrapLeekRunException(e);
+			throw unwrapped != null ? unwrapped : new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
 		}
 	}
 
