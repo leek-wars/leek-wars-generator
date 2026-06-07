@@ -11,6 +11,8 @@ import com.leekwars.generator.polyglot.PolyglotSandbox;
 import com.leekwars.generator.state.Entity;
 
 import leekscript.common.Error;
+import leekscript.compiler.AIFile;
+import leekscript.compiler.LeekScript;
 import leekscript.runner.LeekRunException;
 
 /**
@@ -173,6 +175,84 @@ public class TestPolyglotFight extends FightTestBase {
 				Assert.assertTrue("erreur de ressource attendue, recue: " + e.getError(),
 					e.getError() == Error.STACKOVERFLOW || e.getError() == Error.TOO_MUCH_OPERATIONS);
 			}
+		}
+	}
+
+	@Test
+	public void classStaticsPersistAcrossTurns() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// Modele LeekScript : source evalue 1x (definit Mem + turn()), turn() rejoue chaque tour.
+			// La static de classe persiste entre les tours, les locales de turn() sont oubliees.
+			PolyglotEntityAI ai = new PolyglotEntityAI("js",
+				"class Mem { static n = 0; } function turn() { Mem.n++; return Mem.n; }", sandbox);
+			ai.setEntity(leek1);
+			ai.setLogs(new LeekLog(farmerLog, leek1));
+			ai.setFight(fight);
+			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(2L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(3L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void topLevelRunsOnceWhenTurnDefined() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// Le code top-level (setup) ne s'execute qu'une fois : le compteur reste a 1.
+			PolyglotEntityAI ai = new PolyglotEntityAI("js",
+				"globalThis.setup = (globalThis.setup || 0) + 1; function turn() { return globalThis.setup; }", sandbox);
+			ai.setEntity(leek1);
+			ai.setLogs(new LeekLog(farmerLog, leek1));
+			ai.setFight(fight);
+			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void jsAiRunsInFullMultiTurnFight() throws Exception {
+		// IA JS attachee via un fichier .js -> EntityAI.build() dispatche vers le polyglot.
+		// turn() incremente une static et l'ecrit dans un registre ; apres le combat le registre
+		// doit valoir > 1, ce qui prouve l'execution multi-tours ET la persistance de la static.
+		attachJsAI(leek1, "class C { static n = 0; } function turn() { C.n++; setRegister('turns', '' + C.n); }");
+		attachAI(leek2, ""); // adversaire LeekScript inerte
+		runFight();
+
+		Assert.assertTrue("leek1 doit utiliser une IA polyglot", leek1.getAI() instanceof PolyglotEntityAI);
+		String registers = registerStore.get(leek1.getId());
+		Assert.assertNotNull("les registres de leek1 doivent etre persistes", registers);
+		int turns = extractTurns(registers);
+		Assert.assertTrue("turn() doit s'etre execute sur plusieurs tours (static persistante), recu: " + turns, turns > 1);
+	}
+
+	/** Attache une IA JS a un poireau via un AIFile dont le chemin se termine par .js. */
+	private void attachJsAI(Leek leek, String code) {
+		AIFile file = new AIFile("polyglot_test_" + System.nanoTime() + ".js", code,
+			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
+		leek.setAIFile(file);
+		leek.setLogs(new LeekLog(farmerLog, leek));
+		leek.setFight(fight);
+		leek.setBirthTurn(1);
+	}
+
+	/** Extrait la valeur entiere du registre "turns" du JSON de registres. */
+	private static int extractTurns(String registersJson) {
+		var m = java.util.regex.Pattern.compile("\"turns\"\\s*:\\s*\"?(\\d+)\"?").matcher(registersJson);
+		return m.find() ? Integer.parseInt(m.group(1)) : -1;
+	}
+
+	@Test
+	public void mathRandomIsDeterministicForSeed() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			// Deux IA identiques avec la meme seed -> meme sequence Math.random (replays reproductibles).
+			PolyglotEntityAI a = buildAI(sandbox, "function turn(){ return Math.floor(Math.random() * 1000000); }");
+			PolyglotEntityAI b = buildAI(sandbox, "function turn(){ return Math.floor(Math.random() * 1000000); }");
+			a.getRandom().seed(12345);
+			b.getRandom().seed(12345);
+			Assert.assertEquals(((Number) a.runIA()).longValue(), ((Number) b.runIA()).longValue());
+			Assert.assertEquals(((Number) a.runIA()).longValue(), ((Number) b.runIA()).longValue());
 		}
 	}
 

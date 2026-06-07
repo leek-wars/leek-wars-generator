@@ -74,6 +74,8 @@ public class Fight {
 	public long executionTime = 0;
 	FightListener listener;
 	private State state = new State();
+	/** Sandbox GraalVM partage par le combat (IA JS/Python), cree paresseusement. */
+	private com.leekwars.generator.polyglot.PolyglotSandbox polyglotSandbox;
 
 
 	public Fight(Generator generator) {
@@ -221,6 +223,10 @@ public class Fight {
 			listener.newTurn(this);
 		}
 		state.getActions().addOpsAndTimes(state.statistics);
+
+		// Apres les hooks afterFight : on libere le sandbox polyglot (Engine + contextes).
+		// Generator.runFight le refait dans un finally pour couvrir le chemin de crash.
+		closePolyglotSandbox();
 	}
 
 	public void computeWinner(boolean drawCheckLife) {
@@ -295,6 +301,27 @@ public class Fight {
 
 		// Init the state
 		this.state.init();
+	}
+
+	/** Sandbox polyglot du combat (1 Engine partage par toutes les entites), cree au besoin. */
+	public com.leekwars.generator.polyglot.PolyglotSandbox getPolyglotSandbox(String languageId) {
+		if (polyglotSandbox == null) {
+			polyglotSandbox = new com.leekwars.generator.polyglot.PolyglotSandbox(languageId);
+		}
+		return polyglotSandbox;
+	}
+
+	/**
+	 * Ferme le sandbox polyglot (Engine + tous les contextes). Idempotent. Decouple de
+	 * finishFight() (appele en cours de combat) : la fermeture doit avoir lieu APRES les hooks
+	 * afterFight et sur TOUS les chemins (y compris crash) -> appele en fin de startFight et
+	 * dans le finally de Generator.runFight.
+	 */
+	public void closePolyglotSandbox() {
+		if (polyglotSandbox != null) {
+			polyglotSandbox.close();
+			polyglotSandbox = null;
+		}
 	}
 
 	public void finishFight() {

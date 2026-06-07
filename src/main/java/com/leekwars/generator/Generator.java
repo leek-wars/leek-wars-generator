@@ -226,6 +226,9 @@ public class Generator {
 			e.printStackTrace();
 			Log.e(TAG, "Error during fight generation!");
 			return outcome;
+		} finally {
+			// Garantit la fermeture du sandbox polyglot meme si startFight a leve (fuite Engine sinon).
+			fight.closePolyglotSandbox();
 		}
 	}
 

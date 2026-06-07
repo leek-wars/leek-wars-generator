@@ -169,6 +169,13 @@ public class EntityAI extends AI {
 			return new EntityAI(entity, (LeekLog) entity.getLogs());
 		}
 
+		// Branche polyglot (JS/Python) : detecte via l'extension du fichier, court-circuite
+		// le pipeline LeekScript (compilation Java) au profit de GraalVM.
+		String language = com.leekwars.generator.polyglot.PolyglotEntityAI.detectLanguage(file.getPath());
+		if (language != null) {
+			return com.leekwars.generator.polyglot.PolyglotEntityAI.build(generator, file, entity, language);
+		}
+
 		Log.i(TAG, "Compile AI " + file.getPath() + " (id " + file.getId() + ")...");
 		EntityAI ai = null;
 		try {
