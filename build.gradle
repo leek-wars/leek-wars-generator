@@ -28,7 +28,10 @@ jar {
 		attributes "Main-Class": "com.leekwars.Main"
 	}
 	from {
-		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+		// Ne bundler que les dossiers de classes et les .jar : les deps GraalVM polyglot (js-community,
+		// python-community, polyglot) sont a packaging POM, donc le runtimeClasspath contient des .pom
+		// que zipTree ne sait pas ouvrir (BUILD FAILED). Meme filtre que le fat jar worker/daemon.
+		configurations.runtimeClasspath.findAll { it.isDirectory() || it.name.endsWith('.jar') }.collect { it.isDirectory() ? it : zipTree(it) }
 	}
 }
 
