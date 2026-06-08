@@ -3,6 +3,8 @@ package com.leekwars.generator.polyglot;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import org.graalvm.polyglot.Context;
@@ -53,6 +55,25 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Detecte une IA JS multi-fichiers (modules ES) : import/export en debut de ligne. */
 	private static final Pattern ES_MODULE = Pattern.compile("(?m)^\\s*(import\\s[^(]|export[\\s{*])");
 
+	/**
+	 * Backstop wall-clock par tour : annule un tour qui depasse cette duree. Genereux (un tour
+	 * legitime est borne BIEN avant par le statement limit ~20M) : ne sert qu'a couper le travail
+	 * natif que le statement limit ne compte pas (ex: {@code 'x'*10**9}). Cf {@link PolyglotSandbox}.
+	 *
+	 * NB determinisme : une coupure wall-clock est NON deterministe (depend de la charge machine), alors
+	 * que le reste du moteur est reproductible (cf les gardes de determinisme RNG/horloge). Acceptable car
+	 * une IA legitime ne declenche JAMAIS ce backstop (elle est bornee bien avant par le statement limit) :
+	 * la reproductibilite tient pour tous les combats non abusifs ; seul un tour pathologique (deja en
+	 * train de saturer le worker) peut etre coupe a un instant dependant de la charge.
+	 */
+	private static final long DEFAULT_TURN_WALL_CLOCK_LIMIT_MS = 5_000;
+	/**
+	 * Au-dela de ce nombre de depassements wall-clock sur le combat, l'IA est neutralisee : sinon une
+	 * IA malveillante paierait la limite a CHAQUE tour (x64). Une IA legitime ne depasse jamais (bornee
+	 * par le statement limit), donc ce compteur ne la touche pas.
+	 */
+	private static final int MAX_WALL_CLOCK_TIMEOUTS = 3;
+
 	private final String languageId;
 	private final String source;
 	private final PolyglotSandbox sandbox;
@@ -62,6 +83,10 @@ public class PolyglotEntityAI extends EntityAI {
 	private Context context;
 	private boolean initialized;
 	private Value entry;                       // fonction turn() si definie
+
+	private long turnWallClockLimitMs = DEFAULT_TURN_WALL_CLOCK_LIMIT_MS;
+	private int wallClockTimeouts;             // nb de tours coupes par le watchdog sur ce combat
+	private boolean disabled;                  // IA neutralisee apres trop de depassements wall-clock
 
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
@@ -291,10 +316,30 @@ public class PolyglotEntityAI extends EntityAI {
 
 	@Override
 	public Object runIA(Session session) throws LeekRunException {
+		if (disabled) {
+			return null; // IA neutralisee (trop de depassements wall-clock) : n'agit plus, ne consomme plus.
+		}
 		ensureContext();
 		// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 		// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
 		context.resetLimits();
+
+		// Garde-fou wall-clock : un tour qui depasse l'echeance (typiquement du travail natif que le
+		// statement limit ne compte pas, ex: 'x'*10**9) est coupe. Le watchdog et le tour se disputent un
+		// UNIQUE CAS, resolu dans le finally (donc pour TOUTE sortie : succes, erreurs, ET Error non
+		// capturee comme StackOverflow). Invariants :
+		//   - interruptAsync n'est declenche QUE si le watchdog gagne le CAS ;
+		//   - si le watchdog gagne, le tour PERD le CAS dans le finally et passe par onWallClockTimeout(),
+		//     qui FERME le contexte -> le tour suivant en reconstruit un neuf. Donc l'interruption asynchrone
+		//     (qui vise l'ancien `running`) ne peut JAMAIS toucher le contexte d'un tour suivant ;
+		//   - si le tour gagne, le watchdog ne declenche jamais rien (son CAS echoue) et on l'annule.
+		final Context running = context;
+		final AtomicBoolean settled = new AtomicBoolean(false);
+		final ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
+			if (settled.compareAndSet(false, true)) {
+				PolyglotSandbox.interruptAsync(running);
+			}
+		}, turnWallClockLimitMs);
 		try {
 			Value value;
 			if (!initialized) {
@@ -319,7 +364,7 @@ public class PolyglotEntityAI extends EntityAI {
 			} else {
 				value = replayFlatTurn(); // IA plate sans turn() : tours suivants
 			}
-			// Peut lever LeekRunException (marshalling du retour : ops/profondeur) : propagee telle quelle.
+			// Peut lever LeekRunException (marshalling du retour : ops/profondeur) : resolue par le finally.
 			return TypeMarshaller.toJava(value, this);
 		} catch (PolyglotException e) {
 			LeekRunException mapped = mapException(e);
@@ -330,7 +375,51 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!initialized) closeContext();
 			LeekRunException unwrapped = unwrapLeekRunException(e);
 			throw unwrapped != null ? unwrapped : new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
+		} finally {
+			// Resolution UNIQUE de la course, pour TOUTE sortie du tour : succes, exception verifiee
+			// (LeekRunException du marshalling/chargement, non capturee ci-dessus), erreur hote, ET
+			// java.lang.Error (StackOverflow...) hors taxonomie des catch. Le tour gagne -> on annule le
+			// watchdog. Le WATCHDOG gagne -> il a interrompu `running` ; onWallClockTimeout() FERME le
+			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
+			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
+			// re-capturable par les catch ci-dessus -> pas de double comptage.
+			if (!winRace(settled, watchdog)) {
+				throw onWallClockTimeout();
+			}
 		}
+	}
+
+	/**
+	 * Resout la course tour/watchdog en fin de tour (appelee depuis le finally de {@link #runIA}). Renvoie
+	 * true si LE TOUR gagne (l'echeance n'a pas encore expire) : on annule alors le watchdog (il ne
+	 * declenchera rien). Renvoie false si le WATCHDOG a deja gagne (echeance expiree, interruption en
+	 * cours) -&gt; l'appelant doit traiter un depassement.
+	 */
+	private static boolean winRace(AtomicBoolean settled, ScheduledFuture<?> watchdog) {
+		if (settled.compareAndSet(false, true)) {
+			watchdog.cancel(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Tour coupe par le watchdog wall-clock. On ferme le contexte (repart neuf au prochain tour) et,
+	 * apres trop de depassements sur le combat, on neutralise l'IA pour borner le cout total.
+	 */
+	private LeekRunException onWallClockTimeout() {
+		closeContext();
+		if (++wallClockTimeouts >= MAX_WALL_CLOCK_TIMEOUTS) {
+			disabled = true;
+			Log.w("PolyglotEntityAI", "IA polyglot (" + languageId + ") neutralisee apres " + wallClockTimeouts
+				+ " depassements wall-clock (" + turnWallClockLimitMs + " ms/tour) : probable travail natif non borne par le statement limit");
+		}
+		return new LeekRunException(Error.TOO_MUCH_OPERATIONS);
+	}
+
+	/** Regle le backstop wall-clock par tour (defaut {@value #DEFAULT_TURN_WALL_CLOCK_LIMIT_MS} ms). */
+	public void setTurnWallClockLimitMs(long ms) {
+		this.turnWallClockLimitMs = ms;
 	}
 
 	private LeekRunException mapException(PolyglotException e) {
@@ -377,6 +466,9 @@ public class PolyglotEntityAI extends EntityAI {
 			} catch (Exception ignore) {
 				// best effort
 			}
+			// Retirer du suivi du sandbox : sinon chaque contexte reconstruit (timeout, limite atteinte
+			// chaque tour...) s'accumulerait dans la liste pour tout le combat (retention memoire).
+			sandbox.forgetContext(context);
 			context = null;
 		}
 		// Le prochain ensureContext reconstruira un contexte neuf : on re-evaluera le source

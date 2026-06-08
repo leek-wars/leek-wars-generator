@@ -2,9 +2,17 @@ package com.leekwars.generator.polyglot;
 
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -114,6 +122,15 @@ public class PolyglotSandbox implements AutoCloseable {
 		return context;
 	}
 
+	/**
+	 * Oublie un contexte deja ferme (par {@code PolyglotEntityAI.closeContext}), pour qu'il ne soit pas
+	 * retenu jusqu'a {@link #close()}. Sans ca, une IA reconstruite a chaque tour (timeout / limite)
+	 * accumulerait ses contextes morts dans la liste pour tout le combat.
+	 */
+	public void forgetContext(Context context) {
+		contexts.remove(context);
+	}
+
 	@Override
 	public void close() {
 		synchronized (contexts) {
@@ -127,5 +144,88 @@ public class PolyglotSandbox implements AutoCloseable {
 			contexts.clear();
 		}
 		engine.close();
+	}
+
+	// ---------- Watchdog wall-clock (anti-DoS) ----------
+	// Le statement limit borne les boucles pures guest, mais PAS le travail natif fait en un seul
+	// statement (ex: 'x'*10**9, un gros bignum) : ce backstop wall-clock annule un tour qui depasse
+	// une echeance. Infra statique partagee par tous les combats de la JVM : un timer (1 thread daemon)
+	// arme/desarme les echeances ; quand une echeance expire, l'interruption (potentiellement bloquante)
+	// est faite sur un pool separe pour ne jamais saturer le timer.
+
+	/** Delai laisse a une interruption douce avant d'escalader vers une annulation dure (close). */
+	private static final long INTERRUPT_GRACE_MS = 2_000;
+
+	private static volatile ScheduledThreadPoolExecutor watchdogTimer;
+	private static volatile ExecutorService watchdogWorkers;
+
+	private static ScheduledThreadPoolExecutor watchdogTimer() {
+		if (watchdogTimer == null) {
+			synchronized (PolyglotSandbox.class) {
+				if (watchdogTimer == null) {
+					ThreadFactory tf = daemonFactory("polyglot-watchdog");
+					ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1, tf);
+					// Cas normal (tour fini a temps) : la tache est annulee -> on la retire aussitot de
+					// la file pour ne pas l'accumuler jusqu'a son echeance.
+					exec.setRemoveOnCancelPolicy(true);
+					watchdogTimer = exec;
+				}
+			}
+		}
+		return watchdogTimer;
+	}
+
+	private static ExecutorService watchdogWorkers() {
+		if (watchdogWorkers == null) {
+			synchronized (PolyglotSandbox.class) {
+				if (watchdogWorkers == null) {
+					watchdogWorkers = Executors.newCachedThreadPool(daemonFactory("polyglot-watchdog-worker"));
+				}
+			}
+		}
+		return watchdogWorkers;
+	}
+
+	private static ThreadFactory daemonFactory(String name) {
+		return r -> {
+			Thread t = new Thread(r, name);
+			t.setDaemon(true);
+			return t;
+		};
+	}
+
+	/**
+	 * Arme une echeance : apres {@code deadlineMs}, {@code onExpire} est execute sur le thread du timer.
+	 * Retourne le handle a {@link ScheduledFuture#cancel(boolean) cancel} en fin de tour.
+	 */
+	public static ScheduledFuture<?> scheduleDeadline(Runnable onExpire, long deadlineMs) {
+		return watchdogTimer().schedule(onExpire, deadlineMs, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * Demande l'arret d'un tour qui depasse son echeance, sur un thread separe (l'operation peut bloquer
+	 * si le guest ne cede pas). On tente d'abord une interruption douce, puis on escalade vers une
+	 * annulation dure (close).
+	 *
+	 * RESIDU CONNU : interrupt ET close dependent tous deux d'un safepoint Truffle. Un travail natif
+	 * en UN statement qui n'atteint aucun safepoint (gros bignum, allocation massive) reste donc
+	 * inarretable : le thread de combat (et ce thread-ci) restent bloques jusqu'a la fin de l'operation.
+	 * Pas de remede en GraalVM community (ni limite de heap, ni preemption forcee) : il faudrait
+	 * l'edition EE (sandbox policy) ou une isolation par process.
+	 */
+	public static void interruptAsync(Context context) {
+		watchdogWorkers().execute(() -> {
+			try {
+				context.interrupt(Duration.ofMillis(INTERRUPT_GRACE_MS));
+			} catch (TimeoutException te) {
+				try {
+					context.close(true); // derniere cartouche : annulation dure
+				} catch (Exception ignore) {
+					// best effort
+				}
+			} catch (Exception ignore) {
+				// contexte deja ferme / etat invalide : best effort
+			}
+		});
 	}
 }
