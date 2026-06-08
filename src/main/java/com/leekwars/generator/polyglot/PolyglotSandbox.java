@@ -49,13 +49,21 @@ public class PolyglotSandbox implements AutoCloseable {
 				.build();
 	}
 
-	/** Construit un contexte isole et verrouille pour le langage donne (et le suit pour la fermeture). */
+	/** Contexte isole et verrouille, sans systeme de fichiers (IA mono-fichier). */
 	public Context createContext(String languageId) {
-		Context context = Context.newBuilder(languageId)
+		return createContext(languageId, null);
+	}
+
+	/**
+	 * Construit un contexte isole et verrouille pour le langage donne (et le suit pour la fermeture).
+	 * Si {@code fileSystem} != null, il est monte (multi-fichiers) : les import/require resolvent
+	 * a travers lui, en lecture seule et uniquement sur les fichiers du joueur (aucun acces hote).
+	 */
+	public Context createContext(String languageId, PolyglotFileSystem fileSystem) {
+		Context.Builder builder = Context.newBuilder(languageId)
 				.engine(engine)
 				.allowHostAccess(HostAccess.NONE)
 				.allowAllAccess(false)
-				.allowIO(IOAccess.NONE)
 				.allowCreateThread(false)
 				.allowNativeAccess(false)
 				.allowCreateProcess(false)
@@ -64,8 +72,18 @@ public class PolyglotSandbox implements AutoCloseable {
 				// le stdout/les logs du serveur. (Le logging joueur passera par l'API de combat.)
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream())
-				.resourceLimits(limits)
-				.build();
+				.resourceLimits(limits);
+
+		if (fileSystem != null) {
+			builder.allowIO(IOAccess.newBuilder().fileSystem(fileSystem).build());
+			if ("python".equals(languageId)) {
+				builder.option("python.PythonPath", PolyglotFileSystem.MOUNT);
+			}
+		} else {
+			builder.allowIO(IOAccess.NONE);
+		}
+
+		Context context = builder.build();
 		contexts.add(context);
 		return context;
 	}

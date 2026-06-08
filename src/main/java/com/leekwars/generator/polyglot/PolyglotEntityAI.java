@@ -1,5 +1,9 @@
 package com.leekwars.generator.polyglot;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
@@ -45,20 +49,37 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/** Nom de la fonction d'entree (optionnelle) appelee a chaque tour, pour un etat persistant. */
 	private static final String TURN_FUNCTION = "turn";
+	/** Detecte une IA JS multi-fichiers (modules ES) : import/export en debut de ligne. */
+	private static final Pattern ES_MODULE = Pattern.compile("(?m)^\\s*(import\\s[^(]|export[\\s{*])");
 
 	private final String languageId;
 	private final String source;
 	private final PolyglotSandbox sandbox;
+	private final String entryPath;            // chemin LeekScript de l'entree (null = mono-fichier)
+	private final PolyglotFileSystem fileSystem; // fichiers du joueur montes (null = mono-fichier)
+	private final boolean jsModule;            // entree JS chargee comme module ES
 	private Context context;
 	private boolean initialized;
-	private Value entry; // fonction turn() si le source en definit une
+	private Value entry;                       // fonction turn() si definie
 
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
+		this(languageId, source, null, null, sandbox);
+	}
+
+	public PolyglotEntityAI(String languageId, String source, String entryPath, PolyglotFileSystem fileSystem, PolyglotSandbox sandbox) {
 		super(0, LeekScript.LATEST_VERSION);
 		this.languageId = languageId;
 		this.source = source;
+		this.entryPath = entryPath;
+		this.fileSystem = fileSystem;
 		this.sandbox = sandbox;
+		this.jsModule = entryPath != null && usesEsModules(languageId, source);
 		this.valid = true;
+	}
+
+	/** IA JS multi-fichiers : l'entree utilise des modules ES (import/export en debut de ligne). */
+	private static boolean usesEsModules(String languageId, String source) {
+		return "js".equals(languageId) && ES_MODULE.matcher(source).find();
 	}
 
 	/** Detecte le langage polyglot a partir de l'extension du fichier (null = LeekScript). */
@@ -84,18 +105,26 @@ public class PolyglotEntityAI extends EntityAI {
 			Fight fight = (Fight) entity.getFight();
 			PolyglotSandbox sandbox = fight.getPolyglotSandbox(languageId);
 
-			// Validation syntaxique au build (parite avec LeekScript qui valide a la compilation) :
-			// une erreur de syntaxe -> IA invalide (no-op), comme une IA LeekScript qui ne compile pas.
-			try (Context probe = sandbox.createContext(languageId)) {
-				probe.parse(languageId, file.getCode());
-			} catch (PolyglotException e) {
-				// Toute erreur de parse vient du code joueur (syntaxe...) -> IA invalide (erreur
-				// utilisateur), jamais le chemin "erreur serveur" du catch externe.
-				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
-				return new EntityAI(entity, (LeekLog) entity.getLogs());
+			// Multi-fichiers : on monte les fichiers du joueur (enumeres via la FileSystem LeekScript)
+			// pour que les import/require de l'IA resolvent leurs voisins, en lecture seule.
+			PolyglotFileSystem fs = buildFileSystem(file);
+
+			// Validation syntaxique au build (parite avec LeekScript). On la saute pour une entree
+			// JS module : son source contient des `import` (illegaux hors module) qui feraient
+			// echouer un parse de script ; les erreurs remonteront au 1er tour (chargement du module).
+			boolean isJsModule = usesEsModules(languageId, file.getCode());
+			if (!isJsModule) {
+				try (Context probe = sandbox.createContext(languageId)) {
+					probe.parse(languageId, file.getCode());
+				} catch (PolyglotException e) {
+					// Toute erreur de parse vient du code joueur (syntaxe...) -> IA invalide (erreur
+					// utilisateur), jamais le chemin "erreur serveur" du catch externe.
+					((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
+					return new EntityAI(entity, (LeekLog) entity.getLogs());
+				}
 			}
 
-			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, file.getCode(), sandbox);
+			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, file.getCode(), file.getPath(), fs, sandbox);
 			ai.setEntity(entity);
 			ai.setLogs((LeekLog) entity.getLogs());
 			return ai;
@@ -106,16 +135,89 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 
+	/**
+	 * Monte les fichiers du joueur (proprietaire de l'IA) en lecture seule, pour le multi-fichiers.
+	 * Enumeration via la FileSystem LeekScript (la meme capacite que les includes LeekScript) ;
+	 * si elle n'enumere pas, on retombe sur le seul fichier d'entree (mono-fichier).
+	 */
+	private static PolyglotFileSystem buildFileSystem(AIFile entry) {
+		Set<String> paths = new HashSet<>();
+		paths.add(entry.getPath());
+		try {
+			var lfs = LeekScript.getFileSystem();
+			int owner = entry.getOwner();
+			var root = lfs.getRoot(owner);
+			for (AIFile f : lfs.listAllFiles(owner)) {
+				paths.add(f.getPath());
+			}
+			return new PolyglotFileSystem(paths, path -> {
+				try {
+					AIFile f = root.resolve(path);
+					return f != null ? f.getCode() : null;
+				} catch (Exception e) {
+					return null;
+				}
+			});
+		} catch (Exception e) {
+			// Enumeration impossible (FS sans listing, owner inconnu...) : on retombe sur le seul
+			// fichier d'entree (mono-fichier). Jamais une erreur serveur pour autant.
+			return new PolyglotFileSystem(Set.of(entry.getPath()), path -> {
+				try {
+					return entry.getPath().equals(path) ? entry.getCode() : null;
+				} catch (Exception ex) {
+					return null;
+				}
+			});
+		}
+	}
+
 	private void ensureContext() {
 		if (context == null) {
 			// Budgets calques sur le pipeline LeekScript (cf EntityAI.build) : RAM pour les
 			// LeekValue alloues cote hote, ops pour borner le travail hote des fonctions de combat.
 			setMaxRAM(Math.min(50, mEntity.getRAM()) * 8_000_000);
 			setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mEntity.getCores() * 1_000_000));
-			context = sandbox.createContext(languageId);
+			// Multi-fichiers : on monte le FS pour JS (modules ES). Pour Python, un FS custom nu
+			// casse la localisation de la stdlib GraalPy (extraite dans ~/.cache, hors du FS) ; le
+			// multi-fichiers Python demandera un FS composant stdlib + fichiers joueur (a venir).
+			PolyglotFileSystem fs = "js".equals(languageId) ? fileSystem : null;
+			context = sandbox.createContext(languageId, fs);
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
 		}
+	}
+
+	/** Chargement de l'entree au 1er tour, selon le mode (module ES / script). */
+	private Value loadEntryFirstTurn() throws LeekRunException {
+		if (jsModule) {
+			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
+			// resolvent contre /ai. L'IA expose sa logique via globalThis.turn.
+			// import() est asynchrone : on capture sa rejection (erreur de syntaxe/exec dans un
+			// fichier importe) dans une variable, sinon elle serait silencieusement avalee.
+			context.eval(languageId,
+				"globalThis.__lw_loadError = null;"
+				+ "import('" + PolyglotFileSystem.mountPath(entryPath) + "')"
+				+ ".catch(function(e){ globalThis.__lw_loadError = '' + (e && e.stack ? e.stack : e); });");
+			context.eval(languageId, "void 0;"); // draine les microtasks (eval du module + le .catch)
+			Value loadError = context.getBindings(languageId).getMember("__lw_loadError");
+			if (loadError != null && !loadError.isNull()) {
+				throw new LeekRunException(Error.AI_INTERRUPTED, new String[] { loadError.asString() });
+			}
+			return null; // un module ne renvoie pas de valeur
+		}
+		return context.eval(languageId, source); // JS script / Python : eval direct
+	}
+
+	/** Tours suivants d'une IA plate (sans turn()). */
+	private Value replayFlatTurn() {
+		if (jsModule) {
+			return null; // module en cache : deja execute (turn() requise pour agir a chaque tour)
+		}
+		if ("js".equals(languageId)) {
+			// IIFE anonyme (scope frais) : evite la collision "already declared" d'une re-eval top-level.
+			return context.eval(languageId, "(function(){" + source + "\n})()");
+		}
+		return context.eval(languageId, source); // Python (et autres) : re-eval brut
 	}
 
 	// RNG seede + gele (non reassignable) + horloge murale fixe. Sinon une IA pourrait reintroduire
@@ -174,10 +276,12 @@ public class PolyglotEntityAI extends EntityAI {
 		try {
 			Value value;
 			if (!initialized) {
-				// 1er tour : on evalue tout le source une fois (definit classes + fonction turn()).
-				Value top = context.eval(languageId, source);
-				Value turnFn = context.getBindings(languageId).getMember(TURN_FUNCTION);
+				// 1er tour : on charge l'entree une fois (definit classes / globalThis.turn / fonction turn()).
+				// On marque initialized tot : meme si le chargement echoue (et leve), on ne recharge pas
+				// (les tours suivants passeront par replayFlatTurn, inertes, plutot que de boucler).
 				initialized = true;
+				Value top = loadEntryFirstTurn();
+				Value turnFn = context.getBindings(languageId).getMember(TURN_FUNCTION);
 				if (turnFn != null && turnFn.canExecute()) {
 					// IA avec etat : le top-level (classes + statics) n'etait que du setup execute
 					// une fois ; turn() est rejouee chaque tour (les statics de classe persistent).
@@ -190,14 +294,8 @@ public class PolyglotEntityAI extends EntityAI {
 				}
 			} else if (entry != null) {
 				value = entry.execute(); // IA avec etat : turn() rejouee chaque tour
-			} else if ("js".equals(languageId)) {
-				// IA JS plate, tours suivants : on rejoue le source dans une IIFE anonyme (scope frais).
-				// Evite la collision "already declared" d'une re-eval top-level (let/const/class) dans
-				// le contexte reutilise, sans nom interne susceptible d'entrer en collision.
-				value = context.eval(languageId, "(function(){" + source + "\n})()");
 			} else {
-				// Python (et autres) : re-eval brut, sans collision (les noms top-level se reassignent).
-				value = context.eval(languageId, source);
+				value = replayFlatTurn(); // IA plate sans turn() : tours suivants
 			}
 			// Peut lever LeekRunException (marshalling du retour : ops/profondeur) : propagee telle quelle.
 			return TypeMarshaller.toJava(value, this);
