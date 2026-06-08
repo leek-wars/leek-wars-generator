@@ -1,5 +1,6 @@
 package com.leekwars.generator.polyglot;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -107,7 +108,7 @@ public class PolyglotEntityAI extends EntityAI {
 
 			// Multi-fichiers : on monte les fichiers du joueur (enumeres via la FileSystem LeekScript)
 			// pour que les import/require de l'IA resolvent leurs voisins, en lecture seule.
-			PolyglotFileSystem fs = buildFileSystem(file);
+			PolyglotFileSystem fs = buildFileSystem(file, languageId);
 
 			// Validation syntaxique au build (parite avec LeekScript). On la saute pour une entree
 			// JS module : son source contient des `import` (illegaux hors module) qui feraient
@@ -140,7 +141,17 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Enumeration via la FileSystem LeekScript (la meme capacite que les includes LeekScript) ;
 	 * si elle n'enumere pas, on retombe sur le seul fichier d'entree (mono-fichier).
 	 */
-	private static PolyglotFileSystem buildFileSystem(AIFile entry) {
+	private static PolyglotFileSystem buildFileSystem(AIFile entry, String languageId) {
+		// Python : on delegue la stdlib GraalPy (sinon un FS nu la casserait). Si on ne sait pas la
+		// localiser, on renonce au FS pour Python (mono-fichier, stdlib lue en interne).
+		Path passthrough = null;
+		if ("python".equals(languageId)) {
+			passthrough = PolyglotSandbox.pythonStdlibRoot();
+			if (passthrough == null) {
+				return null;
+			}
+		}
+		final Path pass = passthrough;
 		Set<String> paths = new HashSet<>();
 		paths.add(entry.getPath());
 		try {
@@ -157,7 +168,7 @@ public class PolyglotEntityAI extends EntityAI {
 				} catch (Exception e) {
 					return null;
 				}
-			});
+			}, pass);
 		} catch (Exception e) {
 			// Enumeration impossible (FS sans listing, owner inconnu...) : on retombe sur le seul
 			// fichier d'entree (mono-fichier). Jamais une erreur serveur pour autant.
@@ -167,7 +178,7 @@ public class PolyglotEntityAI extends EntityAI {
 				} catch (Exception ex) {
 					return null;
 				}
-			});
+			}, pass);
 		}
 	}
 
@@ -177,11 +188,10 @@ public class PolyglotEntityAI extends EntityAI {
 			// LeekValue alloues cote hote, ops pour borner le travail hote des fonctions de combat.
 			setMaxRAM(Math.min(50, mEntity.getRAM()) * 8_000_000);
 			setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mEntity.getCores() * 1_000_000));
-			// Multi-fichiers : on monte le FS pour JS (modules ES). Pour Python, un FS custom nu
-			// casse la localisation de la stdlib GraalPy (extraite dans ~/.cache, hors du FS) ; le
-			// multi-fichiers Python demandera un FS composant stdlib + fichiers joueur (a venir).
-			PolyglotFileSystem fs = "js".equals(languageId) ? fileSystem : null;
-			context = sandbox.createContext(languageId, fs);
+			// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
+			// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
+			// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
+			context = sandbox.createContext(languageId, fileSystem);
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
 		}
@@ -250,7 +260,13 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Sans cela un simple {@code import os; os.urandom(1)} contournerait silencieusement la seed.
 	 */
 	private static String pythonDeterminismGuard(long seed) {
-		return "import os, random, uuid, time, datetime\n"
+		return
+			// Multi-fichiers : on s'assure que la stdlib a la PRIORITE sur les fichiers du joueur
+			// (/ai). Sinon une IA nommant un fichier random.py / os.py masquerait la stdlib (et le
+			// RNG seede). On deplace /ai en fin de sys.path AVANT d'importer la stdlib.
+			"import sys\n"
+			+ "if '/ai' in sys.path:\n    sys.path.remove('/ai')\n    sys.path.append('/ai')\n"
+			+ "import os, random, uuid, time, datetime\n"
 			+ "_lw_r = random.Random(" + seed + ")\n"
 			+ "os.urandom = lambda n: bytes(_lw_r.getrandbits(8) for _ in range(n))\n"
 			+ "random.SystemRandom = random.Random\n"

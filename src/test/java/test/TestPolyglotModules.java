@@ -1,7 +1,11 @@
 package test;
 
+import java.nio.file.AccessMode;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
@@ -53,6 +57,28 @@ public class TestPolyglotModules {
 			c.eval(main);
 			Assert.assertEquals("42:utils", c.eval("python", "result").asString());
 		}
+	}
+
+	@Test
+	public void passthroughBlocksSymlinkEscape() throws Exception {
+		// Le passthrough (stdlib) delegue a l'hote, mais un symlink sortant doit etre refuse :
+		// la decision lexicale est reverifiee apres resolution des symlinks (requireContained).
+		Path base = Files.createTempDirectory("lw_pt");
+		Path secret = Files.createTempDirectory("lw_secret");
+		Files.writeString(secret.resolve("flag.txt"), "ESCAPED");
+		Files.createSymbolicLink(base.resolve("evil"), secret); // symlink dans le passthrough vers dehors
+
+		PolyglotFileSystem fs = new PolyglotFileSystem(Set.of(), p -> null, base);
+		Path viaSymlink = base.resolve("evil").resolve("flag.txt"); // lexicalement sous base, reellement dehors
+		try {
+			fs.checkAccess(viaSymlink, Set.of(AccessMode.READ));
+			Assert.fail("un symlink sortant du passthrough aurait du etre refuse");
+		} catch (java.nio.file.AccessDeniedException e) {
+			// attendu
+		}
+		// un vrai fichier sous le passthrough reste lisible
+		Files.writeString(base.resolve("real.txt"), "OK");
+		fs.checkAccess(base.resolve("real.txt"), Set.of(AccessMode.READ)); // ne doit pas lever
 	}
 
 	@Test

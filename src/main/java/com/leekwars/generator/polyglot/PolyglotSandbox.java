@@ -1,6 +1,7 @@
 package com.leekwars.generator.polyglot;
 
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,31 @@ public class PolyglotSandbox implements AutoCloseable {
 		this.limits = ResourceLimits.newBuilder()
 				.statementLimit(statementLimit, null)
 				.build();
+	}
+
+	/** Racine de la stdlib GraalPy (decouverte une fois, mise en cache). */
+	private static volatile Path pythonStdlibRoot;
+	private static volatile boolean pythonStdlibProbed;
+
+	/**
+	 * Racine du python-home GraalPy (sa stdlib .py extraite dans ~/.cache), a deleguer en lecture
+	 * seule pour que le multi-fichiers Python n'ecrase pas la stdlib. Decouverte par un contexte
+	 * Python jetable (une fois par JVM). null si Python indisponible -&gt; multi-fichiers Python off.
+	 */
+	public static Path pythonStdlibRoot() {
+		if (!pythonStdlibProbed) {
+			synchronized (PolyglotSandbox.class) {
+				if (!pythonStdlibProbed) {
+					try (Context boot = Context.newBuilder("python").allowIO(IOAccess.ALL).build()) {
+						pythonStdlibRoot = Path.of(boot.eval("python", "import sys; sys.prefix").asString()).toAbsolutePath().normalize();
+					} catch (Exception e) {
+						pythonStdlibRoot = null;
+					}
+					pythonStdlibProbed = true;
+				}
+			}
+		}
+		return pythonStdlibRoot;
 	}
 
 	/** Contexte isole et verrouille, sans systeme de fichiers (IA mono-fichier). */

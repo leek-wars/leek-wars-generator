@@ -11,11 +11,11 @@ import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +27,18 @@ import org.graalvm.polyglot.io.FileSystem;
 /**
  * FileSystem polyglot en MEMOIRE, en lecture seule, servant uniquement les fichiers d'IA du
  * joueur (et rien de l'hote). C'est ce qui permet le multi-fichiers : les systemes de modules
- * natifs (import/export JS, import Python) resolvent leurs dependances a travers ce FS, donc
+ * natifs (import/export JS, import Python) resolvent leurs dependances a travers lui, donc
  * sans aucun acces disque.
  *
  * Les fichiers sont montes sous un prefixe virtuel ({@link #MOUNT}). Un chemin virtuel
  * {@code /ai/strategie.js} est traduit en chemin LeekScript {@code strategie.js}. La liste des
  * chemins est connue d'avance (pour le listing de dossier, requis par l'import Python) ; le
  * contenu est lu paresseusement via {@code read}.
+ *
+ * En option, un {@code passthroughRoot} (sous-arbre hote, ex: le python-home de GraalPy) est
+ * delegue au FS hote en LECTURE SEULE. C'est necessaire pour Python : GraalPy lit sa stdlib .py
+ * depuis ce dossier hote, qu'un FS purement en memoire ne servirait pas (la stdlib casserait).
+ * Tout chemin hors {@link #MOUNT} et hors {@code passthroughRoot} reste inaccessible.
  */
 public class PolyglotFileSystem implements FileSystem {
 
@@ -44,11 +49,20 @@ public class PolyglotFileSystem implements FileSystem {
 	private final Set<String> dirs;    // dossiers (derives des chemins de fichiers), "" = racine
 	private final Function<String, String> read; // chemin LeekScript -> contenu
 
-	/**
-	 * @param filePaths tous les chemins de fichiers du joueur (ex: "main.js", "lib/util.js")
-	 * @param read      lecture paresseuse d'un fichier (chemin LeekScript -> contenu, ou null)
-	 */
+	private final Path passthroughRoot;     // sous-arbre hote delegue en lecture seule (stdlib), ou null
+	private final Path passthroughRootReal; // sa version resolue (symlinks suivis), pour le confinement
+	private final FileSystem hostDelegate;  // FS hote, uniquement pour le passthrough
+
 	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read) {
+		this(filePaths, read, null);
+	}
+
+	/**
+	 * @param filePaths       tous les chemins de fichiers du joueur (ex: "main.js", "lib/util.js")
+	 * @param read            lecture paresseuse d'un fichier (chemin LeekScript -> contenu, ou null)
+	 * @param passthroughRoot sous-arbre hote delegue en lecture seule (stdlib GraalPy), ou null
+	 */
+	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot) {
 		this.files = new HashSet<>(filePaths);
 		this.read = read;
 		this.dirs = new HashSet<>();
@@ -60,6 +74,39 @@ public class PolyglotFileSystem implements FileSystem {
 				slash = f.lastIndexOf('/', slash - 1);
 			}
 		}
+		this.passthroughRoot = passthroughRoot == null ? null : passthroughRoot.toAbsolutePath().normalize();
+		this.hostDelegate = passthroughRoot == null ? null : FileSystem.newDefaultFileSystem();
+		Path real = this.passthroughRoot;
+		if (this.passthroughRoot != null) {
+			try {
+				real = hostDelegate.toRealPath(this.passthroughRoot);
+			} catch (IOException e) {
+				real = this.passthroughRoot; // la racine devrait exister ; sinon on garde le lexical
+			}
+		}
+		this.passthroughRootReal = real;
+	}
+
+	/** Chemin absolu normalise : les chemins relatifs sont ancres au point de montage (pas le CWD). */
+	private static Path abs(Path p) {
+		return (p.isAbsolute() ? p : Path.of(MOUNT).resolve(p)).normalize();
+	}
+
+	/**
+	 * Confinement du passthrough : on suit les symlinks (toRealPath) et on REVERIFIE que la cible
+	 * reelle reste sous la racine reelle, sinon un symlink dans le python-home pourrait pointer hors
+	 * du sous-arbre. Pour un chemin inexistant (probing d'import), pas de symlink a suivre -&gt; lexical.
+	 */
+	private void requireContained(Path p) throws IOException {
+		Path real;
+		try {
+			real = hostDelegate.toRealPath(p);
+		} catch (IOException e) {
+			real = abs(p);
+		}
+		if (!real.startsWith(passthroughRootReal)) {
+			throw new java.nio.file.AccessDeniedException(String.valueOf(p));
+		}
 	}
 
 	/** Chemin virtuel absolu d'un fichier LeekScript (ex: "strategie.js" -> "/ai/strategie.js"). */
@@ -69,10 +116,21 @@ public class PolyglotFileSystem implements FileSystem {
 
 	/** Chemin LeekScript a partir d'un chemin virtuel, ou null s'il est hors du point de montage. */
 	private String toLeekPath(Path p) {
-		String s = p.toAbsolutePath().normalize().toString();
+		String s = abs(p).toString();
 		if (s.equals(MOUNT)) return "";
 		if (!s.startsWith(MOUNT + "/")) return null; // hors du dossier du joueur
 		return s.substring(MOUNT.length() + 1);
+	}
+
+	/** Le chemin est-il dans le sous-arbre hote delegue (stdlib) ? (decision lexicale) */
+	private boolean inPassthrough(Path p) {
+		return passthroughRoot != null && abs(p).startsWith(passthroughRoot);
+	}
+
+	private static boolean isWrite(Set<? extends OpenOption> options) {
+		return options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)
+			|| options.contains(StandardOpenOption.CREATE) || options.contains(StandardOpenOption.CREATE_NEW)
+			|| options.contains(StandardOpenOption.DELETE_ON_CLOSE);
 	}
 
 	@Override
@@ -87,19 +145,31 @@ public class PolyglotFileSystem implements FileSystem {
 
 	@Override
 	public Path toAbsolutePath(Path path) {
+		if (inPassthrough(path)) {
+			return hostDelegate.toAbsolutePath(path);
+		}
 		// Les chemins relatifs sont ancres au point de montage (et non au CWD du process).
-		return path.isAbsolute() ? path : Path.of(MOUNT).resolve(path);
+		return abs(path);
 	}
 
 	@Override
-	public Path toRealPath(Path path, LinkOption... options) {
-		return toAbsolutePath(path).normalize();
+	public Path toRealPath(Path path, LinkOption... options) throws IOException {
+		if (inPassthrough(path)) {
+			requireContained(path);
+			return hostDelegate.toRealPath(path, options);
+		}
+		return abs(path);
 	}
 
 	@Override
 	public void checkAccess(Path path, Set<? extends AccessMode> modes, LinkOption... options) throws IOException {
 		if (modes.contains(AccessMode.WRITE)) {
 			throw new IOException("read-only");
+		}
+		if (inPassthrough(path)) {
+			requireContained(path);
+			hostDelegate.checkAccess(path, modes, options);
+			return;
 		}
 		String leek = toLeekPath(path);
 		if (leek == null || (!files.contains(leek) && !dirs.contains(leek))) {
@@ -109,6 +179,13 @@ public class PolyglotFileSystem implements FileSystem {
 
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+		if (isWrite(options)) {
+			throw new IOException("read-only");
+		}
+		if (inPassthrough(path)) {
+			requireContained(path);
+			return hostDelegate.newByteChannel(path, options, attrs);
+		}
 		String leek = toLeekPath(path);
 		String content = leek != null && files.contains(leek) ? read.apply(leek) : null;
 		if (content == null) {
@@ -119,6 +196,10 @@ public class PolyglotFileSystem implements FileSystem {
 
 	@Override
 	public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
+		if (inPassthrough(dir)) {
+			requireContained(dir);
+			return hostDelegate.newDirectoryStream(dir, filter);
+		}
 		String leekDir = toLeekPath(dir);
 		if (leekDir == null || !dirs.contains(leekDir)) {
 			throw new NoSuchFileException(String.valueOf(dir));
@@ -144,6 +225,10 @@ public class PolyglotFileSystem implements FileSystem {
 
 	@Override
 	public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
+		if (inPassthrough(path)) {
+			requireContained(path);
+			return hostDelegate.readAttributes(path, attributes, options);
+		}
 		String leek = toLeekPath(path);
 		boolean file = leek != null && files.contains(leek);
 		boolean dir = leek != null && dirs.contains(leek);
@@ -151,7 +236,7 @@ public class PolyglotFileSystem implements FileSystem {
 			throw new NoSuchFileException(String.valueOf(path));
 		}
 		FileTime epoch = FileTime.fromMillis(0);
-		Map<String, Object> r = new HashMap<>();
+		Map<String, Object> r = new java.util.HashMap<>();
 		r.put("isRegularFile", file);
 		r.put("isDirectory", dir);
 		r.put("isSymbolicLink", false);

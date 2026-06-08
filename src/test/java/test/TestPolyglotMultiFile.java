@@ -1,10 +1,10 @@
 package test;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.leekwars.generator.leek.Leek;
@@ -35,7 +35,9 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	}
 
 	private PolyglotEntityAI multiFileAI(PolyglotSandbox sb, String lang, Map<String, String> files, String entryPath) {
-		PolyglotFileSystem fs = new PolyglotFileSystem(files.keySet(), files::get);
+		// Python : on delegue la stdlib GraalPy (sinon le FS custom la casserait).
+		Path passthrough = "python".equals(lang) ? PolyglotSandbox.pythonStdlibRoot() : null;
+		PolyglotFileSystem fs = new PolyglotFileSystem(files.keySet(), files::get, passthrough);
 		PolyglotEntityAI ai = new PolyglotEntityAI(lang, files.get(entryPath), entryPath, fs, sb);
 		ai.setEntity(leek1);
 		ai.setLogs(new LeekLog(farmerLog, leek1));
@@ -57,7 +59,6 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
-	@Ignore("multi-fichiers Python : demande un FS composant stdlib GraalPy + fichiers joueur (a venir)")
 	@Test
 	public void pythonMultiFileImport() throws Exception {
 		initFightOnly();
@@ -70,7 +71,6 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
-	@Ignore("multi-fichiers Python : demande un FS composant stdlib GraalPy + fichiers joueur (a venir)")
 	@Test
 	public void pythonMultiFilePackageImport() throws Exception {
 		initFightOnly();
@@ -84,7 +84,6 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
-	@Ignore("multi-fichiers Python : demande un FS composant stdlib GraalPy + fichiers joueur (a venir)")
 	@Test
 	public void pythonMultiFileStatePersistsAcrossTurns() throws Exception {
 		initFightOnly();
@@ -96,6 +95,49 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
 			Assert.assertEquals(2L, ((Number) ai.runIA()).longValue());
 			Assert.assertEquals(3L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void pythonMultiFileSiblingAndStdlibTogether() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("strat.py", "def base():\n    return 40\n");
+		// Importe a la fois un voisin (/ai) ET la stdlib (math) dans le meme contexte.
+		files.put("main.py", "import strat, math\ndef turn():\n    return strat.base() + math.floor(2.7)\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "main.py").runIA()).longValue();
+			Assert.assertEquals(42, r); // 40 + floor(2.7)=2
+		}
+	}
+
+	@Test
+	public void pythonPlayerFileCannotShadowStdlib() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("random.py", "def randint(a, b):\n    return 999\n"); // tentative de masquage de la stdlib
+		files.put("main.py", "import random\ndef turn():\n    return random.randint(5, 5)\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "main.py").runIA()).longValue();
+			Assert.assertEquals("la stdlib doit primer sur un fichier joueur random.py", 5, r);
+		}
+	}
+
+	@Test
+	public void pythonMultiFileCannotEscapeToHost() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		// Le FS composant delegue UNIQUEMENT le python-home (stdlib) ; tout autre chemin hote
+		// reste inaccessible meme avec le passthrough actif.
+		files.put("main.py", "def turn():\n    return open('/etc/passwd').read()\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			PolyglotEntityAI ai = multiFileAI(sb, "python", files, "main.py");
+			try {
+				ai.runIA();
+				Assert.fail("la lecture d'un fichier hote aurait du echouer");
+			} catch (LeekRunException e) {
+				// attendu : acces refuse
+			}
 		}
 	}
 
