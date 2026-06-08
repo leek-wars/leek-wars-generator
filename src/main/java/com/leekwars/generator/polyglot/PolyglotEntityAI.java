@@ -114,25 +114,55 @@ public class PolyglotEntityAI extends EntityAI {
 			setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mEntity.getCores() * 1_000_000));
 			context = sandbox.createContext(languageId);
 			PolyglotAPIBridge.install(context, languageId, this);
-			installDeterministicRandom();
+			installDeterminismGuards();
+		}
+	}
+
+	// RNG seede + gele (non reassignable) + horloge murale fixe. Sinon une IA pourrait reintroduire
+	// du non-determinisme (Math.random reassigne, new Date(), Date.now), cassant la reproductibilite.
+	private static final String JS_DETERMINISM_GUARD =
+		"Object.defineProperty(Math,'random',{value:function(){return __lw_random();},writable:false,configurable:false});"
+		+ "(function(){var F=0;var D=Date;var L=function(){if(arguments.length===0)return new D(F);return new D(...arguments);};"
+		+ "L.now=function(){return F;};L.parse=D.parse;L.UTC=D.UTC;L.prototype=D.prototype;globalThis.Date=L;})();"
+		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}";
+
+	/**
+	 * Neutralise les sources de non-determinisme atteignables par le guest, sinon les IA JS/Python
+	 * ne seraient pas reproductibles a partir de la seed du combat (re-simulation / verification) :
+	 * generateur aleatoire seede et fige, et horloge murale fixe.
+	 */
+	private void installDeterminismGuards() {
+		if ("js".equals(languageId)) {
+			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
+			context.eval(languageId, JS_DETERMINISM_GUARD);
+		} else if ("python".equals(languageId)) {
+			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
+			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
+			context.eval(languageId, pythonDeterminismGuard(seed));
 		}
 	}
 
 	/**
-	 * Remplace le generateur aleatoire du langage par le RNG seede du combat, sinon les IA
-	 * JS/Python utilisant le hasard ne seraient pas reproductibles (les combats se rejouent
-	 * cote client depuis le log : le serveur doit etre deterministe pour une seed donnee).
+	 * Garde Python : seede random, ET re-route toutes les sources d'entropie OS (os.urandom,
+	 * SystemRandom, uuid4, random.seed() sans argument) vers un PRNG seede, et fige l'horloge.
+	 * Sans cela un simple {@code import os; os.urandom(1)} contournerait silencieusement la seed.
 	 */
-	private void installDeterministicRandom() {
-		if ("js".equals(languageId)) {
-			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
-			context.eval(languageId, "Math.random = function() { return __lw_random(); };");
-		} else if ("python".equals(languageId)) {
-			// On seede le module random avec une graine deterministe issue du RNG seede du combat.
-			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
-			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
-			context.eval(languageId, "import random\nrandom.seed(" + seed + ")\n");
-		}
+	private static String pythonDeterminismGuard(long seed) {
+		return "import os, random, uuid, time, datetime\n"
+			+ "_lw_r = random.Random(" + seed + ")\n"
+			+ "os.urandom = lambda n: bytes(_lw_r.getrandbits(8) for _ in range(n))\n"
+			+ "random.SystemRandom = random.Random\n"
+			+ "_lw_seed = random.seed\n"
+			+ "def _lw_seed_guard(a=None, *ar, **kw):\n    return _lw_seed(" + seed + " if a is None else a, *ar, **kw)\n"
+			+ "random.seed = _lw_seed_guard\n"
+			+ "random.seed(" + seed + ")\n"
+			+ "uuid.uuid4 = lambda: uuid.UUID(int=_lw_r.getrandbits(128))\n"
+			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
+			+ "try:\n"
+			+ "    datetime.datetime.now = classmethod(lambda cls, tz=None: datetime.datetime(2020, 1, 1))\n"
+			+ "    datetime.datetime.today = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
+			+ "    datetime.datetime.utcnow = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
+			+ "except Exception:\n    pass\n";
 	}
 
 	@Override

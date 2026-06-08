@@ -1,5 +1,6 @@
 package com.leekwars.generator.polyglot;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +60,10 @@ public class PolyglotSandbox implements AutoCloseable {
 				.allowNativeAccess(false)
 				.allowCreateProcess(false)
 				.allowHostClassLoading(false)
+				// La sortie guest (console.log / print) est jetee : sinon une IA pourrait spammer
+				// le stdout/les logs du serveur. (Le logging joueur passera par l'API de combat.)
+				.out(OutputStream.nullOutputStream())
+				.err(OutputStream.nullOutputStream())
 				.resourceLimits(limits)
 				.build();
 		contexts.add(context);
