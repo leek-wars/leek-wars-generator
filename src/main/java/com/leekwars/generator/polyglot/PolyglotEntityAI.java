@@ -83,15 +83,21 @@ public class PolyglotEntityAI extends EntityAI {
 		return "js".equals(languageId) && ES_MODULE.matcher(source).find();
 	}
 
-	/** Detecte le langage polyglot a partir de l'extension du fichier (null = LeekScript). */
+	/**
+	 * Detecte le langage polyglot a partir de l'extension du fichier (null = LeekScript).
+	 * Comparaison insensible a la casse : le serveur et le client classent .JS/.Py via strtolower /
+	 * toLowerCase (sauter le daemon LeekScript), donc le moteur doit reconnaitre la meme chose,
+	 * sinon un "Bot.JS" serait sauve comme polyglot mais compile ici comme LeekScript (erreur muette).
+	 */
 	public static String detectLanguage(String path) {
 		if (path == null) {
 			return null;
 		}
-		if (path.endsWith(".js")) {
+		String lower = path.toLowerCase();
+		if (lower.endsWith(".js")) {
 			return "js";
 		}
-		if (path.endsWith(".py")) {
+		if (lower.endsWith(".py")) {
 			return "python";
 		}
 		return null;

@@ -15,6 +15,7 @@ import org.graalvm.polyglot.io.IOAccess;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotFileSystem;
 
 /**
@@ -26,6 +27,19 @@ public class TestPolyglotModules {
 
 	private IOAccess io(Map<String, String> files) {
 		return IOAccess.newBuilder().fileSystem(new PolyglotFileSystem(files.keySet(), files::get)).build();
+	}
+
+	@Test
+	public void detectLanguageIsCaseInsensitive() {
+		// Le serveur/client classent l'extension via strtolower / toLowerCase ; le moteur doit
+		// reconnaitre la meme chose, sinon un "Bot.JS" sauve comme polyglot serait compile en LeekScript.
+		Assert.assertEquals("js", PolyglotEntityAI.detectLanguage("main.js"));
+		Assert.assertEquals("js", PolyglotEntityAI.detectLanguage("Bot.JS"));
+		Assert.assertEquals("python", PolyglotEntityAI.detectLanguage("main.py"));
+		Assert.assertEquals("python", PolyglotEntityAI.detectLanguage("Bot.PY"));
+		Assert.assertNull(PolyglotEntityAI.detectLanguage("main")); // LeekScript
+		Assert.assertNull(PolyglotEntityAI.detectLanguage("notes.md"));
+		Assert.assertNull(PolyglotEntityAI.detectLanguage(null));
 	}
 
 	@Test
