@@ -1,5 +1,6 @@
 package com.leekwars.generator.polyglot;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,20 +95,45 @@ public final class TypeMarshaller {
 			return v.asBoolean();
 		}
 		if (v.isNumber()) {
-			// Un nombre guest entier reste entier (long) cote LeekScript, sinon reel.
-			return v.fitsInLong() ? (Object) v.asLong() : (Object) v.asDouble();
+			return numberToJava(v);
 		}
 		if (v.isString()) {
 			return v.asString();
 		}
 		if (v.hasArrayElements()) {
-			return toLeekArray(v, ai, depth);
+			return toLeekArray(v, ai, depth); // tableau JS, list/tuple Python
+		}
+		if (v.hasHashEntries()) {
+			return toLeekMap(v, ai, depth); // dict Python, Map JS (cles/valeurs via l'API hash)
+		}
+		if (v.hasIterator()) {
+			return toLeekArray(v, ai, depth); // set Python et autres iterables non indexes
 		}
 		if (v.hasMembers() && !v.canExecute()) {
-			return toLeekMap(v, ai, depth);
+			return toLeekMap(v, ai, depth); // objet JS { ... } (les methodes sont ignorees)
 		}
-		// Fonctions guest et autres : pas de representation LeekScript -> chaine.
-		return v.toString();
+		// Fonctions / objets opaques (modules Python, etc.) : pas de donnee LeekScript exploitable.
+		// (La valeur de retour de runIA est de toute facon ignoree par le moteur en combat.)
+		return null;
+	}
+
+	/** Nombre guest -&gt; long (entier) ou double (reel), avec garde sur les bignums Python. */
+	private static Object numberToJava(Value v) {
+		if (v.fitsInLong()) {
+			return v.asLong();
+		}
+		if (v.fitsInDouble()) {
+			return v.asDouble();
+		}
+		// Entier Python hors plage double : LeekScript n'a pas de bigint -> on sature.
+		return v.fitsInBigInteger() ? clampBigInteger(v.asBigInteger()) : 0L;
+	}
+
+	private static long clampBigInteger(BigInteger b) {
+		if (b.bitLength() >= 63) {
+			return b.signum() >= 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+		}
+		return b.longValue();
 	}
 
 	private static void checkDepth(int depth) throws LeekRunException {
@@ -117,6 +143,7 @@ public final class TypeMarshaller {
 		}
 	}
 
+	/** Tableau guest -&gt; ArrayLeekValue (indexe : list/tuple/tableau JS ; ou iterable : set Python). */
 	private static ArrayLeekValue toLeekArray(Value v, AI ai, int depth) throws LeekRunException {
 		checkDepth(depth);
 		ArrayLeekValue array = new ArrayLeekValue(ai);
@@ -126,17 +153,35 @@ public final class TypeMarshaller {
 				ai.ops(1); // borne la largeur du marshalling (non compte par le statement limit)
 				array.push(ai, toJava(v.getArrayElement(i), ai, depth + 1));
 			}
+		} else if (v.hasIterator()) {
+			Value it = v.getIterator();
+			while (it.hasIteratorNextElement()) {
+				ai.ops(1);
+				array.push(ai, toJava(it.getIteratorNextElement(), ai, depth + 1));
+			}
 		}
 		return array;
 	}
 
+	/** Objet guest -&gt; MapLeekValue (dict Python via l'API hash, objet JS via les membres). */
 	private static MapLeekValue toLeekMap(Value v, AI ai, int depth) throws LeekRunException {
 		checkDepth(depth);
 		MapLeekValue map = new MapLeekValue(ai);
-		if (v.hasMembers()) {
-			for (String key : v.getMemberKeys()) {
+		if (v.hasHashEntries()) {
+			Value it = v.getHashEntriesIterator();
+			while (it.hasIteratorNextElement()) {
 				ai.ops(1);
-				map.set(ai, key, toJava(v.getMember(key), ai, depth + 1));
+				Value entry = it.getIteratorNextElement(); // [cle, valeur]
+				map.set(ai, toJava(entry.getArrayElement(0), ai, depth + 1), toJava(entry.getArrayElement(1), ai, depth + 1));
+			}
+		} else if (v.hasMembers()) {
+			for (String key : v.getMemberKeys()) {
+				Value mv = v.getMember(key);
+				if (mv != null && mv.canExecute()) {
+					continue; // on ignore les methodes (objets/modules Python exposent leurs methodes)
+				}
+				ai.ops(1);
+				map.set(ai, key, toJava(mv, ai, depth + 1));
 			}
 		} else if (v.hasArrayElements()) {
 			// Un tableau guest la ou une map est attendue : indices entiers comme cles.
@@ -154,6 +199,10 @@ public final class TypeMarshaller {
 			return v.asLong();
 		}
 		if (v.isNumber()) {
+			if (!v.fitsInDouble()) {
+				// Entier Python hors plage double : pas de bigint en LeekScript -> on sature.
+				return v.fitsInBigInteger() ? clampBigInteger(v.asBigInteger()) : 0L;
+			}
 			double d = v.asDouble();
 			// NaN / +-Infinity n'ont pas de representation entiere : valeur definie 0
 			// (eviter (long) Infinity == Long.MAX_VALUE qui produirait des tailles aberrantes).
@@ -177,7 +226,13 @@ public final class TypeMarshaller {
 
 	private static double toDouble(Value v) {
 		if (v.isNumber()) {
-			return v.fitsInDouble() ? v.asDouble() : (double) v.asLong();
+			if (v.fitsInDouble()) {
+				return v.asDouble();
+			}
+			if (v.fitsInLong()) {
+				return (double) v.asLong();
+			}
+			return v.fitsInBigInteger() ? v.asBigInteger().doubleValue() : 0.0;
 		}
 		if (v.isBoolean()) {
 			return v.asBoolean() ? 1.0 : 0.0;

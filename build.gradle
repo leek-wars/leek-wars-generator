@@ -49,4 +49,6 @@ dependencies {
 	// 25.0.x est la premiere serie compatible JDK 25. js-community = licence OSS (EPL/UPL).
 	implementation 'org.graalvm.polyglot:polyglot:25.0.2'
 	implementation 'org.graalvm.polyglot:js-community:25.0.2'
+	// GraalPy (Python). Lourd (~150 Mo, stdlib embarquee) -> phase 2.
+	implementation 'org.graalvm.polyglot:python-community:25.0.2'
 }

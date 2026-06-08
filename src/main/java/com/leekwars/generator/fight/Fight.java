@@ -306,7 +306,10 @@ public class Fight {
 	/** Sandbox polyglot du combat (1 Engine partage par toutes les entites), cree au besoin. */
 	public com.leekwars.generator.polyglot.PolyglotSandbox getPolyglotSandbox(String languageId) {
 		if (polyglotSandbox == null) {
-			polyglotSandbox = new com.leekwars.generator.polyglot.PolyglotSandbox(languageId);
+			// Engine partage permettant tous les langages polyglot supportes (un combat peut
+			// melanger JS et Python). Les runtimes ne s'initialisent qu'a la creation d'un contexte
+			// du langage concerne, donc un combat JS-only ne charge pas GraalPy.
+			polyglotSandbox = new com.leekwars.generator.polyglot.PolyglotSandbox("js", "python");
 		}
 		return polyglotSandbox;
 	}
