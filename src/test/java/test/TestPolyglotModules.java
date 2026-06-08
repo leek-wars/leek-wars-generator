@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotFileSystem;
+import com.leekwars.generator.polyglot.PolyglotSandbox;
 
 /**
  * Multi-fichiers : les systemes de modules natifs (import/export JS, import Python) resolvent
@@ -40,6 +41,50 @@ public class TestPolyglotModules {
 		Assert.assertNull(PolyglotEntityAI.detectLanguage("main")); // LeekScript
 		Assert.assertNull(PolyglotEntityAI.detectLanguage("notes.md"));
 		Assert.assertNull(PolyglotEntityAI.detectLanguage(null));
+	}
+
+	// ---------- Validation syntaxique (diagnostics editeur) ----------
+
+	@Test
+	public void validateSyntaxAcceptsValidJs() {
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertNull(PolyglotEntityAI.validateSyntax("js", "var x = 1 + 2;\nfunction turn(){ return x; }", sb));
+		}
+	}
+
+	@Test
+	public void validateSyntaxReportsJsSyntaxError() {
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			PolyglotEntityAI.SyntaxProblem p = PolyglotEntityAI.validateSyntax("js", "var x = ;", sb);
+			Assert.assertNotNull("une erreur de syntaxe JS doit etre rapportee", p);
+			Assert.assertNotNull(p.message);
+			Assert.assertTrue("ligne 1-based", p.startLine >= 1);
+		}
+	}
+
+	@Test
+	public void validateSyntaxAcceptsValidPython() {
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertNull(PolyglotEntityAI.validateSyntax("python", "def turn():\n    return 1\n", sb));
+		}
+	}
+
+	@Test
+	public void validateSyntaxReportsPythonSyntaxError() {
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			PolyglotEntityAI.SyntaxProblem p = PolyglotEntityAI.validateSyntax("python", "def turn(:\n    return 1\n", sb);
+			Assert.assertNotNull("une erreur de syntaxe Python doit etre rapportee", p);
+			Assert.assertNotNull(p.message);
+		}
+	}
+
+	@Test
+	public void validateSyntaxSkipsJsModule() {
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// import en tete = module ES : non parsable comme script -> on ne valide pas (null).
+			Assert.assertNull(PolyglotEntityAI.validateSyntax("js",
+				"import { x } from './u.mjs';\nglobalThis.turn = () => x;", sb));
+		}
 	}
 
 	@Test

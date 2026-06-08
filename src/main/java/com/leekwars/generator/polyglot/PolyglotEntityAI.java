@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.SourceSection;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 
@@ -128,6 +129,59 @@ public class PolyglotEntityAI extends EntityAI {
 		return null;
 	}
 
+	/** Probleme de syntaxe d'une IA polyglot : message + localisation (lignes 1-based, colonnes 0-based,
+	 *  pour coller a la convention des "problems" LeekScript que le client decale de +1). */
+	public static final class SyntaxProblem {
+		public final String message;
+		public final int startLine, startColumn, endLine, endColumn;
+		private SyntaxProblem(String message, int startLine, int startColumn, int endLine, int endColumn) {
+			this.message = message;
+			this.startLine = startLine;
+			this.startColumn = startColumn;
+			this.endLine = endLine;
+			this.endColumn = endColumn;
+		}
+		static SyntaxProblem from(PolyglotException e) {
+			String msg = e.getMessage() != null ? e.getMessage() : "syntax error";
+			SourceSection loc = e.getSourceLocation();
+			if (loc != null && loc.isAvailable()) {
+				// GraalVM expose des colonnes 1-based ; on revient en 0-based (le client rajoute +1).
+				return new SyntaxProblem(msg, loc.getStartLine(), Math.max(0, loc.getStartColumn() - 1),
+						loc.getEndLine(), Math.max(0, loc.getEndColumn() - 1));
+			}
+			return new SyntaxProblem(msg, 1, 0, 1, 0); // localisation inconnue -> debut du fichier
+		}
+	}
+
+	/**
+	 * Valide la SYNTAXE d'une IA polyglot sans l'executer ({@code context.parse}). Renvoie null si OK,
+	 * sinon le probleme (message + localisation). Reutilisable : le build de combat l'appelle (parite
+	 * LeekScript), et le daemon d'analyse l'appelle pour remonter les erreurs a l'editeur.
+	 *
+	 * Une entree JS module (import/export en tete) n'est PAS parsable comme un script (l'import est
+	 * illegal hors module) -> on ne valide pas (null), les erreurs remonteront au chargement du module.
+	 * Le contexte sonde est cree puis ferme ET retire du suivi du sandbox (pas de retention).
+	 */
+	public static SyntaxProblem validateSyntax(String languageId, String source, PolyglotSandbox sandbox) {
+		if (usesEsModules(languageId, source)) {
+			return null;
+		}
+		Context probe = sandbox.createContext(languageId);
+		try {
+			probe.parse(languageId, source);
+			return null;
+		} catch (PolyglotException e) {
+			return SyntaxProblem.from(e);
+		} finally {
+			try {
+				probe.close();
+			} catch (Exception ignore) {
+				// best effort
+			}
+			sandbox.forgetContext(probe);
+		}
+	}
+
 	/**
 	 * Construit une IA polyglot pour une entite, en reutilisant le sandbox du combat.
 	 * Erreur de construction -&gt; IA vide (l'entite n'agira pas), comme le chemin LeekScript.
@@ -141,19 +195,12 @@ public class PolyglotEntityAI extends EntityAI {
 			// pour que les import/require de l'IA resolvent leurs voisins, en lecture seule.
 			PolyglotFileSystem fs = buildFileSystem(file, languageId);
 
-			// Validation syntaxique au build (parite avec LeekScript). On la saute pour une entree
-			// JS module : son source contient des `import` (illegaux hors module) qui feraient
-			// echouer un parse de script ; les erreurs remonteront au 1er tour (chargement du module).
-			boolean isJsModule = usesEsModules(languageId, file.getCode());
-			if (!isJsModule) {
-				try (Context probe = sandbox.createContext(languageId)) {
-					probe.parse(languageId, file.getCode());
-				} catch (PolyglotException e) {
-					// Toute erreur de parse vient du code joueur (syntaxe...) -> IA invalide (erreur
-					// utilisateur), jamais le chemin "erreur serveur" du catch externe.
-					((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
-					return new EntityAI(entity, (LeekLog) entity.getLogs());
-				}
+			// Validation syntaxique au build (parite avec LeekScript). Une erreur de parse vient du code
+			// joueur -> IA invalide (erreur utilisateur), jamais le chemin "erreur serveur" du catch externe.
+			SyntaxProblem problem = validateSyntax(languageId, file.getCode(), sandbox);
+			if (problem != null) {
+				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { problem.message });
+				return new EntityAI(entity, (LeekLog) entity.getLogs());
 			}
 
 			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, file.getCode(), file.getPath(), fs, sandbox);
