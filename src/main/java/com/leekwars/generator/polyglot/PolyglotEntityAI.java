@@ -120,7 +120,8 @@ public class PolyglotEntityAI extends EntityAI {
 			return null;
 		}
 		String lower = path.toLowerCase();
-		if (lower.endsWith(".js")) {
+		// .mjs (module ES explicite) accepte au meme titre que .js.
+		if (lower.endsWith(".js") || lower.endsWith(".mjs")) {
 			return "js";
 		}
 		if (lower.endsWith(".py")) {

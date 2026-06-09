@@ -241,8 +241,10 @@ public class Generator {
 				ObjectNode weapon = (ObjectNode) entry.getValue();
 				Weapons.addWeapon(new Weapon(weapon.get("item").intValue(), weapon.get("cost").intValue(),
 						weapon.get("min_range").intValue(), weapon.get("max_range").intValue(), (ArrayNode) weapon.get("effects"),
-						(byte) weapon.get("launch_type").intValue(), (byte) weapon.get("area").intValue(), weapon.get("los").booleanValue(),
-						weapon.get("template").intValue(), weapon.get("name").asString(), (ArrayNode) weapon.get("passive_effects"), weapon.get("max_uses").intValue(),
+						(byte) weapon.get("launch_type").intValue(), (byte) weapon.get("area").intValue(),
+						(weapon.get("los").isBoolean() ? weapon.get("los").booleanValue() : weapon.get("los").intValue() != 0),
+						weapon.get("template").intValue(), weapon.get("name").asString(), (ArrayNode) weapon.get("passive_effects"),
+						(weapon.has("max_uses") ? weapon.get("max_uses").intValue() : 0),
 						weapon.has("forgotten") && weapon.get("forgotten").booleanValue()));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
@@ -263,9 +265,11 @@ public class Generator {
 				// System.out.println("New chip " + chip.get("name").asString() + " " + id + " " + chip.get("template").intValue());
 				Chips.addChip(new Chip(Integer.parseInt(id), chip.get("cost").intValue(), chip.get("min_range").intValue(),
 						chip.get("max_range").intValue(), (ArrayNode) chip.get("effects"), (byte) chip.get("launch_type").intValue(),
-						(byte) chip.get("area").intValue(), chip.get("los").booleanValue(), chip.get("cooldown").intValue(),
+						(byte) chip.get("area").intValue(),
+						(chip.get("los").isBoolean() ? chip.get("los").booleanValue() : chip.get("los").intValue() != 0), chip.get("cooldown").intValue(),
 						chip.get("team_cooldown").booleanValue(), chip.get("initial_cooldown").intValue(), chip.get("level").intValue(),
-						chip.get("template").intValue(), chip.get("name").asString(), ChipType.values()[chip.get("type").intValue()], chip.get("max_uses").intValue()));
+						chip.get("template").intValue(), chip.get("name").asString(), ChipType.values()[chip.get("type").intValue()],
+					(chip.has("max_uses") ? chip.get("max_uses").intValue() : 0)));
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
