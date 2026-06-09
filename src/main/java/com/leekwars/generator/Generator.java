@@ -244,7 +244,7 @@ public class Generator {
 						(byte) weapon.get("launch_type").intValue(), (byte) weapon.get("area").intValue(),
 						(weapon.get("los").isBoolean() ? weapon.get("los").booleanValue() : weapon.get("los").intValue() != 0),
 						weapon.get("template").intValue(), weapon.get("name").asString(), (ArrayNode) weapon.get("passive_effects"),
-						(weapon.has("max_uses") ? weapon.get("max_uses").intValue() : 0),
+						(weapon.has("max_uses") ? weapon.get("max_uses").intValue() : -1),
 						weapon.has("forgotten") && weapon.get("forgotten").booleanValue()));
 			}
 			Log.end(weapons.size() + " weapons loaded.");
@@ -269,7 +269,7 @@ public class Generator {
 						(chip.get("los").isBoolean() ? chip.get("los").booleanValue() : chip.get("los").intValue() != 0), chip.get("cooldown").intValue(),
 						chip.get("team_cooldown").booleanValue(), chip.get("initial_cooldown").intValue(), chip.get("level").intValue(),
 						chip.get("template").intValue(), chip.get("name").asString(), ChipType.values()[chip.get("type").intValue()],
-					(chip.has("max_uses") ? chip.get("max_uses").intValue() : 0)));
+					(chip.has("max_uses") ? chip.get("max_uses").intValue() : -1)));
 			}
 			Log.end(chips.size() + " chips loaded.");
 		} catch (Exception e) {
