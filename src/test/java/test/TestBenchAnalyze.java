@@ -40,6 +40,11 @@ public class TestBenchAnalyze {
 	@Test
 	public void benchmark() throws Exception {
 		String root = System.getenv().getOrDefault("LEEK_AI_ROOT", DEFAULT_ROOT);
+		// Benchmark dev-only : il mesure l'analyse sur un dossier d'IA local (LEEK_AI_ROOT)
+		// qui n'existe pas en CI. On le skip proprement (test ignoré, pas en échec) quand le
+		// root est absent ; lancer avec LEEK_AI_ROOT pointant sur un dossier d'IA pour mesurer.
+		org.junit.Assume.assumeTrue("LEEK_AI_ROOT absent (" + root + "), benchmark ignoré hors dev",
+			new java.io.File(root).isDirectory());
 		int iterations = Integer.parseInt(System.getenv().getOrDefault("BENCH_ITERATIONS", "30"));
 		int warmup = Integer.parseInt(System.getenv().getOrDefault("BENCH_WARMUP", "5"));
 		run(root, ENTRYPOINT, warmup, iterations);
