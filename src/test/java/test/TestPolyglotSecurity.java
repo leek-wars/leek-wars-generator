@@ -91,6 +91,11 @@ public class TestPolyglotSecurity extends FightTestBase {
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			Assert.assertEquals(0L, ((Number) ai(sb, "js", "Date.now()", 1).runIA()).longValue());
 			Assert.assertEquals(0L, ((Number) ai(sb, "js", "new Date().getTime()", 1).runIA()).longValue());
+			// #4006 leak via .constructor : new Date().constructor / Date.prototype.constructor pointaient
+			// sur le Date d'origine -> doivent maintenant renvoyer l'horloge figee, pas l'heure reelle.
+			Assert.assertEquals(0L, ((Number) ai(sb, "js", "new Date().constructor.now()", 1).runIA()).longValue());
+			Assert.assertEquals(0L, ((Number) ai(sb, "js", "Date.prototype.constructor.now()", 1).runIA()).longValue());
+			Assert.assertEquals(0L, ((Number) ai(sb, "js", "new (new Date().constructor)().getTime()", 1).runIA()).longValue());
 		}
 	}
 
@@ -127,6 +132,11 @@ public class TestPolyglotSecurity extends FightTestBase {
 			Assert.assertEquals(0.0, ((Number) ai(sb, "python", "import time\ntime.time()", 1).runIA()).doubleValue(), 0.0);
 			Assert.assertEquals("2020-01-01 00:00:00",
 				ai(sb, "python", "import datetime\nstr(datetime.datetime.now())", 1).runIA());
+			// #4006 les variantes _ns / gmtime / localtime n'etaient pas figees.
+			Assert.assertEquals(0L, ((Number) ai(sb, "python", "import time\ntime.time_ns()", 1).runIA()).longValue());
+			Assert.assertEquals(0L, ((Number) ai(sb, "python", "import time\ntime.monotonic_ns()", 1).runIA()).longValue());
+			Assert.assertEquals(2020L, ((Number) ai(sb, "python", "import time\ntime.gmtime().tm_year", 1).runIA()).longValue());
+			Assert.assertEquals(2020L, ((Number) ai(sb, "python", "import time\ntime.localtime().tm_year", 1).runIA()).longValue());
 		}
 	}
 }

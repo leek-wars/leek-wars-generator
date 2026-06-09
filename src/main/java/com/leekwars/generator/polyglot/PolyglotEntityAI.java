@@ -89,6 +89,18 @@ public class PolyglotEntityAI extends EntityAI {
 	private int wallClockTimeouts;             // nb de tours coupes par le watchdog sur ce combat
 	private boolean disabled;                  // IA neutralisee apres trop de depassements wall-clock
 
+	/**
+	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
+	 * {@code getMaxOperations()}. A 0.5, une IA qui surveille son budget (garde
+	 * {@code getOperations() > seuil}) s'arrete vers la moitie de l'echeance, laissant une marge
+	 * confortable avant le backstop dur. Cf {@link #getOperations()}.
+	 */
+	private static final double OPS_TIME_BUDGET_FRACTION = 0.5;
+	private long turnStartNanos;               // nanos de debut de tour (base du compteur d'ops synthetique)
+	// Budget temps (ns) au bout duquel le compteur synthetique atteint getMaxOperations(). Derive de
+	// turnWallClockLimitMs (recalcule dans le setter) ; pre-calcule car getOperations() est sur le hot path.
+	private long opsBudgetNanos = (long) (DEFAULT_TURN_WALL_CLOCK_LIMIT_MS * 1_000_000L * OPS_TIME_BUDGET_FRACTION);
+
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
 	}
@@ -314,7 +326,11 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String JS_DETERMINISM_GUARD =
 		"Object.defineProperty(Math,'random',{value:function(){return __lw_random();},writable:false,configurable:false});"
 		+ "(function(){var F=0;var D=Date;var L=function(){if(arguments.length===0)return new D(F);return new D(...arguments);};"
-		+ "L.now=function(){return F;};L.parse=D.parse;L.UTC=D.UTC;L.prototype=D.prototype;globalThis.Date=L;})();"
+		+ "L.now=function(){return F;};L.parse=D.parse;L.UTC=D.UTC;L.prototype=D.prototype;"
+		// On scelle aussi D.prototype.constructor -> L : sinon (new Date()).constructor et Date.prototype.constructor
+		// pointaient encore sur le Date d'origine, permettant de recuperer l'horloge reelle via .constructor.now().
+		+ "Object.defineProperty(D.prototype,'constructor',{value:L,writable:false,configurable:false});"
+		+ "globalThis.Date=L;})();"
 		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}";
 
 	/**
@@ -355,6 +371,9 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "random.seed(" + seed + ")\n"
 			+ "uuid.uuid4 = lambda: uuid.UUID(int=_lw_r.getrandbits(128))\n"
 			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
+			+ "time.time_ns = lambda: 0\ntime.monotonic_ns = lambda: 0\ntime.perf_counter_ns = lambda: 0\n"
+			+ "time.gmtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
+			+ "time.localtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
 			+ "try:\n"
 			+ "    datetime.datetime.now = classmethod(lambda cls, tz=None: datetime.datetime(2020, 1, 1))\n"
 			+ "    datetime.datetime.today = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
@@ -367,6 +386,7 @@ public class PolyglotEntityAI extends EntityAI {
 		if (disabled) {
 			return null; // IA neutralisee (trop de depassements wall-clock) : n'agit plus, ne consomme plus.
 		}
+		turnStartNanos = System.nanoTime(); // base du compteur d'operations synthetique (cf getOperations)
 		ensureContext();
 		// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 		// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
@@ -468,6 +488,41 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Regle le backstop wall-clock par tour (defaut {@value #DEFAULT_TURN_WALL_CLOCK_LIMIT_MS} ms). */
 	public void setTurnWallClockLimitMs(long ms) {
 		this.turnWallClockLimitMs = ms;
+		this.opsBudgetNanos = (long) (ms * 1_000_000L * OPS_TIME_BUDGET_FRACTION);
+	}
+
+	/**
+	 * Compteur d'operations expose au guest, augmente d'un terme SYNTHETIQUE base sur le temps ecoule
+	 * dans le tour.
+	 *
+	 * <p>En LeekScript natif, chaque statement incremente le compteur : une IA de recherche (alpha-beta,
+	 * etc.) borne son exploration avec {@code getOperations() > seuil}. Sous le runtime polyglot, le
+	 * calcul pur guest (boucles JS/Python) n'incremente PAS {@code mOperations} (seul le travail hote des
+	 * fonctions de combat appelle {@code ops()}). Sans correctif, la garde de l'IA ne se declenche jamais,
+	 * l'exploration sature les 5 s du backstop wall-clock et l'IA finit neutralisee sans avoir agi.
+	 *
+	 * <p>On surface donc un budget proportionnel au TEMPS : il atteint {@link #getMaxOperations()} a
+	 * {@link #OPS_TIME_BUDGET_FRACTION} du budget wall-clock du tour. La garde de l'IA se declenche ainsi
+	 * naturellement, bien avant le backstop dur, et l'IA rend sa meilleure action. L'enforcement reel du
+	 * budget (jet de {@code TOO_MUCH_OPERATIONS} dans {@code ops()}) reste base sur {@code mOperations}
+	 * brut : ce terme synthetique ne sert qu'a la LECTURE par le guest.
+	 *
+	 * <p>NB determinisme : comme le backstop wall-clock, ce terme depend de la charge machine ; une IO de
+	 * recherche polyglot n'est donc pas bit-reproductible entre machines. Acceptable pour faire tourner /
+	 * terminer des combats ; a affiner (compteur de statements guest) pour des combats classes.
+	 */
+	@Override
+	public long getOperations() {
+		long real = super.getOperations();
+		if (turnStartNanos == 0 || opsBudgetNanos <= 0) {
+			return real;
+		}
+		long elapsed = System.nanoTime() - turnStartNanos;
+		if (elapsed < 0) {
+			elapsed = 0;
+		}
+		long synthetic = (long) ((double) getMaxOperations() * elapsed / opsBudgetNanos);
+		return real + synthetic;
 	}
 
 	private LeekRunException mapException(PolyglotException e) {
