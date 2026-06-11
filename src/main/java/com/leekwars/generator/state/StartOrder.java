@@ -87,7 +87,10 @@ public class StartOrder {
 				int team = remaining.get(i);
 				double p = probas.get(team);
 
-				if (v <= p) {
+				// Le dernier restant est le fallback : sans lui, un arrondi flottant
+				// (v légèrement supérieur à la somme des probas) pourrait ne sélectionner
+				// aucune équipe et laisser teamOrder plus court que teams.
+				if (v <= p || i == remaining.size() - 1) {
 					teamOrder.add(team);
 					remaining.remove(i);
 					psum -= p;
@@ -115,7 +118,7 @@ public class StartOrder {
 				order.add(teams.get(team).remove(0));
 			}
 
-			currentTeamI = (currentTeamI + 1) % teams.size();
+			currentTeamI = (currentTeamI + 1) % teamOrder.size();
 		}
 
 		// Logger.log("Order : " + Arrays.toString(order.toArray()));
