@@ -47,6 +47,7 @@ public class Data {
 		// File fullmoonFile = new File("data/fullmoon.json");
 		System.out.println("Load fullmoon from API...");
 		ArrayNode f = Json.parseArray(get(api + "fight/fullmoon", ""));
+		fullmoon.clear(); // checkData() est rejouable (reload à chaud) : éviter d'empiler les dates à chaque appel
 		for (var d : f) {
 			var dateUTC = ZonedDateTime.of(LocalDateTime.parse(d.asString()), ZoneOffset.UTC);
 			var dateLocal = dateUTC.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate();
