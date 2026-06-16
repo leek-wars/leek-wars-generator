@@ -184,6 +184,7 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_EXCALIBUR(409, Type.INT),
 	WEAPON_SCYTHE(410, Type.INT),
 	WEAPON_QUANTUM_RIFLE(428, Type.INT),
+	WEAPON_PLUTONIUM_BAZOOKA(506, Type.INT),
 
 	// Messages
 	MESSAGE_HEAL(1, Type.INT),
