@@ -302,9 +302,12 @@ public class Fight {
 	}
 
 	private void runHooks(String name, EntityAI.HookPhase phase) {
-		// Iterate in turn order (deterministic) rather than state.getEntities()
-		// (HashMap, non-deterministic).
-		for (var entity : state.getOrder().getEntities()) {
+		// Iterate the initial boot order: deterministic (unlike state.getEntities(),
+		// a HashMap) AND inclusive of dead entities (unlike state.getOrder(), which
+		// drops entities on death). afterFight() must still run for fallen leeks so
+		// their registers/debug are saved, otherwise the hook is silently skipped
+		// (or, worse, runs for the wrong leek). See issue #4170.
+		for (var entity : state.getInitialOrder()) {
 			var ai = entity.getAI();
 			if (!(ai instanceof EntityAI)) continue;
 			var entityAI = (EntityAI) ai;

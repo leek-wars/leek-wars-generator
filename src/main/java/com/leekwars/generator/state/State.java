@@ -263,6 +263,16 @@ public class State {
 		return mEntities;
 	}
 
+	/**
+	 * Deterministic boot/turn order of all entities, captured at init and never
+	 * mutated by deaths (unlike {@link #getOrder()}, which drops entities on death).
+	 * Use this to iterate every participant (alive or dead) in a stable order, e.g.
+	 * for the afterFight() hooks which must still run for fallen leeks.
+	 */
+	public List<Entity> getInitialOrder() {
+		return initialOrder;
+	}
+
 	public void setStartFarmer(int startFarmer) {
 		mStartFarmer = startFarmer;
 	}

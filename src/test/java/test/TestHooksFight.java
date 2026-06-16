@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.state.Entity;
@@ -362,6 +363,32 @@ public class TestHooksFight extends FightTestBase {
 		// After the fight, register manager should hold the value
 		Assert.assertNotNull("Register manager should have stored leek1 registers", registerStore.get(leek1.getId()));
 		Assert.assertTrue("Stored JSON should contain 'persisted'", registerStore.get(leek1.getId()).contains("persisted"));
+	}
+
+	// ---------- afterFight() for leeks that died during the fight (issue #4170) ----------
+
+	@Test
+	public void afterFightRunsForLeekThatDiedDuringFight() throws Exception {
+		// Regression #4170: a leek that dies mid-fight is removed from the turn order
+		// (state.getOrder()), yet afterFight() must still run for it, otherwise its
+		// registers are never saved, its debug is dropped, and the hook can even run
+		// for the wrong leek. Iterating the initial boot order (which retains dead
+		// entities) fixes this.
+		attachAI(leek1, "function afterFight() { setRegister('ran', 'leek1'); }");
+		attachAI(leek2, "function afterFight() { setRegister('ran', 'leek2'); }");
+
+		// Lethal poison applied before the fight starts: it survives initFight (which
+		// does not clear entity effects) and kills leek1 on its first turn. The value
+		// is amplified by the caster's power (see EffectPoison.apply), so 300 becomes
+		// 600 >= 500 life.
+		Effect.createEffect(fight.getState(), Effect.TYPE_POISON, 10, 1, 300, 300, false,
+			leek1, leek2, null, 0, false, 0, 1, 0, 0);
+
+		runFight();
+
+		Assert.assertTrue("leek1 should have died during the fight", leek1.isDead());
+		Assert.assertEquals("afterFight() must still run for the dead leek", "leek1", leek1.getRegister("ran"));
+		Assert.assertEquals("leek2's afterFight() ran on leek2", "leek2", leek2.getRegister("ran"));
 	}
 
 
