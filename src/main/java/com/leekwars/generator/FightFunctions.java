@@ -2,6 +2,7 @@ package com.leekwars.generator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import leekscript.common.Type;
 import leekscript.runner.CallableVersion;
@@ -10,6 +11,30 @@ import leekscript.runner.LeekFunctions;
 public class FightFunctions {
 
 	private static HashMap<String, LeekFunctions> functions = new HashMap<>();
+
+	// Fight functions that produce an observable side effect on the fight (they move
+	// or act, write to persistent registers, emit network messages, or draw on the
+	// map / log). Calling one of these from a @pure LeekScript function makes that
+	// function impure and is reported (Error.ANNOTATION_NOT_PURE). Every other fight
+	// function only reads or computes from the fight state and is treated as pure by
+	// default — so a new read-only getter needs no change here, while a new action
+	// must be added below.
+	private static final Set<String> IMPURE_FUNCTIONS = Set.of(
+		// Movement
+		"moveToward", "moveTowardCell", "moveTowardCells", "moveTowardEntities",
+		"moveTowardLeeks", "moveTowardLine",
+		"moveAwayFrom", "moveAwayFromCell", "moveAwayFromCells", "moveAwayFromEntities",
+		"moveAwayFromLeeks", "moveAwayFromLine",
+		// Combat / loadout actions
+		"useChip", "useChipOnCell", "useWeapon", "useWeaponOnCell",
+		"summon", "resurrect", "setWeapon", "setLoadout",
+		// Communication
+		"say", "lama", "sendAll", "sendTo",
+		// Map drawing / debugging
+		"mark", "markText", "clearMarks", "show", "pause",
+		// Persistent registers
+		"setRegister", "deleteRegister"
+	);
 
 	static {
 
@@ -572,6 +597,9 @@ public class FightFunctions {
 
 	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, CallableVersion[] versions) {
 		var function = new LeekFunctions(clazz, name, operations, isStatic, versions);
+		if (IMPURE_FUNCTIONS.contains(name)) {
+			function.setImpure();
+		}
 		functions.put(name, function);
 		return function;
 	}
