@@ -94,6 +94,13 @@ public class EntityAI extends AI {
 	public enum HookPhase { NONE, BEFORE_FIGHT, AFTER_FIGHT }
 	private HookPhase hookPhase = HookPhase.NONE;
 
+	/**
+	 * Top-level AI functions the engine invokes itself (by reflection, as f_&lt;name&gt;),
+	 * never from user code. Registered with the analyzer so strict mode does not flag
+	 * them as unused (issue #4165).
+	 */
+	public static final java.util.Set<String> HOOK_NAMES = java.util.Set.of("beforeFight", "afterFight");
+
 	public HookPhase getHookPhase() {
 		return hookPhase;
 	}

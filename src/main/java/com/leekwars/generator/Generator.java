@@ -49,6 +49,7 @@ public class Generator {
 	public Generator() {
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions(FightFunctions.getFunctions(), "com.leekwars.generator.classes.*");
+		LeekFunctions.setEntryPointFunctions(EntityAI.HOOK_NAMES);
 		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
 		loadWeapons();
 		loadChips();
