@@ -23,6 +23,16 @@ public class EntityClass {
 
 	private static final int SAY_LENGTH_LIMIT = 100;
 
+	// Combat actions are denied during beforeFight()/afterFight() hooks — no turn is
+	// active, so consuming TP or emitting an entity-less action (say/lama) would
+	// corrupt fight state or be misattributed in the report (the client falls back to
+	// the current-turn entity, which is undefined outside a turn → frozen report).
+	private static boolean denyDuringHook(EntityAI ai, String funcName) {
+		if (!ai.isInHook()) return false;
+		ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
+		return true;
+	}
+
 	/**
 	 * Target resolver for equipment- and stat-dependent natives. Returns null when
 	 * the target doesn't exist or when masked by the beforeFight() hook.
@@ -291,10 +301,7 @@ public class EntityClass {
 
 	public static boolean setWeapon(EntityAI ai, long weapon_id) throws LeekRunException {
 
-		if (ai.isInHook()) {
-			ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { "setWeapon" });
-			return false;
-		}
+		if (denyDuringHook(ai, "setWeapon")) return false;
 
 		var weapon = Weapons.getWeapon((int) weapon_id);
 		if (weapon == null) {
@@ -318,6 +325,7 @@ public class EntityClass {
 	}
 
 	public static boolean say(EntityAI ai, Object messageObject) throws LeekRunException {
+		if (denyDuringHook(ai, "say")) return false;
 		if (ai.getEntity().getTP() < 1) {
 			return false;
 		}
@@ -343,6 +351,7 @@ public class EntityClass {
 	}
 
 	public static Object lama(EntityAI ai) {
+		if (denyDuringHook(ai, "lama")) return null;
 		if (ai.getEntity().getTP() < 1) {
 			return null;
 		}

@@ -298,6 +298,28 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertEquals("100", leek1.getRegister("opp_str"));
 	}
 
+	@Test
+	public void sayAndLamaAreDeniedInHooks() throws Exception {
+		// say() / lama() consume TP and emit an entity-less action that the report
+		// attributes to the current-turn entity. During a hook no turn is active, so
+		// the action would be misattributed (leak to the last-played leek) and freeze
+		// the client report (entity undefined). They must be denied, like useChip etc.
+		attachAI(leek1,
+			"function afterFight() {"
+			+ "  setRegister('say_result', say('gg') ? 'true' : 'false');"
+			+ "  setRegister('lama_result', '' + lama());"
+			+ "  setRegister('reached_end', '1');"  // execution continues after the denied calls
+			+ "}");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("false", leek1.getRegister("say_result"));
+		Assert.assertEquals("null", leek1.getRegister("lama_result"));
+		Assert.assertEquals("1", leek1.getRegister("reached_end"));
+		// No SAY (203) / LAMA (204) action must have leaked into the report stream.
+		String actions = fight.getState().getActions().toJSON().toString();
+		Assert.assertFalse("No SAY action expected from a hook", actions.contains("[203,"));
+	}
+
 	// ---------- Hook robustness (errors / ops) ----------
 
 	@Test
