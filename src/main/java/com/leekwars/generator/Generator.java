@@ -296,6 +296,13 @@ public class Generator {
 			ObjectNode components = Json.parseObject(Util.readFile("data/components.json"));
 			for (var entry : components.properties()) {
 				String id = entry.getKey();
+				// Garde-fou : un data/components.json corrompu (ex: enveloppe d'erreur
+				// API écrite par un ancien checkData() sans validation) ne doit pas
+				// faire planter tout le chargement. On ignore l'entrée invalide.
+				if (!entry.getValue().isObject()) {
+					Log.e(TAG, "Composant ignoré (valeur non-objet) : " + id + " = " + entry.getValue());
+					continue;
+				}
 				ObjectNode component = (ObjectNode) entry.getValue();
 				Components.addComponent(new Component(Integer.parseInt(id), component.get("name").asString(), (ArrayNode) component.get("stats"), component.get("template").intValue()));
 			}
