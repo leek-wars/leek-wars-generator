@@ -9,7 +9,10 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.HashSet;
 
@@ -148,9 +151,26 @@ public class Util {
 		File f = new File(file);
 		System.out.println("Write file " + f.getAbsolutePath());
 		try {
-			PrintWriter out = new PrintWriter(f);
-			out.append(data);
-			out.close();
+			// Écriture atomique : on écrit dans un fichier temporaire puis on le
+			// renomme. `new PrintWriter(f)` tronque le fichier à l'ouverture, ce qui
+			// laisse une fenêtre où data/*.json est vide/partiel sur disque ; un
+			// combat qui s'initialise pendant ce write (le Generator relit
+			// data/weapons.json à chaque GeneratorAPI.init) lisait alors un contenu
+			// tronqué -> MissingNode -> ClassCastException dans loadWeapons(). Le
+			// rename atomique garantit que tout lecteur voit soit l'ancien fichier
+			// complet, soit le nouveau, jamais un état intermédiaire.
+			Path target = f.toPath();
+			Path dir = target.toAbsolutePath().getParent();
+			Path tmp = Files.createTempFile(dir, f.getName() + ".", ".tmp");
+			Files.writeString(tmp, data, StandardCharsets.UTF_8);
+			try {
+				Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+			} catch (AtomicMoveNotSupportedException e) {
+				// Filesystem sans rename atomique : on retombe sur un move best-effort.
+				Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
+			} finally {
+				Files.deleteIfExists(tmp);
+			}
 		} catch (Exception e) {
 			System.out.println(e);
 		}

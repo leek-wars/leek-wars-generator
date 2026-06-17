@@ -9,7 +9,10 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.HashSet;
 
@@ -143,14 +146,37 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Écriture atomique : on écrit d'abord dans un fichier temporaire du même
+	 * dossier, puis on le renomme atomiquement sur la cible. Un lecteur
+	 * concurrent (worker qui boote et lit data/*.json pendant un "Refresh game
+	 * data") ne voit JAMAIS un fichier tronqué/vide, et un crash en plein write
+	 * ne laisse pas une cible à zéro octet. Sans ça, une lecture pendant la
+	 * réécriture renvoie "" et fait planter parseObject (MissingNode ->
+	 * ObjectNode) dans GeneratorAPI.init().
+	 */
 	public static void writeFile(String data, String file) {
-		File f = new File(file);
+		Path target = new File(file).toPath();
+		Path tmp = null;
 		try {
-			PrintWriter out = new PrintWriter(f);
-			out.append(data);
-			out.close();
+			Path dir = target.toAbsolutePath().getParent();
+			tmp = Files.createTempFile(dir, ".tmp-", target.getFileName().toString());
+			Files.write(tmp, data.getBytes(StandardCharsets.UTF_8));
+			try {
+				Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+			} catch (AtomicMoveNotSupportedException e) {
+				// Filesystem sans rename atomique : on retombe sur un move simple.
+				Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
+			}
+			tmp = null;
 		} catch (Exception e) {
 			System.out.println(e);
+		} finally {
+			if (tmp != null) {
+				try {
+					Files.deleteIfExists(tmp);
+				} catch (IOException ignored) {}
+			}
 		}
 	}
 }

@@ -77,7 +77,17 @@ public class Json {
      */
     public static ObjectNode parseObject(String json) {
         try {
-            return (ObjectNode) mapper.readTree(json);
+            JsonNode node = mapper.readTree(json);
+            // readTree("") / readTree(blank) renvoie un MissingNode : un fichier
+            // data/*.json absent ou tronqué (lecture concurrente d'un write) donne
+            // ce cas. On lève une erreur explicite plutôt qu'un ClassCastException
+            // opaque (MissingNode -> ObjectNode) qui fait planter GeneratorAPI.init().
+            if (node == null || !node.isObject()) {
+                throw new RuntimeException("Expected JSON object but got "
+                    + (node == null ? "null" : node.getNodeType())
+                    + " (content length=" + (json == null ? 0 : json.length()) + ")");
+            }
+            return (ObjectNode) node;
         } catch (JacksonException e) {
             throw new RuntimeException("JsonNode parsing error: " + json, e);
         }
