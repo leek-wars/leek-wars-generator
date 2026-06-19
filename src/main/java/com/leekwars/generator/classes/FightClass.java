@@ -1356,6 +1356,7 @@ public class FightClass {
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_FORGOTTEN_ALREADY_EQUIPPED,
 				new String[] { name });
 		}
+		ai.getFight().getState().statistics.setLoadout(entity);
 		return true;
 	}
 }
