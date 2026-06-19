@@ -358,6 +358,14 @@ public class Generator {
 		errorManager = manager;
 	}
 
+	// Report depuis un contexte statique (ex. generation de map) : route vers
+	// l'ErrorManager du worker (table error) au lieu du stub stdout de leekscript.
+	public static void reportException(Throwable e) {
+		if (errorManager != null) {
+			errorManager.exception(e, -1);
+		}
+	}
+
 	public void exception(Throwable e) {
 		if (errorManager != null) {
 			errorManager.exception(e, -1);

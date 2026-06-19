@@ -31,8 +31,7 @@ import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.State;
 import com.leekwars.generator.state.Team;
-
-import leekscript.ErrorManager;
+import com.leekwars.generator.Generator;
 
 public class Map {
 
@@ -130,7 +129,9 @@ public class Map {
 						}
 					}
 				} catch (Exception e) {
-					ErrorManager.exception(e);
+					// Obstacle de map custom malforme : on saute cet obstacle (resilience)
+					// mais on remonte l'erreur a la table au lieu de la cracher sur stdout.
+					Generator.reportException(e);
 				}
 			}
 
