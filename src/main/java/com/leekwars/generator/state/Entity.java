@@ -462,6 +462,11 @@ public abstract class Entity {
 	public void addTotalLife(int vitality, Entity caster) {
 		mTotalLife += vitality;
 		state.statistics.vitality(this, caster, vitality);
+		// Un buff de vie max (Vitalité, Nova Vitalité...) doit ré-évaluer les trophées de
+		// caractéristiques tout de suite, comme addLife/updateBuffStats : sinon le trophée de
+		// vie (Tank...) ne se déclenche qu'au prochain event sans rapport (soin, boost de
+		// bouclier) au lieu du moment où la vie max franchit le seuil (#11618).
+		state.statistics.characteristics(this);
 	}
 
 	public void setTotalLife(int vitality) {
