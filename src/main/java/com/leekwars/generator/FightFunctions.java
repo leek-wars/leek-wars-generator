@@ -558,7 +558,7 @@ public class FightFunctions {
 		method("pause", "Util", 30, true, Type.VOID, new Type[0]);
 		method("getRegisters", "Util", 25, true, Type.MAP_STRING_STRING, new Type[0]);
 		method("getRegister", "Util", 15, true, Type.STRING_OR_NULL, new Type[] { Type.STRING });
-		method("setRegister", "Util", 50, true, Type.VOID, new Type[] { Type.STRING, Type.ANY });
+		method("setRegister", "Util", 50, true, Type.BOOL, new Type[] { Type.STRING, Type.ANY });
 		method("deleteRegister", "Util", 16, true, Type.VOID, new Type[] { Type.STRING });
 	}
 
