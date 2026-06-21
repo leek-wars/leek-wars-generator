@@ -499,9 +499,16 @@ public class State {
 		if (type == TYPE_COLOSSUS && teams.size() > 1) {
 			colossusMultiplier = 3;
 			for (Entity e : teams.get(1).getEntities()) {
-				Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+				applyColossusMultiplier(e);
 			}
 		}
+	}
+
+	// Applique le multiplicateur de stats courant du Colosse à une entité (effet
+	// non stackable, irréductible). Centralise l'appel partagé par l'effet initial,
+	// le palier des 5 tours et l'invocation rejoignant l'équipe du colosse.
+	private void applyColossusMultiplier(Entity e) {
+		Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 	}
 
 	public void startTurn() throws Exception {
@@ -620,7 +627,7 @@ public class State {
 						colossusMultiplier++;
 						for (Entity e : teams.get(1).getEntities()) {
 							if (!e.isDead()) {
-								Effect.createEffect(this, Effect.TYPE_MULTIPLY_STATS, -1, 1, colossusMultiplier, 0, false, e, e, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+								applyColossusMultiplier(e);
 							}
 						}
 					}
@@ -960,6 +967,15 @@ public class State {
 
 		invoc.setTeam(team);
 		teams.get(team).addEntity(invoc);
+
+		// Colosse : une invocation qui rejoint l'équipe du colosse (team 1) reçoit
+		// immédiatement le multiplicateur courant, au lieu d'attendre le prochain
+		// palier des 5 tours (forum #11869 : un bulbe invoqué entre deux paliers
+		// voyait ses stats sauter d'un coup ×N au palier suivant). `this.type` car
+		// le paramètre `type` de cette méthode désigne le type de bulbe.
+		if (this.type == TYPE_COLOSSUS && team == 1 && colossusMultiplier > 0) {
+			applyColossusMultiplier(invoc);
+		}
 
 		// On ajoute dans les tableaux
 		mEntities.put(invoc.getFId(), invoc);
