@@ -105,6 +105,25 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 	}
 
 	@Test
+	public void tsMultiFileImportedErrorIsNotMasked() throws Exception {
+		// Erreur de syntaxe dans un fichier IMPORTE : elle ne doit pas etre silencieusement masquee
+		// (l'import doit echouer -> turn() ne s'execute pas), pas tourner sur du JS partiel.
+		Path dir = Files.createTempDirectory("ts-mf-err-");
+		Files.writeString(dir.resolve("util.ts"), "export const X: number = ;\n"); // syntaxe invalide
+		Files.writeString(dir.resolve("main.ts"), String.join("\n",
+			"import { X } from './util.js';",
+			"globalThis.turn = function(): void { setRegister('x', '' + X); };"));
+
+		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
+		attachTsEntry(leek1, dir.toString(), "main.ts");
+		attachAI(leek2, "");
+		runFight();
+
+		Assert.assertNull("l'erreur d'un module TS importe ne doit pas etre masquee (turn ne doit pas tourner)",
+			leek1.getRegister("x"));
+	}
+
+	@Test
 	public void tsMultiFileStatePersistsAcrossTurns() throws Exception {
 		Path dir = Files.createTempDirectory("ts-mf-state-");
 		Files.writeString(dir.resolve("mem.ts"), "export class Mem { static n: number = 0; }\n");

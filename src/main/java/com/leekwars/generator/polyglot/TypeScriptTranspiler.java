@@ -6,10 +6,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 import java.util.zip.GZIPInputStream;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.IOAccess;
 
@@ -82,33 +84,70 @@ public final class TypeScriptTranspiler {
 		}
 	}
 
+	/** Budget wall-clock d'une transpilation : borne le compilateur face a un source joueur pathologique. */
+	private static final long TRANSPILE_TIMEOUT_MS = 5_000;
+
 	/**
 	 * Transpile un source TypeScript. {@code fileName} sert au nommage des diagnostics et de la sourcemap.
-	 * Toujours renvoie un Result : si des diagnostics existent, {@link Result#ok()} est false (IA invalide).
+	 * Toujours renvoie un Result : des diagnostics non vides -&gt; {@link Result#ok()} false (IA invalide).
+	 *
+	 * Le source vient d'un JOUEUR (non fiable) : on borne la transpilation par un watchdog wall-clock
+	 * (le contexte du compilateur n'a pas de statement limit, sinon le compilateur legitime serait coupe)
+	 * et on JETTE le contexte partage en cas d'echec/timeout/crash, pour qu'il soit reconstruit au prochain
+	 * appel plutot que de rester potentiellement annule pour tous les combats de la JVM.
 	 */
 	public static Result transpile(String source, String fileName) {
-		Context ctx = context();
 		synchronized (LOCK) {
-			Value bindings = ctx.getBindings("js");
-			bindings.putMember("__lwSrc", source);
-			bindings.putMember("__lwFile", fileName != null ? fileName : "ai.ts");
-			Value r = ctx.eval("js", "__lwTranspile(__lwSrc, __lwFile)");
+			Context ctx = context(); // sous le verrou : reconstruit si un appel precedent l'a jete
+			ScheduledFuture<?> deadline = PolyglotSandbox.scheduleDeadline(
+					() -> PolyglotSandbox.interruptAsync(ctx), TRANSPILE_TIMEOUT_MS);
+			try {
+				Value bindings = ctx.getBindings("js");
+				bindings.putMember("__lwSrc", source);
+				bindings.putMember("__lwFile", fileName != null ? fileName : "ai.ts");
+				Value r = ctx.eval("js", "__lwTranspile(__lwSrc, __lwFile)");
 
-			String js = r.getMember("js").asString();
-			Value mapV = r.getMember("map");
-			String sourceMap = (mapV != null && !mapV.isNull()) ? mapV.asString() : null;
+				String js = r.getMember("js").asString();
+				Value mapV = r.getMember("map");
+				String sourceMap = (mapV != null && !mapV.isNull()) ? mapV.asString() : null;
 
-			List<SyntaxProblem> diagnostics = new ArrayList<>();
-			Value diags = r.getMember("diagnostics");
-			long n = diags.getArraySize();
-			for (long i = 0; i < n; i++) {
-				Value d = diags.getArrayElement(i);
-				String message = d.getMember("message").asString();
-				int start = d.getMember("start").asInt();
-				int length = d.getMember("length").asInt();
-				diagnostics.add(SyntaxProblem.atOffset(source, message, start, length));
+				List<SyntaxProblem> diagnostics = new ArrayList<>();
+				Value diags = r.getMember("diagnostics");
+				long n = diags.getArraySize();
+				for (long i = 0; i < n; i++) {
+					Value d = diags.getArrayElement(i);
+					String message = d.getMember("message").asString();
+					int start = d.getMember("start").asInt();
+					int length = d.getMember("length").asInt();
+					diagnostics.add(SyntaxProblem.atOffset(source, message, start, length));
+				}
+				return new Result(js, sourceMap, Collections.unmodifiableList(diagnostics));
+			} catch (PolyglotException e) {
+				// Timeout (interruption du watchdog), OOM guest ou crash du compilateur sur un source
+				// pathologique : on jette le contexte partage (potentiellement annule) pour qu'il soit
+				// reconstruit, et on remonte un diagnostic (IA invalide cote joueur) plutot que de laisser
+				// fuiter une erreur serveur ou un contexte mort pour tous les combats.
+				discardContext(ctx);
+				String reason = (e.isInterrupted() || e.isCancelled() || e.isResourceExhausted())
+						? "TypeScript transpilation timed out"
+						: "TypeScript transpilation failed";
+				return new Result("", null, Collections.singletonList(
+						SyntaxProblem.atOffset(source, reason, -1, 0)));
+			} finally {
+				deadline.cancel(false);
 			}
-			return new Result(js, sourceMap, Collections.unmodifiableList(diagnostics));
+		}
+	}
+
+	/** Jette le contexte partage (ferme + oublie) apres un echec, pour forcer sa reconstruction au prochain appel. */
+	private static void discardContext(Context ctx) {
+		try {
+			ctx.close(true); // cancelIfExecuting : un contexte annule ne doit pas relancer a la fermeture
+		} catch (Exception ignore) {
+			// best effort
+		}
+		if (tsContext == ctx) {
+			tsContext = null;
 		}
 	}
 

@@ -149,13 +149,9 @@ public class PolyglotEntityAI extends EntityAI {
 		return null;
 	}
 
-	/** true si le fichier est du TypeScript (a transpiler en JS avant execution). */
+	/** true si le fichier est du TypeScript (a transpiler en JS avant execution). Source unique : {@link #tsAlias}. */
 	public static boolean isTypeScript(String path) {
-		if (path == null) {
-			return false;
-		}
-		String lower = path.toLowerCase();
-		return lower.endsWith(".ts") || lower.endsWith(".mts");
+		return tsAlias(path) != null;
 	}
 
 	/** Probleme de syntaxe d'une IA polyglot : message + localisation (lignes 1-based, colonnes 0-based,
@@ -360,15 +356,49 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 		}
 		final Function<String, String> baseRead = rawRead;
+		// Memoisation par fichier : le module loader peut relire un meme fichier (resolution + lecture,
+		// voisin importe par plusieurs fichiers), on ne le transpile qu'une fois par chargement d'IA.
+		final Map<String, String> transpileCache = new HashMap<>();
 		Function<String, String> tsRead = path -> {
 			String real = aliasToReal.getOrDefault(path, path);
+			String cached = transpileCache.get(real);
+			if (cached != null) {
+				return cached;
+			}
 			String code = baseRead.apply(real);
 			if (code == null) {
 				return null;
 			}
-			return isTypeScript(real) ? TypeScriptTranspiler.transpile(code, real).js : code;
+			String result;
+			if (isTypeScript(real)) {
+				TypeScriptTranspiler.Result tr = TypeScriptTranspiler.transpile(code, real);
+				// Erreur de compilation dans un fichier importe : on emet un module qui leve, pour que la
+				// rejection d'import() remonte le diagnostic (sinon un outputText partiel le masquerait).
+				result = tr.ok() ? tr.js
+						: "throw new Error(" + jsStringLiteral(real + ": " + tr.firstDiagnostic().message) + ");";
+			} else {
+				result = code;
+			}
+			transpileCache.put(real, result);
+			return result;
 		};
 		return new PolyglotFileSystem(mounted, tsRead, pass);
+	}
+
+	/** Encode une chaine en litteral JS entre guillemets (pour injecter un message dans un module de fallback). */
+	private static String jsStringLiteral(String s) {
+		StringBuilder b = new StringBuilder("\"");
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			switch (c) {
+				case '"': b.append("\\\""); break;
+				case '\\': b.append("\\\\"); break;
+				case '\n': b.append("\\n"); break;
+				case '\r': b.append("\\r"); break;
+				default: b.append(c);
+			}
+		}
+		return b.append('"').toString();
 	}
 
 	/** Alias module JS d'un fichier TS : foo.ts -&gt; foo.js, foo.mts -&gt; foo.mjs ; null si pas du TS. */
