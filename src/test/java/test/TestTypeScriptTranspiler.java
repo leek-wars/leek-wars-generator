@@ -3,6 +3,7 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotEntityAI.SyntaxProblem;
 import com.leekwars.generator.polyglot.TypeScriptTranspiler;
 
@@ -66,5 +67,27 @@ public class TestTypeScriptTranspiler {
 		Assert.assertTrue(r.ok());
 		Assert.assertFalse(r.js.contains("type Cell"));
 		Assert.assertTrue(r.js.contains("function at(c)"));
+	}
+
+	@Test
+	public void validateSyntaxForFileReportsTsError() {
+		// Validation orientee fichier (chemin daemon) : un .ts errone -> diagnostic localise, sans sandbox.
+		SyntaxProblem p = PolyglotEntityAI.validateSyntaxForFile(
+			"bot.ts", "const a: number = 1;\nfunction turn(): void { return ( }", null);
+		Assert.assertNotNull("le .ts errone doit produire un diagnostic", p);
+		Assert.assertEquals(2, p.startLine);
+	}
+
+	@Test
+	public void validateSyntaxForFileAcceptsValidTs() {
+		SyntaxProblem p = PolyglotEntityAI.validateSyntaxForFile(
+			"bot.ts", "const a: number = 1;\nfunction turn(): void { debug('' + a); }", null);
+		Assert.assertNull("un .ts valide ne doit produire aucun diagnostic", p);
+	}
+
+	@Test
+	public void validateSyntaxForFileIgnoresNonPolyglot() {
+		// Une extension non polyglot (LeekScript) n'est pas du ressort de cette validation.
+		Assert.assertNull(PolyglotEntityAI.validateSyntaxForFile("bot.leek", "var x = ;", null));
 	}
 }

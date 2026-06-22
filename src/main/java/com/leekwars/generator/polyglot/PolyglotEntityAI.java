@@ -231,6 +231,22 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
+	 * Validation de syntaxe orientee FICHIER (pour les diagnostics editeur via le daemon) : route selon
+	 * l'extension. TypeScript -&gt; diagnostics tsc (transpilation) ; JS/Python -&gt; parse GraalVM ;
+	 * extension non polyglot -&gt; null (rien a signaler). Renvoie null si OK, sinon le 1er probleme.
+	 */
+	public static SyntaxProblem validateSyntaxForFile(String path, String source, PolyglotSandbox sandbox) {
+		if (isTypeScript(path)) {
+			return TypeScriptTranspiler.transpile(source, path).firstDiagnostic();
+		}
+		String lang = detectLanguage(path);
+		if (lang == null) {
+			return null;
+		}
+		return validateSyntax(lang, source, sandbox);
+	}
+
+	/**
 	 * Construit une IA polyglot pour une entite, en reutilisant le sandbox du combat.
 	 * Erreur de construction -&gt; IA vide (l'entite n'agira pas), comme le chemin LeekScript.
 	 */
