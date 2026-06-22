@@ -23,10 +23,34 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	private Leek leek1;
 	private Leek leek2;
 
+	// Stats de combat (PV modérés pour finir dans la limite de tours) + équipement complet :
+	// permet de tester une vraie attaque écrite 100 % en API objet (me.useWeapon...).
+	private static Leek combatLeek(int id, String name) {
+		return new Leek(id, name, 0, 150, 1200, 18, 6, 450, 200, 300, 100, 100, 0, 0, 8, 64,
+			0, false, 0, 0, "", 0, "", "", "", 0);
+	}
+
+	private void equipEverything(Leek leek) {
+		for (com.leekwars.generator.FightConstants c : com.leekwars.generator.FightConstants.values()) {
+			String n = c.name();
+			try {
+				if (n.startsWith("CHIP_")) {
+					var chip = com.leekwars.generator.chips.Chips.getChip(c.getIntValue());
+					if (chip != null) leek.addChip(chip);
+				} else if (n.startsWith("WEAPON_")) {
+					var w = com.leekwars.generator.weapons.Weapons.getWeapon(c.getIntValue());
+					if (w != null) leek.addWeapon(w);
+				}
+			} catch (Exception ignore) {}
+		}
+	}
+
 	@Override
 	protected void createLeeks() {
-		leek1 = defaultLeek(1, "Obj1");
-		leek2 = defaultLeek(2, "Obj2");
+		leek1 = combatLeek(1, "Obj1");
+		leek2 = combatLeek(2, "Obj2");
+		equipEverything(leek1);
+		equipEverything(leek2);
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);
 	}
@@ -151,5 +175,35 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		System.out.println("[objet] leek1 distance " + s1 + " -> " + e1 + " | leek2 " + s2 + " -> " + e2);
 		Assert.assertTrue("leek1 (API objet) doit s'etre rapproche : " + s1 + " -> " + e1, e1 < s1);
 		Assert.assertTrue("leek2 (API objet) doit s'etre rapproche : " + s2 + " -> " + e2, e2 < s2);
+	}
+
+	/**
+	 * Validation de bout en bout : une IA écrite ENTIÈREMENT en API objet (aucune fonction plate)
+	 * équipe une arme, se rapproche et tire — l'ennemi doit perdre des PV. Prouve que l'API objet
+	 * suffit à écrire une vraie IA de combat (Fight.getNearestEnemy / me.weapons / me.setWeapon /
+	 * me.moveToward / me.canUseWeapon / me.useWeapon).
+	 */
+	@Test
+	public void fullObjectApiAttackerDealsDamage() throws Exception {
+		String ai =
+			"function turn() {"
+			+ "  var e = Fight.getNearestEnemy();"
+			+ "  if (e == null) return;"
+			+ "  var ws = me.weapons;"
+			+ "  if (ws.length > 0) me.setWeapon(ws[0]);"
+			+ "  me.moveToward(e);"
+			+ "  while (me.canUseWeapon(e)) { if (me.useWeapon(e) <= 0) break; }"
+			+ "}";
+		attachJsAI(leek1, ai);
+		attachJsAI(leek2, ai);
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		int l1 = leek1.getLife();
+		int l2 = leek2.getLife();
+		System.out.println("[objet-attaque] leek1 vie=" + l1 + "/1200 | leek2 vie=" + l2 + "/1200");
+		// Deux attaquants identiques en API objet : au moins un a infligé des dégâts.
+		Assert.assertTrue("une attaque 100% API objet doit infliger des degats (l1=" + l1 + " l2=" + l2 + ")",
+			l1 < 1200 || l2 < 1200);
 	}
 }
