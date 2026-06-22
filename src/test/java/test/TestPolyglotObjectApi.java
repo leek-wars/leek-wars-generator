@@ -75,6 +75,34 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Object dObj = evalPy(sb, "me.cell.distance(Fight.getNearestEnemy())");
 			Object dFlat = evalPy(sb, "getCellDistance(getCell(), getCell(getNearestEnemy()))");
 			Assert.assertEquals(((Number) dFlat).longValue(), ((Number) dObj).longValue());
+			// Tranche 2 : objet Weapon en Python.
+			Assert.assertEquals(((Number) evalPy(sb, "getWeaponCost(WEAPON_PISTOL)")).longValue(),
+				((Number) evalPy(sb, "Weapon(WEAPON_PISTOL).cost")).longValue());
+		}
+	}
+
+	@Test
+	public void weaponChipFieldObjects() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Weapon : stats statiques (pas besoin d'equiper l'arme), coherentes avec l'API plate.
+			Assert.assertEquals(((Number) eval(sb, "getWeaponCost(WEAPON_PISTOL);")).longValue(),
+				((Number) eval(sb, "new Weapon(WEAPON_PISTOL).cost;")).longValue());
+			Assert.assertEquals(((Number) eval(sb, "getWeaponMaxRange(WEAPON_PISTOL);")).longValue(),
+				((Number) eval(sb, "new Weapon(WEAPON_PISTOL).maxRange;")).longValue());
+			Assert.assertEquals(eval(sb, "getWeaponName(WEAPON_PISTOL);"),
+				eval(sb, "new Weapon(WEAPON_PISTOL).name;"));
+			// Chip : stats statiques.
+			Assert.assertEquals(((Number) eval(sb, "getChipCost(CHIP_LIGHTNING);")).longValue(),
+				((Number) eval(sb, "new Chip(CHIP_LIGHTNING).cost;")).longValue());
+			// Field : cellFromXY renvoie une Cell coherente.
+			Object cellObjX = eval(sb, "var c = Field.cellFromXY(0, 0); c == null ? -1 : c.id;");
+			Object cellFlat = eval(sb, "var c = getCellFromXY(0, 0); c == null ? -1 : c;");
+			Assert.assertEquals(((Number) cellFlat).longValue(), ((Number) cellObjX).longValue());
+			Assert.assertEquals(((Number) eval(sb, "getMapType();")).longValue(),
+				((Number) eval(sb, "Field.mapType;")).longValue());
+			// me.weapon / me.weapons / me.chips : ne doivent pas lever (tableaux d'objets ou null).
+			Assert.assertEquals(true, eval(sb, "Array.isArray(me.weapons) && Array.isArray(me.chips);"));
 		}
 	}
 
