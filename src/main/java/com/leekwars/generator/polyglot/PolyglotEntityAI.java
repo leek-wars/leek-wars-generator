@@ -480,6 +480,19 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "globalThis.Date=L;})();"
 		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}";
 
+	// graaljs fournit bien `console`, mais sa sortie part dans le nullOutputStream du sandbox (jetee) :
+	// une IA qui fait console.log ne verrait donc RIEN. On reroute console.* vers debug() (le log de
+	// combat, visible dans le rapport, avec ses propres limites anti-spam) -> les IA JS/TS peuvent
+	// deboguer avec le console.log familier. debug() (LeekScript) reste aussi disponible directement.
+	private static final String JS_CONSOLE_SETUP =
+		"(function(){"
+		// try/catch autour de debug() : il peut lever (ex: contexte de combat incomplet) ; on ne veut
+		// JAMAIS que console.log fasse echouer l'IA. Visible quand debug marche, silencieux sinon.
+		+ "var L=function(){try{debug(Array.prototype.map.call(arguments,String).join(' '));}catch(e){}};"
+		+ "try{globalThis.console={log:L,info:L,debug:L,warn:L,error:L};}"
+		+ "catch(e){try{console.log=L;console.info=L;console.debug=L;console.warn=L;console.error=L;}catch(e2){}}"
+		+ "})();";
+
 	/**
 	 * Neutralise les sources de non-determinisme atteignables par le guest, sinon les IA JS/Python
 	 * ne seraient pas reproductibles a partir de la seed du combat (re-simulation / verification) :
@@ -489,6 +502,7 @@ public class PolyglotEntityAI extends EntityAI {
 		if ("js".equals(languageId)) {
 			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
 			context.eval(languageId, JS_DETERMINISM_GUARD);
+			context.eval(languageId, JS_CONSOLE_SETUP);
 		} else if ("python".equals(languageId)) {
 			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
 			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
