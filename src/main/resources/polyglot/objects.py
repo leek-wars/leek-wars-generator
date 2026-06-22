@@ -139,6 +139,20 @@ class Entity:
     @property
     def chips(self): return _chps(getChips(self.id))
     @property
+    def effects(self): return getEffects(self.id)
+    @property
+    def launchedEffects(self): return getLaunchedEffects(self.id)
+    @property
+    def passiveEffects(self): return getPassiveEffects(self.id)
+    @property
+    def states(self): return getStates(self.id)
+    @property
+    def summons(self): return _ents(getSummons(self.id))
+    @property
+    def summoner(self): return _ent(getSummoner(self.id))
+    @property
+    def summoned(self): return isSummon(self.id)
+    @property
     def alive(self): return isAlive(self.id)
     @property
     def dead(self): return isDead(self.id)
@@ -161,6 +175,7 @@ class Me(Entity):
     def say(self, message): return say(message)
     def canUseWeapon(self, target): return canUseWeapon(_eid(target))
     def canUseChip(self, chip, target): return canUseChip(_cpid(chip), _eid(target))
+    def resurrect(self, target, cell): return resurrect(_eid(target), _cid(cell))
 
 
 class _Fight:
@@ -199,6 +214,14 @@ class _Field:
     def lineOfSight(self, a, b): return lineOfSight(_cid(a), _cid(b))
 
 
+class _Registers:
+    def get(self, key): return getRegister(key)
+    def set(self, key, value): return setRegister(key, value)
+    def delete(self, key): return deleteRegister(key)
+    def all(self): return getRegisters()
+
+
 Fight = _Fight()
 Field = _Field()
+Registers = _Registers()
 me = Me()

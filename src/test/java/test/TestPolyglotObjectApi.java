@@ -106,6 +106,20 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	@Test
+	public void effectsStatesSummonsRegisters() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Registers : round-trip via le namespace objet (au-dessus de set/getRegister).
+			Assert.assertEquals("hello", eval(sb, "Registers.set('k', 'hello'); Registers.get('k');"));
+			// effects / states / summons : tableaux (ne lèvent pas).
+			Assert.assertEquals(true, eval(sb,
+				"Array.isArray(me.effects) && Array.isArray(me.states) && Array.isArray(me.summons);"));
+			// summoned : booléen cohérent avec l'API plate.
+			Assert.assertEquals(eval(sb, "isSummon(getEntity());"), eval(sb, "me.summoned;"));
+		}
+	}
+
 	private void attachJsAI(Leek leek, String code) {
 		AIFile file = new AIFile("obj_" + System.nanoTime() + ".js", code,
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);

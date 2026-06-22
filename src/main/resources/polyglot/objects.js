@@ -93,6 +93,13 @@
 		get weapon() { return weap(getWeapon(this.id)); }
 		get weapons() { return weaps(getWeapons(this.id)); }
 		get chips() { return chps(getChips(this.id)); }
+		get effects() { return getEffects(this.id); }
+		get launchedEffects() { return getLaunchedEffects(this.id); }
+		get passiveEffects() { return getPassiveEffects(this.id); }
+		get states() { return getStates(this.id); }
+		get summons() { return ents(getSummons(this.id)); }
+		get summoner() { return ent(getSummoner(this.id)); }
+		get summoned() { return isSummon(this.id); }
 		get alive() { return isAlive(this.id); }
 		get dead() { return isDead(this.id); }
 		isAlly() { return isAlly(this.id); }
@@ -113,6 +120,7 @@
 		say(message) { return say(message); }
 		canUseWeapon(target) { return canUseWeapon(eid(target)); }
 		canUseChip(chip, target) { return canUseChip(cpid(chip), eid(target)); }
+		resurrect(target, cell) { return resurrect(eid(target), cid(cell)); }
 	}
 
 	// ---- Fight : entités et état global du combat ----
@@ -149,6 +157,14 @@
 		lineOfSight: function (a, b) { return lineOfSight(cid(a), cid(b)); },
 	};
 
+	// ---- Registers : stockage persistant de l'IA (clé -> valeur, entre combats) ----
+	var Registers = {
+		get: function (key) { return getRegister(key); },
+		set: function (key, value) { return setRegister(key, value); },
+		delete: function (key) { return deleteRegister(key); },
+		all: function () { return getRegisters(); },
+	};
+
 	globalThis.Cell = Cell;
 	globalThis.Entity = Entity;
 	globalThis.Weapon = Weapon;
@@ -156,4 +172,5 @@
 	globalThis.me = new Me();
 	globalThis.Fight = Fight;
 	globalThis.Field = Field;
+	globalThis.Registers = Registers;
 })();
