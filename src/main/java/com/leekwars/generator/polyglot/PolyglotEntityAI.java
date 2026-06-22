@@ -1,5 +1,7 @@
 package com.leekwars.generator.polyglot;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -493,6 +495,18 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "catch(e){try{console.log=L;console.info=L;console.debug=L;console.warn=L;console.error=L;}catch(e2){}}"
 		+ "})();";
 
+	// API de combat orientee objet (me, Entity, Cell, Fight...) : couche guest au-dessus de l'API plate,
+	// chargee une fois depuis les resources et evaluee dans chaque contexte JS apres le bridge. Style LS5.
+	private static final String JS_OBJECT_API = loadResource("/polyglot/objects.js");
+
+	private static String loadResource(String path) {
+		try (InputStream in = PolyglotEntityAI.class.getResourceAsStream(path)) {
+			return in == null ? null : new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	/**
 	 * Neutralise les sources de non-determinisme atteignables par le guest, sinon les IA JS/Python
 	 * ne seraient pas reproductibles a partir de la seed du combat (re-simulation / verification) :
@@ -503,6 +517,9 @@ public class PolyglotEntityAI extends EntityAI {
 			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
 			context.eval(languageId, JS_DETERMINISM_GUARD);
 			context.eval(languageId, JS_CONSOLE_SETUP);
+			if (JS_OBJECT_API != null) {
+				context.eval(languageId, JS_OBJECT_API);
+			}
 		} else if ("python".equals(languageId)) {
 			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
 			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
