@@ -19,6 +19,7 @@ def _cells(ids): return [Cell(i) for i in (ids or [])]
 def _weap(i): return None if i is None or i <= 0 else Weapon(i)
 def _weaps(ids): return [Weapon(i) for i in (ids or [])]
 def _chps(ids): return [Chip(i) for i in (ids or [])]
+def _cidlist(x): return [_cid(i) for i in x] if isinstance(x, list) else _cid(x)
 
 
 class Cell:
@@ -221,7 +222,23 @@ class _Registers:
     def all(self): return getRegisters()
 
 
+class _Debug:
+    def mark(self, cells, color=None, duration=None):
+        if color is None: return mark(_cidlist(cells))
+        if duration is None: return mark(_cidlist(cells), color)
+        return mark(_cidlist(cells), color, duration)
+    def markText(self, cells, text, color=None, duration=None):
+        if color is None: return markText(_cidlist(cells), text)
+        if duration is None: return markText(_cidlist(cells), text, color)
+        return markText(_cidlist(cells), text, color, duration)
+    def clearMarks(self): return clearMarks()
+    def show(self, cell, color=None):
+        return show(_cid(cell)) if color is None else show(_cid(cell), color)
+    def pause(self): return pause()
+
+
 Fight = _Fight()
 Field = _Field()
 Registers = _Registers()
+Debug = _Debug()
 me = Me()

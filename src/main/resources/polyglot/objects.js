@@ -19,6 +19,10 @@
 	function weap(id) { return (id === null || id === undefined || id <= 0) ? null : new Weapon(id); }
 	function weaps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Weapon(ids[i])); return o; }
 	function chps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Chip(ids[i])); return o; }
+	function cidList(x) {
+		if (Array.isArray(x)) { var o = []; for (var i = 0; i < x.length; i++) o.push(cid(x[i])); return o; }
+		return cid(x);
+	}
 
 	// ---- Cell : une case du terrain ----
 	class Cell {
@@ -165,6 +169,23 @@
 		all: function () { return getRegisters(); },
 	};
 
+	// ---- Debug : marquage et visualisation du terrain (aide au développement d'IA) ----
+	var Debug = {
+		mark: function (cells, color, duration) {
+			if (color === undefined) return mark(cidList(cells));
+			if (duration === undefined) return mark(cidList(cells), color);
+			return mark(cidList(cells), color, duration);
+		},
+		markText: function (cells, text, color, duration) {
+			if (color === undefined) return markText(cidList(cells), text);
+			if (duration === undefined) return markText(cidList(cells), text, color);
+			return markText(cidList(cells), text, color, duration);
+		},
+		clearMarks: function () { return clearMarks(); },
+		show: function (cell, color) { return (color === undefined) ? show(cid(cell)) : show(cid(cell), color); },
+		pause: function () { return pause(); },
+	};
+
 	globalThis.Cell = Cell;
 	globalThis.Entity = Entity;
 	globalThis.Weapon = Weapon;
@@ -173,4 +194,5 @@
 	globalThis.Fight = Fight;
 	globalThis.Field = Field;
 	globalThis.Registers = Registers;
+	globalThis.Debug = Debug;
 })();

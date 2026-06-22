@@ -144,6 +144,17 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	@Test
+	public void debugMarkingDoesNotThrow() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Debug.mark accepte une Cell, un id, ou un tableau de Cells ; renvoie un bool.
+			Assert.assertEquals(true, eval(sb,
+				"Debug.mark(me.cell); Debug.mark([me.cell, Fight.getNearestEnemy().cell], 0xff0000, 2);"
+				+ "Debug.markText(me.cell, 'ici'); Debug.clearMarks(); true;"));
+		}
+	}
+
 	private void attachJsAI(Leek leek, String code) {
 		AIFile file = new AIFile("obj_" + System.nanoTime() + ".js", code,
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
