@@ -136,10 +136,23 @@ public class PolyglotEntityAI extends EntityAI {
 		if (lower.endsWith(".js") || lower.endsWith(".mjs")) {
 			return "js";
 		}
+		// TypeScript : pas de moteur guest "ts" -> transpile en JS au build, execute par le moteur js.
+		if (isTypeScript(path)) {
+			return "js";
+		}
 		if (lower.endsWith(".py")) {
 			return "python";
 		}
 		return null;
+	}
+
+	/** true si le fichier est du TypeScript (a transpiler en JS avant execution). */
+	public static boolean isTypeScript(String path) {
+		if (path == null) {
+			return false;
+		}
+		String lower = path.toLowerCase();
+		return lower.endsWith(".ts") || lower.endsWith(".mts");
 	}
 
 	/** Probleme de syntaxe d'une IA polyglot : message + localisation (lignes 1-based, colonnes 0-based,
@@ -163,6 +176,25 @@ public class PolyglotEntityAI extends EntityAI {
 						loc.getEndLine(), Math.max(0, loc.getEndColumn() - 1));
 			}
 			return new SyntaxProblem(msg, 1, 0, 1, 0); // localisation inconnue -> debut du fichier
+		}
+		/**
+		 * Probleme localise par un offset caractere dans le source (convention des diagnostics tsc).
+		 * On derive ligne (1-based) / colonne (0-based) en parcourant le source. start &lt; 0 -&gt; debut.
+		 */
+		static SyntaxProblem atOffset(String source, String message, int start, int length) {
+			if (start < 0 || source == null) {
+				return new SyntaxProblem(message, 1, 0, 1, 0);
+			}
+			int line = 1, col = 0;
+			int max = source.length();
+			for (int i = 0; i < start && i < max; i++) {
+				if (source.charAt(i) == '\n') { line++; col = 0; } else { col++; }
+			}
+			int endLine = line, endCol = col;
+			for (int i = start; i < start + length && i < max; i++) {
+				if (source.charAt(i) == '\n') { endLine++; endCol = 0; } else { endCol++; }
+			}
+			return new SyntaxProblem(message, line, col, endLine, endCol);
 		}
 	}
 
@@ -208,15 +240,28 @@ public class PolyglotEntityAI extends EntityAI {
 			// pour que les import/require de l'IA resolvent leurs voisins, en lecture seule.
 			PolyglotFileSystem fs = buildFileSystem(file, languageId);
 
-			// Validation syntaxique au build (parite avec LeekScript). Une erreur de parse vient du code
-			// joueur -> IA invalide (erreur utilisateur), jamais le chemin "erreur serveur" du catch externe.
-			SyntaxProblem problem = validateSyntax(languageId, file.getCode(), sandbox);
-			if (problem != null) {
-				((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { problem.message });
-				return new EntityAI(entity, (LeekLog) entity.getLogs());
+			String source = file.getCode();
+			if (isTypeScript(file.getPath())) {
+				// TypeScript : on efface les types au build ; l'artefact JS repart dans le pipeline
+				// polyglot identique (memes gardes). Les diagnostics tsc = erreur joueur -> IA invalide.
+				TypeScriptTranspiler.Result tr = TypeScriptTranspiler.transpile(source, file.getPath());
+				if (!tr.ok()) {
+					SyntaxProblem p = tr.firstDiagnostic();
+					((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { p.message });
+					return new EntityAI(entity, (LeekLog) entity.getLogs());
+				}
+				source = tr.js;
+			} else {
+				// Validation syntaxique au build (parite avec LeekScript). Une erreur de parse vient du code
+				// joueur -> IA invalide (erreur utilisateur), jamais le chemin "erreur serveur" du catch externe.
+				SyntaxProblem problem = validateSyntax(languageId, source, sandbox);
+				if (problem != null) {
+					((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { problem.message });
+					return new EntityAI(entity, (LeekLog) entity.getLogs());
+				}
 			}
 
-			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, file.getCode(), file.getPath(), fs, sandbox);
+			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, source, file.getPath(), fs, sandbox);
 			ai.setEntity(entity);
 			ai.setLogs((LeekLog) entity.getLogs());
 			return ai;
