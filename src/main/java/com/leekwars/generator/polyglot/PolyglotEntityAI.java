@@ -498,6 +498,7 @@ public class PolyglotEntityAI extends EntityAI {
 	// API de combat orientee objet (me, Entity, Cell, Fight...) : couche guest au-dessus de l'API plate,
 	// chargee une fois depuis les resources et evaluee dans chaque contexte JS apres le bridge. Style LS5.
 	private static final String JS_OBJECT_API = loadResource("/polyglot/objects.js");
+	private static final String PY_OBJECT_API = loadResource("/polyglot/objects.py");
 
 	private static String loadResource(String path) {
 		try (InputStream in = PolyglotEntityAI.class.getResourceAsStream(path)) {
@@ -524,6 +525,9 @@ public class PolyglotEntityAI extends EntityAI {
 			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
 			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
 			context.eval(languageId, pythonDeterminismGuard(seed));
+			if (PY_OBJECT_API != null) {
+				context.eval(languageId, PY_OBJECT_API);
+			}
 		}
 	}
 

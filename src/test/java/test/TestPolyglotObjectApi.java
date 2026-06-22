@@ -57,6 +57,27 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	private Object evalPy(PolyglotSandbox sb, String expr) throws Exception {
+		PolyglotEntityAI ai = new PolyglotEntityAI("python", "def turn():\n    return " + expr + "\n", sb);
+		ai.setEntity(leek1);
+		ai.setLogs(new LeekLog(farmerLog, leek1));
+		ai.setFight(fight);
+		return ai.runIA();
+	}
+
+	@Test
+	public void pythonObjectPropertiesReadState() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals((long) leek1.getLife(), ((Number) evalPy(sb, "me.life")).longValue());
+			Assert.assertEquals((long) leek1.getStat(Entity.STAT_STRENGTH), ((Number) evalPy(sb, "me.strength")).longValue());
+			Assert.assertEquals((long) leek2.getFId(), ((Number) evalPy(sb, "Fight.getNearestEnemy().id")).longValue());
+			Object dObj = evalPy(sb, "me.cell.distance(Fight.getNearestEnemy())");
+			Object dFlat = evalPy(sb, "getCellDistance(getCell(), getCell(getNearestEnemy()))");
+			Assert.assertEquals(((Number) dFlat).longValue(), ((Number) dObj).longValue());
+		}
+	}
+
 	private void attachJsAI(Leek leek, String code) {
 		AIFile file = new AIFile("obj_" + System.nanoTime() + ".js", code,
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
