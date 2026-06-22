@@ -1,10 +1,13 @@
 package com.leekwars.generator.polyglot;
 
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.graalvm.polyglot.Context;
@@ -261,7 +264,9 @@ public class PolyglotEntityAI extends EntityAI {
 				}
 			}
 
-			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, source, file.getPath(), fs, sandbox);
+			// TS : l'entree est importee via son alias .js/.mjs (graaljs charge un module par extension).
+			String entryPath = isTypeScript(file.getPath()) ? tsAlias(file.getPath()) : file.getPath();
+			PolyglotEntityAI ai = new PolyglotEntityAI(languageId, source, entryPath, fs, sandbox);
 			ai.setEntity(entity);
 			ai.setLogs((LeekLog) entity.getLogs());
 			return ai;
@@ -288,34 +293,81 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 		}
 		final Path pass = passthrough;
-		Set<String> paths = new HashSet<>();
-		paths.add(entry.getPath());
+
+		// Enumere les fichiers du joueur + lecture paresseuse (chemin LeekScript -> contenu).
+		Set<String> realPaths = new HashSet<>();
+		realPaths.add(entry.getPath());
+		Function<String, String> rawRead;
 		try {
 			var lfs = LeekScript.getFileSystem();
 			int owner = entry.getOwner();
 			var root = lfs.getRoot(owner);
 			for (AIFile f : lfs.listAllFiles(owner)) {
-				paths.add(f.getPath());
+				realPaths.add(f.getPath());
 			}
-			return new PolyglotFileSystem(paths, path -> {
+			rawRead = path -> {
 				try {
 					AIFile f = root.resolve(path);
 					return f != null ? f.getCode() : null;
 				} catch (Exception e) {
 					return null;
 				}
-			}, pass);
+			};
 		} catch (Exception e) {
 			// Enumeration impossible (FS sans listing, owner inconnu...) : on retombe sur le seul
 			// fichier d'entree (mono-fichier). Jamais une erreur serveur pour autant.
-			return new PolyglotFileSystem(Set.of(entry.getPath()), path -> {
+			realPaths.clear();
+			realPaths.add(entry.getPath());
+			rawRead = path -> {
 				try {
 					return entry.getPath().equals(path) ? entry.getCode() : null;
 				} catch (Exception ex) {
 					return null;
 				}
-			}, pass);
+			};
 		}
+
+		if (!isTypeScript(entry.getPath())) {
+			return new PolyglotFileSystem(realPaths, rawRead, pass);
+		}
+
+		// TypeScript multi-fichiers : on transpile chaque .ts/.mts a la lecture, et on expose un alias
+		// .js/.mjs pour chaque .ts/.mts (l'usage TS importe en .js/.mjs meme quand le voisin est en .ts).
+		// L'import extensionless n'est pas supporte (comme Node ESM) : utiliser une extension explicite.
+		final Map<String, String> aliasToReal = new HashMap<>();
+		Set<String> mounted = new HashSet<>(realPaths);
+		for (String p : realPaths) {
+			String alias = tsAlias(p);
+			if (alias != null && !realPaths.contains(alias)) {
+				mounted.add(alias);
+				aliasToReal.put(alias, p);
+			}
+		}
+		final Function<String, String> baseRead = rawRead;
+		Function<String, String> tsRead = path -> {
+			String real = aliasToReal.getOrDefault(path, path);
+			String code = baseRead.apply(real);
+			if (code == null) {
+				return null;
+			}
+			return isTypeScript(real) ? TypeScriptTranspiler.transpile(code, real).js : code;
+		};
+		return new PolyglotFileSystem(mounted, tsRead, pass);
+	}
+
+	/** Alias module JS d'un fichier TS : foo.ts -&gt; foo.js, foo.mts -&gt; foo.mjs ; null si pas du TS. */
+	private static String tsAlias(String path) {
+		if (path == null) {
+			return null;
+		}
+		String lower = path.toLowerCase();
+		if (lower.endsWith(".mts")) {
+			return path.substring(0, path.length() - 4) + ".mjs";
+		}
+		if (lower.endsWith(".ts")) {
+			return path.substring(0, path.length() - 3) + ".js";
+		}
+		return null;
 	}
 
 	private void ensureContext() {
