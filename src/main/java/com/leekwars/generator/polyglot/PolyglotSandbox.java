@@ -44,6 +44,7 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	private final Engine engine;
 	private final ResourceLimits limits;
+	private final StatementCounter.Counter statementCounter;
 	private final List<Context> contexts = Collections.synchronizedList(new ArrayList<>());
 
 	public PolyglotSandbox(String... languages) {
@@ -53,9 +54,27 @@ public class PolyglotSandbox implements AutoCloseable {
 	public PolyglotSandbox(long statementLimit, String... languages) {
 		String[] permitted = languages.length == 0 ? new String[] { "js" } : languages;
 		this.engine = Engine.newBuilder(permitted).build();
+		// Compteur de statements guest DETERMINISTE (cf StatementCounter) : le lookup ACTIVE l'instrument
+		// sur cet engine. Sert a PolyglotEntityAI.getOperations() (operations reproductibles). null si
+		// l'instrument est indisponible -> degradation gracieuse (pas de terme synthetique).
+		StatementCounter.Counter counter = null;
+		try {
+			var instrument = engine.getInstruments().get(StatementCounter.ID);
+			if (instrument != null) {
+				counter = instrument.lookup(StatementCounter.Counter.class);
+			}
+		} catch (Exception ignore) {
+			// best effort
+		}
+		this.statementCounter = counter;
 		this.limits = ResourceLimits.newBuilder()
 				.statementLimit(statementLimit, null)
 				.build();
+	}
+
+	/** Compteur de statements guest (deterministe) de cet engine, ou null s'il est indisponible. */
+	public StatementCounter.Counter getStatementCounter() {
+		return statementCounter;
 	}
 
 	/** Racine de la stdlib GraalPy (decouverte une fois, mise en cache). */

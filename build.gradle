@@ -54,4 +54,9 @@ dependencies {
 	implementation 'org.graalvm.polyglot:js-community:25.0.2'
 	// GraalPy (Python). Lourd (~150 Mo, stdlib embarquee) -> phase 2.
 	implementation 'org.graalvm.polyglot:python-community:25.0.2'
+	// Instrumentation Truffle : compteur de statements guest DETERMINISTE (cf StatementCounter), pour
+	// des combats polyglot reproductibles. truffle-api est deja transitif au runtime -> compileOnly ici ;
+	// le processor genere le provider d'instrument (decouverte via engine.getInstruments()).
+	compileOnly 'org.graalvm.truffle:truffle-api:25.0.2'
+	annotationProcessor 'org.graalvm.truffle:truffle-dsl-processor:25.0.2'
 }

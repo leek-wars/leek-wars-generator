@@ -103,6 +103,9 @@ public class PolyglotEntityAI extends EntityAI {
 	// Budget temps (ns) au bout duquel le compteur synthetique atteint getMaxOperations(). Derive de
 	// turnWallClockLimitMs (recalcule dans le setter) ; pre-calcule car getOperations() est sur le hot path.
 	private long opsBudgetNanos = (long) (DEFAULT_TURN_WALL_CLOCK_LIMIT_MS * 1_000_000L * OPS_TIME_BUDGET_FRACTION);
+	// Compteur de statements guest DETERMINISTE (cf StatementCounter) : terme d'operations reproductible
+	// pour getOperations(). null si l'instrument est indisponible -> fallback temps-based (non reproductible).
+	private final StatementCounter.Counter statementCounter;
 
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
@@ -115,6 +118,7 @@ public class PolyglotEntityAI extends EntityAI {
 		this.entryPath = entryPath;
 		this.fileSystem = fileSystem;
 		this.sandbox = sandbox;
+		this.statementCounter = sandbox != null ? sandbox.getStatementCounter() : null;
 		this.jsModule = entryPath != null && usesEsModules(languageId, source);
 		this.valid = true;
 	}
@@ -529,7 +533,10 @@ public class PolyglotEntityAI extends EntityAI {
 		if (disabled) {
 			return null; // IA neutralisee (trop de depassements wall-clock) : n'agit plus, ne consomme plus.
 		}
-		turnStartNanos = System.nanoTime(); // base du compteur d'operations synthetique (cf getOperations)
+		turnStartNanos = System.nanoTime(); // base du compteur d'ops temps-based (fallback, cf getOperations)
+		if (statementCounter != null) {
+			statementCounter.reset(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
+		}
 		ensureContext();
 		// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 		// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
@@ -657,6 +664,14 @@ public class PolyglotEntityAI extends EntityAI {
 	@Override
 	public long getOperations() {
 		long real = super.getOperations();
+		// Terme DETERMINISTE : nombre de statements guest executes ce tour. Reproductible (meme code +
+		// memes entrees -> meme compte), donc les IA de recherche qui se bornent sur getOperations()
+		// redeviennent bit-reproductibles (replays fiables, arene classee).
+		if (statementCounter != null) {
+			return real + statementCounter.get();
+		}
+		// Fallback (instrument indisponible) : terme proportionnel au TEMPS ecoule -> NON reproductible,
+		// mais evite que l'IA sature le backstop wall-clock faute de signal d'ops.
 		if (turnStartNanos == 0 || opsBudgetNanos <= 0) {
 			return real;
 		}
