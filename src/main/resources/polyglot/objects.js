@@ -51,7 +51,7 @@
 		get maxUses() { return getWeaponMaxUses(this.id); }
 		get inline() { return isInlineWeapon(this.id); }
 		needLos() { return weaponNeedLos(this.id); }
-		effects() { return getWeaponEffects(this.id); }
+		effects() { return feats(getWeaponEffects(this.id)); }
 	}
 
 	// ---- Chip : une puce (stats) ----
@@ -70,8 +70,37 @@
 		get maxUses() { return getChipMaxUses(this.id); }
 		get inline() { return isInlineChip(this.id); }
 		needLos() { return chipNeedLos(this.id); }
-		effects() { return getChipEffects(this.id); }
+		effects() { return feats(getChipEffects(this.id)); }
 	}
+
+	// ---- Effect : un effet ACTIF/lancé sur une entité (vue nommée du tableau brut) ----
+	// Tableau brut = [type, value, caster, turns, critical, item, target, modifiers].
+	class Effect {
+		constructor(raw) { this.raw = raw; }
+		get type() { return this.raw[0]; }
+		get value() { return this.raw[1]; }
+		get caster() { return ent(this.raw[2]); }
+		get turns() { return this.raw[3]; }
+		get critical() { return this.raw[4]; }
+		get item() { return this.raw[5]; }
+		get target() { return ent(this.raw[6]); }
+		get modifiers() { return this.raw[7]; }
+	}
+
+	// ---- EffectTemplate : un effet DÉCLARÉ par une arme/puce ou un effet passif (potentiel, pas encore appliqué) ----
+	// Tableau brut = [type, minValue, maxValue, turns, targets, modifiers].
+	class EffectTemplate {
+		constructor(raw) { this.raw = raw; }
+		get type() { return this.raw[0]; }
+		get minValue() { return this.raw[1]; }
+		get maxValue() { return this.raw[2]; }
+		get turns() { return this.raw[3]; }
+		get targets() { return this.raw[4]; }
+		get modifiers() { return this.raw[5]; }
+	}
+
+	function effs(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new Effect(arr[i])); return o; }
+	function feats(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new EffectTemplate(arr[i])); return o; }
 
 	// ---- Entity : n'importe quelle entité (lecture d'état) ----
 	class Entity {
@@ -97,9 +126,9 @@
 		get weapon() { return weap(getWeapon(this.id)); }
 		get weapons() { return weaps(getWeapons(this.id)); }
 		get chips() { return chps(getChips(this.id)); }
-		get effects() { return getEffects(this.id); }
-		get launchedEffects() { return getLaunchedEffects(this.id); }
-		get passiveEffects() { return getPassiveEffects(this.id); }
+		get effects() { return effs(getEffects(this.id)); }
+		get launchedEffects() { return effs(getLaunchedEffects(this.id)); }
+		get passiveEffects() { return feats(getPassiveEffects(this.id)); }
 		get states() { return getStates(this.id); }
 		get summons() { return ents(getSummons(this.id)); }
 		get summoner() { return ent(getSummoner(this.id)); }
@@ -190,6 +219,8 @@
 	globalThis.Entity = Entity;
 	globalThis.Weapon = Weapon;
 	globalThis.Chip = Chip;
+	globalThis.Effect = Effect;
+	globalThis.EffectTemplate = EffectTemplate;
 	globalThis.me = new Me();
 	globalThis.Fight = Fight;
 	globalThis.Field = Field;

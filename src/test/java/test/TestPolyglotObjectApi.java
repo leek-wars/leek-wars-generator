@@ -144,6 +144,79 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Effets DÉCLARÉS d'une arme/puce -> objets EffectTemplate ([type, minValue, maxValue, turns,
+	 * targets, modifiers]). Statique (pas de combat), cohérent avec l'API plate getWeaponEffects/
+	 * getChipEffects. JS + Python.
+	 */
+	@Test
+	public void effectTemplatesWrapWeaponAndChip() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// JS : Weapon.effects()[i] est un EffectTemplate dont type/minValue/maxValue == tableau brut.
+			Object js = eval(sb,
+				"(function(){"
+				+ "  var raw = getWeaponEffects(WEAPON_PISTOL);"
+				+ "  var o = new Weapon(WEAPON_PISTOL).effects();"
+				+ "  if (o.length !== raw.length) return 'len';"
+				+ "  if (o.length === 0) return 'empty';"
+				+ "  if (!(o[0] instanceof EffectTemplate)) return 'class';"
+				+ "  if (o[0].type !== raw[0][0]) return 'type';"
+				+ "  if (o[0].minValue !== raw[0][1]) return 'min';"
+				+ "  if (o[0].maxValue !== raw[0][2]) return 'max';"
+				+ "  return 'ok:' + o.length;"
+				+ "})();");
+			Assert.assertTrue("EffectTemplate JS incohérent: " + js, String.valueOf(js).startsWith("ok:"));
+			// Chip : même structure.
+			Assert.assertEquals(((Number) eval(sb, "getChipEffects(CHIP_LIGHTNING).length;")).longValue(),
+				((Number) eval(sb, "new Chip(CHIP_LIGHTNING).effects().length;")).longValue());
+			// Python : Weapon(WEAPON_PISTOL).effects()[0].type == getWeaponEffects(WEAPON_PISTOL)[0][0].
+			Assert.assertEquals(
+				((Number) evalPy(sb, "getWeaponEffects(WEAPON_PISTOL)[0][0]")).longValue(),
+				((Number) evalPy(sb, "Weapon(WEAPON_PISTOL).effects()[0].type")).longValue());
+		}
+	}
+
+	/**
+	 * Effets ACTIFS sur une entité -> objets Effect ([type, value, caster, turns, critical, item,
+	 * target, modifiers]). Dans un vrai combat, l'IA s'auto-buffe (CHIP_PROTEIN sur elle-même) puis lit
+	 * me.effects : le 1er effet doit être un Effect dont le caster est l'entité elle-même.
+	 */
+	@Test
+	public void activeEffectsWrapAfterSelfBuff() throws Exception {
+		String ai =
+			"function turn() {"
+			+ "  if (!getRegister('done')) {"
+			+ "    useChip(CHIP_PROTEIN, getEntity());"
+			+ "    var es = me.effects;"
+			+ "    setRegister('count', '' + es.length);"
+			+ "    if (es.length > 0) {"
+			+ "      setRegister('isEffect', es[0] instanceof Effect ? '1' : '0');"
+			+ "      setRegister('etype', '' + es[0].type);"
+			+ "      setRegister('ecaster', '' + (es[0].caster == null ? -1 : es[0].caster.id));"
+			+ "    }"
+			+ "    setRegister('done', '1');"
+			+ "  }"
+			+ "  var e = Fight.getNearestEnemy();"
+			+ "  if (e == null) return;"
+			+ "  var ws = me.weapons; if (ws.length > 0) me.setWeapon(ws[0]);"
+			+ "  me.moveToward(e);"
+			+ "  while (me.canUseWeapon(e)) { if (me.useWeapon(e) <= 0) break; }"
+			+ "}";
+		attachJsAI(leek1, ai);
+		attachJsAI(leek2, ai);
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		int count = Integer.parseInt(leek1.getRegister("count"));
+		System.out.println("[objet-effet] leek1 me.effects.length apres auto-buff = " + count
+			+ " type=" + leek1.getRegister("etype") + " caster=" + leek1.getRegister("ecaster"));
+		Assert.assertTrue("l'auto-buff doit produire au moins un effet actif (count=" + count + ")", count >= 1);
+		Assert.assertEquals("le 1er effet doit etre un objet Effect", "1", leek1.getRegister("isEffect"));
+		Assert.assertEquals("le caster de l'effet d'auto-buff doit etre l'entite elle-meme",
+			String.valueOf(leek1.getFId()), leek1.getRegister("ecaster"));
+	}
+
 	@Test
 	public void debugMarkingDoesNotThrow() throws Exception {
 		initFightOnly();

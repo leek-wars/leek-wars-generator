@@ -62,7 +62,7 @@ class Weapon:
     @property
     def inline(self): return isInlineWeapon(self.id)
     def needLos(self): return weaponNeedLos(self.id)
-    def effects(self): return getWeaponEffects(self.id)
+    def effects(self): return _feats(getWeaponEffects(self.id))
 
 
 class Chip:
@@ -92,7 +92,49 @@ class Chip:
     @property
     def inline(self): return isInlineChip(self.id)
     def needLos(self): return chipNeedLos(self.id)
-    def effects(self): return getChipEffects(self.id)
+    def effects(self): return _feats(getChipEffects(self.id))
+
+
+# Effet ACTIF/lancé : [type, value, caster, turns, critical, item, target, modifiers]
+class Effect:
+    def __init__(self, raw): self.raw = raw
+    @property
+    def type(self): return self.raw[0]
+    @property
+    def value(self): return self.raw[1]
+    @property
+    def caster(self): return _ent(self.raw[2])
+    @property
+    def turns(self): return self.raw[3]
+    @property
+    def critical(self): return self.raw[4]
+    @property
+    def item(self): return self.raw[5]
+    @property
+    def target(self): return _ent(self.raw[6])
+    @property
+    def modifiers(self): return self.raw[7]
+
+
+# Effet DÉCLARÉ par une arme/puce ou effet passif : [type, minValue, maxValue, turns, targets, modifiers]
+class EffectTemplate:
+    def __init__(self, raw): self.raw = raw
+    @property
+    def type(self): return self.raw[0]
+    @property
+    def minValue(self): return self.raw[1]
+    @property
+    def maxValue(self): return self.raw[2]
+    @property
+    def turns(self): return self.raw[3]
+    @property
+    def targets(self): return self.raw[4]
+    @property
+    def modifiers(self): return self.raw[5]
+
+
+def _effs(arr): return [Effect(e) for e in (arr or [])]
+def _feats(arr): return [EffectTemplate(e) for e in (arr or [])]
 
 
 class Entity:
@@ -140,11 +182,11 @@ class Entity:
     @property
     def chips(self): return _chps(getChips(self.id))
     @property
-    def effects(self): return getEffects(self.id)
+    def effects(self): return _effs(getEffects(self.id))
     @property
-    def launchedEffects(self): return getLaunchedEffects(self.id)
+    def launchedEffects(self): return _effs(getLaunchedEffects(self.id))
     @property
-    def passiveEffects(self): return getPassiveEffects(self.id)
+    def passiveEffects(self): return _feats(getPassiveEffects(self.id))
     @property
     def states(self): return getStates(self.id)
     @property
