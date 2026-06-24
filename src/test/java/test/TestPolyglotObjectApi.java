@@ -290,4 +290,129 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		Assert.assertTrue("une attaque 100% API objet doit infliger des degats (l1=" + l1 + " l2=" + l2 + ")",
 			l1 < 1200 || l2 < 1200);
 	}
+
+	private void attachPyAI(Leek leek, String code) {
+		AIFile file = new AIFile("obj_" + System.nanoTime() + ".py", code,
+			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
+		leek.setAIFile(file);
+		leek.setLogs(new LeekLog(farmerLog, leek));
+		leek.setFight(fight);
+		leek.setBirthTurn(1);
+	}
+
+	// ---- me.summon : le callback guest est rejoué par BulbAI à chaque tour du bulbe (mEntity de l'IA
+	// invocatrice rebasculé sur le bulbe). Pendant ce tour, me / getEntity() doivent désigner le BULBE.
+	// Verrou 1 = TypeMarshaller wrappe la fonction guest en FunctionLeekValue ; verrou 2 = me.id dynamique.
+	// Les registres d'un summon sont redirigés vers son invocateur, donc leek1.getRegister voit le callback.
+
+	@Test
+	public void summonedBulbIsMeDuringItsTurn() throws Exception {
+		String ai =
+			"function turn() {"
+			+ "  if (!getRegister('summoned')) {"
+			+ "    setRegister('ownerId', '' + me.id);"
+			+ "    var cb = function() {"
+			+ "      setRegister('bulbMeId', '' + me.id);"
+			+ "      setRegister('bulbGetEntity', '' + getEntity());"
+			+ "      setRegister('bulbIsSummon', me.summoned ? '1' : '0');"
+			+ "    };"
+			+ "    var c = me.cell;"
+			+ "    var cands = [Field.cellFromXY(c.x + 1, c.y), Field.cellFromXY(c.x - 1, c.y),"
+			+ "                 Field.cellFromXY(c.x, c.y + 1), Field.cellFromXY(c.x, c.y - 1)];"
+			+ "    var r = -99;"
+			+ "    for (var i = 0; i < cands.length; i++) {"
+			+ "      if (cands[i] != null && cands[i].empty) { r = me.summon(CHIP_PUNY_BULB, cands[i], cb); if (r > 0) break; }"
+			+ "    }"
+			+ "    setRegister('summonResult', '' + r);"
+			+ "    setRegister('summoned', '1');"
+			+ "  }"
+			+ "}";
+		attachJsAI(leek1, ai);
+		attachJsAI(leek2, "function turn() {}");
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		String summonResult = leek1.getRegister("summonResult");
+		String ownerId = leek1.getRegister("ownerId");
+		String bulbMeId = leek1.getRegister("bulbMeId");
+		System.out.println("[summon-js] result=" + summonResult + " ownerId=" + ownerId + " bulbMeId=" + bulbMeId
+			+ " bulbGetEntity=" + leek1.getRegister("bulbGetEntity") + " isSummon=" + leek1.getRegister("bulbIsSummon"));
+		Assert.assertNotNull("me.summon doit reussir (verrou 1) et le callback du bulbe s'executer (resultat="
+			+ summonResult + ")", bulbMeId);
+		Assert.assertEquals("me.id pendant le tour du bulbe doit egaler getEntity()",
+			leek1.getRegister("bulbGetEntity"), bulbMeId);
+		Assert.assertNotEquals("me pendant le tour du bulbe doit etre le bulbe, pas l'invocateur (verrou 2)",
+			ownerId, bulbMeId);
+		Assert.assertEquals("me.summoned doit etre vrai pendant le tour du bulbe", "1", leek1.getRegister("bulbIsSummon"));
+	}
+
+	@Test
+	public void summonedBulbIsMeDuringItsTurnPython() throws Exception {
+		String ai =
+			"def turn():\n"
+			+ "    if not getRegister('summoned'):\n"
+			+ "        setRegister('ownerId', str(me.id))\n"
+			+ "        def cb():\n"
+			+ "            setRegister('bulbMeId', str(me.id))\n"
+			+ "            setRegister('bulbGetEntity', str(getEntity()))\n"
+			+ "            setRegister('bulbIsSummon', '1' if me.summoned else '0')\n"
+			+ "        c = me.cell\n"
+			+ "        cands = [Field.cellFromXY(c.x + 1, c.y), Field.cellFromXY(c.x - 1, c.y), Field.cellFromXY(c.x, c.y + 1), Field.cellFromXY(c.x, c.y - 1)]\n"
+			+ "        r = -99\n"
+			+ "        for cand in cands:\n"
+			+ "            if cand is not None and cand.empty:\n"
+			+ "                r = me.summon(CHIP_PUNY_BULB, cand, cb)\n"
+			+ "                if r > 0:\n"
+			+ "                    break\n"
+			+ "        setRegister('summonResult', str(r))\n"
+			+ "        setRegister('summoned', '1')\n";
+		attachPyAI(leek1, ai);
+		attachPyAI(leek2, "def turn():\n    pass\n");
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		String ownerId = leek1.getRegister("ownerId");
+		String bulbMeId = leek1.getRegister("bulbMeId");
+		System.out.println("[summon-py] result=" + leek1.getRegister("summonResult") + " ownerId=" + ownerId
+			+ " bulbMeId=" + bulbMeId + " isSummon=" + leek1.getRegister("bulbIsSummon"));
+		Assert.assertNotNull("me.summon Python doit reussir et le callback du bulbe s'executer", bulbMeId);
+		Assert.assertEquals("me.id (Python) pendant le tour du bulbe doit egaler getEntity()",
+			leek1.getRegister("bulbGetEntity"), bulbMeId);
+		Assert.assertNotEquals("me (Python) pendant le tour du bulbe doit etre le bulbe, pas l'invocateur",
+			ownerId, bulbMeId);
+		Assert.assertEquals("me.summoned (Python) doit etre vrai pendant le tour du bulbe", "1",
+			leek1.getRegister("bulbIsSummon"));
+	}
+
+	/**
+	 * Une erreur dans le callback du bulbe est mappee en erreur d'IA (AI_INTERRUPTED via mapException),
+	 * PAS en exception serveur, et n'empoisonne pas le contexte de l'invocateur : l'invocateur continue
+	 * d'agir tour apres tour. Couvre le routage des exceptions guest par runGuestCallback.
+	 */
+	@Test
+	public void summonCallbackErrorIsGracefulForOwner() throws Exception {
+		String ai =
+			"function turn() {"
+			+ "  if (!getRegister('summoned')) {"
+			+ "    var cb = function() { throw new Error('boum du bulbe'); };"
+			+ "    var c = me.cell;"
+			+ "    var cands = [Field.cellFromXY(c.x + 1, c.y), Field.cellFromXY(c.x - 1, c.y),"
+			+ "                 Field.cellFromXY(c.x, c.y + 1), Field.cellFromXY(c.x, c.y - 1)];"
+			+ "    for (var i = 0; i < cands.length; i++) {"
+			+ "      if (cands[i] != null && cands[i].empty && me.summon(CHIP_PUNY_BULB, cands[i], cb) > 0) break;"
+			+ "    }"
+			+ "    setRegister('summoned', '1');"
+			+ "  }"
+			+ "  setRegister('ownerTurns', '' + (parseInt(getRegister('ownerTurns') || '0', 10) + 1));"
+			+ "}";
+		attachJsAI(leek1, ai);
+		attachJsAI(leek2, "function turn() {}");
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		int ownerTurns = Integer.parseInt(leek1.getRegister("ownerTurns"));
+		System.out.println("[summon-erreur] ownerTurns=" + ownerTurns);
+		Assert.assertTrue("l'invocateur doit survivre a un callback de bulbe qui leve (ownerTurns=" + ownerTurns + ")",
+			ownerTurns >= 2);
+	}
 }

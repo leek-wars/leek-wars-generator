@@ -12,6 +12,7 @@ import leekscript.common.Error;
 import leekscript.runner.AI;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
+import leekscript.runner.values.FunctionLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.GenericMapLeekValue;
 import leekscript.runner.values.MapLeekValue;
@@ -66,6 +67,13 @@ public final class TypeMarshaller {
 		if (target == String.class) {
 			return v.isString() ? v.asString() : v.toString();
 		}
+		// Fonction guest -> FunctionLeekValue. Unique cas : le callback de summon (seule fonction de combat
+		// a parametre Type.FUNCTION). On enveloppe la Value executable dans un FunctionLeekValue rejouable
+		// par BulbAI a chaque tour du bulbe (cf wrapGuestFunction + PolyglotEntityAI.runGuestCallback).
+		if (FunctionLeekValue.class.isAssignableFrom(target)) {
+			// Non executable -> null : ChipClass.summon renvoie -1 (degradation gracieuse, pas d'exception).
+			return v.canExecute() ? wrapGuestFunction(v, ai) : null;
+		}
 		// Collections : le marshalling peut lever (ops/RAM/profondeur). Appele depuis le
 		// ProxyExecutable qui n'autorise pas d'exception checkee -> on encapsule
 		// (deballee par PolyglotEntityAI.mapException via isHostException()).
@@ -80,6 +88,50 @@ public final class TypeMarshaller {
 		} catch (LeekRunException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Enveloppe une fonction guest (Value executable JS/Python) dans un {@link FunctionLeekValue} rejouable.
+	 * Seul {@code summon} attend ce type. BulbAI rejoue le callback a chaque tour du bulbe via
+	 * {@code run(mOwnerAI, null, args)} ; on route l'execution par
+	 * {@link PolyglotEntityAI#runGuestCallback} (memes gardes qu'un tour normal : statement reset,
+	 * wall-clock, mapException). La Value est conservee, liee au contexte de l'invocateur.
+	 *
+	 * @param fn    la fonction guest a rejouer.
+	 * @param owner l'IA invocatrice ; son contexte porte {@code fn} et fournit les gardes.
+	 */
+	public static FunctionLeekValue<Object> wrapGuestFunction(Value fn, AI owner) {
+		final PolyglotEntityAI polyglotOwner = (owner instanceof PolyglotEntityAI) ? (PolyglotEntityAI) owner : null;
+		// parametersCount = 0 : le callback de summon est appele sans argument (BulbAI borne argCount a
+		// getArgumentsCount()==-1?0 et passe un Object[] de nulls). Cf BulbAI.runIA.
+		return new FunctionLeekValue<Object>(0, "#guestSummonCallback") {
+			@Override
+			public Object run(AI ai, Object thiz, Object... values) throws LeekRunException {
+				Object[] guestArgs = null;
+				if (values != null && values.length > 0) {
+					guestArgs = new Object[values.length];
+					for (int i = 0; i < values.length; i++) {
+						guestArgs[i] = toGuest(values[i]); // Java LeekValue -> vue guest
+					}
+				}
+				if (polyglotOwner != null) {
+					return polyglotOwner.runGuestCallback(fn, guestArgs);
+				}
+				// Inatteignable (une fonction guest ne peut venir que d'un contexte polyglot) : execution
+				// non gardee en dernier recours, en deballant une eventuelle LeekRunException encapsulee.
+				try {
+					Value result = (guestArgs == null) ? fn.execute() : fn.execute(guestArgs);
+					return toJava(result, ai);
+				} catch (RuntimeException e) {
+					Throwable cur = e;
+					while (cur != null) {
+						if (cur instanceof LeekRunException) throw (LeekRunException) cur;
+						cur = cur.getCause();
+					}
+					throw e;
+				}
+			}
+		};
 	}
 
 	/** Conversion generique guest -&gt; Java (parametres Object et valeur de retour de runIA). */

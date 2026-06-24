@@ -205,7 +205,14 @@ class Entity:
 
 
 class Me(Entity):
-    def __init__(self): super().__init__(getEntity())
+    def __init__(self): super().__init__(-1)  # id jetable : la property ci-dessous le rend dynamique
+    # me suit l'entite COURANTE. Pendant le tour d'un bulbe (summon), BulbAI rebascule mEntity de l'IA
+    # invocatrice sur le bulbe -> me.id doit renvoyer le bulbe. Setter no-op OBLIGATOIRE (Entity.__init__
+    # fait self.id = id). Property posee SEULEMENT sur Me : Entity/Cell/Weapon/Chip gardent un id fige.
+    @property
+    def id(self): return getEntity()
+    @id.setter
+    def id(self, value): pass
     def moveToward(self, target):
         return moveTowardCell(target.id) if isinstance(target, Cell) else moveToward(_eid(target))
     def moveAwayFrom(self, target):
@@ -219,6 +226,9 @@ class Me(Entity):
     def canUseWeapon(self, target): return canUseWeapon(_eid(target))
     def canUseChip(self, chip, target): return canUseChip(_cpid(chip), _eid(target))
     def resurrect(self, target, cell): return resurrect(_eid(target), _cid(cell))
+    # Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (me/getEntity() = bulbe).
+    def summon(self, chip, cell, callback, name=None):
+        return summon(_cpid(chip), _cid(cell), callback) if name is None else summon(_cpid(chip), _cid(cell), callback, name)
 
 
 class _Fight:

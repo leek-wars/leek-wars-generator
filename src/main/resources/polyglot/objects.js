@@ -142,7 +142,19 @@
 
 	// ---- me : l'IA courante (Entity + actions) ----
 	class Me extends Entity {
-		constructor() { super(getEntity()); }
+		constructor() {
+			super(-1); // id jetable : remplace juste apres par un accessor dynamique
+			// me suit l'entite COURANTE de l'IA. Pendant le tour d'un bulbe (summon), BulbAI rebascule
+			// mEntity de l'IA invocatrice sur le bulbe -> me.id doit renvoyer le bulbe, pas l'invocateur.
+			// Setter no-op OBLIGATOIRE : 'use strict' + le constructeur Entity fait this.id = id (leverait
+			// un TypeError sur un accessor sans setter). Les autres Entity gardent un id fige (non impactees).
+			Object.defineProperty(this, 'id', {
+				get: function () { return getEntity(); },
+				set: function () {},
+				configurable: true,
+				enumerable: true,
+			});
+		}
 		moveToward(target) { return (target instanceof Cell) ? moveTowardCell(target.id) : moveToward(eid(target)); }
 		moveAwayFrom(target) { return (target instanceof Cell) ? moveAwayFromCell(target.id) : moveAwayFrom(eid(target)); }
 		useWeapon(target) { return useWeapon(eid(target)); }
@@ -154,6 +166,11 @@
 		canUseWeapon(target) { return canUseWeapon(eid(target)); }
 		canUseChip(chip, target) { return canUseChip(cpid(chip), eid(target)); }
 		resurrect(target, cell) { return resurrect(eid(target), cid(cell)); }
+		// Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (pendant laquelle
+		// me/getEntity() designent le bulbe). cf TypeMarshaller.wrapGuestFunction + BulbAI.
+		summon(chip, cell, callback, name) {
+			return (name === undefined) ? summon(cpid(chip), cid(cell), callback) : summon(cpid(chip), cid(cell), callback, name);
+		}
 	}
 
 	// ---- Fight : entités et état global du combat ----

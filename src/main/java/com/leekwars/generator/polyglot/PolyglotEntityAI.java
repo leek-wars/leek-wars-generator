@@ -670,6 +670,59 @@ public class PolyglotEntityAI extends EntityAI {
 		return new LeekRunException(Error.TOO_MUCH_OPERATIONS);
 	}
 
+	/**
+	 * Execute une fonction guest (callback de summon, cf {@link com.leekwars.generator.fight.entity.BulbAI})
+	 * avec LES MEMES gardes par-tour que {@link #runIA} : reset du compteur de statements + des limites du
+	 * contexte, backstop wall-clock, et mapping des exceptions guest en {@link LeekRunException}
+	 * (closeContext defensif). Le bulbe ne passe PAS par runIA ; sans ces gardes, le callback contournerait
+	 * le statement limit (cumulatif sur le contexte de l'invocateur -&gt; epuiserait un tour ULTERIEUR de
+	 * l'invocateur) et le backstop wall-clock (un travail natif lourd bloquerait le worker). Appelee par le
+	 * wrapper de {@link TypeMarshaller#wrapGuestFunction} via {@code mAIFunction.run(mOwnerAI, ...)} : a ce
+	 * moment {@code mEntity} pointe deja sur le bulbe (BulbAI.runIA), donc {@code getEntity()} (et {@code me}
+	 * une fois rendu dynamique) renvoie le bulbe.
+	 *
+	 * @param fn        la fonction guest a rejouer (liee au contexte de l'invocateur).
+	 * @param guestArgs arguments deja marshalles Java -&gt; guest (null/vide pour le callback de summon).
+	 * @return la valeur de retour marshallee guest -&gt; Java, ou {@code null} si l'IA est neutralisee, le
+	 *         contexte ferme, ou le callback n'est plus executable (degradation gracieuse : le bulbe cesse
+	 *         d'agir, le combat continue).
+	 */
+	Object runGuestCallback(Value fn, Object[] guestArgs) throws LeekRunException {
+		if (disabled || context == null || fn == null || !fn.canExecute()) {
+			return null;
+		}
+		turnStartNanos = System.nanoTime();
+		if (statementCounter != null) {
+			statementCounter.reset();
+		}
+		// Contexte reutilise entre tours (statement limit cumulatif) : on remet le budget a zero pour le
+		// tour du bulbe, exactement comme runIA pour un tour normal.
+		context.resetLimits();
+
+		final Context running = context;
+		final AtomicBoolean settled = new AtomicBoolean(false);
+		final ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
+			if (settled.compareAndSet(false, true)) {
+				PolyglotSandbox.interruptAsync(running);
+			}
+		}, turnWallClockLimitMs);
+		try {
+			// HostAccess.NONE ne gene PAS un appel host -> guest d'une Value executable (il ne gate que
+			// l'acces du guest aux objets hote) ; cf entry.execute() de runIA, meme contexte.
+			Value value = (guestArgs == null || guestArgs.length == 0) ? fn.execute() : fn.execute(guestArgs);
+			return TypeMarshaller.toJava(value, this);
+		} catch (PolyglotException e) {
+			throw mapException(e);
+		} catch (RuntimeException e) {
+			LeekRunException unwrapped = unwrapLeekRunException(e);
+			throw unwrapped != null ? unwrapped : new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
+		} finally {
+			if (!winRace(settled, watchdog)) {
+				throw onWallClockTimeout();
+			}
+		}
+	}
+
 	/** Regle le backstop wall-clock par tour (defaut {@value #DEFAULT_TURN_WALL_CLOCK_LIMIT_MS} ms). */
 	public void setTurnWallClockLimitMs(long ms) {
 		this.turnWallClockLimitMs = ms;
