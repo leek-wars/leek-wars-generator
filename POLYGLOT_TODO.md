@@ -27,14 +27,15 @@
 
 ## A. Valider un combat polyglot end-to-end sur beta
 
-> Tout est déployé en beta mais **aucun combat polyglot réel n'a jamais été joué/validé** en conditions réelles. C'est le préalable à la prod.
+> ✅ **BASELINE VALIDÉE end-to-end sur beta (24/06)** — fight `52437868` (Klaude vs PolyDummy) : IA `.js` en **API objet** compilée par le daemon (`ai/write` → `problems:[]`) puis exécutée par le worker GraalVM (51 actions, équipement d'arme + déplacement + tir, aucune erreur d'IA). Le pipeline polyglot de base tourne en prod-beta.
 
-- [ ] Obtenir un accès beta opérationnel (login Klaude / gate cookie `beta_auth`)
-- [ ] Créer une IA `.js`, `.ts`, `.py` minimale via l'éditeur, vérifier la coloration + diagnostics live
-- [ ] Équiper l'IA sur un poireau et lancer un combat ; vérifier qu'il se termine et que le replay rejoue correctement
-- [ ] Tester l'API objet (`me`, `Fight`, `Debug.mark`…) en combat réel
+- [x] Accès beta opérationnel (gate cookie `memory/.beta_access.cookie` + login Klaude ; mdp beta réaligné via DB, cf [[reference_beta_access]])
+- [x] Créer une IA `.js` + écrire le code via l'API → daemon valide sans erreur
+- [x] Combat lancé (test-scenario) et terminé ; l'API objet (`Fight.getNearestEnemy`/`me.weapons`/`me.setWeapon`/`me.moveToward`/`me.useWeapon`) exécutée en combat réel
+- [ ] Idem pour `.ts` et `.py` sur beta (baseline JS prouvée ; TS/PY = même pipeline, à confirmer)
+- [ ] Diagnostics éditeur live (coloration + syntaxe daemon + types Monaco) sur du code cassé, via l'UID navigateur connecté
 - [ ] Valider le déterminisme : un combat miroir rejoué donne le même résultat
-- [ ] Vérifier les diagnostics éditeur (syntaxe daemon + types Monaco) sur du code volontairement cassé
+- [ ] **`me.summon` PAS encore validable sur beta** : commité aujourd'hui sur `polyglot-recon`, pas déployé → nécessite un deploy beta (push `private/develop` + dispatch `generator-updated` ref develop) avant validation
 
 ## B. `me.summon` (seul vrai trou fonctionnel de l'API objet)
 
