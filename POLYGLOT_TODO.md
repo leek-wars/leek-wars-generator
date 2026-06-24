@@ -38,12 +38,14 @@
 
 ## B. `me.summon` (seul vrai trou fonctionnel de l'API objet)
 
-> 2 verrous identifiés. À faire avec un test combat (un summon qui agit comme le bulbe).
+> ✅ **FAIT (24/06)** — conçu via workflow (cartographie + 3 revues adversariales), implémenté et vérifié (suite polyglot complète verte). Modèle d'exécution confirmé : le tour du bulbe est une itération séparée (pas de réentrance), `getEntity()` renvoie déjà le bulbe ; seul `me` était figé.
 
-- [ ] **Verrou 1 — marshaller callback** : `TypeMarshaller` ne convertit PAS une fonction guest (JS/Python) en `FunctionLeekValue` → wrapper un `Value.canExecute()` en `FunctionLeekValue` qui ré-invoque le guest.
-- [ ] **Verrou 2 — `me` dynamique** : pendant le tour du bulbe (`BulbAI(summon, casterAI, callback)` via `Fight.summonEntity`), `getEntity()` doit renvoyer le bulbe, mais le `me` de l'API objet est le singleton boot (= l'invocateur). Résoudre `getEntity()` à chaque accès, OU passer un `me` frais au callback.
-- [ ] Définir/figer la sémantique de `me` (impacte aussi le reste de l'API objet)
-- [ ] Test combat : summon qui agit comme le bulbe + l'invocateur garde son `me`
+- [x] **Verrou 1 — marshaller callback** : `TypeMarshaller.coerce` enveloppe une `Value.canExecute()` en `FunctionLeekValue` (`wrapGuestFunction`, `parametersCount=0`) → ré-invoquée par `BulbAI`.
+- [x] **Verrou 2 — `me` dynamique** : `me.id` = getter `getEntity()` + setter no-op (objects.js `Object.defineProperty`, objects.py `@property`). Les autres `Entity` gardent un id figé. Coût d'ops nul (vérifié).
+- [x] **Gardes par-tour pour le bulbe** (trous critiques relevés par la revue : le bulbe ne passe pas par `runIA`) → `PolyglotEntityAI.runGuestCallback` rejoue `turnStartNanos` + `statementCounter.reset()` + `context.resetLimits()` + watchdog wall-clock + `try/catch → mapException`. Ferme : statement limit cumulatif (tuait un tour ultérieur de l'invocateur), watchdog absent (DoS), exceptions guest mal classées en erreur serveur + contexte empoisonné.
+- [x] `me.summon(chip, cell, callback[, name])` ajouté à `Me` (objects.js + objects.py).
+- [x] Tests (3, verts) : `summonedBulbIsMeDuringItsTurn` (JS), `summonedBulbIsMeDuringItsTurnPython`, `summonCallbackErrorIsGracefulForOwner` (invocateur survit 64 tours à un callback qui lève).
+- Différé (non bloquant) : test DoS lourd dédié (boucle/travail natif du bulbe coupé) — chemin de garde identique à `runIA`, déjà couvert par TestPolyglotDoS ; isolation du flux RNG owner/bulbe (couplage non documenté, OK si ordre de tour déterministe).
 
 ## C. Dépréciation de la forme plate
 
