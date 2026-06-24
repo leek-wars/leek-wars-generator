@@ -40,11 +40,13 @@ public class Registers {
 	}
 
 	public boolean set(String key, String value) {
-		if (mValues.size() > MAX_ENTRIES)
-			return false;
 		if (key.length() > MAX_KEY_LENGTH)
 			return false;
 		if (value.length() > MAX_DATA_LENGTH)
+			return false;
+		// Refuser une nouvelle clé au-delà du plafond, mais toujours autoriser la
+		// mise à jour d'une clé existante (cohérent avec le site, plafond = 100).
+		if (!mValues.containsKey(key) && mValues.size() >= MAX_ENTRIES)
 			return false;
 		String val = mValues.get(key);
 		if (val != null) {
