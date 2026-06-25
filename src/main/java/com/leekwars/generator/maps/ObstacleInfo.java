@@ -45,7 +45,21 @@ public class ObstacleInfo {
 		obstacles.put(56, new ObstacleInfo(2));
 		obstacles.put(58, new ObstacleInfo(2));
 		obstacles.put(61, new ObstacleInfo(2));
-		obstacles.put(31, new ObstacleInfo(1));
+		obstacles.put(31, new ObstacleInfo(2));
+		// Obstacles 2x2 alignes sur la table de rendu client (ground.ts OBSTACLES).
+		// Sans ces entrees le generateur les traitait en taille 1 : des cases
+		// affichees comme murs restaient traversables (maps fixes / arenes de boss).
+		obstacles.put(2, new ObstacleInfo(2));
+		obstacles.put(4, new ObstacleInfo(2));
+		obstacles.put(10, new ObstacleInfo(2));
+		obstacles.put(12, new ObstacleInfo(2));
+		obstacles.put(14, new ObstacleInfo(2));
+		obstacles.put(15, new ObstacleInfo(2));
+		obstacles.put(19, new ObstacleInfo(2));
+		obstacles.put(23, new ObstacleInfo(2));
+		obstacles.put(25, new ObstacleInfo(2));
+		obstacles.put(33, new ObstacleInfo(2));
+		obstacles.put(37, new ObstacleInfo(2));
 
 		obstacles.put(51, new ObstacleInfo(3));
 
