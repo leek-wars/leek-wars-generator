@@ -134,7 +134,9 @@ public class State {
 	private Order order;
 	private final int fullType;
 	private int mStartFarmer = -1;
-	private int lastTurn = 0;
+	// Plus haut numéro de tour ayant commencé (1 = tour initial), mis à jour à chaque
+	// ActionNewTurn. Compteur monotone, jamais rembobiné : sert de durée du combat.
+	private int lastTurn = 1;
 	private int colossusMultiplier = 0;
 	private Date date;
 	private Map map;
@@ -1235,7 +1237,11 @@ public class State {
 	}
 
 	public int getDuration() {
-		return order.getTurn();
+		// Durée = nombre de tours réellement joués. On NE lit PAS order.getTurn() :
+		// c'est un curseur transitoire que removeEntity() rembobine (turn--) en
+		// comptant sur un next() compensateur, lequel n'a pas lieu si le combat se
+		// termine sur cette mort (#11545). lastTurn n'est jamais rembobiné.
+		return lastTurn;
 	}
 
 	public Entity getLastEntity() {
