@@ -51,10 +51,11 @@ public class Order {
 			position--;
 		}
 		leeks.remove(index);
-		if (position == -1) {
-			position = leeks.size() - 1;
-			turn--; // On décrémente le tour car on va le réincrémenter tout de suite derrière
-		}
+		// Si on retire l'entité courante (index 0, position 0), position passe à -1 :
+		// on le laisse tel quel. Le prochain next() repassera à 0 SANS wrap, donc sans
+		// toucher au compteur de tours. L'ancien `turn--` (compensé par un wrap de
+		// next()) faussait la durée si le combat se terminait sur cette mort, et
+		// déclenchait un applyCoolDown() en trop (le wrap parasite). #11545
 	}
 
 	public Entity current() {
@@ -93,9 +94,11 @@ public class Order {
 	}
 
 	public Entity getPreviousPlayer() {
-		int p = position - 1;
-		if (p < 0)
-			p += leeks.size();
+		if (leeks.isEmpty()) return null;
+		// Modulo robuste : position peut valoir -1 dans la fenêtre transitoire après le
+		// retrait de l'entité courante (cf. removeEntity), et l'ancien `if (p < 0) p +=
+		// size` ne corrigeait qu'une fois (-2 restait négatif quand size == 1 -> crash).
+		int p = ((position - 1) % leeks.size() + leeks.size()) % leeks.size();
 		return leeks.get(p);
 	}
 

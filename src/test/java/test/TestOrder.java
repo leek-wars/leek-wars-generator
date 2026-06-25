@@ -48,7 +48,9 @@ public class TestOrder {
 		Assert.assertEquals(order.current().getId(), 1);
 		Assert.assertEquals(order.getTurn(), 2);
 		order.removeEntity(l1);
-		Assert.assertEquals(order.current().getId(), 4);
+		// Retirer la tête (pos 0) : current() null jusqu'au next(), tour non rembobiné (#11545)
+		Assert.assertNull(order.current());
+		Assert.assertEquals(2, order.getTurn());
 		order.next();
 		Assert.assertEquals(order.current().getId(), 2);
 		order.removeEntity(l3);

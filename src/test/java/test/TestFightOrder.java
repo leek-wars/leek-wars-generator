@@ -190,15 +190,32 @@ public class TestFightOrder extends FightTestBase {
 	}
 
 	@Test
-	public void removeFirstEntityOnFirstTurnRollsTurnBack() {
-		// Edge case: removing entity at pos=0 makes position -1; code resets to
-		// size-1 and decrements turn so the caller's next() reaches turn 1 again.
+	public void removeFirstEntityLeavesTransientNullAndKeepsTurn() {
+		// Retirer l'entité courante (pos 0) laisse position à -1 et NE rembobine PAS le
+		// tour : le prochain next() repasse à 0 SANS wrap. (Avant #11545 : position=size-1
+		// + turn-- pour compenser un wrap parasite, ce qui faussait la durée si le combat
+		// se terminait sur cette mort et déclenchait un applyCoolDown en trop.)
 		Order o = orderOf(a, b);
 		Assert.assertEquals(a, o.current());
 		o.removeEntity(a);
+		Assert.assertNull("current() transitoire après retrait de la tête", o.current());
+		Assert.assertEquals(-1, o.getPosition());
+		Assert.assertEquals("tour NON rembobiné", 1, o.getTurn());
+		Assert.assertFalse("next() ne wrap pas (pas de cooldown parasite)", o.next());
 		Assert.assertEquals(b, o.current());
-		Assert.assertEquals(0, o.getPosition());
-		Assert.assertEquals(0, o.getTurn());
+		Assert.assertEquals(1, o.getTurn());
+	}
+
+	@Test
+	public void getPreviousPlayerSurvivesHeadRemovalInDuel() {
+		// Régression #11545 : en 1v1, si la tête (pos 0) se tue en plein tour, son IA
+		// continue et peut appeler getPreviousPlayer() alors que position == -1 et
+		// size == 1. L'ancien modulo ne corrigeait qu'une fois -> leeks.get(-1) crash.
+		Order o = orderOf(a, b);
+		o.removeEntity(a);
+		Assert.assertEquals(-1, o.getPosition());
+		Assert.assertEquals(b, o.getPreviousPlayer()); // ne doit pas lever d'exception
+		Assert.assertEquals(b, o.getNextPlayer());
 	}
 
 	@Test
