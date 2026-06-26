@@ -780,7 +780,6 @@ public class Map {
 		// Ignore first entity in area for Area first in line
 		if (attack.getArea() == Area.TYPE_FIRST_IN_LINE) {
 			Cell cell = getFirstEntity(start, end, attack.getMinRange(), attack.getMaxRange());
-			if (cell == end) return false;
 			if (cell != null) {
 				ignoredCells.add(cell);
 			}
