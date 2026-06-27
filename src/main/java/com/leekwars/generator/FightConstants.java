@@ -132,6 +132,8 @@ public enum FightConstants implements ILeekConstant {
 	// États
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
 	STATE_INVINCIBLE(EntityState.INVINCIBLE.ordinal(), Type.INT),
+	STATE_PACIFIST(EntityState.PACIFIST.ordinal(), Type.INT),
+	STATE_STATIC(EntityState.STATIC.ordinal(), Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
@@ -311,6 +313,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_JUMP(144, Type.INT),
 	CHIP_COVID(152, Type.INT),
 	CHIP_ELEVATION(154, Type.INT),
+	CHIP_EXASPERATION(425, Type.INT),
 	CHIP_KNOWLEDGE(155, Type.INT),
 	CHIP_WIZARDRY(156, Type.INT),
 	CHIP_REPOTTING(157, Type.INT),
