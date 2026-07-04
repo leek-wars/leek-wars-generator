@@ -125,6 +125,11 @@ public class PolyglotEntityAI extends EntityAI {
 	// execute(x) = reset). Refetche a chaque (re)construction de contexte par ensureContext ; null si
 	// l'image ne l'embarque pas (ex Python officiel) -> fallback temps CPU (non reproductible).
 	private Value statementCounter;
+	// Engine en isolate processus EXTERNE (repli une-lib-par-JVM, cf PolyglotSandbox.engineFor) :
+	// le guest tourne dans un AUTRE process, le temps CPU du thread de combat ne mesure plus son
+	// travail -> le terme d'ops synthetique doit passer au temps MUR (sinon la garde getOperations()
+	// ne monte jamais et chaque tour epuise son budget de statements, ~1,6 s/tour constate en beta).
+	private boolean externalIsolate;
 
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
@@ -456,6 +461,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// Compteur de statements deterministe de l'image custom, lie a CE contexte (refetche
 			// apres chaque reconstruction). null si l'image ne l'embarque pas -> temps CPU.
 			statementCounter = PolyglotSandbox.statementCounterBinding(context);
+			externalIsolate = sandbox.isExternalIsolate(languageId);
 		}
 	}
 
@@ -812,7 +818,9 @@ public class PolyglotEntityAI extends EntityAI {
 			return real;
 		}
 		long elapsed = -1L;
-		if (CPU_TIME_SUPPORTED && turnStartCpuNanos >= 0) {
+		// En isolate externe, le guest ne tourne PAS sur ce thread : temps CPU inutilisable (reste
+		// proche de 0 pendant que le guest calcule dans son process) -> temps mur directement.
+		if (!externalIsolate && CPU_TIME_SUPPORTED && turnStartCpuNanos >= 0) {
 			long nowCpu = THREAD_MX.getThreadCpuTime(turnThreadId);
 			if (nowCpu >= 0) {
 				elapsed = nowCpu - turnStartCpuNanos;
