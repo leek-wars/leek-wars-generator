@@ -1,0 +1,337 @@
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  * Build worker beta JAR
+  * Run docker/setup-buildx-action@v3
+  * Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  * Build worker beta JAR
+  * Run docker/setup-buildx-action@v3
+  * Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  * Run docker/setup-buildx-action@v3
+  * Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run docker/build-push-action@v6
+  * Post Run docker/login-action@v3
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 2 minutes ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run docker/build-push-action@v6
+  * Post Run docker/login-action@v3
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 2 minutes ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run docker/build-push-action@v6
+  * Post Run docker/login-action@v3
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 2 minutes ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  * Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run docker/build-push-action@v6
+  * Post Run docker/login-action@v3
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 3 minutes ago
+
+JOBS
+* build (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  ✓ Run docker/build-push-action@v6
+  * Push Docker image
+  * Post Run docker/build-push-action@v6
+  * Post Run docker/login-action@v3
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run gradle/actions/setup-gradle@v4
+  * Post Run actions/setup-java@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+  * Post Run actions/checkout@v4
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 3 minutes ago
+
+JOBS
+✓ build in 3m21s (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  ✓ Run docker/build-push-action@v6
+  ✓ Push Docker image
+  ✓ Post Run docker/build-push-action@v6
+  ✓ Post Run docker/login-action@v3
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run gradle/actions/setup-gradle@v4
+  ✓ Post Run actions/setup-java@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+* deploy (ID 85124032799)
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3, gradle/actions/setup-gradle@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build: .github#3
+
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 3 minutes ago
+
+JOBS
+✓ build in 3m21s (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  ✓ Run docker/build-push-action@v6
+  ✓ Push Docker image
+  ✓ Post Run docker/build-push-action@v6
+  ✓ Post Run docker/login-action@v3
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run gradle/actions/setup-gradle@v4
+  ✓ Post Run actions/setup-java@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+* deploy (ID 85124032799)
+  ✓ Set up job
+  * Deploy
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3, gradle/actions/setup-gradle@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build: .github#3
+
+Refreshing run status every 20 seconds. Press Ctrl+C to quit.
+
+* develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 4 minutes ago
+
+JOBS
+✓ build in 3m21s (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  ✓ Run docker/build-push-action@v6
+  ✓ Push Docker image
+  ✓ Post Run docker/build-push-action@v6
+  ✓ Post Run docker/login-action@v3
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run gradle/actions/setup-gradle@v4
+  ✓ Post Run actions/setup-java@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+* deploy (ID 85124032799)
+  ✓ Set up job
+  * Deploy
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3, gradle/actions/setup-gradle@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build: .github#3
+
+✓ develop Docker Worker Beta · 28702922180
+Triggered via workflow_dispatch about 4 minutes ago
+
+JOBS
+✓ build in 3m21s (ID 85123832544)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-java@v4
+  ✓ Run gradle/actions/setup-gradle@v4
+  ✓ Build worker beta JAR
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Run docker/login-action@v3
+  ✓ Run docker/build-push-action@v6
+  ✓ Push Docker image
+  ✓ Post Run docker/build-push-action@v6
+  ✓ Post Run docker/login-action@v3
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run gradle/actions/setup-gradle@v4
+  ✓ Post Run actions/setup-java@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+✓ deploy in 44s (ID 85124032799)
+  ✓ Set up job
+  ✓ Deploy
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3, gradle/actions/setup-gradle@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build: .github#3
+

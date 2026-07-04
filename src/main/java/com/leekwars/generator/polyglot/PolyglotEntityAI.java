@@ -1,6 +1,8 @@
 package com.leekwars.generator.polyglot;
 
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -101,7 +103,20 @@ public class PolyglotEntityAI extends EntityAI {
 	 * confortable avant le backstop dur. Cf {@link #getOperations()}.
 	 */
 	private static final double OPS_TIME_BUDGET_FRACTION = 0.5;
-	private long turnStartNanos;               // nanos de debut de tour (base du compteur d'ops synthetique)
+	// Terme d'ops synthetique (sous isolate, faute d'instrument deterministe) : base sur le TEMPS CPU du
+	// thread de combat passe dans le tour -> plus honnete que le temps mur (exclut GC / ordonnancement).
+	private static final ThreadMXBean THREAD_MX = ManagementFactory.getThreadMXBean();
+	private static final boolean CPU_TIME_SUPPORTED = enableCpuTime();
+	private static boolean enableCpuTime() {
+		if (THREAD_MX.isThreadCpuTimeSupported()) {
+			THREAD_MX.setThreadCpuTimeEnabled(true);
+			return true;
+		}
+		return false;
+	}
+	private long turnStartNanos;               // temps mur de debut de tour (repli si temps CPU indispo)
+	private long turnThreadId;                 // id du thread de combat du tour (pour lire son temps CPU)
+	private long turnStartCpuNanos = -1L;      // temps CPU du thread au debut du tour (base du terme synthetique)
 	// Budget temps (ns) au bout duquel le compteur synthetique atteint getMaxOperations(). Derive de
 	// turnWallClockLimitMs (recalcule dans le setter) ; pre-calcule car getOperations() est sur le hot path.
 	private long opsBudgetNanos = (long) (DEFAULT_TURN_WALL_CLOCK_LIMIT_MS * 1_000_000L * OPS_TIME_BUDGET_FRACTION);
@@ -571,7 +586,7 @@ public class PolyglotEntityAI extends EntityAI {
 		if (disabled) {
 			return null; // IA neutralisee (trop de depassements wall-clock) : n'agit plus, ne consomme plus.
 		}
-		turnStartNanos = System.nanoTime(); // base du compteur d'ops temps-based (fallback, cf getOperations)
+		markTurnStart(); // bases (temps mur + temps CPU) du terme d'ops synthetique, cf getOperations
 		if (statementCounter != null) {
 			statementCounter.reset(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
 		}
@@ -694,7 +709,7 @@ public class PolyglotEntityAI extends EntityAI {
 		if (disabled || context == null || fn == null || !fn.canExecute()) {
 			return null;
 		}
-		turnStartNanos = System.nanoTime();
+		markTurnStart();
 		if (statementCounter != null) {
 			statementCounter.reset();
 		}
@@ -752,21 +767,41 @@ public class PolyglotEntityAI extends EntityAI {
 	 * recherche polyglot n'est donc pas bit-reproductible entre machines. Acceptable pour faire tourner /
 	 * terminer des combats ; a affiner (compteur de statements guest) pour des combats classes.
 	 */
+	/** Pose les bases (temps mur + temps CPU du thread de combat) du terme d'ops synthetique, en debut de tour. */
+	private void markTurnStart() {
+		turnStartNanos = System.nanoTime();
+		turnThreadId = Thread.currentThread().threadId();
+		turnStartCpuNanos = CPU_TIME_SUPPORTED ? THREAD_MX.getThreadCpuTime(turnThreadId) : -1L;
+	}
+
 	@Override
 	public long getOperations() {
 		long real = super.getOperations();
 		// Terme DETERMINISTE : nombre de statements guest executes ce tour. Reproductible (meme code +
 		// memes entrees -> meme compte), donc les IA de recherche qui se bornent sur getOperations()
-		// redeviennent bit-reproductibles (replays fiables, arene classee).
+		// redeviennent bit-reproductibles (replays fiables, arene classee). Indispo sous isolate.
 		if (statementCounter != null) {
 			return real + statementCounter.get();
 		}
-		// Fallback (instrument indisponible) : terme proportionnel au TEMPS ecoule -> NON reproductible,
-		// mais evite que l'IA sature le backstop wall-clock faute de signal d'ops.
-		if (turnStartNanos == 0 || opsBudgetNanos <= 0) {
+		// Fallback sous isolate : terme proportionnel au TEMPS CPU du thread de combat passe dans ce tour
+		// -> plus honnete que le temps mur (exclut pauses GC / ordonnancement). Repli sur le temps mur si
+		// le temps CPU est indisponible. NON reproductible (depend de la charge machine).
+		if (opsBudgetNanos <= 0) {
 			return real;
 		}
-		long elapsed = System.nanoTime() - turnStartNanos;
+		long elapsed = -1L;
+		if (CPU_TIME_SUPPORTED && turnStartCpuNanos >= 0) {
+			long nowCpu = THREAD_MX.getThreadCpuTime(turnThreadId);
+			if (nowCpu >= 0) {
+				elapsed = nowCpu - turnStartCpuNanos;
+			}
+		}
+		if (elapsed < 0) { // temps CPU indispo -> repli sur le temps mur
+			if (turnStartNanos == 0) {
+				return real;
+			}
+			elapsed = System.nanoTime() - turnStartNanos;
+		}
 		if (elapsed < 0) {
 			elapsed = 0;
 		}
