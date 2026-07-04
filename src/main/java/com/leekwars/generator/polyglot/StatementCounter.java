@@ -1,36 +1,79 @@
 package com.leekwars.generator.polyglot;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.ContextsListener;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.TruffleInstrument;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.LanguageInfo;
+import com.oracle.truffle.api.Option;
+import com.oracle.truffle.api.TruffleContext;
+
+import org.graalvm.options.OptionCategory;
+import org.graalvm.options.OptionDescriptors;
+import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
+import org.graalvm.polyglot.SandboxPolicy;
 
 /**
- * Instrument Truffle qui compte les statements guest executes, PAR THREAD.
+ * Instrument Truffle qui compte les statements guest executes. Version SPIKE custom isolate.
  *
- * Sert de compteur d'operations DETERMINISTE pour les IA polyglot : le nombre de statements executes
- * par un meme code sur les memes entrees est reproductible (contrairement au compteur temps-based de
- * {@link PolyglotEntityAI#getOperations()}). Les IA de recherche (qui bornent leur exploration sur
- * {@code getOperations() > seuil}) redeviennent ainsi bit-reproductibles -> replays fiables, arene classee.
+ * Compile DANS l'image native isolate (via isolate_deps / LW_INSTRUMENT). Le lookup de service
+ * hote (engine.getInstruments().get(ID).lookup(Counter.class)) ne traverse PAS la frontiere
+ * isolate (verifie : renvoie null) ; le compteur est donc expose via les POLYGLOT BINDINGS,
+ * seule voie marshallee par le nativebridge : a la creation de chaque contexte, l'instrument
+ * publie un objet executable sous {@link #BINDING_NAME} ; l'hote le lit via
+ * context.getPolyglotBindings().getMember(...).execute() (0 arg = lire, 1 arg = reset).
  *
- * Chaque IA execute son guest de facon SYNCHRONE sur le thread de combat ; le compteur est donc
- * ThreadLocal (remis a zero au debut de tour par {@link PolyglotEntityAI}, lu dans getOperations()).
- * Decouvert par l'embedding via {@code engine.getInstruments().get(ID).lookup(Counter.class)} (ce
- * lookup active l'instrument).
+ * Compteur = simple champ long : PAS de ThreadLocal (blocklist en compilation runtime
+ * native-image, et un engine = un combat = un thread chez LeekWars).
  */
-@TruffleInstrument.Registration(id = StatementCounter.ID, name = "LeekWars Statement Counter", services = StatementCounter.Counter.class)
+@TruffleInstrument.Registration(id = StatementCounter.ID, name = "LeekWars Statement Counter", services = StatementCounter.Counter.class, sandbox = SandboxPolicy.ISOLATED)
 public final class StatementCounter extends TruffleInstrument {
 
 	public static final String ID = "lw-statement-counter";
+	public static final String BINDING_NAME = "lwStatementCounter";
 
-	/** Compteur de statements guest par thread (le travail d'une IA tient sur le thread de combat). */
+	/**
+	 * Option d'activation : sous isolate le lookup de service hote (qui activait l'instrument
+	 * en in-process) ne traverse pas la frontiere ; l'engine doit poser
+	 * {@code .option("lw-statement-counter", "true")} pour activer l'instrument.
+	 */
+	@Option(name = "", help = "Enable the LeekWars statement counter.", category = OptionCategory.EXPERT, stability = OptionStability.STABLE, sandbox = SandboxPolicy.ISOLATED)
+	static final OptionKey<Boolean> ENABLED = new OptionKey<>(false);
+
+	@Override
+	protected OptionDescriptors getOptionDescriptors() {
+		return new StatementCounterOptionDescriptors();
+	}
+
+	/** Compteur de statements guest (un engine = un combat = un thread). */
 	public static final class Counter {
-		private final ThreadLocal<long[]> count = ThreadLocal.withInitial(() -> new long[1]);
-		public long get() { return count.get()[0]; }
-		public void reset() { count.get()[0] = 0L; }
-		void increment() { count.get()[0]++; }
+		private long count;
+		public long get() { return count; }
+		public void reset() { count = 0L; }
+		void increment() { count++; }
+	}
+
+	/** Facade interop : execute() = lire, execute(x) = reset. Publiee dans les polyglot bindings. */
+	@ExportLibrary(InteropLibrary.class)
+	static final class CounterObject implements TruffleObject {
+		final Counter counter;
+		CounterObject(Counter counter) { this.counter = counter; }
+		@ExportMessage boolean isExecutable() { return true; }
+		@ExportMessage Object execute(Object[] args) {
+			if (args.length > 0) {
+				counter.reset();
+				return 0L;
+			}
+			return counter.get();
+		}
 	}
 
 	private final Counter counter = new Counter();
@@ -46,5 +89,39 @@ public final class StatementCounter extends TruffleInstrument {
 			@Override public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {}
 			@Override public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {}
 		});
+		// Publie la facade dans les polyglot bindings de chaque contexte cree (il faut etre
+		// entre dans le contexte pour y acceder). Tente aux deux hooks (creation + init
+		// langage) : le premier qui passe gagne, les erreurs sont loggees (jamais bloquant).
+		CounterObject facade = new CounterObject(counter);
+		env.getInstrumenter().attachContextsListener(new ContextsListener() {
+			private void publish(TruffleContext context, String where) {
+				try {
+					Object prev = null;
+					boolean entered = false;
+					try {
+						prev = context.enter(null);
+						entered = true;
+					} catch (Exception alreadyEnteredOrForbidden) {
+						// peut etre deja entre : on tente l'ecriture directe
+					}
+					try {
+						InteropLibrary.getUncached().writeMember(env.getPolyglotBindings(), BINDING_NAME, facade);
+					} finally {
+						if (entered) {
+							context.leave(null, prev);
+						}
+					}
+				} catch (Exception e) {
+					env.getLogger(StatementCounter.class).severe(
+							"publish bindings (" + where + ") a echoue: " + e);
+				}
+			}
+			@Override public void onContextCreated(TruffleContext context) { publish(context, "onContextCreated"); }
+			@Override public void onLanguageContextCreated(TruffleContext context, LanguageInfo language) {}
+			@Override public void onLanguageContextInitialized(TruffleContext context, LanguageInfo language) { publish(context, "onLanguageContextInitialized"); }
+			@Override public void onLanguageContextFinalized(TruffleContext context, LanguageInfo language) {}
+			@Override public void onLanguageContextDisposed(TruffleContext context, LanguageInfo language) {}
+			@Override public void onContextClosed(TruffleContext context) {}
+		}, true);
 	}
 }

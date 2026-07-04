@@ -55,11 +55,19 @@ dependencies {
 	// darwin-amd64 ABSENT de Maven Central (pas de .module pour filtrer) -> cibler l'artefact plateforme.
 	// TODO deploy : ajouter les classifiers des autres plateformes (aarch64...) selon les workers/dev.
 	implementation 'org.graalvm.polyglot:polyglot:25.1.3'
-	implementation 'org.graalvm.polyglot:js-isolate-linux-amd64-community:25.1.3'
-	// GraalPy (Python) en isolate. Lourd (~150 Mo, stdlib embarquee).
+	// Image isolate JS CUSTOM (repo prive leek-wars/graal-isolate) : identique a
+	// org.graalvm.polyglot:js-isolate-linux-amd64-community:25.1.3 MAIS avec l'instrument
+	// StatementCounter compile dans l'image native (compteur d'ops DETERMINISTE, active par
+	// option a la creation de l'engine et lu via les polyglot bindings, cf PolyglotSandbox).
+	// Le meta-pom Maven ne wrappe que ce jar de ressources -> substitution directe ; ses deps
+	// transitives (nativebridge, truffle-api) sont declarees explicitement ci-dessous.
+	implementation files('libs/js-isolate-resources-linux-amd64.jar')
+	implementation 'org.graalvm.sdk:nativebridge:25.1.3'
+	// GraalPy (Python) en isolate. Lourd (~150 Mo, stdlib embarquee). Image OFFICIELLE, sans
+	// instrument -> ops Python = temps CPU (non deterministe), en attendant le meme montage GraalPy.
 	implementation 'org.graalvm.polyglot:python-isolate-linux-amd64-community:25.1.3'
-	// truffle-api : encore requis pour compiler StatementCounter (l'instrument ne tourne PAS sous
-	// isolate -> ops deterministes indispo, cf getOperations fallback temps-based ; classe conservee).
-	compileOnly 'org.graalvm.truffle:truffle-api:25.1.3'
+	// truffle-api : compile StatementCounter (copie hote de l'instrument, ALIGNEE sur celle de
+	// l'image custom - repo graal-isolate) et sert le runtime hote de l'isolate.
+	implementation 'org.graalvm.truffle:truffle-api:25.1.3'
 	annotationProcessor 'org.graalvm.truffle:truffle-dsl-processor:25.1.3'
 }

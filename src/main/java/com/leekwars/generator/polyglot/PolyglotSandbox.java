@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,7 +20,10 @@ import java.util.concurrent.TimeoutException;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.SandboxPolicy;
+import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.IOAccess;
+
+import com.leekwars.generator.Log;
 
 /**
  * Fabrique de contextes GraalVM verrouilles pour l'execution d'IA en JS/Python.
@@ -88,22 +92,88 @@ public class PolyglotSandbox implements AutoCloseable {
 	}
 
 	/**
-	 * L'instrument Truffle {@link StatementCounter} (compteur d'ops DETERMINISTE) n'est PAS disponible
-	 * sous isolate (il n'est pas dans l'image native). {@code getOperations()} retombe donc sur un terme
-	 * temps-based, non deterministe (accepte : la RAM precise par-poireau prime sur le determinisme).
+	 * Compteur de statements DETERMINISTE de l'image isolate JS custom (repo graal-isolate), publie par
+	 * l'instrument {@link StatementCounter} dans les polyglot bindings de chaque contexte — le lookup de
+	 * service hote ({@code getInstruments().get(ID).lookup(Counter.class)}) ne traverse PAS la frontiere
+	 * isolate. Renvoie l'executable (execute() = lire, execute(x) = remise a zero), ou null si l'image
+	 * ne l'embarque pas (image officielle, ex Python) -&gt; {@code getOperations()} retombe sur le terme
+	 * temps CPU (non deterministe).
 	 */
-	public StatementCounter.Counter getStatementCounter() {
-		return null;
+	public static Value statementCounterBinding(Context context) {
+		try {
+			Value counter = context.getPolyglotBindings().getMember(StatementCounter.BINDING_NAME);
+			return counter != null && counter.canExecute() ? counter : null;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
-	/** Engine isolate (SandboxPolicy.ISOLATED) pour un langage, cree a la demande et partage. */
+	/** Langages dont l'engine a du basculer en isolate processus externe (cf engineFor). */
+	private final Set<String> externalIsolates = ConcurrentHashMap.newKeySet();
+
+	/** Vrai si l'engine de ce langage tourne en isolate processus EXTERNE (mode degrade, cf engineFor). */
+	public boolean isExternalIsolate(String languageId) {
+		return externalIsolates.contains(languageId);
+	}
+
+	/**
+	 * Engine isolate (SandboxPolicy.ISOLATED) pour un langage, cree a la demande et partage.
+	 *
+	 * <p>Deux replis gracieux (echelle, jamais d'echec du combat pour un probleme d'image) :
+	 * <ul>
+	 * <li>option {@code lw-statement-counter} inconnue (image isolate officielle SANS notre
+	 * instrument, cf repo graal-isolate) -&gt; engine sans compteur deterministe, getOperations()
+	 * retombe sur le temps CPU ;</li>
+	 * <li>LIMITE GraalVM : UNE seule lib isolate in-process par JVM ("A native library for
+	 * engine.SpawnIsolate was already loaded") : un worker qui a deja charge l'isolate js ne peut
+	 * plus charger l'isolate python (et inversement) -&gt; bascule de ce langage en isolate
+	 * PROCESSUS EXTERNE ({@code engine.IsolateMode=external}) : coexistence retablie, isolation
+	 * renforcee, MAIS {@code sandbox.MaxHeapMemory} par contexte n'y est PAS applique (verifie par
+	 * TestPolyglotRamLimit) -&gt; la RAM n'est plus bornee que par {@code engine.MaxIsolateMemory}
+	 * (par combat-langage) ; le worker reste a l'abri (process a part).</li>
+	 * </ul>
+	 */
 	private Engine engineFor(String languageId) {
-		return engines.computeIfAbsent(languageId, lang -> Engine.newBuilder(lang)
+		return engines.computeIfAbsent(languageId, lang -> {
+			boolean withCounter = "js".equals(lang); // l'image custom (instrument) n'existe que pour js
+			boolean external = false;
+			while (true) {
+				try {
+					return buildEngine(lang, external, withCounter);
+				} catch (IllegalArgumentException e) {
+					if (!withCounter) {
+						throw e;
+					}
+					Log.w("PolyglotSandbox", "Instrument " + StatementCounter.ID
+							+ " indisponible (image isolate officielle ?) : " + e.getMessage());
+					withCounter = false;
+				} catch (IllegalStateException e) {
+					if (external) {
+						throw e;
+					}
+					Log.w("PolyglotSandbox", "Isolate in-process indisponible pour " + lang
+							+ " (une seule lib isolate par JVM) : bascule en isolate processus externe. "
+							+ e.getMessage());
+					externalIsolates.add(lang);
+					external = true;
+				}
+			}
+		});
+	}
+
+	private Engine buildEngine(String languageId, boolean externalIsolate, boolean withCounter) {
+		Engine.Builder builder = Engine.newBuilder(languageId)
 				.sandbox(SandboxPolicy.ISOLATED)
 				.option("engine.MaxIsolateMemory", memoryOption(MAX_ISOLATE_MEMORY))
 				.out(OutputStream.nullOutputStream())
-				.err(OutputStream.nullOutputStream())
-				.build());
+				.err(OutputStream.nullOutputStream());
+		if (externalIsolate) {
+			builder.allowExperimentalOptions(true).option("engine.IsolateMode", "external");
+		}
+		if (withCounter) {
+			builder.option(StatementCounter.ID, "true");
+		}
+		return builder.build();
 	}
 
 	/** Racine de la stdlib GraalPy (decouverte une fois, mise en cache). */
@@ -145,10 +215,11 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * les temporaires ne penalisent pas -> honnete, comme le {@code mRAM} LeekScript. {@code maxHeapBytes}
 	 * = budget RAM de l'entite (cf {@link PolyglotEntityAI#ensureContext}).
 	 *
-	 * <p>Note (determinisme) : sous ISOLATED l'instrument StatementCounter est indispo -> ops via terme
-	 * temps-based (non deterministe, accepte). Sous ISOLATED, le statement limit passe par
-	 * {@code sandbox.MaxStatements} (les autres {@code sandbox.Max*} sont exiges par la policy et poses
-	 * genereusement ; le vrai backstop reste le watchdog wall-clock de PolyglotEntityAI + le cap RAM).
+	 * <p>Note (determinisme) : l'image isolate JS custom embarque l'instrument StatementCounter (ops
+	 * deterministes, lus via {@link #statementCounterBinding}) ; Python (image officielle) reste sur le
+	 * terme temps CPU. Sous ISOLATED, le statement limit passe par {@code sandbox.MaxStatements} (les
+	 * autres {@code sandbox.Max*} sont exiges par la policy et poses genereusement ; le vrai backstop
+	 * reste le watchdog wall-clock de PolyglotEntityAI + le cap RAM).
 	 *
 	 * <p>Si {@code fileSystem} != null, il est monte (multi-fichiers) : les import/require resolvent a
 	 * travers lui, en lecture seule et uniquement sur les fichiers du joueur (aucun acces hote).

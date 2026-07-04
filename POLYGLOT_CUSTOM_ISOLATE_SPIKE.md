@@ -120,6 +120,44 @@ Spike de **plusieurs jours** : build mx de GraalVM (lourd, expertise mx), fork d
 maintenance à chaque bump de version GraalVM. **À sortir seulement quand l'arène CLASSÉE en prod
 exige la bit-reproductibilité.** Pour beta / non-classé, le **temps CPU actuel suffit**.
 
+## ✅ RÉSULTAT DU SPIKE (2026-07-04) : SUCCÈS
+
+Build dans `/media/hdd/lw-isolate-spike` (graal+graaljs @ `graal-25.1.3`, mx 7.82.2,
+labsjdk-ce-25.0.3-jvmci-25.1-b19, `BOOTSTRAP_GRAALVM` = dev-build `25.1.3-dev-20260621_0111`
+du repo graalvm-ce-dev-builds). Harnais : `harness/Gate2.java`.
+
+Verdict mesuré (image js custom avec l'instrument embarqué) :
+- **Déterminisme : OUI** — run1 == run2 == 600004 statements sur deux contextes frais.
+- **Overhead comptage : ~+3%** sur compute guest pur (1721 vs 1669 µs/eval) — contre +4200%
+  pour l'ExecutionListener. Le pari du comptage isolate-side est gagné.
+- **Coût lecture hôte : ~3 µs** par lecture (occasionnelle, dans getOperations()).
+
+Les 4 découvertes qui font marcher le montage :
+1. **Le lookup de service NE traverse PAS la frontière** (`lookup(Counter.class)` = null,
+   confirmé — c'était LE risque). Canal de lecture = **polyglot bindings** : l'instrument
+   publie un exécutable `lwStatementCounter` (execute()=lire, execute(x)=reset) dans chaque
+   contexte (ContextsListener + context.enter), l'hôte lit via
+   `context.getPolyglotBindings().getMember(..).execute()` — API standard, bridgée.
+2. **L'instrument est lazy** et son activateur historique (le lookup) est cassé sous isolate →
+   activation par **option Truffle** (`@Option` vide → `.option("lw-statement-counter", "true")`
+   sur l'engine, comme cpusampler).
+3. **ThreadLocal est blocklisté** en compilation runtime native-image → le compteur devient un
+   simple champ `long` (correct : 1 engine = 1 combat = 1 thread ; et plus rapide, l'incrément
+   se PE-compile). À reporter dans le StatementCounter du generator.
+4. Le provider DSL exige `--initialize-at-build-time=com.leekwars.generator.polyglot`
+   (ajouté aux isolate_build_options).
+
+Recette d'injection : projet mx `com.leekwars.truffle.instrument` + distribution module
+`LW_INSTRUMENT` dans la suite graal-js, ajoutée à `additional_image_path_artifacts` de
+`register_polyglot_isolate_distributions` (patch mx_graal_js.py, gaté `LW_ISOLATE_INSTRUMENT=1`).
+Build : `POLYGLOT_ISOLATES=js mx -p graaljs/graal-js --dy /substratevm build
+--dependencies graal-js:JS_ISOLATE_RESOURCES_LINUX_AMD64` (~5 min d'image sur 24 cœurs).
+
+Reste avant prod : nom de binding secret par combat OU builtin Polyglot js désactivé (sinon un
+joueur peut `Polyglot.import` et reset le compteur = triche) ; rebuild python-isolate équivalent ;
+bench Quantum ia-js sous l'image custom ; câblage PolyglotSandbox (option d'activation + lecture
+bindings dans getOperations) ; process de rebuild à chaque bump GraalVM.
+
 ## Références
 
 **Code (generator, branche `polyglot-ram-limit` = `private/develop`)** :

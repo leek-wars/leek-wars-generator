@@ -120,9 +120,11 @@ public class PolyglotEntityAI extends EntityAI {
 	// Budget temps (ns) au bout duquel le compteur synthetique atteint getMaxOperations(). Derive de
 	// turnWallClockLimitMs (recalcule dans le setter) ; pre-calcule car getOperations() est sur le hot path.
 	private long opsBudgetNanos = (long) (DEFAULT_TURN_WALL_CLOCK_LIMIT_MS * 1_000_000L * OPS_TIME_BUDGET_FRACTION);
-	// Compteur de statements guest DETERMINISTE (cf StatementCounter) : terme d'operations reproductible
-	// pour getOperations(). null si l'instrument est indisponible -> fallback temps-based (non reproductible).
-	private final StatementCounter.Counter statementCounter;
+	// Compteur de statements guest DETERMINISTE : executable publie par l'instrument StatementCounter
+	// de l'image isolate custom dans les polyglot bindings du contexte (execute() = lire,
+	// execute(x) = reset). Refetche a chaque (re)construction de contexte par ensureContext ; null si
+	// l'image ne l'embarque pas (ex Python officiel) -> fallback temps CPU (non reproductible).
+	private Value statementCounter;
 
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
@@ -135,7 +137,6 @@ public class PolyglotEntityAI extends EntityAI {
 		this.entryPath = entryPath;
 		this.fileSystem = fileSystem;
 		this.sandbox = sandbox;
-		this.statementCounter = sandbox != null ? sandbox.getStatementCounter() : null;
 		this.jsModule = entryPath != null && usesEsModules(languageId, source);
 		this.valid = true;
 	}
@@ -452,6 +453,9 @@ public class PolyglotEntityAI extends EntityAI {
 			context = sandbox.createContext(languageId, fileSystem, getMaxRAM());
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
+			// Compteur de statements deterministe de l'image custom, lie a CE contexte (refetche
+			// apres chaque reconstruction). null si l'image ne l'embarque pas -> temps CPU.
+			statementCounter = PolyglotSandbox.statementCounterBinding(context);
 		}
 	}
 
@@ -587,10 +591,8 @@ public class PolyglotEntityAI extends EntityAI {
 			return null; // IA neutralisee (trop de depassements wall-clock) : n'agit plus, ne consomme plus.
 		}
 		markTurnStart(); // bases (temps mur + temps CPU) du terme d'ops synthetique, cf getOperations
-		if (statementCounter != null) {
-			statementCounter.reset(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
-		}
 		ensureContext();
+		resetStatementCounter(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
 		// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 		// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
 		context.resetLimits();
@@ -710,9 +712,7 @@ public class PolyglotEntityAI extends EntityAI {
 			return null;
 		}
 		markTurnStart();
-		if (statementCounter != null) {
-			statementCounter.reset();
-		}
+		resetStatementCounter();
 		// Contexte reutilise entre tours (statement limit cumulatif) : on remet le budget a zero pour le
 		// tour du bulbe, exactement comme runIA pour un tour normal.
 		context.resetLimits();
@@ -767,6 +767,22 @@ public class PolyglotEntityAI extends EntityAI {
 	 * recherche polyglot n'est donc pas bit-reproductible entre machines. Acceptable pour faire tourner /
 	 * terminer des combats ; a affiner (compteur de statements guest) pour des combats classes.
 	 */
+	/**
+	 * Remet a zero le compteur de statements deterministe (execute(x) = reset, cf StatementCounter).
+	 * Si le contexte est mort (annule/ferme), on abandonne le compteur pour ce contexte : repli sur le
+	 * terme temps CPU (ensureContext refetchera un binding neuf avec le prochain contexte).
+	 */
+	private void resetStatementCounter() {
+		if (statementCounter == null) {
+			return;
+		}
+		try {
+			statementCounter.execute(0);
+		} catch (Exception e) {
+			statementCounter = null;
+		}
+	}
+
 	/** Pose les bases (temps mur + temps CPU du thread de combat) du terme d'ops synthetique, en debut de tour. */
 	private void markTurnStart() {
 		turnStartNanos = System.nanoTime();
@@ -777,11 +793,17 @@ public class PolyglotEntityAI extends EntityAI {
 	@Override
 	public long getOperations() {
 		long real = super.getOperations();
-		// Terme DETERMINISTE : nombre de statements guest executes ce tour. Reproductible (meme code +
-		// memes entrees -> meme compte), donc les IA de recherche qui se bornent sur getOperations()
-		// redeviennent bit-reproductibles (replays fiables, arene classee). Indispo sous isolate.
+		// Terme DETERMINISTE : nombre de statements guest executes ce tour, compte par l'instrument
+		// embarque dans l'image isolate custom et lu a travers la frontiere (~3 us). Reproductible
+		// (meme code + memes entrees -> meme compte), donc les IA de recherche qui se bornent sur
+		// getOperations() sont bit-reproductibles (replays fiables, arene classee).
 		if (statementCounter != null) {
-			return real + statementCounter.get();
+			try {
+				return real + statementCounter.execute().asLong();
+			} catch (Exception e) {
+				// Contexte annule/ferme en cours de tour : repli temps CPU pour le reste du tour.
+				statementCounter = null;
+			}
 		}
 		// Fallback sous isolate : terme proportionnel au TEMPS CPU du thread de combat passe dans ce tour
 		// -> plus honnete que le temps mur (exclut pauses GC / ordonnancement). Repli sur le temps mur si
@@ -857,6 +879,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// chaque tour...) s'accumulerait dans la liste pour tout le combat (retention memoire).
 			sandbox.forgetContext(context);
 			context = null;
+			statementCounter = null; // binding lie au contexte ferme ; refetche par ensureContext
 		}
 		// Le prochain ensureContext reconstruira un contexte neuf : on re-evaluera le source
 		// (entry pointait vers l'ancien contexte ferme).
