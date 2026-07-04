@@ -48,15 +48,18 @@ dependencies {
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
 	implementation 'org.postgresql:postgresql:42.7.5'
 
-	// GraalVM Polyglot (support IA en JavaScript / Python pour les groupes pro)
-	// 25.0.x est la premiere serie compatible JDK 25. js-community = licence OSS (EPL/UPL).
-	implementation 'org.graalvm.polyglot:polyglot:25.0.2'
-	implementation 'org.graalvm.polyglot:js-community:25.0.2'
-	// GraalPy (Python). Lourd (~150 Mo, stdlib embarquee) -> phase 2.
-	implementation 'org.graalvm.polyglot:python-community:25.0.2'
-	// Instrumentation Truffle : compteur de statements guest DETERMINISTE (cf StatementCounter), pour
-	// des combats polyglot reproductibles. truffle-api est deja transitif au runtime -> compileOnly ici ;
-	// le processor genere le provider d'instrument (decouverte via engine.getInstruments()).
-	compileOnly 'org.graalvm.truffle:truffle-api:25.0.2'
-	annotationProcessor 'org.graalvm.truffle:truffle-dsl-processor:25.0.2'
+	// GraalVM Polyglot (support IA en JavaScript / Python).
+	// 25.1.x = premiere serie ou les artefacts ISOLATE community exposent sandbox.MaxHeapMemory
+	// (cap RAM par contexte / par poireau). Variante "-community" = OSS pur (MIT/UPL), pas GFTC.
+	// PIEGE : l'agregateur js-isolate/python-isolate reference en dur les 5 plateformes dont
+	// darwin-amd64 ABSENT de Maven Central (pas de .module pour filtrer) -> cibler l'artefact plateforme.
+	// TODO deploy : ajouter les classifiers des autres plateformes (aarch64...) selon les workers/dev.
+	implementation 'org.graalvm.polyglot:polyglot:25.1.3'
+	implementation 'org.graalvm.polyglot:js-isolate-linux-amd64-community:25.1.3'
+	// GraalPy (Python) en isolate. Lourd (~150 Mo, stdlib embarquee).
+	implementation 'org.graalvm.polyglot:python-isolate-linux-amd64-community:25.1.3'
+	// truffle-api : encore requis pour compiler StatementCounter (l'instrument ne tourne PAS sous
+	// isolate -> ops deterministes indispo, cf getOperations fallback temps-based ; classe conservee).
+	compileOnly 'org.graalvm.truffle:truffle-api:25.1.3'
+	annotationProcessor 'org.graalvm.truffle:truffle-dsl-processor:25.1.3'
 }

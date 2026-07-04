@@ -431,7 +431,10 @@ public class PolyglotEntityAI extends EntityAI {
 			// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
 			// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
 			// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
-			context = sandbox.createContext(languageId, fileSystem);
+			// Cap RAM RETENUE du guest = budget RAM de l'entite (par poireau, sandbox.MaxHeapMemory).
+			// Meme budget que le mRAM LeekScript ci-dessus. (TODO calibrer : un objet JS/Py pese plus
+			// qu'un "quad" LeekScript, ce budget brut peut etre un peu serre pour le guest.)
+			context = sandbox.createContext(languageId, fileSystem, getMaxRAM());
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
 		}

@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
@@ -16,8 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.HostAccess;
-import org.graalvm.polyglot.ResourceLimits;
+import org.graalvm.polyglot.SandboxPolicy;
 import org.graalvm.polyglot.io.IOAccess;
 
 /**
@@ -42,9 +43,34 @@ public class PolyglotSandbox implements AutoCloseable {
 	/** Limite par defaut : 20M statements guest (cf. issue #3179). */
 	public static final long DEFAULT_STATEMENT_LIMIT = 20_000_000L;
 
-	private final Engine engine;
-	private final ResourceLimits limits;
-	private final StatementCounter.Counter statementCounter;
+	/**
+	 * Limite memoire TOTALE de l'isolate (par langage), en octets : adresse RESERVEE, committee a la
+	 * demande. Doit couvrir la somme des caps par-poireau (jusqu'a ~8 entites qui RETIENNENT leur RAM
+	 * entre tours) + l'overhead runtime GraalJS/GraalPy. TODO calibrer vs le nombre d'entites max.
+	 */
+	private static final long MAX_ISOLATE_MEMORY = 4_000_000_000L;
+
+	/** Cap RAM par defaut par contexte (par poireau) si non fourni (probes de validation), en octets. */
+	private static final long DEFAULT_MAX_HEAP_MEMORY = 100_000_000L;
+
+	// Limites exigees par SandboxPolicy.ISOLATED, posees GENEREUSEMENT : le vrai backstop reste le
+	// watchdog wall-clock de PolyglotEntityAI + le cap RAM par poireau. Regroupees ici (memes knobs
+	// que les budgets ci-dessus) plutot que dispersees en litteraux dans le builder.
+	private static final String MAX_CPU_TIME = "60s";
+	private static final String MAX_CPU_TIME_CHECK_INTERVAL = "10ms";
+	private static final String MAX_STACK_FRAMES = "50000";
+	private static final String MAX_THREADS = "1";
+	private static final String MAX_AST_DEPTH = "5000";
+	private static final String MAX_STREAM_SIZE = "1MB";
+
+	private final long statementLimit;
+	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
+	/**
+	 * Un Engine (= un isolate) PAR LANGAGE : les images isolate sont par-langage
+	 * (js-isolate != python-isolate), un meme isolate ne peut pas heberger js ET python. Lazy,
+	 * partage par tous les contextes du meme langage du combat (amortit le warmup).
+	 */
+	private final Map<String, Engine> engines = new ConcurrentHashMap<>();
 	private final List<Context> contexts = Collections.synchronizedList(new ArrayList<>());
 
 	public PolyglotSandbox(String... languages) {
@@ -52,29 +78,32 @@ public class PolyglotSandbox implements AutoCloseable {
 	}
 
 	public PolyglotSandbox(long statementLimit, String... languages) {
-		String[] permitted = languages.length == 0 ? new String[] { "js" } : languages;
-		this.engine = Engine.newBuilder(permitted).build();
-		// Compteur de statements guest DETERMINISTE (cf StatementCounter) : le lookup ACTIVE l'instrument
-		// sur cet engine. Sert a PolyglotEntityAI.getOperations() (operations reproductibles). null si
-		// l'instrument est indisponible -> degradation gracieuse (pas de terme synthetique).
-		StatementCounter.Counter counter = null;
-		try {
-			var instrument = engine.getInstruments().get(StatementCounter.ID);
-			if (instrument != null) {
-				counter = instrument.lookup(StatementCounter.Counter.class);
-			}
-		} catch (Exception ignore) {
-			// best effort
-		}
-		this.statementCounter = counter;
-		this.limits = ResourceLimits.newBuilder()
-				.statementLimit(statementLimit, null)
-				.build();
+		this.statementLimit = statementLimit;
+		this.statementLimitOption = String.valueOf(statementLimit);
 	}
 
-	/** Compteur de statements guest (deterministe) de cet engine, ou null s'il est indisponible. */
+	/** Formate un nombre d'octets en option memoire GraalVM ("&lt;n&gt;MB"). */
+	private static String memoryOption(long bytes) {
+		return Math.max(1L, bytes / 1_000_000L) + "MB";
+	}
+
+	/**
+	 * L'instrument Truffle {@link StatementCounter} (compteur d'ops DETERMINISTE) n'est PAS disponible
+	 * sous isolate (il n'est pas dans l'image native). {@code getOperations()} retombe donc sur un terme
+	 * temps-based, non deterministe (accepte : la RAM precise par-poireau prime sur le determinisme).
+	 */
 	public StatementCounter.Counter getStatementCounter() {
-		return statementCounter;
+		return null;
+	}
+
+	/** Engine isolate (SandboxPolicy.ISOLATED) pour un langage, cree a la demande et partage. */
+	private Engine engineFor(String languageId) {
+		return engines.computeIfAbsent(languageId, lang -> Engine.newBuilder(lang)
+				.sandbox(SandboxPolicy.ISOLATED)
+				.option("engine.MaxIsolateMemory", memoryOption(MAX_ISOLATE_MEMORY))
+				.out(OutputStream.nullOutputStream())
+				.err(OutputStream.nullOutputStream())
+				.build());
 	}
 
 	/** Racine de la stdlib GraalPy (decouverte une fois, mise en cache). */
@@ -104,19 +133,30 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/** Contexte isole et verrouille, sans systeme de fichiers (IA mono-fichier). */
 	public Context createContext(String languageId) {
-		return createContext(languageId, null);
+		return createContext(languageId, null, DEFAULT_MAX_HEAP_MEMORY);
 	}
 
 	/**
-	 * Construit un contexte isole et verrouille pour le langage donne (et le suit pour la fermeture).
-	 * Si {@code fileSystem} != null, il est monte (multi-fichiers) : les import/require resolvent
-	 * a travers lui, en lecture seule et uniquement sur les fichiers du joueur (aucun acces hote).
+	 * Construit un contexte ISOLE (mode isolate GraalVM) et verrouille pour le langage donne.
+	 *
+	 * <p>La RAM RETENUE du guest est bornee PAR CONTEXTE (= par poireau) via
+	 * {@code sandbox.MaxHeapMemory} : un poireau qui explose sa RAM est annule sans affecter les autres
+	 * du meme combat (l'isolate partage n'est pas empoisonne). Le cap est le RETENU (pas l'alloue), donc
+	 * les temporaires ne penalisent pas -> honnete, comme le {@code mRAM} LeekScript. {@code maxHeapBytes}
+	 * = budget RAM de l'entite (cf {@link PolyglotEntityAI#ensureContext}).
+	 *
+	 * <p>Note (determinisme) : sous ISOLATED l'instrument StatementCounter est indispo -> ops via terme
+	 * temps-based (non deterministe, accepte). Sous ISOLATED, le statement limit passe par
+	 * {@code sandbox.MaxStatements} (les autres {@code sandbox.Max*} sont exiges par la policy et poses
+	 * genereusement ; le vrai backstop reste le watchdog wall-clock de PolyglotEntityAI + le cap RAM).
+	 *
+	 * <p>Si {@code fileSystem} != null, il est monte (multi-fichiers) : les import/require resolvent a
+	 * travers lui, en lecture seule et uniquement sur les fichiers du joueur (aucun acces hote).
 	 */
-	public Context createContext(String languageId, PolyglotFileSystem fileSystem) {
+	public Context createContext(String languageId, PolyglotFileSystem fileSystem, long maxHeapBytes) {
 		Context.Builder builder = Context.newBuilder(languageId)
-				.engine(engine)
-				.allowHostAccess(HostAccess.NONE)
-				.allowAllAccess(false)
+				.engine(engineFor(languageId))
+				.sandbox(SandboxPolicy.ISOLATED)
 				.allowCreateThread(false)
 				.allowNativeAccess(false)
 				.allowCreateProcess(false)
@@ -125,7 +165,18 @@ public class PolyglotSandbox implements AutoCloseable {
 				// le stdout/les logs du serveur. (Le logging joueur passera par l'API de combat.)
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream())
-				.resourceLimits(limits);
+				// Cap RAM RETENUE par poireau : le vrai anti-DoS, isole par contexte.
+				.option("sandbox.MaxHeapMemory", memoryOption(maxHeapBytes))
+				// Ops guest (borne les boucles pures ; non deterministe sous isolate).
+				.option("sandbox.MaxStatements", statementLimitOption)
+				// Limites exigees par la policy ISOLATED (constantes ci-dessus).
+				.option("sandbox.MaxCPUTime", MAX_CPU_TIME)
+				.option("sandbox.MaxCPUTimeCheckInterval", MAX_CPU_TIME_CHECK_INTERVAL)
+				.option("sandbox.MaxStackFrames", MAX_STACK_FRAMES)
+				.option("sandbox.MaxThreads", MAX_THREADS)
+				.option("sandbox.MaxASTDepth", MAX_AST_DEPTH)
+				.option("sandbox.MaxOutputStreamSize", MAX_STREAM_SIZE)
+				.option("sandbox.MaxErrorStreamSize", MAX_STREAM_SIZE);
 
 		if (fileSystem != null) {
 			builder.allowIO(IOAccess.newBuilder().fileSystem(fileSystem).build());
@@ -162,7 +213,14 @@ public class PolyglotSandbox implements AutoCloseable {
 			}
 			contexts.clear();
 		}
-		engine.close();
+		for (Engine engine : engines.values()) {
+			try {
+				engine.close();
+			} catch (Exception ignore) {
+				// best effort
+			}
+		}
+		engines.clear();
 	}
 
 	// ---------- Watchdog wall-clock (anti-DoS) ----------
