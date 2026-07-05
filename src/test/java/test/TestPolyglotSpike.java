@@ -95,25 +95,24 @@ public class TestPolyglotSpike {
 
 	@Test(timeout = 30_000)
 	public void statementLimitStopsInfiniteLoop() {
-		ResourceLimits limits = ResourceLimits.newBuilder()
-				.statementLimit(100_000, null)
-				.build();
-		// LECON SPIKE : un contexte dont la limite est epuisee passe en etat "cancelled".
-		// Son close() auto (try-with-resources) RELANCE la PolyglotException -> PolyglotEntityAI
-		// devra fermer defensivement avec close(true). On gere donc la fermeture a la main ici.
-		Context context = Context.newBuilder(JS)
-				.allowHostAccess(HostAccess.NONE)
-				.resourceLimits(limits)
-				.build();
-		try {
-			context.eval(JS, "var i = 0; while (true) { i++; }");
-			Assert.fail("la boucle infinie aurait du etre interrompue par le statement limit");
-		} catch (PolyglotException e) {
-			System.out.println("[spike] boucle infinie interrompue: cancelled=" + e.isCancelled()
-					+ " resourceExhausted=" + e.isResourceExhausted());
-			Assert.assertTrue("doit etre une interruption de ressource", e.isCancelled() || e.isResourceExhausted());
-		} finally {
-			context.close(true); // cancelIfExecuting = true : ferme sans relancer
+		// Chemin PROD : sous isolate, la limite de statements passe par sandbox.MaxStatements
+		// (PolyglotSandbox.createContext) — l'ancien ResourceLimits.statementLimit d'un contexte
+		// plain n'est PAS applique par l'image isolate (boucle infinie non bornee, verifie).
+		// LECON SPIKE (toujours vraie) : un contexte epuise passe "cancelled", son close() auto
+		// RELANCE la PolyglotException -> fermeture defensive close(true).
+		try (com.leekwars.generator.polyglot.PolyglotSandbox sb =
+				new com.leekwars.generator.polyglot.PolyglotSandbox(100_000, JS)) {
+			Context context = sb.createContext(JS);
+			try {
+				context.eval(JS, "var i = 0; while (true) { i++; }");
+				Assert.fail("la boucle infinie aurait du etre interrompue par le statement limit");
+			} catch (PolyglotException e) {
+				System.out.println("[spike] boucle infinie interrompue: cancelled=" + e.isCancelled()
+						+ " resourceExhausted=" + e.isResourceExhausted());
+				Assert.assertTrue("doit etre une interruption de ressource", e.isCancelled() || e.isResourceExhausted());
+			} finally {
+				context.close(true); // cancelIfExecuting = true : ferme sans relancer
+			}
 		}
 	}
 

@@ -1,0 +1,3 @@
+# Artefact image isolate combinee (127 Mo, > limite git GitHub) : telecharge depuis la
+# release du repo prive leek-wars-graal-isolate (voir build.gradle et les workflows *-beta).
+*.jar

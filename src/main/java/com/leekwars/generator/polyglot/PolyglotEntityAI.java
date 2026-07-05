@@ -566,11 +566,13 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static String pythonDeterminismGuard(long seed) {
 		return
-			// Multi-fichiers : on s'assure que la stdlib a la PRIORITE sur les fichiers du joueur
-			// (/ai). Sinon une IA nommant un fichier random.py / os.py masquerait la stdlib (et le
-			// RNG seede). On deplace /ai en fin de sys.path AVANT d'importer la stdlib.
+			// Multi-fichiers : le montage /ai est ajoute a sys.path ICI (l'option python.PythonPath
+			// est TRUSTED-only, rejetee par la policy ISOLATED), en FIN de path pour que la stdlib
+			// garde la PRIORITE sur les fichiers du joueur. Sinon une IA nommant un fichier
+			// random.py / os.py masquerait la stdlib (et le RNG seede).
 			"import sys\n"
-			+ "if '/ai' in sys.path:\n    sys.path.remove('/ai')\n    sys.path.append('/ai')\n"
+			+ "if '/ai' in sys.path:\n    sys.path.remove('/ai')\n"
+			+ "sys.path.append('/ai')\n"
 			+ "import os, random, uuid, time, datetime\n"
 			+ "_lw_r = random.Random(" + seed + ")\n"
 			+ "os.urandom = lambda n: bytes(_lw_r.getrandbits(8) for _ in range(n))\n"
@@ -588,7 +590,21 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "    datetime.datetime.now = classmethod(lambda cls, tz=None: datetime.datetime(2020, 1, 1))\n"
 			+ "    datetime.datetime.today = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
 			+ "    datetime.datetime.utcnow = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
-			+ "except Exception:\n    pass\n";
+			+ "except TypeError:\n"
+			// Image avec accelerateur natif _datetime : la classe est IMMUABLE ("cannot set 'now'
+			// attribute of immutable type") -> on la REMPLACE par une sous-classe figee, et on
+			// redirige le module _datetime vers le module patche (sinon `import _datetime`
+			// re-exposerait l'horloge reelle).
+			+ "    _lw_dt = datetime.datetime\n"
+			+ "    class _LWDateTime(_lw_dt):\n"
+			+ "        @classmethod\n"
+			+ "        def now(cls, tz=None):\n            return _lw_dt(2020, 1, 1)\n"
+			+ "        @classmethod\n"
+			+ "        def today(cls):\n            return _lw_dt(2020, 1, 1)\n"
+			+ "        @classmethod\n"
+			+ "        def utcnow(cls):\n            return _lw_dt(2020, 1, 1)\n"
+			+ "    datetime.datetime = _LWDateTime\n"
+			+ "    sys.modules['_datetime'] = sys.modules['datetime']\n";
 	}
 
 	@Override

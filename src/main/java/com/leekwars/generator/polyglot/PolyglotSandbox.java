@@ -135,7 +135,10 @@ public class PolyglotSandbox implements AutoCloseable {
 	 */
 	private Engine engineFor(String languageId) {
 		return engines.computeIfAbsent(languageId, lang -> {
-			boolean withCounter = "js".equals(lang); // l'image custom (instrument) n'existe que pour js
+			// L'image isolate combinee (js+python) embarque l'instrument pour TOUS ses langages ;
+			// si une image officielle (sans instrument) est revenue, l'echelle de replis ci-dessous
+			// retire simplement l'option.
+			boolean withCounter = true;
 			boolean external = false;
 			while (true) {
 				try {
@@ -250,10 +253,11 @@ public class PolyglotSandbox implements AutoCloseable {
 				.option("sandbox.MaxErrorStreamSize", MAX_STREAM_SIZE);
 
 		if (fileSystem != null) {
+			// NB : PAS d'option python.PythonPath ici — elle est TRUSTED-only, la policy ISOLATED
+			// la rejette. Le montage /ai est ajoute a sys.path COTE GUEST par le garde de
+			// determinisme (PolyglotEntityAI.pythonDeterminismGuard), en FIN de path pour que la
+			// stdlib garde la priorite sur les fichiers du joueur.
 			builder.allowIO(IOAccess.newBuilder().fileSystem(fileSystem).build());
-			if ("python".equals(languageId)) {
-				builder.option("python.PythonPath", PolyglotFileSystem.MOUNT);
-			}
 		} else {
 			builder.allowIO(IOAccess.NONE);
 		}

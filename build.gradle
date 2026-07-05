@@ -55,17 +55,18 @@ dependencies {
 	// darwin-amd64 ABSENT de Maven Central (pas de .module pour filtrer) -> cibler l'artefact plateforme.
 	// TODO deploy : ajouter les classifiers des autres plateformes (aarch64...) selon les workers/dev.
 	implementation 'org.graalvm.polyglot:polyglot:25.1.3'
-	// Image isolate JS CUSTOM (repo prive leek-wars/graal-isolate) : identique a
-	// org.graalvm.polyglot:js-isolate-linux-amd64-community:25.1.3 MAIS avec l'instrument
-	// StatementCounter compile dans l'image native (compteur d'ops DETERMINISTE, active par
-	// option a la creation de l'engine et lu via les polyglot bindings, cf PolyglotSandbox).
-	// Le meta-pom Maven ne wrappe que ce jar de ressources -> substitution directe ; ses deps
-	// transitives (nativebridge, truffle-api) sont declarees explicitement ci-dessous.
+	// Image isolate COMBINEE js+python CUSTOM (repo prive leek-wars/graal-isolate) : remplace
+	// org.graalvm.polyglot:{js,python}-isolate-linux-amd64-community:25.1.3. UNE seule lib native
+	// (les deux langages coexistent en mode internal dans un worker : la limite GraalVM
+	// une-lib-isolate-par-JVM ne s'applique plus) + instrument StatementCounter compile dans
+	// l'image (compteur d'ops DETERMINISTE js ET python, active par option a la creation de
+	// l'engine et lu via les polyglot bindings, cf PolyglotSandbox). Les deps transitives des
+	// meta-poms remplaces (nativebridge, truffle-api) sont declarees explicitement ci-dessous.
+	// Le jar (127 Mo, au-dela de la limite git GitHub) n'est PAS commite : il vient de la RELEASE
+	// du repo prive leek-wars-graal-isolate (les workflows *-beta le telechargent dans libs/ via
+	// `gh release download` avant le build ; en local, copier dist/ du repo graal-isolate).
 	implementation files('libs/js-isolate-resources-linux-amd64.jar')
 	implementation 'org.graalvm.sdk:nativebridge:25.1.3'
-	// GraalPy (Python) en isolate. Lourd (~150 Mo, stdlib embarquee). Image OFFICIELLE, sans
-	// instrument -> ops Python = temps CPU (non deterministe), en attendant le meme montage GraalPy.
-	implementation 'org.graalvm.polyglot:python-isolate-linux-amd64-community:25.1.3'
 	// truffle-api : compile StatementCounter (copie hote de l'instrument, ALIGNEE sur celle de
 	// l'image custom - repo graal-isolate) et sert le runtime hote de l'isolate.
 	implementation 'org.graalvm.truffle:truffle-api:25.1.3'

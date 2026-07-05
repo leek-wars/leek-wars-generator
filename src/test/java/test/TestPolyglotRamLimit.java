@@ -33,10 +33,12 @@ public class TestPolyglotRamLimit {
 	/** Un poireau qui explose son cap RAM est annule ; un autre du meme sandbox (meme isolate) survit. */
 	private void greedyBoundedOthersSurvive(String lang, String retainTemplate) {
 		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
-			// Poireau glouton : cap 32 Mo, retient ~200 Mo -> annule.
+			// Poireau glouton : cap 32 Mo, retient ~800 Mo -> annule. (La verification du cap est
+			// liee aux passages GC de l'isolate : une retention trop proche du cap peut passer
+			// entre deux collections -> on vise LARGE pour un declenchement fiable.)
 			Context greedy = sb.createContext(lang, null, 32_000_000L);
 			try {
-				greedy.eval(lang, String.format(retainTemplate, 500));
+				greedy.eval(lang, String.format(retainTemplate, 2000));
 				// Repli isolate processus EXTERNE (la lib in-process d'un AUTRE langage est deja chargee
 				// dans cette JVM, cf PolyglotSandbox.engineFor) : sandbox.MaxHeapMemory n'y est pas
 				// applique, le cap par-poireau n'est verifiable qu'en mode in-process -> test saute.

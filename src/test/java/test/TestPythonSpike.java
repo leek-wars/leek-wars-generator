@@ -102,12 +102,20 @@ public class TestPythonSpike {
 		}
 	}
 
-	@Test
+	@Test(timeout = 30_000)
 	public void statementLimitStopsInfiniteLoop() {
-		ResourceLimits limits = ResourceLimits.newBuilder().statementLimit(1_000_000, null).build();
-		Context c = Context.newBuilder(PY).allowHostAccess(HostAccess.NONE).resourceLimits(limits).build();
+		// Chemin PROD : sous isolate, la limite passe par sandbox.MaxStatements
+		// (PolyglotSandbox.createContext) — ResourceLimits.statementLimit d'un contexte plain
+		// n'est PAS applique par l'image isolate (boucle infinie non bornee, verifie).
+		// NB : le corps de boucle ne doit PAS etre vide — GraalPy n'emet AUCUN statement comptable
+		// pour `while True: pass` (boucle optimisee, verifie : jamais interrompue par MaxStatements).
+		// En prod ce cas est couvert par le watchdog wall-clock de PolyglotEntityAI
+		// (cf TestPythonFight.pyInfiniteLoopIsBounded).
+		try (com.leekwars.generator.polyglot.PolyglotSandbox sb =
+				new com.leekwars.generator.polyglot.PolyglotSandbox(1_000_000, PY)) {
+		Context c = sb.createContext(PY);
 		try {
-			c.eval(PY, "while True:\n    pass\n");
+			c.eval(PY, "i = 0\nwhile True:\n    i += 1\n");
 			Assert.fail("la boucle infinie aurait du etre interrompue");
 		} catch (org.graalvm.polyglot.PolyglotException e) {
 			// Sur le runtime interprete (JDK standard), l'interruption GraalPy par le statement limit
@@ -119,6 +127,7 @@ public class TestPythonSpike {
 					e.isCancelled() || e.isResourceExhausted() || e.isInternalError());
 		} finally {
 			c.close(true);
+		}
 		}
 	}
 }
