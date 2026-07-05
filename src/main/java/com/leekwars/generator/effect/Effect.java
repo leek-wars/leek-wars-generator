@@ -395,7 +395,13 @@ public abstract class Effect implements Cloneable {
 
 	public Object clone() {
 		try {
-			return super.clone();
+			Effect copy = (Effect) super.clone();
+			// Copie PROFONDE des stats : mergeWith (stack d'effets identiques) mute cet objet
+			// après création. Un clone superficiel partage l'instance -> tout stack sur l'effet
+			// cloné (ex: simulation sur une copie de State) pollue l'effet ORIGINAL, et l'entité
+			// d'origine hérite de l'inflation au prochain updateBuffStats() (recalcul complet).
+			copy.stats = new com.leekwars.generator.state.Stats(copy.stats);
+			return copy;
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 			return null;
