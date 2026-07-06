@@ -131,6 +131,39 @@ public class PolyglotEntityAI extends EntityAI {
 	// ne monte jamais et chaque tour epuise son budget de statements, ~1,6 s/tour constate en beta).
 	private boolean externalIsolate;
 
+	/**
+	 * CALIBRATION FAIRNESS INTER-LANGAGES (ops). LeekScript compte des OPERATIONS (granularite
+	 * expression : {@code s += i} ~ 4 ops), l'instrument compte des STATEMENTS (granularite ligne :
+	 * {@code s += i} = 1). Consequence mesuree (TestOpsCalibration) : a travail identique, JS
+	 * consomme ~2x MOINS d'ops que LeekScript et Python ~5x moins -> sans correction, un joueur
+	 * Python fait ~5x plus de calcul par tour a budget egal (avantage de recherche en arene classee).
+	 * On multiplie le terme guest de {@link #getOperations()} par ce facteur pour rendre le compteur
+	 * COMPARABLE entre langages. Compter les expressions serait plus principiel MAIS GraalPy ne tague
+	 * PAS les expressions (verifie) -> le multiplicateur est le seul levier commun.
+	 *
+	 * <p>Facteurs = mediane des workloads combat-typiques (entiers/branches/appels ; le flottant et
+	 * les strings ont un ratio different, non couvrable par une constante). AJUSTABLES (game design) :
+	 * augmenter = plus severe (moins de calcul autorise). 1.0 = LeekScript (reference, non scale).
+	 */
+	private static double opsFactor(String languageId) {
+		switch (languageId) {
+			case "python": return 5.0;
+			case "js":     return 2.0;
+			default:       return 1.0;
+		}
+	}
+	private final double opsFactor;
+
+	/**
+	 * CALIBRATION FAIRNESS INTER-LANGAGES (RAM). Le cap {@code min(50,RAM)*8Mo} est passe tel quel a
+	 * {@code sandbox.MaxHeapMemory} (OCTETS) alors que LeekScript l'interprete en unites mRAM
+	 * LOGIQUES. Consequence mesuree (TestRamCalibration) : a cap identique, JS et Python retiennent
+	 * ~3.8x PLUS de donnees (tableau d'entiers) que LeekScript. On divise le cap guest par ce facteur
+	 * pour rapprocher la parite. AJUSTABLE. NB : approximatif (un objet JS/Py pese plus qu'un entier
+	 * packe -> le ratio varie selon la structure), donc a affiner selon les IA reelles.
+	 */
+	private static final double RAM_FACTOR = 3.8;
+
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
 	}
@@ -142,6 +175,7 @@ public class PolyglotEntityAI extends EntityAI {
 		this.entryPath = entryPath;
 		this.fileSystem = fileSystem;
 		this.sandbox = sandbox;
+		this.opsFactor = opsFactor(languageId);
 		this.jsModule = entryPath != null && usesEsModules(languageId, source);
 		this.valid = true;
 	}
@@ -452,10 +486,12 @@ public class PolyglotEntityAI extends EntityAI {
 			// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
 			// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
 			// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
-			// Cap RAM RETENUE du guest = budget RAM de l'entite (par poireau, sandbox.MaxHeapMemory).
-			// Meme budget que le mRAM LeekScript ci-dessus. (TODO calibrer : un objet JS/Py pese plus
-			// qu'un "quad" LeekScript, ce budget brut peut etre un peu serre pour le guest.)
-			context = sandbox.createContext(languageId, fileSystem, getMaxRAM());
+			// Cap RAM RETENUE du guest (par poireau, sandbox.MaxHeapMemory, en OCTETS) = budget RAM
+			// de l'entite DIVISE par RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de
+			// donnees que le mRAM LeekScript (TestRamCalibration) -> on divise pour la parite (cf
+			// RAM_FACTOR). Plancher a 8 Mo pour ne jamais etouffer un contexte legitime.
+			long guestRamCap = Math.max(8_000_000L, (long) (getMaxRAM() / RAM_FACTOR));
+			context = sandbox.createContext(languageId, fileSystem, guestRamCap);
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
 			// Compteur de statements deterministe de l'image custom, lie a CE contexte (refetche
@@ -510,6 +546,74 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "globalThis.Date=L;})();"
 		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}";
 
+	/**
+	 * FACTURATION DU TRAVAIL NATIF (JS). Les methodes natives de Array/String (sort, fill, repeat...)
+	 * font O(N) de travail mais emettent ~0 statement -> l'instrument ne les voit pas (faille de
+	 * fairness : LeekScript, lui, facture ses builtins). On les enveloppe pour facturer via
+	 * {@code __lw_charge} au prorata de la taille traitee (le facteur de calibration par langage est
+	 * applique cote hote dans {@link #chargeProxy}). On N'enveloppe PAS map/filter/reduce/forEach (leur
+	 * callback guest est deja compte par element) ni indexOf/includes (court-circuit : facturer la
+	 * longueur entiere sur-penaliserait un hit precoce). Deux cadences de facturation : longueur du
+	 * RECEVEUR pour les parcours complets (sort/fill/reverse/join/copyWithin/splice), longueur du
+	 * RESULTAT pour les copies (slice/concat/flat/from/repeat), facturee APRES pour rester exacte.
+	 *
+	 * <p>Accumulateur PRIVE (closure, hors globalThis -> le joueur ne peut pas le remettre a zero) :
+	 * on n'appelle {@code __lw_charge} (traversee hote couteuse sous isolate) que tous les {@code FLUSH}
+	 * unites, pas a chaque appel -> pas de taxe de frontiere sur les IA qui font beaucoup de petits
+	 * appels. Un appel massif (ex fill(1e9)) franchit FLUSH d'un coup et facture immediatement.
+	 * Wraps SCELLES (writable/configurable false, comme les gardes de determinisme).
+	 */
+	private static final String JS_CHARGE_GUARD =
+		"(function(){var C=globalThis.__lw_charge;if(!C)return;"
+		+ "var acc=0;var FLUSH=4096;function ch(n){acc+=n;if(acc>=FLUSH){C(acc);acc=0;}}"
+		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
+		+ "function wrapLen(name){var o=Array.prototype[name];if(!o)return;"
+		+ "Object.defineProperty(Array.prototype,name,{value:function(){ch(this.length>>>0);return o.apply(this,arguments);},writable:false,configurable:false});}"
+		+ "['sort','fill','reverse','join','copyWithin','splice'].forEach(wrapLen);"
+		// copie -> cout = longueur du RESULTAT (facture APRES, exact)
+		+ "function wrapRes(name){var o=Array.prototype[name];if(!o)return;"
+		+ "Object.defineProperty(Array.prototype,name,{value:function(){var r=o.apply(this,arguments);ch((r&&r.length)>>>0);return r;},writable:false,configurable:false});}"
+		+ "['slice','concat','flat'].forEach(wrapRes);"
+		+ "var AF=Array.from;if(AF)Object.defineProperty(Array,'from',{value:function(){var r=AF.apply(Array,arguments);ch((r&&r.length)>>>0);return r;},writable:false,configurable:false});"
+		+ "var RP=String.prototype.repeat;if(RP)Object.defineProperty(String.prototype,'repeat',{value:function(){var r=RP.apply(this,arguments);ch(r.length>>>0);return r;},writable:false,configurable:false});"
+		+ "})();";
+
+	/**
+	 * FACTURATION DU TRAVAIL NATIF (Python). Enveloppe les builtins qui PARCOURENT tout leur argument
+	 * (sum, sorted, list, min, max...) pour facturer via {@code __lw_charge} au prorata de {@code len}
+	 * (le facteur de calibration est applique cote hote, cf {@link #chargeProxy}). On ne facture que la
+	 * FORME iterable (1 argument positionnel dont on peut prendre len) : la forme multi-args (min(a,b))
+	 * est O(1). On N'enveloppe PAS all/any (court-circuit : facturer len sur-penaliserait). Un
+	 * generateur sans len n'est pas facture ici mais son corps est deja compte par l'instrument. Les
+	 * operateurs ({@code 'x'*N}, {@code 10**N}) restent non factures mais sont bornes par le cap RAM +
+	 * wall-clock. Accumulateur PRIVE + flush (idem JS). Contournable par reflexion (idem JS).
+	 */
+	private static final String PY_CHARGE_GUARD =
+		"import builtins as _lwb\n"
+		+ "def _lw_install():\n"
+		+ "    _acc = [0]\n"
+		+ "    _FLUSH = 4096\n"
+		+ "    _C = __lw_charge\n"
+		+ "    def _ch(n):\n"
+		+ "        _acc[0] += n\n"
+		+ "        if _acc[0] >= _FLUSH:\n"
+		+ "            _C(_acc[0]); _acc[0] = 0\n"
+		+ "    def _wrap(_orig):\n"
+		+ "        def _f(*a, **k):\n"
+		+ "            if len(a) == 1:\n"
+		+ "                try:\n"
+		+ "                    _ch(len(a[0]))\n"
+		+ "                except TypeError:\n"
+		+ "                    pass\n"
+		+ "            return _orig(*a, **k)\n"
+		+ "        return _f\n"
+		+ "    for _n in ('sum','sorted','list','tuple','set','frozenset','min','max','dict'):\n"
+		+ "        try:\n"
+		+ "            setattr(_lwb, _n, _wrap(getattr(_lwb, _n)))\n"
+		+ "        except Exception:\n"
+		+ "            pass\n"
+		+ "_lw_install()\n";
+
 	// graaljs fournit bien `console`, mais sa sortie part dans le nullOutputStream du sandbox (jetee) :
 	// une IA qui fait console.log ne verrait donc RIEN. On reroute console.* vers debug() (le log de
 	// combat, visible dans le rapport, avec ses propres limites anti-spam) -> les IA JS/TS peuvent
@@ -537,6 +641,38 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
+	 * Fonction hote {@code __lw_charge(n)} exposee au guest : facture {@code n} operations sur le
+	 * compteur reel (via {@link leekscript.runner.AI#ops(int)}, qui jette {@code TOO_MUCH_OPERATIONS}
+	 * au dela du budget). Sert au comptage du travail NATIF/builtin que l'instrument (granularite
+	 * statement) ne voit pas : les preludes JS_CHARGE_GUARD / PY_CHARGE_GUARD enveloppent les builtins
+	 * couteux (sort, fill, sum, sorted, list...) pour facturer au prorata de la taille d'entree, comme
+	 * LeekScript facture ses propres builtins. Deterministe (la taille l'est). L'exception d'ops est
+	 * emballee en RuntimeException -> deballee par runIA via {@link #unwrapLeekRunException}.
+	 */
+	private ProxyExecutable chargeProxy() {
+		return (Value... args) -> {
+			if (args.length > 0) {
+				long n;
+				try { n = args[0].fitsInLong() ? args[0].asLong() : 0L; } catch (Exception e) { n = 0L; }
+				if (n > 0) {
+					// Le travail natif est du travail GUEST : on le scale par opsFactor comme les
+					// statements (cf getOperations), sinon un builtin resterait opsFactor x moins cher
+					// qu'une boucle explicite equivalente.
+					long scaled = (long) Math.min((double) n * opsFactor, Integer.MAX_VALUE);
+					if (scaled > 0) {
+						try {
+							ops((int) scaled);
+						} catch (LeekRunException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				}
+			}
+			return 0L;
+		};
+	}
+
+	/**
 	 * Neutralise les sources de non-determinisme atteignables par le guest, sinon les IA JS/Python
 	 * ne seraient pas reproductibles a partir de la seed du combat (re-simulation / verification) :
 	 * generateur aleatoire seede et fige, et horloge murale fixe.
@@ -544,7 +680,9 @@ public class PolyglotEntityAI extends EntityAI {
 	private void installDeterminismGuards() {
 		if ("js".equals(languageId)) {
 			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
+			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
 			context.eval(languageId, JS_DETERMINISM_GUARD);
+			context.eval(languageId, JS_CHARGE_GUARD);
 			context.eval(languageId, JS_CONSOLE_SETUP);
 			if (JS_OBJECT_API != null) {
 				context.eval(languageId, JS_OBJECT_API);
@@ -552,7 +690,9 @@ public class PolyglotEntityAI extends EntityAI {
 		} else if ("python".equals(languageId)) {
 			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
 			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
+			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
 			context.eval(languageId, pythonDeterminismGuard(seed));
+			context.eval(languageId, PY_CHARGE_GUARD);
 			if (PY_OBJECT_API != null) {
 				context.eval(languageId, PY_OBJECT_API);
 			}
@@ -821,7 +961,9 @@ public class PolyglotEntityAI extends EntityAI {
 		// getOperations() sont bit-reproductibles (replays fiables, arene classee).
 		if (statementCounter != null) {
 			try {
-				return real + statementCounter.execute().asLong();
+				// Terme guest * facteur de calibration par langage (cf opsFactor) : rend getOperations()
+				// comparable a LeekScript pour la fairness arene.
+				return real + (long) (statementCounter.execute().asLong() * opsFactor);
 			} catch (Exception e) {
 				// Contexte annule/ferme en cours de tour : repli temps CPU pour le reste du tour.
 				statementCounter = null;
