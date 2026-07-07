@@ -17,6 +17,7 @@ public class Order {
 	public Order(Order order, State state) {
 		this.leeks = new ArrayList<Entity>();
 		this.position = order.position;
+		this.turn = order.turn;   // sans ça, toute COPIE de State repart au tour 1 (getTurn faux)
 		for (var entity : order.leeks) {
 			this.leeks.add(state.getEntity(entity.getFId()));
 		}
