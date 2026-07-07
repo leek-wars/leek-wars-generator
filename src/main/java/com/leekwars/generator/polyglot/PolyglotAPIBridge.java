@@ -179,7 +179,11 @@ public class PolyglotAPIBridge {
 				callArgs[i] = TypeMarshaller.coerce(a, params[i], ai);
 			}
 			try {
-				return TypeMarshaller.toGuest(m.invoke(null, callArgs));
+				Object result = TypeMarshaller.toGuest(m.invoke(null, callArgs));
+				// La fonction de combat a pu charger des ops (ai.ops) : rafraichir le miroir __lw_real
+				// pour le getOperations() cote guest (cf PolyglotEntityAI.installGuestGetOperations).
+				if (ai instanceof PolyglotEntityAI) ((PolyglotEntityAI) ai).syncRealToGuest();
+				return result;
 			} catch (InvocationTargetException ite) {
 				Throwable cause = ite.getCause();
 				// LeekRunException (checked) et autres erreurs remontent comme exception hote ;

@@ -125,6 +125,9 @@ public class PolyglotEntityAI extends EntityAI {
 	// execute(x) = reset). Refetche a chaque (re)construction de contexte par ensureContext ; null si
 	// l'image ne l'embarque pas (ex Python officiel) -> fallback temps CPU (non reproductible).
 	private Value statementCounter;
+	// Bindings globaux du guest (cache) : sert a rafraichir le miroir __lw_real pour le getOperations
+	// cote guest (cf installGuestGetOperations). null si l'override guest n'est pas actif.
+	private Value guestBindings;
 	// Engine en isolate processus EXTERNE (repli une-lib-par-JVM, cf PolyglotSandbox.engineFor) :
 	// le guest tourne dans un AUTRE process, le temps CPU du thread de combat ne mesure plus son
 	// travail -> le terme d'ops synthetique doit passer au temps MUR (sinon la garde getOperations()
@@ -498,6 +501,15 @@ public class PolyglotEntityAI extends EntityAI {
 			// apres chaque reconstruction). null si l'image ne l'embarque pas -> temps CPU.
 			statementCounter = PolyglotSandbox.statementCounterBinding(context);
 			externalIsolate = sandbox.isExternalIsolate(languageId);
+			// Redirige getOperations() cote guest (perf : evite ~100k+ aller-retours hote/tour sur une
+			// IA de recherche). Seulement avec l'instrument deterministe ; sinon le getOperations HOTE
+			// (fallback temps CPU) reste en place.
+			guestBindings = context.getBindings(languageId);
+			if (statementCounter != null) {
+				installGuestGetOperations();
+			} else {
+				guestBindings = null;
+			}
 		}
 	}
 
@@ -641,6 +653,54 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
+	 * OPTIM getOperations COTE GUEST. Une IA de recherche appelle {@code getOperations()} des dizaines
+	 * de milliers de fois par tour pour borner son alpha-beta ; en tant que fonction HOTE bridgee, chaque
+	 * appel = un aller-retour hote + une lecture du compteur de statements dans l'isolate (~2,4 us,
+	 * profilé a ~360 ms/tour sur le port Quantum). On redirige donc {@code getOperations} vers une
+	 * implementation GUEST : {@code __lw_real + __lw_counter() * facteur}, ou {@code __lw_counter} est le
+	 * compteur de statements lu LOCALEMENT (il vit dans l'isolate, cote guest -> pas d'aller-retour) et
+	 * {@code __lw_real} est un miroir des ops HOTE (mOperations), rafraichi par l'hote apres chaque appel
+	 * de fonction de combat / facturation (cf {@link #syncRealToGuest}). Deterministe et identique a
+	 * l'implementation hote (meme formule) -> replays preserves. Actif seulement si l'instrument est la.
+	 */
+	private static final String JS_GETOPS_OVERRIDE =
+		"(function(){var f=$F;var c=globalThis.__lw_counter;"
+		+ "var g=function(){return (globalThis.__lw_real||0)+c()*f;};"
+		+ "globalThis.getOperations=g;globalThis.getOperation=g;})();";
+	private static final String PY_GETOPS_OVERRIDE =
+		"import builtins as _lwb2\n"
+		+ "def getOperations():\n"
+		+ "    return __lw_real + __lw_counter() * $F\n"
+		+ "_lwb2.getOperations = getOperations\n";
+
+	/** Fetch les bindings guest + redirige getOperations cote guest (si l'instrument deterministe est la). */
+	private void installGuestGetOperations() {
+		try {
+			guestBindings.putMember("__lw_counter", statementCounter);
+			guestBindings.putMember("__lw_real", super.getOperations());
+			String src = ("js".equals(languageId) ? JS_GETOPS_OVERRIDE : PY_GETOPS_OVERRIDE)
+					.replace("$F", String.valueOf(opsFactor));
+			context.eval(languageId, src);
+		} catch (Exception e) {
+			// Best effort : si l'override echoue, le getOperations HOTE (bridge) reste en place.
+			guestBindings = null;
+			Log.w("PolyglotEntityAI", "getOperations guest-side indisponible (" + languageId + ") : " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Rafraichit le miroir guest {@code __lw_real} des operations HOTE. Appele apres chaque appel de
+	 * fonction de combat (cf PolyglotAPIBridge) et de facturation, et en debut de tour (remise a 0) :
+	 * mOperations ne change QUE dans {@code ops()} (fonctions de combat + charge), donc entre deux tels
+	 * appels le miroir est exact -> les milliers de getOperations() intermediaires lisent une valeur juste.
+	 */
+	void syncRealToGuest() {
+		if (guestBindings != null && statementCounter != null) {
+			try { guestBindings.putMember("__lw_real", super.getOperations()); } catch (Exception ignore) {}
+		}
+	}
+
+	/**
 	 * Fonction hote {@code __lw_charge(n)} exposee au guest : facture {@code n} operations sur le
 	 * compteur reel (via {@link leekscript.runner.AI#ops(int)}, qui jette {@code TOO_MUCH_OPERATIONS}
 	 * au dela du budget). Sert au comptage du travail NATIF/builtin que l'instrument (granularite
@@ -662,6 +722,7 @@ public class PolyglotEntityAI extends EntityAI {
 					if (scaled > 0) {
 						try {
 							ops((int) scaled);
+							syncRealToGuest(); // la charge a bouge mOperations -> rafraichir le miroir guest
 						} catch (LeekRunException e) {
 							throw new RuntimeException(e);
 						}
@@ -755,6 +816,7 @@ public class PolyglotEntityAI extends EntityAI {
 		markTurnStart(); // bases (temps mur + temps CPU) du terme d'ops synthetique, cf getOperations
 		ensureContext();
 		resetStatementCounter(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
+		syncRealToGuest(); // remet a 0 le miroir __lw_real (mOperations vient d etre reset par runTurn)
 		// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 		// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
 		context.resetLimits();
@@ -875,6 +937,7 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 		markTurnStart();
 		resetStatementCounter();
+		syncRealToGuest();
 		// Contexte reutilise entre tours (statement limit cumulatif) : on remet le budget a zero pour le
 		// tour du bulbe, exactement comme runIA pour un tour normal.
 		context.resetLimits();
@@ -1046,6 +1109,7 @@ public class PolyglotEntityAI extends EntityAI {
 			sandbox.forgetContext(context);
 			context = null;
 			statementCounter = null; // binding lie au contexte ferme ; refetche par ensureContext
+			guestBindings = null;
 		}
 		// Le prochain ensureContext reconstruira un contexte neuf : on re-evaluera le source
 		// (entry pointait vers l'ancien contexte ferme).
