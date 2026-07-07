@@ -406,7 +406,7 @@ public class PolyglotEntityAI extends EntityAI {
 		if (!isTypeScript(entry.getPath())) {
 			// Probing des imports sans extension pour JS uniquement (jamais Python, cf JS_PROBE_EXTENSIONS).
 			var probe = "js".equals(languageId) ? PolyglotFileSystem.JS_PROBE_EXTENSIONS : java.util.List.<String>of();
-			return new PolyglotFileSystem(realPaths, rawRead, pass, probe);
+			return new PolyglotFileSystem(realPaths, rawRead, pass, probe, entry.getPath());
 		}
 
 		// TypeScript multi-fichiers : on transpile chaque .ts/.mts a la lecture, et on expose un alias
@@ -448,7 +448,7 @@ public class PolyglotEntityAI extends EntityAI {
 			transpileCache.put(real, result);
 			return result;
 		};
-		return new PolyglotFileSystem(mounted, tsRead, pass, PolyglotFileSystem.JS_PROBE_EXTENSIONS);
+		return new PolyglotFileSystem(mounted, tsRead, pass, PolyglotFileSystem.JS_PROBE_EXTENSIONS, entry.getPath());
 	}
 
 	/** Encode une chaine en litteral JS entre guillemets (pour injecter un message dans un module de fallback). */

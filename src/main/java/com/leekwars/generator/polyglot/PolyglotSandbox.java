@@ -258,6 +258,10 @@ public class PolyglotSandbox implements AutoCloseable {
 			// determinisme (PolyglotEntityAI.pythonDeterminismGuard), en FIN de path pour que la
 			// stdlib garde la priorite sur les fichiers du joueur.
 			builder.allowIO(IOAccess.newBuilder().fileSystem(fileSystem).build());
+			// NB : PAS d'option js.esm-bare-specifier-relative-lookup non plus (TRUSTED-only,
+			// rejetee par ISOLATED). Les specificateurs bare ('include.js' sans ./) sont ancres a
+			// la racine /ai par le loader ; le repli vers le dossier de l'ENTREE est fait par
+			// PolyglotFileSystem.probe (cas reel : ia-ts/test.js important son voisin).
 		} else {
 			builder.allowIO(IOAccess.NONE);
 		}

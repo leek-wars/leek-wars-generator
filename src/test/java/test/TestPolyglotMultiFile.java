@@ -44,7 +44,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		Path passthrough = "python".equals(lang) ? PolyglotSandbox.pythonStdlibRoot() : null;
 		// Miroir de PolyglotEntityAI.buildFileSystem : probing des imports sans extension pour JS.
 		List<String> probe = "js".equals(lang) ? PolyglotFileSystem.JS_PROBE_EXTENSIONS : List.of();
-		PolyglotFileSystem fs = new PolyglotFileSystem(files.keySet(), files::get, passthrough, probe);
+		PolyglotFileSystem fs = new PolyglotFileSystem(files.keySet(), files::get, passthrough, probe, entryPath);
 		PolyglotEntityAI ai = new PolyglotEntityAI(lang, files.get(entryPath), entryPath, fs, sb);
 		ai.setEntity(entity);
 		ai.setLogs(new LeekLog(farmerLog, entity));
@@ -207,6 +207,40 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue();
+			Assert.assertEquals(42 + leek1.getLife(), r);
+		}
+	}
+
+	/**
+	 * Specificateur bare depuis un SOUS-DOSSIER, lib dans le MEME dossier ({@code import 'include.js'}
+	 * depuis {@code ia-ts/test.js}) : cas reel remonte par Pilow sur beta — doit resoudre relativement
+	 * au fichier importeur (option js.esm-bare-specifier-relative-lookup).
+	 */
+	@Test
+	public void jsMultiFileBareImportSameFolder() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("ia-ts/include.js", "export function tout() { return 42; }\n");
+		files.put("ia-ts/test.js",
+			"import { tout } from 'include.js';\n"
+			+ "globalThis.turn = function() { return tout() + getLife(); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "js", files, "ia-ts/test.js").runIA()).longValue();
+			Assert.assertEquals(42 + leek1.getLife(), r);
+		}
+	}
+
+	/** Bare depuis un sous-dossier, lib a la RACINE : repli racine du FS (comportement historique). */
+	@Test
+	public void jsMultiFileBareImportRootFallback() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("strategie.js", "export function pick() { return 42; }\n");
+		files.put("dossier/main.js",
+			"import { pick } from 'strategie.js';\n"
+			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "js", files, "dossier/main.js").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
 		}
 	}

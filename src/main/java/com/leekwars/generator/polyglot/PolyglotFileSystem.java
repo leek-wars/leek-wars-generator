@@ -57,6 +57,7 @@ public class PolyglotFileSystem implements FileSystem {
 	private final Set<String> dirs;    // dossiers (derives des chemins de fichiers), "" = racine
 	private final Function<String, String> read; // chemin LeekScript -> contenu
 	private final List<String> probeExtensions; // probing des imports sans extension (vide = off)
+	private final String entryDir;     // dossier du fichier d'entree ("" = racine), repli des imports bare
 
 	private final Path passthroughRoot;     // sous-arbre hote delegue en lecture seule (stdlib), ou null
 	private final Path passthroughRootReal; // sa version resolue (symlinks suivis), pour le confinement
@@ -67,7 +68,7 @@ public class PolyglotFileSystem implements FileSystem {
 	}
 
 	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot) {
-		this(filePaths, read, passthroughRoot, List.of());
+		this(filePaths, read, passthroughRoot, List.of(), null);
 	}
 
 	/**
@@ -76,11 +77,15 @@ public class PolyglotFileSystem implements FileSystem {
 	 * @param passthroughRoot sous-arbre hote delegue en lecture seule (stdlib GraalPy), ou null
 	 * @param probeExtensions extensions essayees pour un chemin demande sans extension et absent
 	 *                        (cf {@link #JS_PROBE_EXTENSIONS}) ; liste vide = probing desactive
+	 * @param entryPath       chemin du fichier d'ENTREE de l'IA (son dossier sert de repli aux
+	 *                        imports bare ancres racine par le loader), ou null
 	 */
-	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot, List<String> probeExtensions) {
+	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot, List<String> probeExtensions, String entryPath) {
 		this.files = new HashSet<>(filePaths);
 		this.read = read;
 		this.probeExtensions = probeExtensions;
+		int entrySlash = entryPath == null ? -1 : entryPath.lastIndexOf('/');
+		this.entryDir = entrySlash < 0 ? "" : entryPath.substring(0, entrySlash);
 		this.dirs = new HashSet<>();
 		this.dirs.add(""); // racine
 		for (String f : filePaths) {
@@ -139,25 +144,64 @@ public class PolyglotFileSystem implements FileSystem {
 	}
 
 	/**
-	 * Import sans extension : si le chemin demande n'existe pas tel quel et que son nom de base n'a
-	 * pas d'extension, on essaye {@link #probeExtensions} dans l'ordre ({@code './lib'} ->
-	 * {@code lib.js}). Un chemin existant (fichier OU dossier) ou avec extension explicite n'est
-	 * jamais reecrit.
+	 * Resolution tolerante d'un chemin demande absent (JS/TS uniquement, cf constructeur) :
+	 * <ol>
+	 * <li>import sans extension : {@code './lib'} -> {@code lib.js} / {@code lib.mjs} ;</li>
+	 * <li>repli RACINE : {@code dossier/lib.js} absent -> {@code lib.js} racine s'il existe
+	 *     (specificateur bare depuis un sous-dossier alors que la lib vit a la racine — la
+	 *     resolution relative au module importeur a deja ete tentee par graaljs).</li>
+	 * </ol>
+	 * Un chemin existant (fichier OU dossier) n'est jamais reecrit.
 	 */
 	private String probe(String leek) {
 		if (probeExtensions.isEmpty() || files.contains(leek) || dirs.contains(leek)) {
 			return leek;
 		}
+		String withExt = probeWithExtensions(leek);
+		if (withExt != null) {
+			return withExt;
+		}
+		// Repli dossier de l'ENTREE : un import bare ('include.js' sans ./) est ancre a la racine
+		// par le loader, mais le joueur vise generalement le voisin de son fichier (ia-ts/test.js
+		// -> ia-ts/include.js). Le module importeur n'est pas connu ici ; le dossier de l'entree
+		// est la meilleure approximation (projet mono-dossier = cas dominant).
+		if (!entryDir.isEmpty() && !leek.startsWith(entryDir + "/")) {
+			String cand = entryDir + "/" + leek;
+			if (files.contains(cand)) {
+				return cand;
+			}
+			String candExt = probeWithExtensions(cand);
+			if (candExt != null) {
+				return candExt;
+			}
+		}
+		// Dernier recours : le meme nom a la racine (module d'un sous-dossier visant une lib racine).
+		int slash = leek.lastIndexOf('/');
+		if (slash >= 0) {
+			String base = leek.substring(slash + 1);
+			if (files.contains(base)) {
+				return base;
+			}
+			String baseExt = probeWithExtensions(base);
+			if (baseExt != null) {
+				return baseExt;
+			}
+		}
+		return leek;
+	}
+
+	/** Le chemin complete par une extension probee, ou null (extension deja explicite = pas de probing). */
+	private String probeWithExtensions(String leek) {
 		String base = leek.substring(leek.lastIndexOf('/') + 1);
 		if (base.indexOf('.') >= 0) {
-			return leek;
+			return null;
 		}
 		for (String ext : probeExtensions) {
 			if (files.contains(leek + ext)) {
 				return leek + ext;
 			}
 		}
-		return leek;
+		return null;
 	}
 
 	/** Le chemin est-il dans le sous-arbre hote delegue (stdlib) ? (decision lexicale) */
