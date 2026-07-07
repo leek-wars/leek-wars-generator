@@ -104,6 +104,24 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 		Assert.assertEquals("le module TS importe (.js + .ts) doit s'executer", "70", leek1.getRegister("mod"));
 	}
 
+	/** Import SANS extension ({@code './util'}) : convention TS par defaut, probing .js/.mjs (#3179). */
+	@Test
+	public void tsMultiFileExtensionlessImport() throws Exception {
+		Path dir = Files.createTempDirectory("ts-mf-noext-");
+		Files.writeString(dir.resolve("util.ts"), "export function bonus(): number { return 7; }\n");
+		Files.writeString(dir.resolve("main.ts"), String.join("\n",
+			"import { bonus } from './util';",
+			"globalThis.turn = function(): void { setRegister('noext', '' + bonus()); };"));
+
+		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
+		attachTsEntry(leek1, dir.toString(), "main.ts");
+		attachAI(leek2, "");
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		Assert.assertEquals("l'import TS sans extension doit resoudre le voisin .ts", "7", leek1.getRegister("noext"));
+	}
+
 	@Test
 	public void tsMultiFileImportedErrorIsNotMasked() throws Exception {
 		// Erreur de syntaxe dans un fichier IMPORTE : elle ne doit pas etre silencieusement masquee

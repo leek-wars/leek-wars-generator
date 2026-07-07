@@ -45,9 +45,18 @@ public class PolyglotFileSystem implements FileSystem {
 	/** Point de montage virtuel des fichiers du joueur. */
 	public static final String MOUNT = "/ai";
 
+	/**
+	 * Extensions probees pour un import JS/TS SANS extension ({@code import './lib'}) : habitude
+	 * Node CJS / TypeScript tres repandue, qui sinon echoue en "Cannot find module" au combat alors
+	 * que l'editeur n'a rien signale. A ne PAS activer pour Python : importlib fait ses propres
+	 * probes de chemins sans extension (paquets = dossiers) et un probing .js les fausserait.
+	 */
+	public static final List<String> JS_PROBE_EXTENSIONS = List.of(".js", ".mjs");
+
 	private final Set<String> files;   // chemins LeekScript des fichiers
 	private final Set<String> dirs;    // dossiers (derives des chemins de fichiers), "" = racine
 	private final Function<String, String> read; // chemin LeekScript -> contenu
+	private final List<String> probeExtensions; // probing des imports sans extension (vide = off)
 
 	private final Path passthroughRoot;     // sous-arbre hote delegue en lecture seule (stdlib), ou null
 	private final Path passthroughRootReal; // sa version resolue (symlinks suivis), pour le confinement
@@ -57,14 +66,21 @@ public class PolyglotFileSystem implements FileSystem {
 		this(filePaths, read, null);
 	}
 
+	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot) {
+		this(filePaths, read, passthroughRoot, List.of());
+	}
+
 	/**
 	 * @param filePaths       tous les chemins de fichiers du joueur (ex: "main.js", "lib/util.js")
 	 * @param read            lecture paresseuse d'un fichier (chemin LeekScript -> contenu, ou null)
 	 * @param passthroughRoot sous-arbre hote delegue en lecture seule (stdlib GraalPy), ou null
+	 * @param probeExtensions extensions essayees pour un chemin demande sans extension et absent
+	 *                        (cf {@link #JS_PROBE_EXTENSIONS}) ; liste vide = probing desactive
 	 */
-	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot) {
+	public PolyglotFileSystem(Set<String> filePaths, Function<String, String> read, Path passthroughRoot, List<String> probeExtensions) {
 		this.files = new HashSet<>(filePaths);
 		this.read = read;
+		this.probeExtensions = probeExtensions;
 		this.dirs = new HashSet<>();
 		this.dirs.add(""); // racine
 		for (String f : filePaths) {
@@ -119,7 +135,29 @@ public class PolyglotFileSystem implements FileSystem {
 		String s = abs(p).toString();
 		if (s.equals(MOUNT)) return "";
 		if (!s.startsWith(MOUNT + "/")) return null; // hors du dossier du joueur
-		return s.substring(MOUNT.length() + 1);
+		return probe(s.substring(MOUNT.length() + 1));
+	}
+
+	/**
+	 * Import sans extension : si le chemin demande n'existe pas tel quel et que son nom de base n'a
+	 * pas d'extension, on essaye {@link #probeExtensions} dans l'ordre ({@code './lib'} ->
+	 * {@code lib.js}). Un chemin existant (fichier OU dossier) ou avec extension explicite n'est
+	 * jamais reecrit.
+	 */
+	private String probe(String leek) {
+		if (probeExtensions.isEmpty() || files.contains(leek) || dirs.contains(leek)) {
+			return leek;
+		}
+		String base = leek.substring(leek.lastIndexOf('/') + 1);
+		if (base.indexOf('.') >= 0) {
+			return leek;
+		}
+		for (String ext : probeExtensions) {
+			if (files.contains(leek + ext)) {
+				return leek + ext;
+			}
+		}
+		return leek;
 	}
 
 	/** Le chemin est-il dans le sous-arbre hote delegue (stdlib) ? (decision lexicale) */
@@ -157,6 +195,12 @@ public class PolyglotFileSystem implements FileSystem {
 		if (inPassthrough(path)) {
 			requireContained(path);
 			return hostDelegate.toRealPath(path, options);
+		}
+		// Canonicalise un import sans extension vers le fichier probe : '/ai/lib' et '/ai/lib.js'
+		// designent alors le MEME module (sinon il serait charge deux fois, avec deux etats).
+		String leek = toLeekPath(path);
+		if (leek != null && !leek.isEmpty()) {
+			return Path.of(mountPath(leek));
 		}
 		return abs(path);
 	}

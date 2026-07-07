@@ -2,6 +2,7 @@ package test;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -35,12 +36,18 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	}
 
 	private PolyglotEntityAI multiFileAI(PolyglotSandbox sb, String lang, Map<String, String> files, String entryPath) {
+		return multiFileAI(sb, lang, files, entryPath, leek1);
+	}
+
+	private PolyglotEntityAI multiFileAI(PolyglotSandbox sb, String lang, Map<String, String> files, String entryPath, Leek entity) {
 		// Python : on delegue la stdlib GraalPy (sinon le FS custom la casserait).
 		Path passthrough = "python".equals(lang) ? PolyglotSandbox.pythonStdlibRoot() : null;
-		PolyglotFileSystem fs = new PolyglotFileSystem(files.keySet(), files::get, passthrough);
+		// Miroir de PolyglotEntityAI.buildFileSystem : probing des imports sans extension pour JS.
+		List<String> probe = "js".equals(lang) ? PolyglotFileSystem.JS_PROBE_EXTENSIONS : List.of();
+		PolyglotFileSystem fs = new PolyglotFileSystem(files.keySet(), files::get, passthrough, probe);
 		PolyglotEntityAI ai = new PolyglotEntityAI(lang, files.get(entryPath), entryPath, fs, sb);
-		ai.setEntity(leek1);
-		ai.setLogs(new LeekLog(farmerLog, leek1));
+		ai.setEntity(entity);
+		ai.setLogs(new LeekLog(farmerLog, entity));
 		ai.setFight(fight);
 		return ai;
 	}
@@ -171,6 +178,78 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
 			Assert.assertEquals(2L, ((Number) ai.runIA()).longValue());
 			Assert.assertEquals(3L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	/** Import SANS extension ({@code './strategie'}) : habitude Node/TS, probing .js/.mjs (#3179). */
+	@Test
+	public void jsMultiFileExtensionlessImport() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("strategie.js", "export function pick() { return 42; }\n");
+		files.put("main.js",
+			"import { pick } from './strategie';\n"
+			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue();
+			Assert.assertEquals(42 + leek1.getLife(), r);
+		}
+	}
+
+	/** Specificateur bare ({@code 'strategie.js'} sans ./) : accepte, resolu contre /ai. */
+	@Test
+	public void jsMultiFileBareImport() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("strategie.js", "export function pick() { return 42; }\n");
+		files.put("main.js",
+			"import { pick } from 'strategie.js';\n"
+			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue();
+			Assert.assertEquals(42 + leek1.getLife(), r);
+		}
+	}
+
+	/** Un import sans extension ne doit JAMAIS s'appliquer a un dossier existant (paquet/dossier gagne). */
+	@Test
+	public void jsExtensionlessProbeDoesNotShadowFolder() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("lib.js", "export const WHERE = 'racine';\n");
+		files.put("lib/index.js", "export const WHERE = 'dossier';\n");
+		files.put("main.js",
+			"import { WHERE } from './lib';\n"
+			+ "globalThis.turn = function() { return WHERE; };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// 'lib' existe comme DOSSIER -> pas de reecriture vers lib.js ; l'import d'un dossier
+			// echoue (pas de resolution index.js, comme Node ESM) et l'erreur est rapportee.
+			PolyglotEntityAI ai = multiFileAI(sb, "js", files, "main.js");
+			try {
+				ai.runIA();
+				Assert.fail("l'import d'un dossier aurait du echouer (pas de magie index.js)");
+			} catch (LeekRunException e) {
+				Assert.assertEquals(Error.AI_INTERRUPTED, e.getError());
+			}
+		}
+	}
+
+	/**
+	 * Poireau bas niveau (RAM 6 -> cap guest ~12,6 Mo avant fix) : la machinerie d'import GraalPy
+	 * explosait le cap heap sur un simple {@code import voisin} alors que le mono-fichier passait.
+	 * Le plancher Python de 32 Mo doit laisser passer l'import (#3179).
+	 */
+	@Test
+	public void pythonMultiFileImportFitsLowLevelRamCap() throws Exception {
+		initFightOnly();
+		Leek small = new Leek(3, "Small", 0, 1, 100, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 6, 0, false, 0, 0, "", 0, "", "", "", 0);
+		small.setFight(fight);
+		Map<String, String> files = new HashMap<>();
+		files.put("strategie.py", "def pick():\n    return 42\n");
+		files.put("main.py", "import strategie\ndef turn():\n    return strategie.pick() + getLife()\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "main.py", small).runIA()).longValue();
+			Assert.assertEquals(42 + small.getLife(), r);
 		}
 	}
 }

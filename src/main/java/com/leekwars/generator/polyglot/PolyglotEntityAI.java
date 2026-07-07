@@ -404,7 +404,9 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 
 		if (!isTypeScript(entry.getPath())) {
-			return new PolyglotFileSystem(realPaths, rawRead, pass);
+			// Probing des imports sans extension pour JS uniquement (jamais Python, cf JS_PROBE_EXTENSIONS).
+			var probe = "js".equals(languageId) ? PolyglotFileSystem.JS_PROBE_EXTENSIONS : java.util.List.<String>of();
+			return new PolyglotFileSystem(realPaths, rawRead, pass, probe);
 		}
 
 		// TypeScript multi-fichiers : on transpile chaque .ts/.mts a la lecture, et on expose un alias
@@ -446,7 +448,7 @@ public class PolyglotEntityAI extends EntityAI {
 			transpileCache.put(real, result);
 			return result;
 		};
-		return new PolyglotFileSystem(mounted, tsRead, pass);
+		return new PolyglotFileSystem(mounted, tsRead, pass, PolyglotFileSystem.JS_PROBE_EXTENSIONS);
 	}
 
 	/** Encode une chaine en litteral JS entre guillemets (pour injecter un message dans un module de fallback). */
@@ -493,7 +495,12 @@ public class PolyglotEntityAI extends EntityAI {
 			// de l'entite DIVISE par RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de
 			// donnees que le mRAM LeekScript (TestRamCalibration) -> on divise pour la parite (cf
 			// RAM_FACTOR). Plancher a 8 Mo pour ne jamais etouffer un contexte legitime.
-			long guestRamCap = Math.max(8_000_000L, (long) (getMaxRAM() / RAM_FACTOR));
+			// Plancher PYTHON plus haut : la machinerie d'import de GraalPy (importlib + FileFinder
+			// sur le FS custom) alloue plusieurs Mo -> sous ~13 Mo (poireau bas niveau, RAM 6) un
+			// simple `import voisin` explosait le cap ("Maximum heap memory limit exceeded") alors
+			// que le mono-fichier passait. 32 Mo mesure confortable (TestPolyglotMultiFile).
+			long floor = "python".equals(languageId) ? 32_000_000L : 8_000_000L;
+			long guestRamCap = Math.max(floor, (long) (getMaxRAM() / RAM_FACTOR));
 			context = sandbox.createContext(languageId, fileSystem, guestRamCap);
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
