@@ -295,7 +295,6 @@
 			{ p: 'FIGHT_CONTEXT_', c: Fight, s: 'Context' },
 			{ p: 'AREA_', c: Item, s: 'Area' },
 			{ p: 'STAT_', c: Entity, s: 'Stat' },
-			{ p: 'ENTITY_', c: Entity, s: 'Type' },
 			{ p: 'CELL_', c: Cell, s: 'Type' },
 			{ p: 'CHEST_', c: Chest, s: 'Type' },
 			{ p: 'BULB_', c: Bulb, s: 'Type' },

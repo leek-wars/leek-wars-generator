@@ -371,7 +371,6 @@ _RULES = [
     ('FIGHT_CONTEXT_', 'cat', Fight, 'Context'),
     ('AREA_', 'cat', Item, 'Area'),
     ('STAT_', 'cat', Entity, 'Stat'),
-    ('ENTITY_', 'cat', Entity, 'Type'),
     ('CELL_', 'cat', Cell, 'Type'),
     ('CHEST_', 'cat', Chest, 'Type'),
     ('BULB_', 'cat', Bulb, 'Type'),
