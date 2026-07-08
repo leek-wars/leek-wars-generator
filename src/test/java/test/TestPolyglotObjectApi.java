@@ -130,6 +130,39 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Constantes objet Weapon.pistol / Chip.fireball : membres statiques = instances poolees.
+	 * Weapon.pistol.id === WEAPON_PISTOL, .cost/.name coherents avec l'API plate, et l'identite
+	 * de pool (Weapon.pistol === weap(meme id)) rend la comparaison par reference fiable. (#3179)
+	 */
+	@Test
+	public void weaponChipObjectConstants() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Weapon.pistol est une instance dont l'id vaut la globale plate WEAPON_PISTOL.
+			Assert.assertEquals(((Number) eval(sb, "WEAPON_PISTOL;")).longValue(),
+				((Number) eval(sb, "Weapon.pistol.id;")).longValue());
+			// Membres riches accessibles directement (coherents avec l'API plate).
+			Assert.assertEquals(((Number) eval(sb, "getWeaponCost(WEAPON_PISTOL);")).longValue(),
+				((Number) eval(sb, "Weapon.pistol.cost;")).longValue());
+			Assert.assertEquals(eval(sb, "getWeaponName(WEAPON_PISTOL);"), eval(sb, "Weapon.pistol.name;"));
+			// camelCase depuis SNAKE_CASE : WEAPON_MACHINE_GUN -> Weapon.machineGun.
+			Assert.assertEquals(((Number) eval(sb, "WEAPON_MACHINE_GUN;")).longValue(),
+				((Number) eval(sb, "Weapon.machineGun.id;")).longValue());
+			// Chip pareil.
+			Assert.assertEquals(((Number) eval(sb, "CHIP_LIGHTNING;")).longValue(),
+				((Number) eval(sb, "Chip.lightning.id;")).longValue());
+			// IDENTITE DE POOL : deux acces a la meme constante = MEME objet (comparable par ===).
+			Assert.assertEquals(true, eval(sb, "Weapon.pistol === Weapon.pistol;"));
+			// ... et l'arme equipee (via weap()) est le meme singleton que la constante objet.
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.pistol); me.weapon === Weapon.pistol;"));
+			// Ergonomie : passer la constante objet a une action l'unwrap (wid) comme un id plat.
+			Assert.assertEquals(eval(sb, "getWeaponName(WEAPON_PISTOL);"),
+				eval(sb, "me.setWeapon(Weapon.pistol); getWeaponName(getWeapon());"));
+		}
+	}
+
 	@Test
 	public void effectsStatesSummonsRegisters() throws Exception {
 		initFightOnly();

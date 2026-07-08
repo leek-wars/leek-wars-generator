@@ -16,9 +16,16 @@
 	function ent(id) { return (id === null || id === undefined || id < 0) ? null : new Entity(id); }
 	function ents(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Entity(ids[i])); return o; }
 	function cells(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Cell(ids[i])); return o; }
-	function weap(id) { return (id === null || id === undefined || id <= 0) ? null : new Weapon(id); }
-	function weaps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Weapon(ids[i])); return o; }
-	function chps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Chip(ids[i])); return o; }
+	// Pool de singletons par id pour Weapon/Chip : une seule instance par id dans un contexte.
+	// GARANTIT que les valeurs renvoyees par l'API (me.weapon, entity.weapons...) et les constantes
+	// objet (Weapon.pistol) sont LE MEME objet -> comparables par reference (me.weapon === Weapon.pistol).
+	// Sans ca, deux `new Weapon(id)` seraient !== et la comparaison serait toujours fausse.
+	var weaponPool = {};
+	var chipPool = {};
+	function weap(id) { return (id === null || id === undefined || id <= 0) ? null : (weaponPool[id] || (weaponPool[id] = new Weapon(id))); }
+	function chp(id) { return (id === null || id === undefined || id <= 0) ? null : (chipPool[id] || (chipPool[id] = new Chip(id))); }
+	function weaps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(weap(ids[i])); return o; }
+	function chps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(chp(ids[i])); return o; }
 	function cidList(x) {
 		if (Array.isArray(x)) { var o = []; for (var i = 0; i < x.length; i++) o.push(cid(x[i])); return o; }
 		return cid(x);
@@ -231,6 +238,23 @@
 		show: function (cell, color) { return (color === undefined) ? show(cid(cell)) : show(cid(cell), color); },
 		pause: function () { return pause(); },
 	};
+
+	// Constantes d'armes/puces exposees comme membres statiques OBJET : Weapon.pistol est
+	// l'instance Weapon (poolee) du pistolet -> Weapon.pistol.cost, Weapon.pistol.name, et
+	// me.weapon === Weapon.pistol quand le pistolet est equipe. Nom camelCase derive de la
+	// globale plate (WEAPON_MACHINE_GUN -> Weapon.machineGun ; CHIP_FIREBALL -> Chip.fireball).
+	// Les globales plates WEAPON_*/CHIP_* restent disponibles (valeur = id) pour l'API plate.
+	(function attachItemConstants() {
+		function camel(s) { return s.toLowerCase().replace(/_([a-z0-9])/g, function (_m, c) { return c.toUpperCase(); }); }
+		var names = Object.getOwnPropertyNames(globalThis);
+		for (var i = 0; i < names.length; i++) {
+			var k = names[i];
+			try {
+				if (k.indexOf('WEAPON_') === 0) Weapon[camel(k.slice(7))] = weap(globalThis[k]);
+				else if (k.indexOf('CHIP_') === 0) Chip[camel(k.slice(5))] = chp(globalThis[k]);
+			} catch (e) { /* nom statique reserve (Weapon.name/length) : on saute */ }
+		}
+	})();
 
 	globalThis.Cell = Cell;
 	globalThis.Entity = Entity;
