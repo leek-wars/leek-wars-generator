@@ -76,7 +76,10 @@ class Weapon:
     @property
     def inline(self): return isInlineWeapon(self.id)
     def needLos(self): return weaponNeedLos(self.id)
-    def effects(self): return _feats(getWeaponEffects(self.id))
+    # features : caracteristiques declarees de l'arme (Feature[] : degats, poison, teleport...),
+    # distinct de entity.effects (Effect ACTIFS). Property (lecture d'etat).
+    @property
+    def features(self): return _feats(getWeaponEffects(self.id))
 
 
 class Chip:
@@ -106,7 +109,9 @@ class Chip:
     @property
     def inline(self): return isInlineChip(self.id)
     def needLos(self): return chipNeedLos(self.id)
-    def effects(self): return _feats(getChipEffects(self.id))
+    # features : caracteristiques declarees de la puce (Feature[]). cf Weapon.features.
+    @property
+    def features(self): return _feats(getChipEffects(self.id))
 
 
 # Effet ACTIF/lancé : [type, value, caster, turns, critical, item, target, modifiers]
@@ -130,8 +135,10 @@ class Effect:
     def modifiers(self): return self.raw[7]
 
 
-# Effet DÉCLARÉ par une arme/puce ou effet passif : [type, minValue, maxValue, turns, targets, modifiers]
-class EffectTemplate:
+# Feature : CARACTÉRISTIQUE déclarée par une arme/puce (ou effet passif) : ce que l'item PEUT faire
+# (dégâts, poison, téléport, inversion...). Potentiel, pas encore appliqué -> distinct d'Effect
+# (actif sur une entité). Brut = [type, minValue, maxValue, turns, targets, modifiers].
+class Feature:
     def __init__(self, raw): self.raw = raw
     @property
     def type(self): return self.raw[0]
@@ -148,7 +155,7 @@ class EffectTemplate:
 
 
 def _effs(arr): return [Effect(e) for e in (arr or [])]
-def _feats(arr): return [EffectTemplate(e) for e in (arr or [])]
+def _feats(arr): return [Feature(e) for e in (arr or [])]
 
 
 class Entity:

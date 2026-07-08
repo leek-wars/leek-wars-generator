@@ -198,35 +198,35 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	/**
-	 * Effets DÉCLARÉS d'une arme/puce -> objets EffectTemplate ([type, minValue, maxValue, turns,
-	 * targets, modifiers]). Statique (pas de combat), cohérent avec l'API plate getWeaponEffects/
-	 * getChipEffects. JS + Python.
+	 * Caractéristiques DÉCLARÉES d'une arme/puce -> objets Feature ([type, minValue, maxValue, turns,
+	 * targets, modifiers]) via la PROPERTY `features` (ex-méthode effects()). Statique (pas de combat),
+	 * cohérent avec l'API plate getWeaponEffects/getChipEffects. JS + Python. (#3179)
 	 */
 	@Test
-	public void effectTemplatesWrapWeaponAndChip() throws Exception {
+	public void featuresWrapWeaponAndChip() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
-			// JS : Weapon.effects()[i] est un EffectTemplate dont type/minValue/maxValue == tableau brut.
+			// JS : Weapon.features[i] est une Feature dont type/minValue/maxValue == tableau brut.
 			Object js = eval(sb,
 				"(function(){"
 				+ "  var raw = getWeaponEffects(WEAPON_PISTOL);"
-				+ "  var o = new Weapon(WEAPON_PISTOL).effects();"
+				+ "  var o = new Weapon(WEAPON_PISTOL).features;"  // property, pas d'appel
 				+ "  if (o.length !== raw.length) return 'len';"
 				+ "  if (o.length === 0) return 'empty';"
-				+ "  if (!(o[0] instanceof EffectTemplate)) return 'class';"
+				+ "  if (!(o[0] instanceof Feature)) return 'class';"
 				+ "  if (o[0].type !== raw[0][0]) return 'type';"
 				+ "  if (o[0].minValue !== raw[0][1]) return 'min';"
 				+ "  if (o[0].maxValue !== raw[0][2]) return 'max';"
 				+ "  return 'ok:' + o.length;"
 				+ "})();");
-			Assert.assertTrue("EffectTemplate JS incohérent: " + js, String.valueOf(js).startsWith("ok:"));
-			// Chip : même structure.
+			Assert.assertTrue("Feature JS incohérent: " + js, String.valueOf(js).startsWith("ok:"));
+			// Chip : même structure, property features.
 			Assert.assertEquals(((Number) eval(sb, "getChipEffects(CHIP_LIGHTNING).length;")).longValue(),
-				((Number) eval(sb, "new Chip(CHIP_LIGHTNING).effects().length;")).longValue());
-			// Python : Weapon(WEAPON_PISTOL).effects()[0].type == getWeaponEffects(WEAPON_PISTOL)[0][0].
+				((Number) eval(sb, "new Chip(CHIP_LIGHTNING).features.length;")).longValue());
+			// Python : Weapon(WEAPON_PISTOL).features[0].type == getWeaponEffects(WEAPON_PISTOL)[0][0].
 			Assert.assertEquals(
 				((Number) evalPy(sb, "getWeaponEffects(WEAPON_PISTOL)[0][0]")).longValue(),
-				((Number) evalPy(sb, "Weapon(WEAPON_PISTOL).effects()[0].type")).longValue());
+				((Number) evalPy(sb, "Weapon(WEAPON_PISTOL).features[0].type")).longValue());
 		}
 	}
 

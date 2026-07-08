@@ -58,7 +58,9 @@
 		get maxUses() { return getWeaponMaxUses(this.id); }
 		get inline() { return isInlineWeapon(this.id); }
 		needLos() { return weaponNeedLos(this.id); }
-		effects() { return feats(getWeaponEffects(this.id)); }
+		// features : caracteristiques declarees de l'arme (Feature[] : degats, poison, teleport...).
+		// Distinct de entity.effects (Effect ACTIFS sur une entite). Property (lecture d'etat).
+		get features() { return feats(getWeaponEffects(this.id)); }
 	}
 
 	// ---- Chip : une puce (stats) ----
@@ -77,7 +79,8 @@
 		get maxUses() { return getChipMaxUses(this.id); }
 		get inline() { return isInlineChip(this.id); }
 		needLos() { return chipNeedLos(this.id); }
-		effects() { return feats(getChipEffects(this.id)); }
+		// features : caracteristiques declarees de la puce (Feature[]). cf Weapon.features.
+		get features() { return feats(getChipEffects(this.id)); }
 	}
 
 	// ---- Effect : un effet ACTIF/lancé sur une entité (vue nommée du tableau brut) ----
@@ -94,9 +97,11 @@
 		get modifiers() { return this.raw[7]; }
 	}
 
-	// ---- EffectTemplate : un effet DÉCLARÉ par une arme/puce ou un effet passif (potentiel, pas encore appliqué) ----
-	// Tableau brut = [type, minValue, maxValue, turns, targets, modifiers].
-	class EffectTemplate {
+	// ---- Feature : une CARACTÉRISTIQUE déclarée par une arme/puce (ou un effet passif) : ce que
+	// l'item PEUT faire quand il touche (dégâts, poison, téléport, inversion...). Potentiel, pas
+	// encore appliqué -> à distinguer d'Effect (actif sur une entité). Brut = [type, minValue,
+	// maxValue, turns, targets, modifiers]. ----
+	class Feature {
 		constructor(raw) { this.raw = raw; }
 		get type() { return this.raw[0]; }
 		get minValue() { return this.raw[1]; }
@@ -107,7 +112,7 @@
 	}
 
 	function effs(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new Effect(arr[i])); return o; }
-	function feats(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new EffectTemplate(arr[i])); return o; }
+	function feats(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new Feature(arr[i])); return o; }
 
 	// ---- Entity : n'importe quelle entité (lecture d'état) ----
 	class Entity {
@@ -261,7 +266,7 @@
 	globalThis.Weapon = Weapon;
 	globalThis.Chip = Chip;
 	globalThis.Effect = Effect;
-	globalThis.EffectTemplate = EffectTemplate;
+	globalThis.Feature = Feature;
 	globalThis.me = new Me();
 	globalThis.Fight = Fight;
 	globalThis.Field = Field;
