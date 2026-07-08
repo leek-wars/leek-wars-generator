@@ -295,6 +295,7 @@
 			{ p: 'FIGHT_CONTEXT_', c: Fight, s: 'Context' },
 			{ p: 'AREA_', c: Item, s: 'Area' },
 			{ p: 'STAT_', c: Entity, s: 'Stat' },
+			{ p: 'ENTITY_', c: Entity, s: 'Type' },
 			{ p: 'CELL_', c: Cell, s: 'Type' },
 			{ p: 'CHEST_', c: Chest, s: 'Type' },
 			{ p: 'BULB_', c: Bulb, s: 'Type' },
@@ -310,7 +311,9 @@
 		function attach(r, name, val) {
 			if (r.fn) { r.fn(name, val); return; }
 			var box = r.c;
-			if (r.s) { if (!box[r.s]) box[r.s] = {}; box = box[r.s]; }
+			// hasOwnProperty (pas `!box[r.s]`) : Bulb extends Entity -> Bulb.Type HÉRITERAIT
+			// Entity.Type ; sans ça on polluerait Entity.Type au lieu de créer un Bulb.Type propre.
+			if (r.s) { if (!Object.prototype.hasOwnProperty.call(box, r.s)) box[r.s] = {}; box = box[r.s]; }
 			box[name] = val;
 		}
 		var names = Object.getOwnPropertyNames(globalThis);

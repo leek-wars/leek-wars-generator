@@ -213,6 +213,9 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals(true, eval(sb, "Effect.ABSOLUTE_SHIELD === EFFECT_ABSOLUTE_SHIELD && Effect.DAMAGE === EFFECT_DAMAGE;"));
 			Assert.assertEquals(true, eval(sb, "State.UNHEALABLE === STATE_UNHEALABLE;"));
 			Assert.assertEquals(true, eval(sb, "Entity.Stat.STRENGTH === STAT_STRENGTH;"));
+			Assert.assertEquals(true, eval(sb, "Entity.Type.LEEK === ENTITY_LEEK;"));
+			// Anti-pollution : Bulb.Type (propre) ne doit PAS hériter Entity.Type -> pas de LEEK dessus.
+			Assert.assertEquals(true, eval(sb, "Bulb.Type.PUNY === BULB_PUNY && Bulb.Type.LEEK === undefined;"));
 			Assert.assertEquals(true, eval(sb, "Cell.Type.EMPTY === CELL_EMPTY;"));
 			Assert.assertEquals(true, eval(sb, "Item.LaunchType.LINE === LAUNCH_TYPE_LINE;"));
 			Assert.assertEquals(true, eval(sb, "Item.Area.CIRCLE_1 === AREA_CIRCLE_1;"));
@@ -240,7 +243,9 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Weapon(WEAPON_PISTOL), Item) and isinstance(Chip(CHIP_LIGHTNING), Item)"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Effect.DAMAGE == EFFECT_DAMAGE and State.UNHEALABLE == STATE_UNHEALABLE"));
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Entity.Stat.STRENGTH == STAT_STRENGTH"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Entity.Stat.STRENGTH == STAT_STRENGTH and Entity.Type.LEEK == ENTITY_LEEK"));
+			// Anti-pollution : Bulb.Type propre, ne contient pas LEEK (héritée d'Entity.Type).
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Bulb.Type.PUNY == BULB_PUNY and not hasattr(Bulb.Type, 'LEEK')"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Fight.Type.SOLO == FIGHT_TYPE_SOLO and Item.LaunchType.LINE == LAUNCH_TYPE_LINE and Field.NEXUS == MAP_NEXUS"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Chest.Type.WOOD == CHEST_WOOD and Bulb.Type.PUNY == BULB_PUNY and Mob.Type.GRAAL == MOB_GRAAL"));
 			// Dispatch : l'ennemi (leek) est une instance Leek (donc Entity).

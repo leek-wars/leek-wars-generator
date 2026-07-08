@@ -371,6 +371,7 @@ _RULES = [
     ('FIGHT_CONTEXT_', 'cat', Fight, 'Context'),
     ('AREA_', 'cat', Item, 'Area'),
     ('STAT_', 'cat', Entity, 'Stat'),
+    ('ENTITY_', 'cat', Entity, 'Type'),
     ('CELL_', 'cat', Cell, 'Type'),
     ('CHEST_', 'cat', Chest, 'Type'),
     ('BULB_', 'cat', Bulb, 'Type'),
@@ -385,11 +386,11 @@ _RULES = [
 ]
 
 def _sub(container, name):
-    ns = getattr(container, name, None)
-    if ns is None:
-        ns = _NS()
-        setattr(container, name, ns)
-    return ns
+    # __dict__ (pas getattr) : Bulb(Entity) HÉRITERAIT Entity.Type ; sans ce test on polluerait
+    # Entity.Type au lieu de créer un Bulb.Type propre.
+    if name not in container.__dict__:
+        setattr(container, name, _NS())
+    return container.__dict__[name]
 
 for _k in list(globals().keys()):
     for _p, _mode, _c, _extra in _RULES:
