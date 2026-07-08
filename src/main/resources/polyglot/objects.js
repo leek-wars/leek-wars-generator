@@ -13,8 +13,20 @@
 	function eid(x) { return (x instanceof Entity) ? x.id : x; }
 	function wid(x) { return (x instanceof Weapon) ? x.id : x; }
 	function cpid(x) { return (x instanceof Chip) ? x.id : x; }
-	function ent(id) { return (id === null || id === undefined || id < 0) ? null : new Entity(id); }
-	function ents(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Entity(ids[i])); return o; }
+	// Fabrique l'instance TYPÉE d'une entité selon son type (getType). Les classes sont déclarées
+	// plus bas mais ent() n'est appelée qu'au runtime (après chargement du module) -> OK.
+	function ent(id) {
+		if (id === null || id === undefined || id < 0) return null;
+		switch (getType(id)) {
+			case ENTITY_LEEK: return new Leek(id);
+			case ENTITY_BULB: return new Bulb(id);
+			case ENTITY_TURRET: return new Turret(id);
+			case ENTITY_CHEST: return new Chest(id);
+			case ENTITY_MOB: return new Mob(id);
+			default: return new Entity(id);
+		}
+	}
+	function ents(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) { var e = ent(ids[i]); if (e) o.push(e); } return o; }
 	function cells(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Cell(ids[i])); return o; }
 	// Pool de singletons par id pour Weapon/Chip : une seule instance par id dans un contexte.
 	// GARANTIT que les valeurs renvoyees par l'API (me.weapon, entity.weapons...) et les constantes
@@ -44,9 +56,15 @@
 		lineOfSight(target) { return lineOfSight(this.id, cid(target)); }
 	}
 
-	// ---- Weapon : une arme (stats) ----
-	class Weapon {
+	// ---- Item : base commune aux armes et puces. Porte les constantes partagees
+	// (Item.LaunchType, Item.Area). Les getters restent dans les sous-classes : ils tapent des
+	// fonctions plates distinctes (getWeapon* vs getChip*), donc pas factorisables sans dispatch. ----
+	class Item {
 		constructor(id) { this.id = id; }
+	}
+
+	// ---- Weapon : une arme (stats) ----
+	class Weapon extends Item {
 		get cost() { return getWeaponCost(this.id); }
 		get minRange() { return getWeaponMinRange(this.id); }
 		get maxRange() { return getWeaponMaxRange(this.id); }
@@ -64,8 +82,7 @@
 	}
 
 	// ---- Chip : une puce (stats) ----
-	class Chip {
-		constructor(id) { this.id = id; }
+	class Chip extends Item {
 		get cost() { return getChipCost(this.id); }
 		get cooldown() { return getChipCooldown(this.id); }
 		get currentCooldown() { return getCurrentCooldown(this.id); }
@@ -150,6 +167,21 @@
 		isAlly() { return isAlly(this.id); }
 		isEnemy() { return isEnemy(this.id); }
 		distance(target) { return getCellDistance(getCell(this.id), cid(target)); }
+	}
+
+	// ---- Sous-types d'entité : ent() (donc getNearestEnemy, getEnemies...) renvoie l'instance
+	// TYPÉE selon getType() -> instanceof Mob/Chest/Bulb/Leek/Turret fonctionne. Ceux qui ont une
+	// sous-catégorie exposent leur propre .type (chest.type === Chest.Type.WOOD). ----
+	class Leek extends Entity {}
+	class Turret extends Entity {}
+	class Bulb extends Entity {
+		get type() { return getBulbType(this.id); }
+	}
+	class Chest extends Entity {
+		get type() { return getChestType(this.id); }
+	}
+	class Mob extends Entity {
+		get type() { return getMobType(this.id); }
 	}
 
 	// ---- me : l'IA courante (Entity + actions) ----
@@ -244,29 +276,69 @@
 		pause: function () { return pause(); },
 	};
 
-	// Constantes d'armes/puces exposees comme membres statiques OBJET : Weapon.pistol est
-	// l'instance Weapon (poolee) du pistolet -> Weapon.pistol.cost, Weapon.pistol.name, et
-	// me.weapon === Weapon.pistol quand le pistolet est equipe. Nom camelCase derive de la
-	// globale plate (WEAPON_MACHINE_GUN -> Weapon.machineGun ; CHIP_FIREBALL -> Chip.fireball).
-	// Les globales plates WEAPON_*/CHIP_* restent disponibles (valeur = id) pour l'API plate.
-	(function attachItemConstants() {
+	// Conteneur des constantes d'état spécial (State.PACIFIST...). Objet pur (pas d'instances).
+	var State = {};
+
+	// Range les constantes plates du bridge (WEAPON_*, EFFECT_*, STATE_*...) en membres OBJET, par
+	// famille. Deux natures : les ITEMS (WEAPON_/CHIP_) donnent des INSTANCES poolées en camelCase
+	// (Weapon.pistol), tout le reste donne des CATÉGORIES en MAJUSCULES (Effect.SHIELD, State.PACIFIST,
+	// Fight.Type.SOLO...). Les globales plates restent disponibles (API plate inchangée). Les préfixes
+	// composés (LAUNCH_TYPE_, FIGHT_TYPE_...) sont listés AVANT les simples pour matcher en premier.
+	(function attachConstants() {
 		function camel(s) { return s.toLowerCase().replace(/_([a-z0-9])/g, function (_m, c) { return c.toUpperCase(); }); }
+		// {p: préfixe, fn: attache custom} OU {p, c: conteneur, s?: sous-conteneur}. Nom = clé après préfixe.
+		var RULES = [
+			{ p: 'WEAPON_', fn: function (n, v) { Weapon[camel(n)] = weap(v); } },
+			{ p: 'CHIP_', fn: function (n, v) { Chip[camel(n)] = chp(v); } },
+			{ p: 'LAUNCH_TYPE_', c: Item, s: 'LaunchType' },
+			{ p: 'FIGHT_TYPE_', c: Fight, s: 'Type' },
+			{ p: 'FIGHT_CONTEXT_', c: Fight, s: 'Context' },
+			{ p: 'AREA_', c: Item, s: 'Area' },
+			{ p: 'STAT_', c: Entity, s: 'Stat' },
+			{ p: 'ENTITY_', c: Entity, s: 'Type' },
+			{ p: 'CELL_', c: Cell, s: 'Type' },
+			{ p: 'CHEST_', c: Chest, s: 'Type' },
+			{ p: 'BULB_', c: Bulb, s: 'Type' },
+			{ p: 'MOB_', c: Mob, s: 'Type' },
+			{ p: 'BOSS_', c: Fight, s: 'Boss' },
+			{ p: 'EROSION_', c: Fight, s: 'Erosion' },
+			{ p: 'USE_', c: Fight, s: 'Use' },
+			{ p: 'MESSAGE_', c: Fight, s: 'Message' },
+			{ p: 'MAP_', c: Field },
+			{ p: 'EFFECT_', c: Effect },
+			{ p: 'STATE_', c: State },
+		];
+		function attach(r, name, val) {
+			if (r.fn) { r.fn(name, val); return; }
+			var box = r.c;
+			if (r.s) { if (!box[r.s]) box[r.s] = {}; box = box[r.s]; }
+			box[name] = val;
+		}
 		var names = Object.getOwnPropertyNames(globalThis);
 		for (var i = 0; i < names.length; i++) {
 			var k = names[i];
-			try {
-				if (k.indexOf('WEAPON_') === 0) Weapon[camel(k.slice(7))] = weap(globalThis[k]);
-				else if (k.indexOf('CHIP_') === 0) Chip[camel(k.slice(5))] = chp(globalThis[k]);
-			} catch (e) { /* nom statique reserve (Weapon.name/length) : on saute */ }
+			for (var j = 0; j < RULES.length; j++) {
+				if (k.indexOf(RULES[j].p) === 0) {
+					try { attach(RULES[j], k.slice(RULES[j].p.length), globalThis[k]); } catch (e) { /* nom réservé : on saute */ }
+					break;
+				}
+			}
 		}
 	})();
 
 	globalThis.Cell = Cell;
 	globalThis.Entity = Entity;
+	globalThis.Leek = Leek;
+	globalThis.Turret = Turret;
+	globalThis.Bulb = Bulb;
+	globalThis.Chest = Chest;
+	globalThis.Mob = Mob;
+	globalThis.Item = Item;
 	globalThis.Weapon = Weapon;
 	globalThis.Chip = Chip;
 	globalThis.Effect = Effect;
 	globalThis.Feature = Feature;
+	globalThis.State = State;
 	globalThis.me = new Me();
 	globalThis.Fight = Fight;
 	globalThis.Field = Field;

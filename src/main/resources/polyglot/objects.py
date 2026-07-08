@@ -13,8 +13,18 @@ def _cid(x):
 def _eid(x): return x.id if isinstance(x, Entity) else x
 def _wid(x): return x.id if isinstance(x, Weapon) else x
 def _cpid(x): return x.id if isinstance(x, Chip) else x
-def _ent(i): return None if i is None or i < 0 else Entity(i)
-def _ents(ids): return [Entity(i) for i in (ids or [])]
+# Fabrique l'instance TYPEE d'une entite selon son type (getType). Classes definies plus bas mais
+# _ent n'est appelee qu'au runtime (module charge) -> OK.
+def _ent(i):
+    if i is None or i < 0: return None
+    t = getType(i)
+    if t == ENTITY_LEEK: return Leek(i)
+    if t == ENTITY_BULB: return Bulb(i)
+    if t == ENTITY_TURRET: return Turret(i)
+    if t == ENTITY_CHEST: return Chest(i)
+    if t == ENTITY_MOB: return Mob(i)
+    return Entity(i)
+def _ents(ids): return [e for e in (_ent(i) for i in (ids or [])) if e is not None]
 def _cells(ids): return [Cell(i) for i in (ids or [])]
 # Pool de singletons par id pour Weapon/Chip : une seule instance par id dans un contexte, pour
 # que les valeurs de l'API (me.weapon...) et les constantes objet (Weapon.pistol) soient LE MEME
@@ -53,8 +63,13 @@ class Cell:
     def lineOfSight(self, target): return lineOfSight(self.id, _cid(target))
 
 
-class Weapon:
+# Base commune aux armes et puces. Porte les constantes partagees (Item.LaunchType, Item.Area).
+# Les getters restent dans les sous-classes (fonctions plates distinctes getWeapon*/getChip*).
+class Item:
     def __init__(self, id): self.id = id
+
+
+class Weapon(Item):
     @property
     def cost(self): return getWeaponCost(self.id)
     @property
@@ -82,8 +97,7 @@ class Weapon:
     def features(self): return _feats(getWeaponEffects(self.id))
 
 
-class Chip:
-    def __init__(self, id): self.id = id
+class Chip(Item):
     @property
     def cost(self): return getChipCost(self.id)
     @property
@@ -252,6 +266,21 @@ class Me(Entity):
         return summon(_cpid(chip), _cid(cell), callback) if name is None else summon(_cpid(chip), _cid(cell), callback, name)
 
 
+# Sous-types d'entite : _ent() renvoie l'instance TYPEE selon getType() -> isinstance(x, Mob) marche.
+# Ceux qui ont une sous-categorie exposent leur propre .type (chest.type == Chest.Type.WOOD).
+class Leek(Entity): pass
+class Turret(Entity): pass
+class Bulb(Entity):
+    @property
+    def type(self): return getBulbType(self.id)
+class Chest(Entity):
+    @property
+    def type(self): return getChestType(self.id)
+class Mob(Entity):
+    @property
+    def type(self): return getMobType(self.id)
+
+
 class _Fight:
     @property
     def turn(self): return getTurn()
@@ -316,17 +345,63 @@ Registers = _Registers()
 Debug = _Debug()
 me = Me()
 
-# Constantes d'armes/puces exposees comme membres OBJET : Weapon.pistol est l'instance Weapon
-# (poolee) du pistolet -> Weapon.pistol.cost, .name, et me.weapon is Weapon.pistol quand equipe.
-# Nom camelCase derive de la globale plate (WEAPON_MACHINE_GUN -> Weapon.machineGun ;
-# CHIP_FIRE_BALL -> Chip.fireBall). Les globales plates WEAPON_*/CHIP_* restent disponibles.
+
+# Conteneur des constantes d'etat special (State.UNHEALABLE...).
+class State: pass
+
+
+# Namespace vide pour les sous-conteneurs (Fight.Type, Item.LaunchType...).
+class _NS: pass
+
+
+# Range les constantes plates du bridge (WEAPON_*, EFFECT_*, STATE_*...) en membres OBJET, par
+# famille : ITEMS (WEAPON_/CHIP_) -> INSTANCES poolees camelCase (Weapon.pistol), le reste ->
+# CATEGORIES en MAJUSCULES (Effect.DAMAGE, State.UNHEALABLE, Fight.Type.SOLO...). Les globales plates
+# restent disponibles. Prefixes composes (LAUNCH_TYPE_...) listes AVANT les simples.
 def _camel(s):
     parts = s.lower().split('_')
     return parts[0] + ''.join(p.capitalize() for p in parts[1:])
 
+# (prefixe, 'item'|'cat', conteneur, poolfn_ou_souscategorie)
+_RULES = [
+    ('WEAPON_', 'item', Weapon, _weap),
+    ('CHIP_', 'item', Chip, _chp),
+    ('LAUNCH_TYPE_', 'cat', Item, 'LaunchType'),
+    ('FIGHT_TYPE_', 'cat', Fight, 'Type'),
+    ('FIGHT_CONTEXT_', 'cat', Fight, 'Context'),
+    ('AREA_', 'cat', Item, 'Area'),
+    ('STAT_', 'cat', Entity, 'Stat'),
+    ('ENTITY_', 'cat', Entity, 'Type'),
+    ('CELL_', 'cat', Cell, 'Type'),
+    ('CHEST_', 'cat', Chest, 'Type'),
+    ('BULB_', 'cat', Bulb, 'Type'),
+    ('MOB_', 'cat', Mob, 'Type'),
+    ('BOSS_', 'cat', Fight, 'Boss'),
+    ('EROSION_', 'cat', Fight, 'Erosion'),
+    ('USE_', 'cat', Fight, 'Use'),
+    ('MESSAGE_', 'cat', Fight, 'Message'),
+    ('MAP_', 'cat', Field, None),
+    ('EFFECT_', 'cat', Effect, None),
+    ('STATE_', 'cat', State, None),
+]
+
+def _sub(container, name):
+    ns = getattr(container, name, None)
+    if ns is None:
+        ns = _NS()
+        setattr(container, name, ns)
+    return ns
+
 for _k in list(globals().keys()):
-    try:
-        if _k.startswith('WEAPON_'): setattr(Weapon, _camel(_k[7:]), _weap(globals()[_k]))
-        elif _k.startswith('CHIP_'): setattr(Chip, _camel(_k[5:]), _chp(globals()[_k]))
-    except Exception:
-        pass  # attribut de classe reserve : on saute
+    for _p, _mode, _c, _extra in _RULES:
+        if _k.startswith(_p):
+            try:
+                _name = _k[len(_p):]
+                if _mode == 'item':
+                    setattr(_c, _camel(_name), _extra(globals()[_k]))
+                else:
+                    _box = _c if _extra is None else _sub(_c, _extra)
+                    setattr(_box, _name, globals()[_k])
+            except Exception:
+                pass  # nom reserve : on saute
+            break

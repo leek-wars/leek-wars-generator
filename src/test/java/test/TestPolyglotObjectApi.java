@@ -198,6 +198,58 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	/**
+	 * Full POO : hiérarchie Item (Weapon/Chip extends Item), conteneurs de constantes par famille
+	 * (Effect.SHIELD, State.PACIFIST, Entity.Stat.STRENGTH, Fight.Type.SOLO, Item.LaunchType.LINE,
+	 * Field.NEXUS, Chest.Type.WOOD...) et dispatch d'instances typées (getNearestEnemy -> Leek). Les
+	 * valeurs objet doivent coïncider avec les globales plates (conservées au runtime). (#3179)
+	 */
+	@Test
+	public void objectConstantContainersAndHierarchy() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Hiérarchie Item : une arme/puce EST un Item.
+			Assert.assertEquals(true, eval(sb, "(new Weapon(WEAPON_PISTOL) instanceof Item) && (new Chip(CHIP_LIGHTNING) instanceof Item);"));
+			// Conteneurs de catégories == globales plates (MAJUSCULES, valeur identique).
+			Assert.assertEquals(true, eval(sb, "Effect.ABSOLUTE_SHIELD === EFFECT_ABSOLUTE_SHIELD && Effect.DAMAGE === EFFECT_DAMAGE;"));
+			Assert.assertEquals(true, eval(sb, "State.UNHEALABLE === STATE_UNHEALABLE;"));
+			Assert.assertEquals(true, eval(sb, "Entity.Stat.STRENGTH === STAT_STRENGTH;"));
+			Assert.assertEquals(true, eval(sb, "Entity.Type.LEEK === ENTITY_LEEK;"));
+			Assert.assertEquals(true, eval(sb, "Cell.Type.EMPTY === CELL_EMPTY;"));
+			Assert.assertEquals(true, eval(sb, "Item.LaunchType.LINE === LAUNCH_TYPE_LINE;"));
+			Assert.assertEquals(true, eval(sb, "Item.Area.CIRCLE_1 === AREA_CIRCLE_1;"));
+			Assert.assertEquals(true, eval(sb, "Field.NEXUS === MAP_NEXUS;"));
+			// Sous-conteneurs de Fight.
+			Assert.assertEquals(true, eval(sb, "Fight.Type.SOLO === FIGHT_TYPE_SOLO;"));
+			Assert.assertEquals(true, eval(sb, "Fight.Context.GARDEN === FIGHT_CONTEXT_GARDEN;"));
+			Assert.assertEquals(true, eval(sb, "Fight.Boss.FENNEL_KING === BOSS_FENNEL_KING;"));
+			Assert.assertEquals(true, eval(sb, "Fight.Erosion.DAMAGE === EROSION_DAMAGE;"));
+			Assert.assertEquals(true, eval(sb, "Fight.Use.SUCCESS === USE_SUCCESS;"));
+			Assert.assertEquals(true, eval(sb, "Fight.Message.HEAL === MESSAGE_HEAL;"));
+			// Types des sous-classes d'entité.
+			Assert.assertEquals(true, eval(sb, "Chest.Type.WOOD === CHEST_WOOD && Bulb.Type.PUNY === BULB_PUNY && Mob.Type.GRAAL === MOB_GRAAL;"));
+			// Feature.type est une catégorie Effect (le "croisement" assumé).
+			Assert.assertEquals(true, eval(sb, "var f = new Weapon(WEAPON_PISTOL).features; f.length === 0 || typeof f[0].type === 'number';"));
+			// Dispatch : dans un combat leek vs leek, l'ennemi est une instance Leek (donc Entity).
+			Assert.assertEquals(true, eval(sb, "var e = Fight.getNearestEnemy(); (e instanceof Leek) && (e instanceof Entity);"));
+		}
+	}
+
+	/** Full POO côté PYTHON : hiérarchie Item, conteneurs de constantes, dispatch d'instances typées. */
+	@Test
+	public void objectConstantContainersPython() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Weapon(WEAPON_PISTOL), Item) and isinstance(Chip(CHIP_LIGHTNING), Item)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Effect.DAMAGE == EFFECT_DAMAGE and State.UNHEALABLE == STATE_UNHEALABLE"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Entity.Stat.STRENGTH == STAT_STRENGTH and Entity.Type.LEEK == ENTITY_LEEK"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Fight.Type.SOLO == FIGHT_TYPE_SOLO and Item.LaunchType.LINE == LAUNCH_TYPE_LINE and Field.NEXUS == MAP_NEXUS"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Chest.Type.WOOD == CHEST_WOOD and Bulb.Type.PUNY == BULB_PUNY and Mob.Type.GRAAL == MOB_GRAAL"));
+			// Dispatch : l'ennemi (leek) est une instance Leek (donc Entity).
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Fight.getNearestEnemy(), Leek) and isinstance(Fight.getNearestEnemy(), Entity)"));
+		}
+	}
+
+	/**
 	 * Caractéristiques DÉCLARÉES d'une arme/puce -> objets Feature ([type, minValue, maxValue, turns,
 	 * targets, modifiers]) via la PROPERTY `features` (ex-méthode effects()). Statique (pas de combat),
 	 * cohérent avec l'API plate getWeaponEffects/getChipEffects. JS + Python. (#3179)
