@@ -16,9 +16,23 @@ def _cpid(x): return x.id if isinstance(x, Chip) else x
 def _ent(i): return None if i is None or i < 0 else Entity(i)
 def _ents(ids): return [Entity(i) for i in (ids or [])]
 def _cells(ids): return [Cell(i) for i in (ids or [])]
-def _weap(i): return None if i is None or i <= 0 else Weapon(i)
-def _weaps(ids): return [Weapon(i) for i in (ids or [])]
-def _chps(ids): return [Chip(i) for i in (ids or [])]
+# Pool de singletons par id pour Weapon/Chip : une seule instance par id dans un contexte, pour
+# que les valeurs de l'API (me.weapon...) et les constantes objet (Weapon.pistol) soient LE MEME
+# objet -> comparables par identite (me.weapon is Weapon.pistol). Sinon deux Weapon(id) differeraient.
+_weapon_pool = {}
+_chip_pool = {}
+def _weap(i):
+    if i is None or i <= 0: return None
+    w = _weapon_pool.get(i)
+    if w is None: w = Weapon(i); _weapon_pool[i] = w
+    return w
+def _chp(i):
+    if i is None or i <= 0: return None
+    c = _chip_pool.get(i)
+    if c is None: c = Chip(i); _chip_pool[i] = c
+    return c
+def _weaps(ids): return [_weap(i) for i in (ids or [])]
+def _chps(ids): return [_chp(i) for i in (ids or [])]
 def _cidlist(x): return [_cid(i) for i in x] if isinstance(x, list) else _cid(x)
 
 
@@ -294,3 +308,18 @@ Field = _Field()
 Registers = _Registers()
 Debug = _Debug()
 me = Me()
+
+# Constantes d'armes/puces exposees comme membres OBJET : Weapon.pistol est l'instance Weapon
+# (poolee) du pistolet -> Weapon.pistol.cost, .name, et me.weapon is Weapon.pistol quand equipe.
+# Nom camelCase derive de la globale plate (WEAPON_MACHINE_GUN -> Weapon.machineGun ;
+# CHIP_FIRE_BALL -> Chip.fireBall). Les globales plates WEAPON_*/CHIP_* restent disponibles.
+def _camel(s):
+    parts = s.lower().split('_')
+    return parts[0] + ''.join(p.capitalize() for p in parts[1:])
+
+for _k in list(globals().keys()):
+    try:
+        if _k.startswith('WEAPON_'): setattr(Weapon, _camel(_k[7:]), _weap(globals()[_k]))
+        elif _k.startswith('CHIP_'): setattr(Chip, _camel(_k[5:]), _chp(globals()[_k]))
+    except Exception:
+        pass  # attribut de classe reserve : on saute

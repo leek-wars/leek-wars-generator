@@ -163,6 +163,26 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/** Constantes objet Weapon.pistol aussi en PYTHON : instance poolee, identite avec l'arme equipee. */
+	@Test
+	public void weaponChipObjectConstantsPython() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(((Number) evalPy(sb, "WEAPON_PISTOL")).longValue(),
+				((Number) evalPy(sb, "Weapon.pistol.id")).longValue());
+			Assert.assertEquals(((Number) evalPy(sb, "getWeaponCost(WEAPON_PISTOL)")).longValue(),
+				((Number) evalPy(sb, "Weapon.pistol.cost")).longValue());
+			// camelCase identique au runtime JS (WEAPON_MACHINE_GUN -> machineGun, CHIP_FIRE_BALL -> fireBall).
+			Assert.assertEquals(((Number) evalPy(sb, "WEAPON_MACHINE_GUN")).longValue(),
+				((Number) evalPy(sb, "Weapon.machineGun.id")).longValue());
+			Assert.assertEquals(((Number) evalPy(sb, "CHIP_FIRE_BALL")).longValue(),
+				((Number) evalPy(sb, "Chip.fireBall.id")).longValue());
+			// Identite de pool : l'arme equipee est le MEME objet que la constante (Python `is`).
+			// Tuple pour sequencer l'effet (setWeapon) puis l'assertion, sans court-circuit d'un `or`.
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "(me.setWeapon(Weapon.pistol), me.weapon is Weapon.pistol)[1]"));
+		}
+	}
+
 	@Test
 	public void effectsStatesSummonsRegisters() throws Exception {
 		initFightOnly();
