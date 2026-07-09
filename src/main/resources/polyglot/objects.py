@@ -44,6 +44,14 @@ def _chp(i):
 def _weaps(ids): return [_weap(i) for i in (ids or [])]
 def _chps(ids): return [_chp(i) for i in (ids or [])]
 def _cidlist(x): return [_cid(i) for i in x] if isinstance(x, list) else _cid(x)
+def _cell(i): return None if i is None or i < 0 else Cell(i)
+# Déballe un argument vers son id brut (Entity/Weapon/Chip/Cell -> .id ; liste -> déballée). Sert aux
+# helpers de ciblage pour accepter des objets quel que soit l'ordre des arguments.
+def _unwrap(x):
+    if isinstance(x, (Entity, Weapon, Chip, Cell)): return x.id
+    if isinstance(x, list): return [_unwrap(i) for i in x]
+    return x
+def _unwrapall(args): return [_unwrap(a) for a in args]
 
 
 class Cell:
@@ -58,9 +66,15 @@ class Cell:
     def obstacle(self): return isObstacle(self.id)
     @property
     def entity(self): return _ent(getEntityOnCell(self.id))
+    # Contenu de la case (CELL_EMPTY/PLAYER/ENTITY/OBSTACLE = Cell.Type.*).
+    @property
+    def content(self): return getCellContent(self.id)
     def distance(self, target): return getCellDistance(self.id, _cid(target))
     def pathLength(self, target): return getPathLength(self.id, _cid(target))
     def lineOfSight(self, target): return lineOfSight(self.id, _cid(target))
+    # Chemin (liste de cellules) jusqu'à la cible. Retour list[Cell].
+    def path(self, target, ignored=None):
+        return _cells(getPath(self.id, _cid(target)) if ignored is None else getPath(self.id, _cid(target), _cidlist(ignored)))
 
 
 # Base commune aux armes et puces. Porte les constantes partagees (Item.LaunchType, Item.Area).
@@ -264,6 +278,19 @@ class Me(Entity):
     # Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (me/getEntity() = bulbe).
     def summon(self, chip, cell, callback, name=None):
         return summon(_cpid(chip), _cid(cell), callback) if name is None else summon(_cpid(chip), _cid(cell), callback, name)
+    # Ciblage : cellule (ou toutes les cellules) d'ou utiliser une arme/puce. Retour Cell / list[Cell].
+    # Arguments deballes generiquement (acceptent objets ou ids, ordre libre).
+    def cellToUseWeapon(self, *args): return _cell(getCellToUseWeapon(*_unwrapall(args)))
+    def cellsToUseWeapon(self, *args): return _cells(getCellsToUseWeapon(*_unwrapall(args)))
+    def cellToUseWeaponOnCell(self, *args): return _cell(getCellToUseWeaponOnCell(*_unwrapall(args)))
+    def cellsToUseWeaponOnCell(self, *args): return _cells(getCellsToUseWeaponOnCell(*_unwrapall(args)))
+    def cellToUseChip(self, *args): return _cell(getCellToUseChip(*_unwrapall(args)))
+    def cellsToUseChip(self, *args): return _cells(getCellsToUseChip(*_unwrapall(args)))
+    def cellToUseChipOnCell(self, *args): return _cell(getCellToUseChipOnCell(*_unwrapall(args)))
+    def cellsToUseChipOnCell(self, *args): return _cells(getCellsToUseChipOnCell(*_unwrapall(args)))
+    # Entites touchees par une arme/puce lancee sur une cellule. Retour list[Entity].
+    def weaponTargets(self, *args): return _ents(getWeaponTargets(*_unwrapall(args)))
+    def chipTargets(self, *args): return _ents(getChipTargets(*_unwrapall(args)))
 
 
 # Sous-types d'entite : _ent() renvoie l'instance TYPEE selon getType() -> isinstance(x, Mob) marche.
@@ -290,6 +317,8 @@ class _Fight:
     def getFarthestAlly(self): return _ent(getFarthestAlly())
     def getNearestEnemyTo(self, target): return _ent(getNearestEnemyTo(_eid(target)))
     def getNearestAllyTo(self, target): return _ent(getNearestAllyTo(_eid(target)))
+    def getNearestEnemyToCell(self, c): return _ent(getNearestEnemyToCell(_cid(c)))
+    def getNearestAllyToCell(self, c): return _ent(getNearestAllyToCell(_cid(c)))
     def getEnemies(self): return _ents(getEnemies())
     def getAllies(self): return _ents(getAllies())
     def getAliveEnemies(self): return _ents(getAliveEnemies())
@@ -315,6 +344,9 @@ class _Field:
     def cellDistance(self, a, b): return getCellDistance(_cid(a), _cid(b))
     def pathLength(self, a, b): return getPathLength(_cid(a), _cid(b))
     def lineOfSight(self, a, b): return lineOfSight(_cid(a), _cid(b))
+    # Chemin (liste de cellules) de a a b. Retour list[Cell].
+    def path(self, a, b, ignored=None):
+        return _cells(getPath(_cid(a), _cid(b)) if ignored is None else getPath(_cid(a), _cid(b), _cidlist(ignored)))
 
 
 class _Registers:

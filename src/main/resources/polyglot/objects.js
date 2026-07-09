@@ -42,6 +42,16 @@
 		if (Array.isArray(x)) { var o = []; for (var i = 0; i < x.length; i++) o.push(cid(x[i])); return o; }
 		return cid(x);
 	}
+	function cell(id) { return (id === null || id === undefined || id < 0) ? null : new Cell(id); }
+	// Déballe UN argument vers son id brut (Entity/Weapon/Chip/Cell -> .id ; tableau -> déballé ;
+	// sinon inchangé). Sert aux helpers de ciblage (getCellToUseWeapon...) pour accepter des objets
+	// quel que soit l'ordre des arguments, sans avoir à connaître leur rôle.
+	function unwrap(x) {
+		if (x instanceof Entity || x instanceof Weapon || x instanceof Chip || x instanceof Cell) return x.id;
+		if (Array.isArray(x)) { var o = []; for (var i = 0; i < x.length; i++) o.push(unwrap(x[i])); return o; }
+		return x;
+	}
+	function unwrapAll(args) { var o = []; for (var i = 0; i < args.length; i++) o.push(unwrap(args[i])); return o; }
 
 	// ---- Cell : une case du terrain ----
 	class Cell {
@@ -51,9 +61,13 @@
 		get empty() { return isEmptyCell(this.id); }
 		get obstacle() { return isObstacle(this.id); }
 		get entity() { return ent(getEntityOnCell(this.id)); }
+		// Contenu de la case (CELL_EMPTY/PLAYER/ENTITY/OBSTACLE = Cell.Type.*).
+		get content() { return getCellContent(this.id); }
 		distance(target) { return getCellDistance(this.id, cid(target)); }
 		pathLength(target) { return getPathLength(this.id, cid(target)); }
 		lineOfSight(target) { return lineOfSight(this.id, cid(target)); }
+		// Chemin (liste de cellules) jusqu'à la cible, en évitant `ignored`. Retour Cell[].
+		path(target, ignored) { return cells(ignored === undefined ? getPath(this.id, cid(target)) : getPath(this.id, cid(target), cidList(ignored))); }
 	}
 
 	// ---- Item : base commune aux armes et puces. Porte les constantes partagees
@@ -215,6 +229,19 @@
 		summon(chip, cell, callback, name) {
 			return (name === undefined) ? summon(cpid(chip), cid(cell), callback) : summon(cpid(chip), cid(cell), callback, name);
 		}
+		// Ciblage : cellule (ou toutes les cellules) d'où utiliser une arme/puce sur une cible/cellule.
+		// Retour Cell / Cell[]. Arguments déballés génériquement (acceptent objets ou ids, ordre libre).
+		cellToUseWeapon() { return cell(getCellToUseWeapon.apply(null, unwrapAll(arguments))); }
+		cellsToUseWeapon() { return cells(getCellsToUseWeapon.apply(null, unwrapAll(arguments))); }
+		cellToUseWeaponOnCell() { return cell(getCellToUseWeaponOnCell.apply(null, unwrapAll(arguments))); }
+		cellsToUseWeaponOnCell() { return cells(getCellsToUseWeaponOnCell.apply(null, unwrapAll(arguments))); }
+		cellToUseChip() { return cell(getCellToUseChip.apply(null, unwrapAll(arguments))); }
+		cellsToUseChip() { return cells(getCellsToUseChip.apply(null, unwrapAll(arguments))); }
+		cellToUseChipOnCell() { return cell(getCellToUseChipOnCell.apply(null, unwrapAll(arguments))); }
+		cellsToUseChipOnCell() { return cells(getCellsToUseChipOnCell.apply(null, unwrapAll(arguments))); }
+		// Entités touchées par une arme/puce lancée sur une cellule. Retour Entity[].
+		weaponTargets() { return ents(getWeaponTargets.apply(null, unwrapAll(arguments))); }
+		chipTargets() { return ents(getChipTargets.apply(null, unwrapAll(arguments))); }
 	}
 
 	// ---- Fight : entités et état global du combat ----
@@ -238,6 +265,9 @@
 		getAliveAlliesCount: function () { return getAliveAlliesCount(); },
 		getAlliedTurret: function () { return ent(getAlliedTurret()); },
 		getEnemyTurret: function () { return ent(getEnemyTurret()); },
+		// Entité alliée/ennemie la plus proche d'une CELLULE (complète getNearestEnemyTo qui prend une entité).
+		getNearestEnemyToCell: function (c) { return ent(getNearestEnemyToCell(cid(c))); },
+		getNearestAllyToCell: function (c) { return ent(getNearestAllyToCell(cid(c))); },
 	};
 
 	// ---- Field : terrain et géométrie ----
@@ -249,6 +279,8 @@
 		cellDistance: function (a, b) { return getCellDistance(cid(a), cid(b)); },
 		pathLength: function (a, b) { return getPathLength(cid(a), cid(b)); },
 		lineOfSight: function (a, b) { return lineOfSight(cid(a), cid(b)); },
+		// Chemin (liste de cellules) de a à b, en évitant `ignored`. Retour Cell[].
+		path: function (a, b, ignored) { return cells(ignored === undefined ? getPath(cid(a), cid(b)) : getPath(cid(a), cid(b), cidList(ignored))); },
 	};
 
 	// ---- Registers : stockage persistant de l'IA (clé -> valeur, entre combats) ----
