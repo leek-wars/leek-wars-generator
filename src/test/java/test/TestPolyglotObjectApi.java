@@ -124,7 +124,7 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Object cellFlat = eval(sb, "var c = getCellFromXY(0, 0); c == null ? -1 : c;");
 			Assert.assertEquals(((Number) cellFlat).longValue(), ((Number) cellObjX).longValue());
 			Assert.assertEquals(((Number) eval(sb, "getMapType();")).longValue(),
-				((Number) eval(sb, "Field.mapType;")).longValue());
+				((Number) eval(sb, "Field.type;")).longValue());
 			// me.weapon / me.weapons / me.chips : ne doivent pas lever (tableaux d'objets ou null).
 			Assert.assertEquals(true, eval(sb, "Array.isArray(me.weapons) && Array.isArray(me.chips);"));
 		}
@@ -199,7 +199,7 @@ public class TestPolyglotObjectApi extends FightTestBase {
 
 	/**
 	 * Les helpers qui rendaient des ids bruts renvoient désormais des OBJETS : ciblage
-	 * (me.cellsToUseWeapon -> Cell[]), chemin (Field.path / cell.path -> Cell[]), cibles touchées
+	 * (me.weaponCells -> Cell[]), chemin (Field.path / cell.path -> Cell[]), cibles touchées
 	 * (me.weaponTargets -> Entity[]), proximité par cellule (Fight.getNearestEnemyToCell -> Entity),
 	 * contenu de case (cell.content -> number). Vérifie le TYPE des éléments. (#3179)
 	 */
@@ -207,14 +207,14 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void objectReturningHelpers() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			// cellsToUseWeapon : tableau (éventuellement vide) dont les éléments sont des Cell.
+			// weaponCells : tableau (éventuellement vide) dont les éléments sont des Cell.
 			Assert.assertEquals(true, eval(sb,
 				"me.setWeapon(Weapon.pistol);"
-				+ "var cs = me.cellsToUseWeapon(Fight.getNearestEnemy());"
+				+ "var cs = me.weaponCells(Fight.getNearestEnemy());"
 				+ "Array.isArray(cs) && (cs.length === 0 || cs[0] instanceof Cell);"));
-			// cellToUseWeapon : Cell ou null.
+			// weaponCell : Cell ou null.
 			Assert.assertEquals(true, eval(sb,
-				"var c = me.cellToUseWeapon(Fight.getNearestEnemy()); c === null || c instanceof Cell;"));
+				"var c = me.weaponCell(Fight.getNearestEnemy()); c === null || c instanceof Cell;"));
 			// Field.path et cell.path : Cell[].
 			Assert.assertEquals(true, eval(sb,
 				"var p = Field.path(me.cell, Fight.getNearestEnemy().cell);"
@@ -241,7 +241,7 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
-				"(me.setWeapon(Weapon.pistol), all(isinstance(c, Cell) for c in me.cellsToUseWeapon(Fight.getNearestEnemy())))[1]"));
+				"(me.setWeapon(Weapon.pistol), all(isinstance(c, Cell) for c in me.weaponCells(Fight.getNearestEnemy())))[1]"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
 				"all(isinstance(c, Cell) for c in Field.path(me.cell, Fight.getNearestEnemy().cell))"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb,

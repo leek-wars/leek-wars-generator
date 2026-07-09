@@ -104,7 +104,8 @@ class Weapon(Item):
     def maxUses(self): return getWeaponMaxUses(self.id)
     @property
     def inline(self): return isInlineWeapon(self.id)
-    def needLos(self): return weaponNeedLos(self.id)
+    @property
+    def needsLos(self): return weaponNeedLos(self.id)
     # features : caracteristiques declarees de l'arme (Feature[] : degats, poison, teleport...),
     # distinct de entity.effects (Effect ACTIFS). Property (lecture d'etat).
     @property
@@ -136,7 +137,8 @@ class Chip(Item):
     def maxUses(self): return getChipMaxUses(self.id)
     @property
     def inline(self): return isInlineChip(self.id)
-    def needLos(self): return chipNeedLos(self.id)
+    @property
+    def needsLos(self): return chipNeedLos(self.id)
     # features : caracteristiques declarees de la puce (Feature[]). cf Weapon.features.
     @property
     def features(self): return _feats(getChipEffects(self.id))
@@ -278,16 +280,12 @@ class Me(Entity):
     # Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (me/getEntity() = bulbe).
     def summon(self, chip, cell, callback, name=None):
         return summon(_cpid(chip), _cid(cell), callback) if name is None else summon(_cpid(chip), _cid(cell), callback, name)
-    # Ciblage : cellule (ou toutes les cellules) d'ou utiliser une arme/puce. Retour Cell / list[Cell].
-    # Arguments deballes generiquement (acceptent objets ou ids, ordre libre).
-    def cellToUseWeapon(self, *args): return _cell(getCellToUseWeapon(*_unwrapall(args)))
-    def cellsToUseWeapon(self, *args): return _cells(getCellsToUseWeapon(*_unwrapall(args)))
-    def cellToUseWeaponOnCell(self, *args): return _cell(getCellToUseWeaponOnCell(*_unwrapall(args)))
-    def cellsToUseWeaponOnCell(self, *args): return _cells(getCellsToUseWeaponOnCell(*_unwrapall(args)))
-    def cellToUseChip(self, *args): return _cell(getCellToUseChip(*_unwrapall(args)))
-    def cellsToUseChip(self, *args): return _cells(getCellsToUseChip(*_unwrapall(args)))
-    def cellToUseChipOnCell(self, *args): return _cell(getCellToUseChipOnCell(*_unwrapall(args)))
-    def cellsToUseChipOnCell(self, *args): return _cells(getCellsToUseChipOnCell(*_unwrapall(args)))
+    # Cellule (ou toutes les cellules) d'ou utiliser l'arme/puce sur `target` -- une entite OU une case
+    # (routage automatique). Retour Cell / list[Cell]. Args deballes (objets ou ids, ordre libre).
+    def weaponCell(self, target, *rest): return _cell((getCellToUseWeaponOnCell if isinstance(target, Cell) else getCellToUseWeapon)(*_unwrapall((target,) + rest)))
+    def weaponCells(self, target, *rest): return _cells((getCellsToUseWeaponOnCell if isinstance(target, Cell) else getCellsToUseWeapon)(*_unwrapall((target,) + rest)))
+    def chipCell(self, chip, target, *rest): return _cell((getCellToUseChipOnCell if isinstance(target, Cell) else getCellToUseChip)(*_unwrapall((chip, target) + rest)))
+    def chipCells(self, chip, target, *rest): return _cells((getCellsToUseChipOnCell if isinstance(target, Cell) else getCellsToUseChip)(*_unwrapall((chip, target) + rest)))
     # Entites touchees par une arme/puce lancee sur une cellule. Retour list[Entity].
     def weaponTargets(self, *args): return _ents(getWeaponTargets(*_unwrapall(args)))
     def chipTargets(self, *args): return _ents(getChipTargets(*_unwrapall(args)))
@@ -335,7 +333,7 @@ class _Fight:
 
 class _Field:
     @property
-    def mapType(self): return getMapType()
+    def type(self): return getMapType()
     def cellFromXY(self, x, y):
         c = getCellFromXY(x, y)
         return None if c is None or c < 0 else Cell(c)

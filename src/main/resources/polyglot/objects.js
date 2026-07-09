@@ -89,7 +89,7 @@
 		get launchType() { return getWeaponLaunchType(this.id); }
 		get maxUses() { return getWeaponMaxUses(this.id); }
 		get inline() { return isInlineWeapon(this.id); }
-		needLos() { return weaponNeedLos(this.id); }
+		get needsLos() { return weaponNeedLos(this.id); }
 		// features : caracteristiques declarees de l'arme (Feature[] : degats, poison, teleport...).
 		// Distinct de entity.effects (Effect ACTIFS sur une entite). Property (lecture d'etat).
 		get features() { return feats(getWeaponEffects(this.id)); }
@@ -109,7 +109,7 @@
 		get launchType() { return getChipLaunchType(this.id); }
 		get maxUses() { return getChipMaxUses(this.id); }
 		get inline() { return isInlineChip(this.id); }
-		needLos() { return chipNeedLos(this.id); }
+		get needsLos() { return chipNeedLos(this.id); }
 		// features : caracteristiques declarees de la puce (Feature[]). cf Weapon.features.
 		get features() { return feats(getChipEffects(this.id)); }
 	}
@@ -229,16 +229,12 @@
 		summon(chip, cell, callback, name) {
 			return (name === undefined) ? summon(cpid(chip), cid(cell), callback) : summon(cpid(chip), cid(cell), callback, name);
 		}
-		// Ciblage : cellule (ou toutes les cellules) d'où utiliser une arme/puce sur une cible/cellule.
-		// Retour Cell / Cell[]. Arguments déballés génériquement (acceptent objets ou ids, ordre libre).
-		cellToUseWeapon() { return cell(getCellToUseWeapon.apply(null, unwrapAll(arguments))); }
-		cellsToUseWeapon() { return cells(getCellsToUseWeapon.apply(null, unwrapAll(arguments))); }
-		cellToUseWeaponOnCell() { return cell(getCellToUseWeaponOnCell.apply(null, unwrapAll(arguments))); }
-		cellsToUseWeaponOnCell() { return cells(getCellsToUseWeaponOnCell.apply(null, unwrapAll(arguments))); }
-		cellToUseChip() { return cell(getCellToUseChip.apply(null, unwrapAll(arguments))); }
-		cellsToUseChip() { return cells(getCellsToUseChip.apply(null, unwrapAll(arguments))); }
-		cellToUseChipOnCell() { return cell(getCellToUseChipOnCell.apply(null, unwrapAll(arguments))); }
-		cellsToUseChipOnCell() { return cells(getCellsToUseChipOnCell.apply(null, unwrapAll(arguments))); }
+		// Cellule (ou toutes les cellules) d'où utiliser l'arme/puce sur `target` — une entité OU une
+		// case (routage automatique). Retour Cell / Cell[]. Args déballés (objets ou ids, ordre libre).
+		weaponCell(target) { return cell(((target instanceof Cell) ? getCellToUseWeaponOnCell : getCellToUseWeapon).apply(null, unwrapAll(arguments))); }
+		weaponCells(target) { return cells(((target instanceof Cell) ? getCellsToUseWeaponOnCell : getCellsToUseWeapon).apply(null, unwrapAll(arguments))); }
+		chipCell(chip, target) { return cell(((target instanceof Cell) ? getCellToUseChipOnCell : getCellToUseChip).apply(null, unwrapAll(arguments))); }
+		chipCells(chip, target) { return cells(((target instanceof Cell) ? getCellsToUseChipOnCell : getCellsToUseChip).apply(null, unwrapAll(arguments))); }
 		// Entités touchées par une arme/puce lancée sur une cellule. Retour Entity[].
 		weaponTargets() { return ents(getWeaponTargets.apply(null, unwrapAll(arguments))); }
 		chipTargets() { return ents(getChipTargets.apply(null, unwrapAll(arguments))); }
@@ -272,7 +268,7 @@
 
 	// ---- Field : terrain et géométrie ----
 	var Field = {
-		get mapType() { return getMapType(); },
+		get type() { return getMapType(); },
 		cellFromXY: function (x, y) { var c = getCellFromXY(x, y); return (c === null || c === undefined || c < 0) ? null : new Cell(c); },
 		getObstacles: function () { return cells(getObstacles()); },
 		distance: function (a, b) { return getDistance(cid(a), cid(b)); },
