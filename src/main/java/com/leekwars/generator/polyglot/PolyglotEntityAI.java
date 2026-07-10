@@ -673,12 +673,29 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String JS_GETOPS_OVERRIDE =
 		"(function(){var f=$F;var c=globalThis.__lw_counter;"
 		+ "var g=function(){return (globalThis.__lw_real||0)+c()*f;};"
-		+ "globalThis.getOperations=g;globalThis.getOperation=g;})();";
+		+ "globalThis.getOperations=g;globalThis.getOperation=g;"
+		// Anti-triche : le compteur de statements alimente getOperations ET le compteur d'ops HOTE
+		// (meme instance d'instrument). Laisse sur globalThis, un joueur pouvait le remettre a zero
+		// (__lw_counter(x)) pour sous-evaluer ses ops et fouiller au-dela de son budget. On scelle un
+		// shim LECTURE SEULE (reset ignore) ; g garde la vraie reference `c` (capturee au-dessus) et
+		// l'hote garde son propre handle (polyglot bindings) pour lire/reset.
+		+ "try{Object.defineProperty(globalThis,'__lw_counter',{value:function(){return c();},writable:false,configurable:false});}catch(e){}"
+		+ "})();";
 	private static final String PY_GETOPS_OVERRIDE =
 		"import builtins as _lwb2\n"
-		+ "def getOperations():\n"
-		+ "    return __lw_real + __lw_counter() * $F\n"
-		+ "_lwb2.getOperations = getOperations\n";
+		// Capture le compteur dans une closure (au lieu de le lire par nom a chaque appel) pour pouvoir
+		// le RETIRER du scope guest ensuite : sinon un joueur pouvait faire __lw_counter(x) pour remettre
+		// a zero le compteur partage hote/guest et sous-evaluer ses ops. __lw_real reste lu au call (mis a
+		// jour par l'hote chaque sync). L'hote garde son handle instrument (polyglot bindings) pour reset.
+		+ "def _lw_make_getops(_counter, _factor):\n"
+		+ "    def getOperations():\n"
+		+ "        return __lw_real + _counter() * _factor\n"
+		+ "    return getOperations\n"
+		+ "_lwb2.getOperations = _lw_make_getops(__lw_counter, $F)\n"
+		+ "try:\n"
+		+ "    del globals()['__lw_counter']\n"
+		+ "except Exception:\n"
+		+ "    pass\n";
 
 	/** Fetch les bindings guest + redirige getOperations cote guest (si l'instrument deterministe est la). */
 	private void installGuestGetOperations() {
