@@ -307,6 +307,9 @@ class Mob(Entity):
 
 
 class _Fight:
+    # L'IA courante (votre entite). Remplace l'ancien global `me` : me = Fight.me
+    @property
+    def me(self): return _me_self
     @property
     def turn(self): return getTurn()
     def getNearestEnemy(self): return _ent(getNearestEnemy())
@@ -373,7 +376,9 @@ Fight = _Fight()
 Field = _Field()
 Registers = _Registers()
 Debug = _Debug()
-me = Me()
+# Instance unique de l'IA courante, exposee via Fight.me (plus de global `me`). Une seule instance
+# suffit : son id est un accessor dynamique qui suit l'entite courante (cf classe Me).
+_me_self = Me()
 
 
 # Conteneur des constantes d'etat special (State.UNHEALABLE...).

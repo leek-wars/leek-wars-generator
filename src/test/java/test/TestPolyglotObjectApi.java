@@ -56,7 +56,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	private Object eval(PolyglotSandbox sb, String src) throws Exception {
-		PolyglotEntityAI ai = new PolyglotEntityAI("js", src, sb);
+		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté) avant le snippet.
+		PolyglotEntityAI ai = new PolyglotEntityAI("js", "var me = Fight.me; " + src, sb);
 		ai.setEntity(leek1);
 		ai.setLogs(new LeekLog(farmerLog, leek1));
 		ai.setFight(fight);
@@ -82,7 +83,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	private Object evalPy(PolyglotSandbox sb, String expr) throws Exception {
-		PolyglotEntityAI ai = new PolyglotEntityAI("python", "def turn():\n    return " + expr + "\n", sb);
+		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté) avant le snippet.
+		PolyglotEntityAI ai = new PolyglotEntityAI("python", "me = Fight.me\ndef turn():\n    return " + expr + "\n", sb);
 		ai.setEntity(leek1);
 		ai.setLogs(new LeekLog(farmerLog, leek1));
 		ai.setFight(fight);

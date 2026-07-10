@@ -240,8 +240,14 @@
 		chipTargets() { return ents(getChipTargets.apply(null, unwrapAll(arguments))); }
 	}
 
+	// Instance unique de l'IA courante (Me), exposée via Fight.me. Une seule instance suffit : son id
+	// est un accessor dynamique qui suit l'entité courante (cf classe Me).
+	var meSelf = new Me();
+
 	// ---- Fight : entités et état global du combat ----
 	var Fight = {
+		// L'IA courante (votre entité). Remplace l'ancien global `me` : var me = Fight.me
+		get me() { return meSelf; },
 		get turn() { return getTurn(); },
 		getNearestEnemy: function () { return ent(getNearestEnemy()); },
 		getNearestAlly: function () { return ent(getNearestAlly()); },
@@ -369,7 +375,6 @@
 	globalThis.Effect = Effect;
 	globalThis.Feature = Feature;
 	globalThis.State = State;
-	globalThis.me = new Me();
 	globalThis.Fight = Fight;
 	globalThis.Field = Field;
 	globalThis.Registers = Registers;
