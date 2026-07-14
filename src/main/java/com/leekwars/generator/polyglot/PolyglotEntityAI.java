@@ -646,6 +646,21 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "catch(e){try{console.log=L;console.info=L;console.debug=L;console.warn=L;console.error=L;}catch(e2){}}"
 		+ "})();";
 
+	// GraalPython fournit print, mais sa sortie part dans le nullOutputStream du sandbox (jetee) : une IA
+	// qui fait print() ne verrait RIEN. On reroute print vers debug() (le log de combat, visible dans le
+	// rapport, avec ses limites anti-spam) -> les IA Python peuvent debuguer avec le print familier.
+	// debug() (LeekScript) reste aussi disponible directement. Miroir Python de JS_CONSOLE_SETUP.
+	private static final String PY_CONSOLE_SETUP =
+		"import builtins as _lwc\n"
+		+ "def _lw_print(*a, sep=' ', end='\\n', file=None, flush=False):\n"
+		// try/except autour de debug() : il peut lever (ex: contexte de combat incomplet) ; print ne doit
+		// JAMAIS faire echouer l'IA. Visible quand debug marche, silencieux sinon.
+		+ "    try:\n"
+		+ "        debug(sep.join(str(_x) for _x in a))\n"
+		+ "    except Exception:\n"
+		+ "        pass\n"
+		+ "_lwc.print = _lw_print\n";
+
 	// API de combat orientee objet (me, Entity, Cell, Fight...) : couche guest au-dessus de l'API plate,
 	// chargee une fois depuis les resources et evaluee dans chaque contexte JS apres le bridge. Style LS5.
 	private static final String JS_OBJECT_API = loadResource("/polyglot/objects.js");
@@ -778,6 +793,7 @@ public class PolyglotEntityAI extends EntityAI {
 			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
 			context.eval(languageId, pythonDeterminismGuard(seed));
 			context.eval(languageId, PY_CHARGE_GUARD);
+			context.eval(languageId, PY_CONSOLE_SETUP);
 			if (PY_OBJECT_API != null) {
 				context.eval(languageId, PY_OBJECT_API);
 			}
