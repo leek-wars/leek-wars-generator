@@ -932,8 +932,17 @@ public class PolyglotEntityAI extends EntityAI {
 			} else {
 				value = replayFlatTurn(); // IA plate sans turn() : tours suivants
 			}
-			// Peut lever LeekRunException (marshalling du retour : ops/profondeur) : resolue par le finally.
-			return TypeMarshaller.toJava(value, this);
+			// La valeur de retour de runIA est IGNOREE par le moteur en combat. Or une IA plate finissant
+			// sur None / un import / une affectation renvoie None ou les globals du module, dont le
+			// marshalling recurse dans les objets internes Python (__builtins__, me cyclique via
+			// cell.entity...) et heurte la garde de profondeur (Error.STACKOVERFLOW). Un echec de
+			// marshalling du RETOUR ne doit donc PAS interrompre l'IA (l'eval, lui, a deja reussi ;
+			// une vraie recursion du code joueur leve pendant l'eval, hors de ce try).
+			try {
+				return TypeMarshaller.toJava(value, this);
+			} catch (LeekRunException marshallingIgnored) {
+				return null;
+			}
 		} catch (PolyglotException e) {
 			LeekRunException mapped = mapException(e);
 			if (!initialized) closeContext(); // echec de setup (tour 1) : repartir sur un contexte neuf

@@ -316,4 +316,20 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			Assert.assertEquals("un voisin dans le même dossier doit être importable", 7, r);
 		}
 	}
+
+	@Test
+	public void pythonFlatAiNoneReturnDoesNotCrash() throws Exception {
+		// Regression : une IA plate Python finissant sur None / une affectation / un import renvoie None
+		// (ou les globals du module) ; la valeur de retour etant IGNOREE en combat, son marshalling ne
+		// doit PAS interrompre l'IA en STACKOVERFLOW (ex utilisateur : base.py finissant par print(...)).
+		initFightOnly();
+		for (String last : new String[] { "None", "x = toto(2)", "from test import toto" }) {
+			Map<String, String> files = new HashMap<>();
+			files.put("ia-ts/test.py", "def toto(x):\n    return x * x\n");
+			files.put("ia-ts/base.py", "from test import toto\n" + last + "\n");
+			try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+				multiFileAI(sb, "python", files, "ia-ts/base.py").runIA(); // ne doit pas lever
+			}
+		}
+	}
 }
