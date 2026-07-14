@@ -661,6 +661,16 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        pass\n"
 		+ "_lwc.print = _lw_print\n";
 
+	// Montage des fichiers du joueur (/ai) en TETE de sys.path, evalue en DERNIER (apres tous les
+	// preludes de confiance : guard determinisme, charge, console, objects.py). Ainsi les modules
+	// sensibles sont deja importes+patches+caches dans sys.modules (non masquables), les preludes ont
+	// tourne avec la priorite stdlib, et seul le code du JOUEUR voit /ai en premier -> un fichier
+	// test.py / utils.py resout vers le fichier du joueur (et non un module stdlib homonyme).
+	private static final String PY_MOUNT_AI =
+		"import sys\n"
+		+ "if '/ai' in sys.path:\n    sys.path.remove('/ai')\n"
+		+ "sys.path.insert(0, '/ai')\n";
+
 	// API de combat orientee objet (me, Entity, Cell, Fight...) : couche guest au-dessus de l'API plate,
 	// chargee une fois depuis les resources et evaluee dans chaque contexte JS apres le bridge. Style LS5.
 	private static final String JS_OBJECT_API = loadResource("/polyglot/objects.js");
@@ -797,6 +807,8 @@ public class PolyglotEntityAI extends EntityAI {
 			if (PY_OBJECT_API != null) {
 				context.eval(languageId, PY_OBJECT_API);
 			}
+			// EN DERNIER : monte /ai en tete de path pour le code du joueur (cf PY_MOUNT_AI).
+			context.eval(languageId, PY_MOUNT_AI);
 		}
 	}
 
@@ -807,13 +819,13 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static String pythonDeterminismGuard(long seed) {
 		return
-			// Multi-fichiers : le montage /ai est ajoute a sys.path ICI (l'option python.PythonPath
-			// est TRUSTED-only, rejetee par la policy ISOLATED), en FIN de path pour que la stdlib
-			// garde la PRIORITE sur les fichiers du joueur. Sinon une IA nommant un fichier
-			// random.py / os.py masquerait la stdlib (et le RNG seede).
+			// On importe+patche ICI les modules sensibles (random/os/time/datetime/uuid) AVANT tout
+			// montage des fichiers du joueur : une fois en cache dans sys.modules, un `import random`
+			// renverra la version seedee meme si le joueur a un fichier random.py (Python consulte
+			// sys.modules avant sys.path). Le montage de /ai se fait ensuite en TETE de path (PY_MOUNT_AI,
+			// apres tous les preludes de confiance) pour que les fichiers du joueur (test.py, utils.py...)
+			// resolvent bien vers leur fichier, sans pouvoir masquer les modules deja proteges.
 			"import sys\n"
-			+ "if '/ai' in sys.path:\n    sys.path.remove('/ai')\n"
-			+ "sys.path.append('/ai')\n"
 			+ "import os, random, uuid, time, datetime\n"
 			+ "_lw_r = random.Random(" + seed + ")\n"
 			+ "os.urandom = lambda n: bytes(_lw_r.getrandbits(8) for _ in range(n))\n"

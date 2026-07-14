@@ -131,6 +131,22 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	}
 
 	@Test
+	public void pythonPlayerFileWithStdlibNameResolves() throws Exception {
+		// Regression : un fichier joueur nomme comme un module stdlib NON sensible (ici `string`) doit
+		// resoudre vers le fichier du JOUEUR. Avant le montage /ai en tete, `from string import toto`
+		// resolvait la stdlib -> ImportError. Complementaire de pythonPlayerFileCannotShadowStdlib (les
+		// modules SENSIBLES, eux, restent proteges).
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("string.py", "def toto():\n    return 7\n");
+		files.put("main.py", "from string import toto\ndef turn():\n    return toto()\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "main.py").runIA()).longValue();
+			Assert.assertEquals("un fichier joueur nomme comme un module stdlib non sensible doit primer", 7, r);
+		}
+	}
+
+	@Test
 	public void pythonMultiFileCannotEscapeToHost() throws Exception {
 		initFightOnly();
 		Map<String, String> files = new HashMap<>();
