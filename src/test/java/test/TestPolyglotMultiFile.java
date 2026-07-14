@@ -302,4 +302,18 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			Assert.assertEquals(42 + small.getLife(), r);
 		}
 	}
+
+	@Test
+	public void pythonSiblingImportInSubfolder() throws Exception {
+		// Hypothèse : fichiers dans un dossier -> montés sur /ai/<dossier>/... ; `from test import toto`
+		// doit résoudre le voisin même quand l'entrée n'est pas à la racine de /ai.
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("MonIA/test.py", "def toto():\n    return 7\n");
+		files.put("MonIA/main.py", "from test import toto\ndef turn():\n    return toto()\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "MonIA/main.py").runIA()).longValue();
+			Assert.assertEquals("un voisin dans le même dossier doit être importable", 7, r);
+		}
+	}
 }

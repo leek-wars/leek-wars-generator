@@ -661,15 +661,34 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        pass\n"
 		+ "_lwc.print = _lw_print\n";
 
-	// Montage des fichiers du joueur (/ai) en TETE de sys.path, evalue en DERNIER (apres tous les
-	// preludes de confiance : guard determinisme, charge, console, objects.py). Ainsi les modules
-	// sensibles sont deja importes+patches+caches dans sys.modules (non masquables), les preludes ont
-	// tourne avec la priorite stdlib, et seul le code du JOUEUR voit /ai en premier -> un fichier
-	// test.py / utils.py resout vers le fichier du joueur (et non un module stdlib homonyme).
-	private static final String PY_MOUNT_AI =
-		"import sys\n"
-		+ "if '/ai' in sys.path:\n    sys.path.remove('/ai')\n"
-		+ "sys.path.insert(0, '/ai')\n";
+	// Montage des fichiers du joueur en TETE de sys.path, evalue en DERNIER (apres tous les preludes de
+	// confiance : guard determinisme, charge, console, objects.py). Ainsi les modules sensibles sont deja
+	// importes+patches+caches dans sys.modules (non masquables), les preludes ont tourne avec la priorite
+	// stdlib, et seul le code du JOUEUR voit ces chemins en premier -> un fichier test.py / utils.py
+	// resout vers le fichier du joueur (et non un module stdlib homonyme).
+	//
+	// On monte DEUX chemins : le DOSSIER de l'entree (pour les imports FRERES quand l'IA est dans un
+	// sous-dossier, ex entryPath "MonIA/main.py" -> /ai/MonIA) en priorite, puis /ai (racine, pour les
+	// imports de package "MonIA.x" et les IA a plat). entryPath vient d'un chemin joueur -> echappe.
+	private static String pythonMountGuard(String entryPath) {
+		String dir = "/ai";
+		if (entryPath != null) {
+			int slash = entryPath.lastIndexOf('/');
+			if (slash >= 0) dir = PolyglotFileSystem.MOUNT + "/" + entryPath.substring(0, slash);
+		}
+		StringBuilder sb = new StringBuilder("import sys\n");
+		sb.append("for _p in [").append(pyStr("/ai")).append(", ").append(pyStr(dir)).append("]:\n");
+		sb.append("    while _p in sys.path: sys.path.remove(_p)\n");
+		sb.append("sys.path.insert(0, ").append(pyStr("/ai")).append(")\n");
+		if (!dir.equals("/ai")) sb.append("sys.path.insert(0, ").append(pyStr(dir)).append(")\n");
+		return sb.toString();
+	}
+
+	// Litteral chaine Python sur pour un chemin (echappe backslash et quote simple ; un chemin de fichier
+	// ne contient pas de saut de ligne).
+	private static String pyStr(String s) {
+		return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
+	}
 
 	// API de combat orientee objet (me, Entity, Cell, Fight...) : couche guest au-dessus de l'API plate,
 	// chargee une fois depuis les resources et evaluee dans chaque contexte JS apres le bridge. Style LS5.
@@ -807,8 +826,8 @@ public class PolyglotEntityAI extends EntityAI {
 			if (PY_OBJECT_API != null) {
 				context.eval(languageId, PY_OBJECT_API);
 			}
-			// EN DERNIER : monte /ai en tete de path pour le code du joueur (cf PY_MOUNT_AI).
-			context.eval(languageId, PY_MOUNT_AI);
+			// EN DERNIER : monte /ai + le dossier de l'entree en tete de path pour le code du joueur.
+			context.eval(languageId, pythonMountGuard(entryPath));
 		}
 	}
 
