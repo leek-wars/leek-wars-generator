@@ -23,6 +23,25 @@ public class Data {
 
 	private static final String TAG = Data.class.getSimpleName();
 
+	// Depuis que l'API exempte du rate limit sur le super token (et plus sur l'absence de
+	// X-Real-IP), le chargement des game data doit s'authentifier comme les autres appels
+	// internes, sinon il passe pour du trafic anonyme (429 sous charge). Lu depuis le
+	// secret docker, fallback env ; absent (dev, tests) = appels anonymes comme avant.
+	private static final String SUPER_TOKEN = resolveSuperToken();
+
+	private static String resolveSuperToken() {
+		try {
+			java.nio.file.Path p = java.nio.file.Path.of("/run/secrets/super_token");
+			if (java.nio.file.Files.exists(p)) {
+				String v = java.nio.file.Files.readString(p).trim();
+				if (!v.isEmpty()) return v;
+			}
+		} catch (Exception e) { /* fallback ci-dessous */ }
+		String env = System.getenv("LEEKWARS_SUPER_TOKEN");
+		if (env != null && !env.isEmpty()) return env;
+		return null;
+	}
+
 	public static List<LocalDate> fullmoon = new ArrayList<>();
 
 	public static void checkData(String api) {
@@ -118,9 +137,12 @@ public class Data {
 
 		var client = HttpClient.newHttpClient();
 
-		var request = HttpRequest.newBuilder(URI.create(url))
-			.header("accept", "application/json")
-			.build();
+		var builder = HttpRequest.newBuilder(URI.create(url))
+			.header("accept", "application/json");
+		if (SUPER_TOKEN != null) {
+			builder.header("Authorization", SUPER_TOKEN);
+		}
+		var request = builder.build();
 
 		try {
 			var response = client.send(request, BodyHandlers.ofString());
