@@ -1,6 +1,8 @@
 package test;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,13 +10,18 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotFileSystem;
 import com.leekwars.generator.polyglot.PolyglotSandbox;
 
+import leekscript.compiler.LeekScript;
 import leekscript.common.Error;
+import leekscript.compiler.AIFile;
+import leekscript.compiler.Folder;
+import leekscript.compiler.resolver.FileSystem;
 import leekscript.runner.LeekRunException;
 
 /**
@@ -331,5 +338,122 @@ public class TestPolyglotMultiFile extends FightTestBase {
 				multiFileAI(sb, "python", files, "ia-ts/base.py").runIA(); // ne doit pas lever
 			}
 		}
+	}
+
+	@Test
+	public void pythonReturnCyclicObjectDoesNotCrash() throws Exception {
+		// Renforce le fix de marshalling : une IA plate renvoyant un objet CYCLIQUE (dict auto-referent,
+		// ou `me` cyclique via cell.entity) ne doit pas interrompre l'IA (retour ignore en combat).
+		initFightOnly();
+		for (String last : new String[] { "me = Fight.me\nme", "d = {}\nd['x'] = d\nd" }) {
+			Map<String, String> files = new HashMap<>();
+			files.put("base.py", last + "\n");
+			try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+				multiFileAI(sb, "python", files, "base.py").runIA(); // ne doit pas lever
+			}
+		}
+	}
+
+	@Test
+	public void pythonSubfolderSiblingMultiTurn() throws Exception {
+		// Import frere en sous-dossier + turn() rejouee : l'etat du voisin persiste, le montage du
+		// dossier tient sur plusieurs tours.
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("dir/util.py", "count = 0\ndef step():\n    global count\n    count += 1\n    return count\n");
+		files.put("dir/main.py", "from util import step\ndef turn():\n    return step()\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			var ai = multiFileAI(sb, "python", files, "dir/main.py");
+			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(2L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(3L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void pythonDeeplyNestedSubfolderImport() throws Exception {
+		// Import frere dans un dossier profond (a/b/c) : le dossier de l'entree est bien monte.
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("a/b/c/helper.py", "def val():\n    return 9\n");
+		files.put("a/b/c/main.py", "from helper import val\ndef turn():\n    return val()\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "a/b/c/main.py").runIA()).longValue();
+			Assert.assertEquals(9, r);
+		}
+	}
+
+	@Test
+	public void pythonBuildPathSubfolderImportEndToEnd() throws Exception {
+		// Contrairement a multiFileAI (construction directe), CE test passe par le VRAI chemin de prod
+		// PolyglotEntityAI.build() -> buildFileSystem() -> LeekScript.getFileSystem().listAllFiles() ->
+		// montage. C'est le chemin qui n'etait PAS couvert et qui a laisse passer les regressions.
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("ia-ts/test.py", "def toto(x):\n    return x * x\n");
+		files.put("ia-ts/base.py", "from test import toto\ndef turn():\n    return toto(3)\n");
+		// build() lit entity.getLogs()/getFight() (createLeeks ne les cable pas, seul attachAI le fait).
+		leek1.setLogs(new LeekLog(farmerLog, leek1));
+		leek1.setFight(fight);
+		leek1.setBirthTurn(1);
+		FileSystem prev = LeekScript.getFileSystem();
+		try {
+			LeekScript.setFileSystem(new MemFileSystem(1, files));
+			AIFile entry = new AIFile("ia-ts/base.py", files.get("ia-ts/base.py"), 1L, 4, 1, false);
+			EntityAI ai = PolyglotEntityAI.build(generator, entry, leek1, "python");
+			long r = ((Number) ai.runIA()).longValue();
+			Assert.assertEquals("build() doit enumerer + monter le voisin en sous-dossier", 9, r);
+		} finally {
+			LeekScript.setFileSystem(prev);
+			fight.closePolyglotSandbox();
+		}
+	}
+
+	/** FileSystem LeekScript in-memory minimale (owner unique) pour tester le chemin build()/buildFileSystem. */
+	static final class MemFileSystem extends FileSystem {
+		private final int owner;
+		private final Map<String, String> code;
+		private final Folder root;
+		MemFileSystem(int owner, Map<String, String> code) {
+			this.owner = owner;
+			this.code = code;
+			this.root = new Folder(owner, this);
+			this.root.setParent(root);
+			this.root.setRoot(root);
+		}
+		private static String pathOf(Folder folder, String name) {
+			var parts = new ArrayList<String>();
+			parts.add(name);
+			var cur = folder;
+			while (cur != null && cur.getParent() != cur) {
+				if (cur.getName() != null) parts.add(0, cur.getName());
+				cur = cur.getParent();
+			}
+			return String.join("/", parts);
+		}
+		@Override public Iterable<AIFile> listAllFiles(int o) {
+			var list = new ArrayList<AIFile>();
+			for (var e : code.entrySet()) list.add(new AIFile(e.getKey(), e.getValue(), 1L, 4, owner, false));
+			return list;
+		}
+		@Override public Folder getRoot() { return root; }
+		@Override public Folder getRoot(int o) { return root; }
+		@Override public Folder getRoot(int o, int f) { return root; }
+		@Override public AIFile findFile(String name, Folder folder) throws FileNotFoundException {
+			String p = pathOf(folder, name);
+			String c = code.get(p);
+			if (c == null) throw new FileNotFoundException(p);
+			return new AIFile(p, c, 1L, 4, folder, owner, Math.abs(p.hashCode()) & 0xffffff, false);
+		}
+		@Override public Folder findFolder(String name, Folder folder) {
+			String prefix = pathOf(folder, name) + "/";
+			boolean exists = code.keySet().stream().anyMatch(k -> k.startsWith(prefix));
+			return exists ? new Folder(Math.abs(prefix.hashCode()), owner, name, folder, root, this, 1L) : null;
+		}
+		@Override public AIFile getFileById(int id, int f) { return null; }
+		@Override public Folder getFolderById(int id, int f) { return root; }
+		@Override public long getAITimestamp(AIFile ai) { return 1L; }
+		@Override public void loadDependencies(AIFile ai) { }
+		@Override public long getFolderTimestamp(Folder folder) { return 1L; }
 	}
 }
