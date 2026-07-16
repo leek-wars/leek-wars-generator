@@ -29,6 +29,21 @@ jobs:
     - uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '9.2.1'
+
+    # Image isolate combinée js+python custom (repo privé leek-wars-graal-isolate) :
+    # 127 Mo > limite git GitHub, donc distribuée en RELEASE et non commitée
+    # (libs/ est gitignoré, build.gradle la référence en files()).
+    # Pas de secret sur les PR de forks : l'étape ne tourne pas pour elles (leur build
+    # échouera faute de jar, comme avant).
+    - name: Download custom isolate image
+      if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+      env:
+        GH_TOKEN: ${{ secrets.SERVER_DISPATCH_PAT }}
+      run: |
+        mkdir -p libs
+        gh release download v25.1.3-combined-1 -R 5pilow/leek-wars-graal-isolate \
+          --pattern 'js-isolate-resources-linux-amd64.jar' --dir libs
+
     - name: Build
       run: gradle jar
     - name: Unit tests
