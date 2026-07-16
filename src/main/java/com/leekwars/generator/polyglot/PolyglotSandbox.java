@@ -60,7 +60,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	// Limites exigees par SandboxPolicy.ISOLATED, posees GENEREUSEMENT : le vrai backstop reste le
 	// watchdog wall-clock de PolyglotEntityAI + le cap RAM par poireau. Regroupees ici (memes knobs
 	// que les budgets ci-dessus) plutot que dispersees en litteraux dans le builder.
-	private static final String MAX_CPU_TIME = "60s";
+	private static final String MAX_CPU_TIME = "10m";
 	private static final String MAX_CPU_TIME_CHECK_INTERVAL = "10ms";
 	private static final String MAX_STACK_FRAMES = "50000";
 	private static final String MAX_THREADS = "1";
