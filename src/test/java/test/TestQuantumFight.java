@@ -91,6 +91,8 @@ public class TestQuantumFight extends FightTestBase {
 
 	@Test
 	public void quantumJsFullFight() throws Exception {
+		// IA Quantum locale (repo ia-js, non public) : test machine de dev seulement.
+		org.junit.Assume.assumeTrue("repo ia-js absent, test saute (CI)", Files.isDirectory(Path.of(JS_DIR)));
 		new com.leekwars.generator.Generator(); // charge le catalogue puces/armes
 		equipEverything(leek1);
 		equipEverything(leek2);

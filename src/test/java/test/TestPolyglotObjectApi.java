@@ -396,7 +396,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	private void attachJsAI(Leek leek, String code) {
-		AIFile file = new AIFile("obj_" + System.nanoTime() + ".js", code,
+		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté), comme eval().
+		AIFile file = new AIFile("obj_" + System.nanoTime() + ".js", "var me = Fight.me; " + code,
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
 		leek.setAIFile(file);
 		leek.setLogs(new LeekLog(farmerLog, leek));
@@ -459,7 +460,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	private void attachPyAI(Leek leek, String code) {
-		AIFile file = new AIFile("obj_" + System.nanoTime() + ".py", code,
+		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté), comme evalPy().
+		AIFile file = new AIFile("obj_" + System.nanoTime() + ".py", "me = Fight.me\n" + code,
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
 		leek.setAIFile(file);
 		leek.setLogs(new LeekLog(farmerLog, leek));

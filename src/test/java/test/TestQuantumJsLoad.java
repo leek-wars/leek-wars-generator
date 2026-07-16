@@ -72,6 +72,8 @@ public class TestQuantumJsLoad extends FightTestBase {
 
 	@Test
 	public void loadAndRunOneTurn() throws Exception {
+		// IA Quantum locale (repo ia-js, non public) : test machine de dev seulement.
+		org.junit.Assume.assumeTrue("repo ia-js absent, test saute (CI)", Files.isDirectory(Path.of(ROOT)));
 		System.out.println("[quantum-js] cwd=" + System.getProperty("user.dir")
 			+ " chips=" + com.leekwars.generator.chips.Chips.getTemplates().size()
 			+ " weapons=" + com.leekwars.generator.weapons.Weapons.getTemplates().size());

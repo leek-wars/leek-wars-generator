@@ -164,17 +164,13 @@ public class TestPolyglotFight extends FightTestBase {
 	public void cyclicGuestArrayIsBounded() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
-			// Tableau auto-reference renvoye par l'IA : le marshalling doit s'arreter
-			// proprement (LeekRunException), pas en StackOverflowError non controle.
+			// Tableau auto-reference renvoye par l'IA : le marshalling doit s'arreter proprement
+			// (garde de profondeur/budget), pas en StackOverflowError non controle ni en boucle.
+			// La valeur de retour de runIA etant IGNOREE en combat, son echec de marshalling est
+			// avale et runIA rend null au lieu de lever (cf PolyglotEntityAI.runIA).
 			EntityAI ai = buildAI(sandbox, "var a = []; a[0] = a; a;");
-			try {
-				ai.runIA();
-				Assert.fail("le marshalling d'un tableau cyclique aurait du etre interrompu");
-			} catch (LeekRunException e) {
-				// Profondeur (STACKOVERFLOW) ou largeur/budget (TOO_MUCH_OPERATIONS).
-				Assert.assertTrue("erreur de ressource attendue, recue: " + e.getError(),
-					e.getError() == Error.STACKOVERFLOW || e.getError() == Error.TOO_MUCH_OPERATIONS);
-			}
+			Assert.assertNull("le marshalling d'un tableau cyclique doit etre interrompu (retour null)",
+				ai.runIA());
 		}
 	}
 

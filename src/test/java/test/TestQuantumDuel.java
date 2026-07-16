@@ -109,6 +109,9 @@ public class TestQuantumDuel extends FightTestBase {
 
 	@Test
 	public void jsVsPython() throws Exception {
+		// IA Quantum locale (repos ia-js/ia-py, non publics) : test machine de dev seulement.
+		org.junit.Assume.assumeTrue("repos ia-js/ia-py absents, test saute (CI)",
+			Files.isDirectory(Path.of(JS_DIR)) && Files.isDirectory(Path.of(PY_DIR)));
 		new com.leekwars.generator.Generator();
 		equipEverything(jsLeek);
 		equipEverything(pyLeek);
