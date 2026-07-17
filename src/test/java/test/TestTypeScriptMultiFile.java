@@ -91,7 +91,7 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 			"import { FACTOR } from './lib/helper.ts';",
 			"globalThis.turn = function(): void {",
 			"  const v: number = bonus() * FACTOR;",
-			"  setRegister('mod', '' + v);",
+			"  Registers.set('mod', '' + v);",
 			"};"));
 
 		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
@@ -111,7 +111,7 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 		Files.writeString(dir.resolve("util.ts"), "export function bonus(): number { return 7; }\n");
 		Files.writeString(dir.resolve("main.ts"), String.join("\n",
 			"import { bonus } from './util';",
-			"globalThis.turn = function(): void { setRegister('noext', '' + bonus()); };"));
+			"globalThis.turn = function(): void { Registers.set('noext', '' + bonus()); };"));
 
 		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
 		attachTsEntry(leek1, dir.toString(), "main.ts");
@@ -130,7 +130,7 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 		Files.writeString(dir.resolve("util.ts"), "export const X: number = ;\n"); // syntaxe invalide
 		Files.writeString(dir.resolve("main.ts"), String.join("\n",
 			"import { X } from './util.js';",
-			"globalThis.turn = function(): void { setRegister('x', '' + X); };"));
+			"globalThis.turn = function(): void { Registers.set('x', '' + X); };"));
 
 		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
 		attachTsEntry(leek1, dir.toString(), "main.ts");
@@ -149,7 +149,7 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 			"import { Mem } from './mem.js';",
 			"globalThis.turn = function(): void {",
 			"  Mem.n = Mem.n + 1;",
-			"  setRegister('turns', '' + Mem.n);",
+			"  Registers.set('turns', '' + Mem.n);",
 			"};"));
 
 		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));

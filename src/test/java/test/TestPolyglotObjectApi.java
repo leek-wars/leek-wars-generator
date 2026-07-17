@@ -75,10 +75,10 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertNotNull(cx);
 			// Fight.getNearestEnemy() renvoie une Entity dont l'id est le fid de leek2.
 			Assert.assertEquals((long) leek2.getFId(), ((Number) eval(sb, "Fight.getNearestEnemy().id;")).longValue());
-			// distance de me a l'ennemi via l'objet == via l'API plate.
+			// distance de me a l'ennemi : cohérente entre les deux chemins objet (cell.distance / Field).
 			Object dObj = eval(sb, "me.cell.distance(Fight.getNearestEnemy());");
-			Object dFlat = eval(sb, "getCellDistance(getCell(), getCell(getNearestEnemy()));");
-			Assert.assertEquals(((Number) dFlat).longValue(), ((Number) dObj).longValue());
+			Object dField = eval(sb, "Field.cellDistance(me.cell, Fight.getNearestEnemy().cell);");
+			Assert.assertEquals(((Number) dField).longValue(), ((Number) dObj).longValue());
 		}
 	}
 
@@ -99,11 +99,12 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals((long) leek1.getStat(Entity.STAT_STRENGTH), ((Number) evalPy(sb, "me.strength")).longValue());
 			Assert.assertEquals((long) leek2.getFId(), ((Number) evalPy(sb, "Fight.getNearestEnemy().id")).longValue());
 			Object dObj = evalPy(sb, "me.cell.distance(Fight.getNearestEnemy())");
-			Object dFlat = evalPy(sb, "getCellDistance(getCell(), getCell(getNearestEnemy()))");
-			Assert.assertEquals(((Number) dFlat).longValue(), ((Number) dObj).longValue());
-			// Tranche 2 : objet Weapon en Python.
-			Assert.assertEquals(((Number) evalPy(sb, "getWeaponCost(WEAPON_PISTOL)")).longValue(),
-				((Number) evalPy(sb, "Weapon(WEAPON_PISTOL).cost")).longValue());
+			Object dField = evalPy(sb, "Field.cellDistance(me.cell, Fight.getNearestEnemy().cell)");
+			Assert.assertEquals(((Number) dField).longValue(), ((Number) dObj).longValue());
+			// Objet Weapon en Python : stat cohérente avec le template hôte.
+			int pistol = com.leekwars.generator.FightConstants.WEAPON_PISTOL.getIntValue();
+			Assert.assertEquals((long) com.leekwars.generator.weapons.Weapons.getWeapon(pistol).getCost(),
+				((Number) evalPy(sb, "Weapon.pistol.cost")).longValue());
 		}
 	}
 
@@ -111,22 +112,18 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void weaponChipFieldObjects() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			// Weapon : stats statiques (pas besoin d'equiper l'arme), coherentes avec l'API plate.
-			Assert.assertEquals(((Number) eval(sb, "getWeaponCost(WEAPON_PISTOL);")).longValue(),
-				((Number) eval(sb, "new Weapon(WEAPON_PISTOL).cost;")).longValue());
-			Assert.assertEquals(((Number) eval(sb, "getWeaponMaxRange(WEAPON_PISTOL);")).longValue(),
-				((Number) eval(sb, "new Weapon(WEAPON_PISTOL).maxRange;")).longValue());
-			Assert.assertEquals(eval(sb, "getWeaponName(WEAPON_PISTOL);"),
-				eval(sb, "new Weapon(WEAPON_PISTOL).name;"));
+			// Weapon : stats statiques (pas besoin d'equiper l'arme), coherentes avec le template hote.
+			int pistol = com.leekwars.generator.FightConstants.WEAPON_PISTOL.getIntValue();
+			Assert.assertEquals((long) com.leekwars.generator.weapons.Weapons.getWeapon(pistol).getCost(),
+				((Number) eval(sb, "new Weapon(" + pistol + ").cost;")).longValue());
+			Assert.assertEquals(true, eval(sb, "Weapon.pistol.maxRange >= Weapon.pistol.minRange;"));
+			Assert.assertEquals(true, eval(sb, "typeof Weapon.pistol.name === 'string' && Weapon.pistol.name.length > 0;"));
 			// Chip : stats statiques.
-			Assert.assertEquals(((Number) eval(sb, "getChipCost(CHIP_LIGHTNING);")).longValue(),
-				((Number) eval(sb, "new Chip(CHIP_LIGHTNING).cost;")).longValue());
-			// Field : cellFromXY renvoie une Cell coherente.
-			Object cellObjX = eval(sb, "var c = Field.cellFromXY(0, 0); c == null ? -1 : c.id;");
-			Object cellFlat = eval(sb, "var c = getCellFromXY(0, 0); c == null ? -1 : c;");
-			Assert.assertEquals(((Number) cellFlat).longValue(), ((Number) cellObjX).longValue());
-			Assert.assertEquals(((Number) eval(sb, "getMapType();")).longValue(),
-				((Number) eval(sb, "Field.type;")).longValue());
+			Assert.assertEquals(true, eval(sb, "typeof Chip.lightning.cost === 'number' && Chip.lightning.cost > 0;"));
+			// Field : cellFromXY renvoie une Cell coherente (round-trip x/y -> id).
+			Assert.assertEquals(true, eval(sb,
+				"var c = Field.cellFromXY(5, 5); c === null || Field.cellFromXY(c.x, c.y).id === c.id;"));
+			Assert.assertEquals(true, eval(sb, "typeof Field.type === 'number';"));
 			// me.weapon / me.weapons / me.chips : ne doivent pas lever (tableaux d'objets ou null).
 			Assert.assertEquals(true, eval(sb, "Array.isArray(me.weapons) && Array.isArray(me.chips);"));
 		}
@@ -141,18 +138,18 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void weaponChipObjectConstants() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			// Weapon.pistol est une instance dont l'id vaut la globale plate WEAPON_PISTOL.
-			Assert.assertEquals(((Number) eval(sb, "WEAPON_PISTOL;")).longValue(),
+			// Weapon.pistol est une instance dont l'id vaut la constante hote WEAPON_PISTOL.
+			Assert.assertEquals((long) com.leekwars.generator.FightConstants.WEAPON_PISTOL.getIntValue(),
 				((Number) eval(sb, "Weapon.pistol.id;")).longValue());
-			// Membres riches accessibles directement (coherents avec l'API plate).
-			Assert.assertEquals(((Number) eval(sb, "getWeaponCost(WEAPON_PISTOL);")).longValue(),
+			// Membres riches accessibles directement (coherents avec le template hote).
+			int pistol = com.leekwars.generator.FightConstants.WEAPON_PISTOL.getIntValue();
+			Assert.assertEquals((long) com.leekwars.generator.weapons.Weapons.getWeapon(pistol).getCost(),
 				((Number) eval(sb, "Weapon.pistol.cost;")).longValue());
-			Assert.assertEquals(eval(sb, "getWeaponName(WEAPON_PISTOL);"), eval(sb, "Weapon.pistol.name;"));
 			// camelCase depuis SNAKE_CASE : WEAPON_MACHINE_GUN -> Weapon.machineGun.
-			Assert.assertEquals(((Number) eval(sb, "WEAPON_MACHINE_GUN;")).longValue(),
+			Assert.assertEquals((long) com.leekwars.generator.FightConstants.WEAPON_MACHINE_GUN.getIntValue(),
 				((Number) eval(sb, "Weapon.machineGun.id;")).longValue());
 			// Chip pareil.
-			Assert.assertEquals(((Number) eval(sb, "CHIP_LIGHTNING;")).longValue(),
+			Assert.assertEquals((long) com.leekwars.generator.FightConstants.CHIP_LIGHTNING.getIntValue(),
 				((Number) eval(sb, "Chip.lightning.id;")).longValue());
 			// IDENTITE DE POOL : deux acces a la meme constante = MEME objet (comparable par ===).
 			Assert.assertEquals(true, eval(sb, "Weapon.pistol === Weapon.pistol;"));
@@ -160,8 +157,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals(true, eval(sb,
 				"me.setWeapon(Weapon.pistol); me.weapon === Weapon.pistol;"));
 			// Ergonomie : passer la constante objet a une action l'unwrap (wid) comme un id plat.
-			Assert.assertEquals(eval(sb, "getWeaponName(WEAPON_PISTOL);"),
-				eval(sb, "me.setWeapon(Weapon.pistol); getWeaponName(getWeapon());"));
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.pistol); me.weapon.name === Weapon.pistol.name;"));
 		}
 	}
 
@@ -170,14 +167,15 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void weaponChipObjectConstantsPython() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
-			Assert.assertEquals(((Number) evalPy(sb, "WEAPON_PISTOL")).longValue(),
+			Assert.assertEquals((long) com.leekwars.generator.FightConstants.WEAPON_PISTOL.getIntValue(),
 				((Number) evalPy(sb, "Weapon.pistol.id")).longValue());
-			Assert.assertEquals(((Number) evalPy(sb, "getWeaponCost(WEAPON_PISTOL)")).longValue(),
+			int pistol = com.leekwars.generator.FightConstants.WEAPON_PISTOL.getIntValue();
+			Assert.assertEquals((long) com.leekwars.generator.weapons.Weapons.getWeapon(pistol).getCost(),
 				((Number) evalPy(sb, "Weapon.pistol.cost")).longValue());
 			// camelCase identique au runtime JS (WEAPON_MACHINE_GUN -> machineGun, CHIP_FIRE_BALL -> fireBall).
-			Assert.assertEquals(((Number) evalPy(sb, "WEAPON_MACHINE_GUN")).longValue(),
+			Assert.assertEquals((long) com.leekwars.generator.FightConstants.WEAPON_MACHINE_GUN.getIntValue(),
 				((Number) evalPy(sb, "Weapon.machineGun.id")).longValue());
-			Assert.assertEquals(((Number) evalPy(sb, "CHIP_FIRE_BALL")).longValue(),
+			Assert.assertEquals((long) com.leekwars.generator.FightConstants.CHIP_FIRE_BALL.getIntValue(),
 				((Number) evalPy(sb, "Chip.fireBall.id")).longValue());
 			// Identite de pool : l'arme equipee est le MEME objet que la constante (Python `is`).
 			// Tuple pour sequencer l'effet (setWeapon) puis l'assertion, sans court-circuit d'un `or`.
@@ -194,8 +192,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			// effects / states / summons : tableaux (ne lèvent pas).
 			Assert.assertEquals(true, eval(sb,
 				"Array.isArray(me.effects) && Array.isArray(me.states) && Array.isArray(me.summons);"));
-			// summoned : booléen cohérent avec l'API plate.
-			Assert.assertEquals(eval(sb, "isSummon(getEntity());"), eval(sb, "me.summoned;"));
+			// summoned : un poireau de depart n'est pas une invocation.
+			Assert.assertEquals(false, eval(sb, "me.summoned;"));
 		}
 	}
 
@@ -231,9 +229,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				"me.setWeapon(Weapon.pistol);"
 				+ "var t = me.weaponTargets(Fight.getNearestEnemy().cell);"
 				+ "Array.isArray(t) && (t.length === 0 || t[0] instanceof Entity);"));
-			// cell.content : number cohérent avec l'API plate.
-			Assert.assertEquals(((Number) eval(sb, "getCellContent(getCell());")).longValue(),
-				((Number) eval(sb, "me.cell.content;")).longValue());
+			// cell.content : ma propre case contient un joueur (Cell.Type.PLAYER).
+			Assert.assertEquals(true, eval(sb, "me.cell.content === Cell.Type.PLAYER;"));
 		}
 	}
 
@@ -255,40 +252,50 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/** Valeur hôte d'une constante de combat (source de vérité, les globales plates n'existant plus). */
+	private static long fc(String name) {
+		return com.leekwars.generator.FightConstants.valueOf(name).getIntValue();
+	}
+
 	/**
 	 * Full POO : hiérarchie Item (Weapon/Chip extends Item), conteneurs de constantes par famille
 	 * (Effect.SHIELD, State.PACIFIST, Entity.Stat.STRENGTH, Fight.Type.SOLO, Item.LaunchType.LINE,
 	 * Field.NEXUS, Chest.Type.WOOD...) et dispatch d'instances typées (getNearestEnemy -> Leek). Les
-	 * valeurs objet doivent coïncider avec les globales plates (conservées au runtime). (#3179)
+	 * valeurs objet doivent coïncider avec les constantes HÔTE (les globales plates n'existent plus). (#3179)
 	 */
 	@Test
 	public void objectConstantContainersAndHierarchy() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
 			// Hiérarchie Item : une arme/puce EST un Item.
-			Assert.assertEquals(true, eval(sb, "(new Weapon(WEAPON_PISTOL) instanceof Item) && (new Chip(CHIP_LIGHTNING) instanceof Item);"));
-			// Conteneurs de catégories == globales plates (MAJUSCULES, valeur identique).
-			Assert.assertEquals(true, eval(sb, "Effect.ABSOLUTE_SHIELD === EFFECT_ABSOLUTE_SHIELD && Effect.DAMAGE === EFFECT_DAMAGE;"));
-			Assert.assertEquals(true, eval(sb, "State.UNHEALABLE === STATE_UNHEALABLE;"));
-			Assert.assertEquals(true, eval(sb, "Entity.Stat.STRENGTH === STAT_STRENGTH;"));
-			Assert.assertEquals(true, eval(sb, "Entity.Type.LEEK === ENTITY_LEEK;"));
+			Assert.assertEquals(true, eval(sb, "(Weapon.pistol instanceof Item) && (Chip.lightning instanceof Item);"));
+			// Conteneurs de catégories == constantes hôte (MAJUSCULES, valeur identique).
+			Assert.assertEquals(fc("EFFECT_ABSOLUTE_SHIELD"), ((Number) eval(sb, "Effect.ABSOLUTE_SHIELD;")).longValue());
+			Assert.assertEquals(fc("EFFECT_DAMAGE"), ((Number) eval(sb, "Effect.DAMAGE;")).longValue());
+			Assert.assertEquals(fc("STATE_UNHEALABLE"), ((Number) eval(sb, "State.UNHEALABLE;")).longValue());
+			Assert.assertEquals(fc("STAT_STRENGTH"), ((Number) eval(sb, "Entity.Stat.STRENGTH;")).longValue());
+			Assert.assertEquals(fc("ENTITY_LEEK"), ((Number) eval(sb, "Entity.Type.LEEK;")).longValue());
 			// Anti-pollution : Bulb.Type (propre) ne doit PAS hériter Entity.Type -> pas de LEEK dessus.
-			Assert.assertEquals(true, eval(sb, "Bulb.Type.PUNY === BULB_PUNY && Bulb.Type.LEEK === undefined;"));
-			Assert.assertEquals(true, eval(sb, "Cell.Type.EMPTY === CELL_EMPTY;"));
-			Assert.assertEquals(true, eval(sb, "Item.LaunchType.LINE === LAUNCH_TYPE_LINE;"));
-			Assert.assertEquals(true, eval(sb, "Item.Area.CIRCLE_1 === AREA_CIRCLE_1;"));
-			Assert.assertEquals(true, eval(sb, "Field.NEXUS === MAP_NEXUS;"));
+			Assert.assertEquals(fc("BULB_PUNY"), ((Number) eval(sb, "Bulb.Type.PUNY;")).longValue());
+			Assert.assertEquals(true, eval(sb, "Bulb.Type.LEEK === undefined;"));
+			Assert.assertEquals((long) leekscript.runner.LeekConstants.CELL_EMPTY.getIntValue(),
+				((Number) eval(sb, "Cell.Type.EMPTY;")).longValue());
+			Assert.assertEquals(fc("LAUNCH_TYPE_LINE"), ((Number) eval(sb, "Item.LaunchType.LINE;")).longValue());
+			Assert.assertEquals(fc("AREA_CIRCLE_1"), ((Number) eval(sb, "Item.Area.CIRCLE_1;")).longValue());
+			Assert.assertEquals(fc("MAP_NEXUS"), ((Number) eval(sb, "Field.NEXUS;")).longValue());
 			// Sous-conteneurs de Fight.
-			Assert.assertEquals(true, eval(sb, "Fight.Type.SOLO === FIGHT_TYPE_SOLO;"));
-			Assert.assertEquals(true, eval(sb, "Fight.Context.GARDEN === FIGHT_CONTEXT_GARDEN;"));
-			Assert.assertEquals(true, eval(sb, "Fight.Boss.FENNEL_KING === BOSS_FENNEL_KING;"));
-			Assert.assertEquals(true, eval(sb, "Fight.Erosion.DAMAGE === EROSION_DAMAGE;"));
-			Assert.assertEquals(true, eval(sb, "Fight.Use.SUCCESS === USE_SUCCESS;"));
-			Assert.assertEquals(true, eval(sb, "Fight.Message.HEAL === MESSAGE_HEAL;"));
+			Assert.assertEquals(fc("FIGHT_TYPE_SOLO"), ((Number) eval(sb, "Fight.Type.SOLO;")).longValue());
+			Assert.assertEquals(fc("FIGHT_CONTEXT_GARDEN"), ((Number) eval(sb, "Fight.Context.GARDEN;")).longValue());
+			Assert.assertEquals(fc("BOSS_FENNEL_KING"), ((Number) eval(sb, "Fight.Boss.FENNEL_KING;")).longValue());
+			Assert.assertEquals(fc("EROSION_DAMAGE"), ((Number) eval(sb, "Fight.Erosion.DAMAGE;")).longValue());
+			Assert.assertEquals(fc("USE_SUCCESS"), ((Number) eval(sb, "Fight.Use.SUCCESS;")).longValue());
+			// Les MESSAGE_* vivent sur la classe Message (cf Network.getMessages).
+			Assert.assertEquals(fc("MESSAGE_HEAL"), ((Number) eval(sb, "Message.Type.HEAL;")).longValue());
 			// Types des sous-classes d'entité.
-			Assert.assertEquals(true, eval(sb, "Chest.Type.WOOD === CHEST_WOOD && Bulb.Type.PUNY === BULB_PUNY && Mob.Type.GRAAL === MOB_GRAAL;"));
+			Assert.assertEquals(fc("CHEST_WOOD"), ((Number) eval(sb, "Chest.Type.WOOD;")).longValue());
+			Assert.assertEquals(fc("MOB_GRAAL"), ((Number) eval(sb, "Mob.Type.GRAAL;")).longValue());
 			// Feature.type est une catégorie Effect (le "croisement" assumé).
-			Assert.assertEquals(true, eval(sb, "var f = new Weapon(WEAPON_PISTOL).features; f.length === 0 || typeof f[0].type === 'number';"));
+			Assert.assertEquals(true, eval(sb, "var f = Weapon.pistol.features; f.length === 0 || typeof f[0].type === 'number';"));
 			// Dispatch : dans un combat leek vs leek, l'ennemi est une instance Leek (donc Entity).
 			Assert.assertEquals(true, eval(sb, "var e = Fight.getNearestEnemy(); (e instanceof Leek) && (e instanceof Entity);"));
 		}
@@ -299,13 +306,20 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void objectConstantContainersPython() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Weapon(WEAPON_PISTOL), Item) and isinstance(Chip(CHIP_LIGHTNING), Item)"));
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Effect.DAMAGE == EFFECT_DAMAGE and State.UNHEALABLE == STATE_UNHEALABLE"));
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Entity.Stat.STRENGTH == STAT_STRENGTH and Entity.Type.LEEK == ENTITY_LEEK"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Weapon.pistol, Item) and isinstance(Chip.lightning, Item)"));
+			Assert.assertEquals(fc("EFFECT_DAMAGE"), ((Number) evalPy(sb, "Effect.DAMAGE")).longValue());
+			Assert.assertEquals(fc("STATE_UNHEALABLE"), ((Number) evalPy(sb, "State.UNHEALABLE")).longValue());
+			Assert.assertEquals(fc("STAT_STRENGTH"), ((Number) evalPy(sb, "Entity.Stat.STRENGTH")).longValue());
+			Assert.assertEquals(fc("ENTITY_LEEK"), ((Number) evalPy(sb, "Entity.Type.LEEK")).longValue());
 			// Anti-pollution : Bulb.Type propre, ne contient pas LEEK (héritée d'Entity.Type).
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Bulb.Type.PUNY == BULB_PUNY and not hasattr(Bulb.Type, 'LEEK')"));
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Fight.Type.SOLO == FIGHT_TYPE_SOLO and Item.LaunchType.LINE == LAUNCH_TYPE_LINE and Field.NEXUS == MAP_NEXUS"));
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Chest.Type.WOOD == CHEST_WOOD and Bulb.Type.PUNY == BULB_PUNY and Mob.Type.GRAAL == MOB_GRAAL"));
+			Assert.assertEquals(fc("BULB_PUNY"), ((Number) evalPy(sb, "Bulb.Type.PUNY")).longValue());
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "not hasattr(Bulb.Type, 'LEEK')"));
+			Assert.assertEquals(fc("FIGHT_TYPE_SOLO"), ((Number) evalPy(sb, "Fight.Type.SOLO")).longValue());
+			Assert.assertEquals(fc("LAUNCH_TYPE_LINE"), ((Number) evalPy(sb, "Item.LaunchType.LINE")).longValue());
+			Assert.assertEquals(fc("MAP_NEXUS"), ((Number) evalPy(sb, "Field.NEXUS")).longValue());
+			Assert.assertEquals(fc("CHEST_WOOD"), ((Number) evalPy(sb, "Chest.Type.WOOD")).longValue());
+			Assert.assertEquals(fc("MOB_GRAAL"), ((Number) evalPy(sb, "Mob.Type.GRAAL")).longValue());
+			Assert.assertEquals(fc("MESSAGE_HEAL"), ((Number) evalPy(sb, "Message.Type.HEAL")).longValue());
 			// Dispatch : l'ennemi (leek) est une instance Leek (donc Entity).
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Fight.getNearestEnemy(), Leek) and isinstance(Fight.getNearestEnemy(), Entity)"));
 		}
@@ -320,27 +334,23 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void featuresWrapWeaponAndChip() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
-			// JS : Weapon.features[i] est une Feature dont type/minValue/maxValue == tableau brut.
+			// JS : Weapon.features[i] est une Feature dont type/minValue/maxValue == son tableau brut (.raw).
 			Object js = eval(sb,
 				"(function(){"
-				+ "  var raw = getWeaponEffects(WEAPON_PISTOL);"
-				+ "  var o = new Weapon(WEAPON_PISTOL).features;"  // property, pas d'appel
-				+ "  if (o.length !== raw.length) return 'len';"
+				+ "  var o = Weapon.pistol.features;"  // property, pas d'appel
 				+ "  if (o.length === 0) return 'empty';"
 				+ "  if (!(o[0] instanceof Feature)) return 'class';"
-				+ "  if (o[0].type !== raw[0][0]) return 'type';"
-				+ "  if (o[0].minValue !== raw[0][1]) return 'min';"
-				+ "  if (o[0].maxValue !== raw[0][2]) return 'max';"
+				+ "  if (o[0].type !== o[0].raw[0]) return 'type';"
+				+ "  if (o[0].minValue !== o[0].raw[1]) return 'min';"
+				+ "  if (o[0].maxValue !== o[0].raw[2]) return 'max';"
 				+ "  return 'ok:' + o.length;"
 				+ "})();");
 			Assert.assertTrue("Feature JS incohérent: " + js, String.valueOf(js).startsWith("ok:"));
-			// Chip : même structure, property features.
-			Assert.assertEquals(((Number) eval(sb, "getChipEffects(CHIP_LIGHTNING).length;")).longValue(),
-				((Number) eval(sb, "new Chip(CHIP_LIGHTNING).features.length;")).longValue());
-			// Python : Weapon(WEAPON_PISTOL).features[0].type == getWeaponEffects(WEAPON_PISTOL)[0][0].
-			Assert.assertEquals(
-				((Number) evalPy(sb, "getWeaponEffects(WEAPON_PISTOL)[0][0]")).longValue(),
-				((Number) evalPy(sb, "Weapon(WEAPON_PISTOL).features[0].type")).longValue());
+			// Chip : même structure, property features (un sort de dégâts déclare au moins une Feature).
+			Assert.assertEquals(true, eval(sb, "Chip.lightning.features.length > 0;"));
+			// Python : même vue nommée du tableau brut.
+			Assert.assertEquals(Boolean.TRUE,
+				evalPy(sb, "Weapon.pistol.features[0].type == Weapon.pistol.features[0].raw[0]"));
 		}
 	}
 
@@ -353,16 +363,16 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void activeEffectsWrapAfterSelfBuff() throws Exception {
 		String ai =
 			"function turn() {"
-			+ "  if (!getRegister('done')) {"
-			+ "    useChip(CHIP_PROTEIN, getEntity());"
+			+ "  if (!Registers.get('done')) {"
+			+ "    me.useChip(Chip.protein, me);"
 			+ "    var es = me.effects;"
-			+ "    setRegister('count', '' + es.length);"
+			+ "    Registers.set('count', '' + es.length);"
 			+ "    if (es.length > 0) {"
-			+ "      setRegister('isEffect', es[0] instanceof Effect ? '1' : '0');"
-			+ "      setRegister('etype', '' + es[0].type);"
-			+ "      setRegister('ecaster', '' + (es[0].caster == null ? -1 : es[0].caster.id));"
+			+ "      Registers.set('isEffect', es[0] instanceof Effect ? '1' : '0');"
+			+ "      Registers.set('etype', '' + es[0].type);"
+			+ "      Registers.set('ecaster', '' + (es[0].caster == null ? -1 : es[0].caster.id));"
 			+ "    }"
-			+ "    setRegister('done', '1');"
+			+ "    Registers.set('done', '1');"
 			+ "  }"
 			+ "  var e = Fight.getNearestEnemy();"
 			+ "  if (e == null) return;"
@@ -411,9 +421,9 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			"function turn() {"
 			+ "  var enemy = Fight.getNearestEnemy();"
 			+ "  if (enemy == null) return;"
-			+ "  if (getRegister('start') == null) setRegister('start', '' + me.cell.distance(enemy));"
+			+ "  if (Registers.get('start') == null) Registers.set('start', '' + me.cell.distance(enemy));"
 			+ "  me.moveToward(enemy);"
-			+ "  setRegister('end', '' + me.cell.distance(enemy));"
+			+ "  Registers.set('end', '' + me.cell.distance(enemy));"
 			+ "}";
 		attachJsAI(leek1, ai);
 		attachJsAI(leek2, ai);
@@ -478,22 +488,22 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void summonedBulbIsMeDuringItsTurn() throws Exception {
 		String ai =
 			"function turn() {"
-			+ "  if (!getRegister('summoned')) {"
-			+ "    setRegister('ownerId', '' + me.id);"
+			+ "  if (!Registers.get('summoned')) {"
+			+ "    Registers.set('ownerId', '' + me.id);"
 			+ "    var cb = function() {"
-			+ "      setRegister('bulbMeId', '' + me.id);"
-			+ "      setRegister('bulbGetEntity', '' + getEntity());"
-			+ "      setRegister('bulbIsSummon', me.summoned ? '1' : '0');"
+			+ "      Registers.set('bulbMeId', '' + me.id);"
+			+ "      Registers.set('bulbGetEntity', '' + Fight.me.id);"
+			+ "      Registers.set('bulbIsSummon', me.summoned ? '1' : '0');"
 			+ "    };"
 			+ "    var c = me.cell;"
 			+ "    var cands = [Field.cellFromXY(c.x + 1, c.y), Field.cellFromXY(c.x - 1, c.y),"
 			+ "                 Field.cellFromXY(c.x, c.y + 1), Field.cellFromXY(c.x, c.y - 1)];"
 			+ "    var r = -99;"
 			+ "    for (var i = 0; i < cands.length; i++) {"
-			+ "      if (cands[i] != null && cands[i].empty) { r = me.summon(CHIP_PUNY_BULB, cands[i], cb); if (r > 0) break; }"
+			+ "      if (cands[i] != null && cands[i].empty) { r = me.summon(Chip.punyBulb, cands[i], cb); if (r > 0) break; }"
 			+ "    }"
-			+ "    setRegister('summonResult', '' + r);"
-			+ "    setRegister('summoned', '1');"
+			+ "    Registers.set('summonResult', '' + r);"
+			+ "    Registers.set('summoned', '1');"
 			+ "  }"
 			+ "}";
 		attachJsAI(leek1, ai);
@@ -519,22 +529,22 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void summonedBulbIsMeDuringItsTurnPython() throws Exception {
 		String ai =
 			"def turn():\n"
-			+ "    if not getRegister('summoned'):\n"
-			+ "        setRegister('ownerId', str(me.id))\n"
+			+ "    if not Registers.get('summoned'):\n"
+			+ "        Registers.set('ownerId', str(me.id))\n"
 			+ "        def cb():\n"
-			+ "            setRegister('bulbMeId', str(me.id))\n"
-			+ "            setRegister('bulbGetEntity', str(getEntity()))\n"
-			+ "            setRegister('bulbIsSummon', '1' if me.summoned else '0')\n"
+			+ "            Registers.set('bulbMeId', str(me.id))\n"
+			+ "            Registers.set('bulbGetEntity', str(Fight.me.id))\n"
+			+ "            Registers.set('bulbIsSummon', '1' if me.summoned else '0')\n"
 			+ "        c = me.cell\n"
 			+ "        cands = [Field.cellFromXY(c.x + 1, c.y), Field.cellFromXY(c.x - 1, c.y), Field.cellFromXY(c.x, c.y + 1), Field.cellFromXY(c.x, c.y - 1)]\n"
 			+ "        r = -99\n"
 			+ "        for cand in cands:\n"
 			+ "            if cand is not None and cand.empty:\n"
-			+ "                r = me.summon(CHIP_PUNY_BULB, cand, cb)\n"
+			+ "                r = me.summon(Chip.punyBulb, cand, cb)\n"
 			+ "                if r > 0:\n"
 			+ "                    break\n"
-			+ "        setRegister('summonResult', str(r))\n"
-			+ "        setRegister('summoned', '1')\n";
+			+ "        Registers.set('summonResult', str(r))\n"
+			+ "        Registers.set('summoned', '1')\n";
 		attachPyAI(leek1, ai);
 		attachPyAI(leek2, "def turn():\n    pass\n");
 		runFight();
@@ -562,17 +572,17 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	public void summonCallbackErrorIsGracefulForOwner() throws Exception {
 		String ai =
 			"function turn() {"
-			+ "  if (!getRegister('summoned')) {"
+			+ "  if (!Registers.get('summoned')) {"
 			+ "    var cb = function() { throw new Error('boum du bulbe'); };"
 			+ "    var c = me.cell;"
 			+ "    var cands = [Field.cellFromXY(c.x + 1, c.y), Field.cellFromXY(c.x - 1, c.y),"
 			+ "                 Field.cellFromXY(c.x, c.y + 1), Field.cellFromXY(c.x, c.y - 1)];"
 			+ "    for (var i = 0; i < cands.length; i++) {"
-			+ "      if (cands[i] != null && cands[i].empty && me.summon(CHIP_PUNY_BULB, cands[i], cb) > 0) break;"
+			+ "      if (cands[i] != null && cands[i].empty && me.summon(Chip.punyBulb, cands[i], cb) > 0) break;"
 			+ "    }"
-			+ "    setRegister('summoned', '1');"
+			+ "    Registers.set('summoned', '1');"
 			+ "  }"
-			+ "  setRegister('ownerTurns', '' + (parseInt(getRegister('ownerTurns') || '0', 10) + 1));"
+			+ "  Registers.set('ownerTurns', '' + (parseInt(Registers.get('ownerTurns') || '0', 10) + 1));"
 			+ "}";
 		attachJsAI(leek1, ai);
 		attachJsAI(leek2, "function turn() {}");

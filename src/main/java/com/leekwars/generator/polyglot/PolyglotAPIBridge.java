@@ -2,12 +2,17 @@ package com.leekwars.generator.polyglot;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
+import org.graalvm.polyglot.proxy.ProxyObject;
 
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.FightFunctions;
@@ -18,8 +23,10 @@ import leekscript.compiler.LeekScript;
 import leekscript.runner.LeekFunctions;
 
 /**
- * Expose l'API de combat (fonctions + constantes) dans le scope global d'un contexte
- * GraalVM, pour que les IA JS/Python puissent l'appeler comme en LeekScript.
+ * Expose l'API de combat (fonctions + constantes) a un contexte GraalVM, dans un SAC CACHE
+ * {@code __lw} (+ la liste de ses noms {@code __lw_names}) plutot qu'en globales : l'API guest
+ * est 100% ORIENTEE OBJET (objects.js / objects.py), qui consomme le sac puis le RETIRE du
+ * scope global. Aucune fonction/constante plate n'est visible par le code joueur.
  *
  * Resolution nom -&gt; methode Java (validee sur le code genere v4) :
  *   nom logique "Entity"/"Fight"/"Util"... -&gt; classe {@code com.leekwars.generator.classes.<Nom>Class}
@@ -41,19 +48,25 @@ public class PolyglotAPIBridge {
 	/** nom de constante -&gt; valeur (long pour les INT, double sinon). Resolu une seule fois. */
 	private static final Map<String, Object> CONSTANTS = resolveConstants();
 
-	/** Installe fonctions et constantes de combat dans le scope global du contexte. */
+	/**
+	 * Installe le sac d'API {@code __lw} (fonctions + constantes) et {@code __lw_names} (liste triee
+	 * des noms, pour iterer sans dependre de l'enumeration interop des membres). Les preludes objet
+	 * (objects.js / objects.py) capturent le contenu dans des closures puis SUPPRIMENT ces deux
+	 * bindings du scope global -> le code joueur ne voit que l'API objet.
+	 */
 	public static void install(Context context, String languageId, EntityAI ai) {
 		Value bindings = context.getBindings(languageId);
+		Map<String, Object> bag = new HashMap<>();
 		for (Map.Entry<String, Map<Integer, Method>> entry : FUNCTIONS.entrySet()) {
-			bindings.putMember(entry.getKey(), makeProxy(ai, entry.getKey(), entry.getValue()));
+			bag.put(entry.getKey(), makeProxy(ai, entry.getKey(), entry.getValue()));
 		}
 		for (Map.Entry<String, Object> entry : CONSTANTS.entrySet()) {
-			try {
-				bindings.putMember(entry.getKey(), entry.getValue());
-			} catch (Exception e) {
-				// Nom deja reserve/non-modifiable dans le scope global du guest : on le laisse tel quel.
-			}
+			bag.putIfAbsent(entry.getKey(), entry.getValue());
 		}
+		List<String> sorted = new ArrayList<>(bag.keySet());
+		Collections.sort(sorted);
+		bindings.putMember("__lw", ProxyObject.fromMap(bag));
+		bindings.putMember("__lw_names", ProxyArray.fromList(new ArrayList<Object>(sorted)));
 	}
 
 	private static Map<String, Map<Integer, Method>> resolveFunctions() {

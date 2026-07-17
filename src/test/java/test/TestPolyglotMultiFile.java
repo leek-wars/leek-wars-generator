@@ -66,7 +66,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		files.put("strategie.mjs", "export function pick() { return 42; }\n");
 		files.put("main.mjs",
 			"import { pick } from './strategie.mjs';\n"
-			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+			+ "globalThis.turn = function() { return pick() + Fight.me.life; };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "js", files, "main.mjs").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
@@ -78,7 +78,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		initFightOnly();
 		Map<String, String> files = new HashMap<>();
 		files.put("strategie.py", "def pick():\n    return 42\n");
-		files.put("main.py", "import strategie\ndef turn():\n    return strategie.pick() + getLife()\n");
+		files.put("main.py", "import strategie\ndef turn():\n    return strategie.pick() + Fight.me.life\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "python", files, "main.py").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
@@ -212,7 +212,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		files.put("strategie.js", "export function pick() { return 42; }\n");
 		files.put("main.js",
 			"import { pick } from './strategie';\n"
-			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+			+ "globalThis.turn = function() { return pick() + Fight.me.life; };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
@@ -227,7 +227,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		files.put("strategie.js", "export function pick() { return 42; }\n");
 		files.put("main.js",
 			"import { pick } from 'strategie.js';\n"
-			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+			+ "globalThis.turn = function() { return pick() + Fight.me.life; };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
@@ -246,7 +246,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		files.put("ia-ts/include.js", "export function tout() { return 42; }\n");
 		files.put("ia-ts/test.js",
 			"import { tout } from 'include.js';\n"
-			+ "globalThis.turn = function() { return tout() + getLife(); };\n");
+			+ "globalThis.turn = function() { return tout() + Fight.me.life; };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "js", files, "ia-ts/test.js").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
@@ -261,7 +261,7 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		files.put("strategie.js", "export function pick() { return 42; }\n");
 		files.put("dossier/main.js",
 			"import { pick } from 'strategie.js';\n"
-			+ "globalThis.turn = function() { return pick() + getLife(); };\n");
+			+ "globalThis.turn = function() { return pick() + Fight.me.life; };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "js", files, "dossier/main.js").runIA()).longValue();
 			Assert.assertEquals(42 + leek1.getLife(), r);
@@ -301,9 +301,12 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		initFightOnly();
 		Leek small = new Leek(3, "Small", 0, 1, 100, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 6, 0, false, 0, 0, "", 0, "", "", "", 0);
 		small.setFight(fight);
+		// Enregistre l'entite dans l'etat : Fight.me resout par fid (contrairement a l'ancien
+		// getLife() 0-arg qui lisait l'entite directement), un fid non attribue viserait leek1.
+		fight.getState().addEntity(1, small);
 		Map<String, String> files = new HashMap<>();
 		files.put("strategie.py", "def pick():\n    return 42\n");
-		files.put("main.py", "import strategie\ndef turn():\n    return strategie.pick() + getLife()\n");
+		files.put("main.py", "import strategie\ndef turn():\n    return strategie.pick() + Fight.me.life\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			long r = ((Number) multiFileAI(sb, "python", files, "main.py", small).runIA()).longValue();
 			Assert.assertEquals(42 + small.getLife(), r);

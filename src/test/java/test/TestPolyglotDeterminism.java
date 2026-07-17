@@ -32,7 +32,7 @@ public class TestPolyglotDeterminism extends FightTestBase {
 	// (via turn() : le retour est capte a chaque tour, contrairement a une IA plate dont seul le tour 1
 	// renvoie sa derniere expression.)
 	private static final String BOUNDED_LOOP =
-		"function turn() { var n = 0; while (getOperations() < 300000) { n++; } return n; }";
+		"function turn() { var n = 0; while (System.operations < 300000) { n++; } return n; }";
 
 	private long boundedLoopIterations(PolyglotSandbox sandbox) throws Exception {
 		PolyglotEntityAI ai = new PolyglotEntityAI("js", BOUNDED_LOOP, sandbox);

@@ -94,13 +94,13 @@ public class TestQuantumJsLoad extends FightTestBase {
 		System.out.println("[quantum-js] fichiers charges : " + files.size() + ", entree=quantum.js presente=" + files.containsKey("quantum.js"));
 
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			// Sonde : que renvoie getAllChips() ? contient-il CHIP_JUMP ? quel type ?
+			// Sonde : que renvoie Chip.getAll() ? contient-il Chip.jump ? quel type ?
 			PolyglotEntityAI probe = new PolyglotEntityAI("js",
-				"var ac = getAllChips(); var n = ac.length; var found = -1;"
-				+ "for (var i = 0; i < n; i++) { if (ac[i] == CHIP_JUMP) found = i; }"
+				"var ac = Chip.getAll(); var n = ac.length; var found = -1;"
+				+ "for (var i = 0; i < n; i++) { if (ac[i] === Chip.jump) found = i; }"
 				+ "var isArr = Array.isArray(ac); var hasMap = (typeof ac.map);"
-				+ "'len=' + n + ' t0=' + (typeof ac[0]) + ' v0=' + ac[0]"
-				+ " + ' CHIP_JUMP=' + CHIP_JUMP + ' foundAt=' + found"
+				+ "'len=' + n + ' t0=' + (typeof ac[0]) + ' v0=' + (ac[0] && ac[0].id)"
+				+ " + ' Chip.jump=' + (Chip.jump && Chip.jump.id) + ' foundAt=' + found"
 				+ " + ' isArray=' + isArr + ' typeof_map=' + hasMap;",
 				sb);
 			probe.setEntity(leek1);

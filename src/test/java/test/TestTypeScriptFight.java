@@ -53,8 +53,8 @@ public class TestTypeScriptFight extends FightTestBase {
 			"function turn(): void {",
 			"  C.n = C.n + 1;",
 			"  const p: Phase = C.n < 3 ? Phase.Start : Phase.Mid;",
-			"  setRegister('turns', '' + C.n);",
-			"  setRegister('phase', '' + p);",
+			"  Registers.set('turns', '' + C.n);",
+			"  Registers.set('phase', '' + p);",
 			"}");
 		attachTsAI(leek1, ts);
 		attachAI(leek2, ""); // adversaire LeekScript inerte
@@ -72,11 +72,11 @@ public class TestTypeScriptFight extends FightTestBase {
 		// IA TS typee appelant l'API de combat (getNearestEnemy, getCell, moveToward).
 		String mover = String.join("\n",
 			"function turn(): void {",
-			"  const e: number = getNearestEnemy();",
-			"  const before: number = getCellDistance(getCell(), getCell(e));",
-			"  if (getRegister('startDist') == null) setRegister('startDist', '' + before);",
-			"  moveToward(e);",
-			"  setRegister('endDist', '' + getCellDistance(getCell(), getCell(e)));",
+			"  const e: Entity = Fight.getNearestEnemy();",
+			"  const before: number = Fight.me.cell.distance(e);",
+			"  if (Registers.get('startDist') == null) Registers.set('startDist', '' + before);",
+			"  Fight.me.moveToward(e);",
+			"  Registers.set('endDist', '' + Fight.me.cell.distance(e));",
 			"}");
 		attachTsAI(leek1, mover);
 		attachTsAI(leek2, mover);

@@ -49,7 +49,7 @@ public class TestPolyglotFight extends FightTestBase {
 	public void jsReadsOwnLife() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
-			EntityAI ai = buildAI(sandbox, "getLife();");
+			EntityAI ai = buildAI(sandbox, "Fight.me.life;");
 			Object result = ai.runIA();
 			Assert.assertEquals((long) leek1.getLife(), ((Number) result).longValue());
 		}
@@ -60,7 +60,7 @@ public class TestPolyglotFight extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			// getNearestEnemy() -> fid de leek2 ; getLife(fid) -> pv de leek2.
-			EntityAI ai = buildAI(sandbox, "getLife(getNearestEnemy());");
+			EntityAI ai = buildAI(sandbox, "Fight.getNearestEnemy().life;");
 			Object result = ai.runIA();
 			Assert.assertEquals((long) leek2.getLife(), ((Number) result).longValue());
 		}
@@ -70,7 +70,7 @@ public class TestPolyglotFight extends FightTestBase {
 	public void jsCanUseArithmeticOverApi() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
-			EntityAI ai = buildAI(sandbox, "getLife() + getStrength();");
+			EntityAI ai = buildAI(sandbox, "Fight.me.life + Fight.me.strength;");
 			Object result = ai.runIA();
 			long expected = (long) leek1.getLife() + (long) leek1.getStat(Entity.STAT_STRENGTH);
 			Assert.assertEquals(expected, ((Number) result).longValue());
@@ -82,9 +82,9 @@ public class TestPolyglotFight extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			// Valeurs scalaires : on verifie que les constantes sont definies ET justes.
-			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "ENTITY_LEEK;").runIA()).longValue());
-			Assert.assertEquals(0L, ((Number) buildAI(sandbox, "CELL_EMPTY;").runIA()).longValue());
-			Assert.assertEquals(2L, ((Number) buildAI(sandbox, "CELL_OBSTACLE;").runIA()).longValue());
+			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "Entity.Type.LEEK;").runIA()).longValue());
+			Assert.assertEquals(0L, ((Number) buildAI(sandbox, "Cell.Type.EMPTY;").runIA()).longValue());
+			Assert.assertEquals(2L, ((Number) buildAI(sandbox, "Cell.Type.OBSTACLE;").runIA()).longValue());
 		}
 	}
 
@@ -111,9 +111,9 @@ public class TestPolyglotFight extends FightTestBase {
 		// c'est le comptage d'ops (laisse actif) qui doit l'interrompre via TOO_MUCH_OPERATIONS.
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			EntityAI ai = buildAI(sandbox,
-				"var c1 = getCell();"
-				+ "var c2 = getCell(getNearestEnemy());"
-				+ "for (var i = 0; i < 1000000; i++) { getPathLength(c1, c2); }"
+				"var c1 = Fight.me.cell;"
+				+ "var c2 = Fight.getNearestEnemy().cell;"
+				+ "for (var i = 0; i < 1000000; i++) { c1.pathLength(c2); }"
 				+ "0;");
 			try {
 				ai.runIA();
@@ -129,12 +129,12 @@ public class TestPolyglotFight extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			// getEnemies() -> ArrayLeekValue marshalle en ProxyArray cote JS (length + indexation).
-			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "getEnemies().length;").runIA()).longValue());
+			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "Fight.getEnemies().length;").runIA()).longValue());
 			Assert.assertEquals((long) leek2.getFId(),
-				((Number) buildAI(sandbox, "getEnemies()[0];").runIA()).longValue());
+				((Number) buildAI(sandbox, "Fight.getEnemies()[0].id;").runIA()).longValue());
 			// Iteration cote guest sur le tableau renvoye par l'API.
 			Object sum = buildAI(sandbox,
-				"var e = getEnemies(); var s = 0; for (var i = 0; i < e.length; i++) s += e[i]; s;").runIA();
+				"var e = Fight.getEnemies(); var s = 0; for (var i = 0; i < e.length; i++) s += e[i].id; s;").runIA();
 			Assert.assertEquals((long) leek2.getFId(), ((Number) sum).longValue());
 		}
 	}
@@ -143,10 +143,10 @@ public class TestPolyglotFight extends FightTestBase {
 	public void jsPassesArrayToApi() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
-			// Un tableau JS passe a une fonction attendant un GenericArrayLeekValue.
-			// getMessageAuthor lit l'index 0, getMessageType l'index 1 (taille 3 requise).
-			Assert.assertEquals(5L, ((Number) buildAI(sandbox, "getMessageAuthor([5, 7, 99]);").runIA()).longValue());
-			Assert.assertEquals(7L, ((Number) buildAI(sandbox, "getMessageType([5, 7, 99]);").runIA()).longValue());
+			// Un tableau JS passe a une fonction hote attendant un GenericArrayLeekValue, via la vue
+			// objet Message (raw = [auteur, type, params] ; type lit l'index 1, params l'index 2).
+			Assert.assertEquals(7L, ((Number) buildAI(sandbox, "new Message([5, 7, 99]).type;").runIA()).longValue());
+			Assert.assertEquals(99L, ((Number) buildAI(sandbox, "new Message([5, 7, 99]).params;").runIA()).longValue());
 		}
 	}
 
@@ -155,7 +155,7 @@ public class TestPolyglotFight extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			// setRegister (args string) puis getRegisters() -> MapLeekValue marshalle en ProxyObject.
-			Object value = buildAI(sandbox, "setRegister('foo', 'bar'); getRegisters()['foo'];").runIA();
+			Object value = buildAI(sandbox, "Registers.set('foo', 'bar'); Registers.all()['foo'];").runIA();
 			Assert.assertEquals("bar", value);
 		}
 	}
@@ -211,7 +211,7 @@ public class TestPolyglotFight extends FightTestBase {
 		// IA JS attachee via un fichier .js -> EntityAI.build() dispatche vers le polyglot.
 		// turn() incremente une static et l'ecrit dans un registre ; apres le combat le registre
 		// doit valoir > 1, ce qui prouve l'execution multi-tours ET la persistance de la static.
-		attachJsAI(leek1, "class C { static n = 0; } function turn() { C.n++; setRegister('turns', '' + C.n); }");
+		attachJsAI(leek1, "class C { static n = 0; } function turn() { C.n++; Registers.set('turns', '' + C.n); }");
 		attachAI(leek2, ""); // adversaire LeekScript inerte
 		runFight();
 
@@ -258,12 +258,12 @@ public class TestPolyglotFight extends FightTestBase {
 		// (vraie boucle de tours, pathfinding, consommation de MP). On affiche le deroule.
 		String moverAi =
 			"function turn() {"
-			+ "  var e = getNearestEnemy();"
-			+ "  var before = getCellDistance(getCell(), getCell(e));"
-			+ "  if (getRegister('startDist') == null) setRegister('startDist', '' + before);"
-			+ "  moveToward(e);"
-			+ "  setRegister('endDist', '' + getCellDistance(getCell(), getCell(e)));"
-			+ "  setRegister('cell', '' + getCell());"
+			+ "  var e = Fight.getNearestEnemy();"
+			+ "  var before = Fight.me.cell.distance(e);"
+			+ "  if (Registers.get('startDist') == null) Registers.set('startDist', '' + before);"
+			+ "  Fight.me.moveToward(e);"
+			+ "  Registers.set('endDist', '' + Fight.me.cell.distance(e));"
+			+ "  Registers.set('cell', '' + Fight.me.cell.id);"
 			+ "}";
 		attachJsAI(leek1, moverAi);
 		attachJsAI(leek2, moverAi);
@@ -291,7 +291,7 @@ public class TestPolyglotFight extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			// IA plate (sans turn()) utilisant let : doit tourner CHAQUE tour sans "already declared".
-			PolyglotEntityAI ai = buildAI(sandbox, "let me = getLife(); setRegister('seen', '' + me);");
+			PolyglotEntityAI ai = buildAI(sandbox, "let me = Fight.me.life; Registers.set('seen', '' + me);");
 			ai.runIA();
 			ai.runIA(); // avant le fix : SyntaxError "Variable me has already been declared"
 			ai.runIA();
@@ -305,7 +305,7 @@ public class TestPolyglotFight extends FightTestBase {
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
 			// Regression : une IA plate qui declare un let nomme comme un eventuel wrapper interne
 			// ne doit pas entrer en collision (on rejoue via une IIFE anonyme, sans nom interne).
-			PolyglotEntityAI ai = buildAI(sandbox, "let __lw_turn = getLife(); setRegister('v', '' + __lw_turn);");
+			PolyglotEntityAI ai = buildAI(sandbox, "let __lw_turn = Fight.me.life; Registers.set('v', '' + __lw_turn);");
 			ai.runIA();
 			ai.runIA();
 			ai.runIA();
@@ -327,7 +327,7 @@ public class TestPolyglotFight extends FightTestBase {
 	public void disposeReleasesContextWithoutError() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
-			PolyglotEntityAI ai = buildAI(sandbox, "getLife();");
+			PolyglotEntityAI ai = buildAI(sandbox, "Fight.me.life;");
 			ai.runIA();
 			ai.dispose();
 			// Apres dispose, un nouvel appel reconstruit un contexte neuf (pas d'erreur).

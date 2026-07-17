@@ -56,7 +56,7 @@ public class TestPythonFight extends FightTestBase {
 	public void pyReadsOwnLife() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("python")) {
-			Object result = buildAI(sandbox, "getLife()").runIA();
+			Object result = buildAI(sandbox, "Fight.me.life").runIA();
 			Assert.assertEquals((long) leek1.getLife(), ((Number) result).longValue());
 		}
 	}
@@ -79,9 +79,9 @@ public class TestPythonFight extends FightTestBase {
 	public void pyReceivesArrayFromApi() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("python")) {
-			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "len(getEnemies())").runIA()).longValue());
+			Assert.assertEquals(1L, ((Number) buildAI(sandbox, "len(Fight.getEnemies())").runIA()).longValue());
 			Assert.assertEquals((long) leek2.getFId(),
-				((Number) buildAI(sandbox, "getEnemies()[0]").runIA()).longValue());
+				((Number) buildAI(sandbox, "Fight.getEnemies()[0].id").runIA()).longValue());
 		}
 	}
 
@@ -90,7 +90,7 @@ public class TestPythonFight extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sandbox = new PolyglotSandbox("python")) {
 			// Une liste Python passee a une fonction attendant un GenericArrayLeekValue.
-			Assert.assertEquals(7L, ((Number) buildAI(sandbox, "getMessageType([5, 7, 99])").runIA()).longValue());
+			Assert.assertEquals(7L, ((Number) buildAI(sandbox, "Message([5, 7, 99]).type").runIA()).longValue());
 		}
 	}
 
@@ -143,7 +143,7 @@ public class TestPythonFight extends FightTestBase {
 
 	@Test
 	public void pyAiRunsInFullMultiTurnFight() throws Exception {
-		attachPyAI(leek1, "class C:\n    n = 0\ndef turn():\n    C.n += 1\n    setRegister('turns', str(C.n))\n");
+		attachPyAI(leek1, "class C:\n    n = 0\ndef turn():\n    C.n += 1\n    Registers.set('turns', str(C.n))\n");
 		attachAI(leek2, ""); // adversaire LeekScript inerte
 		runFight();
 		Assert.assertTrue("leek1 doit utiliser une IA polyglot", leek1.getAI() instanceof PolyglotEntityAI);
@@ -168,11 +168,12 @@ public class TestPythonFight extends FightTestBase {
 		// Demo : deux IA Python qui se rapprochent dans un VRAI combat (boucle de tours, pathfinding).
 		String moverAi =
 			"def turn():\n"
-			+ "    e = getNearestEnemy()\n"
-			+ "    if getRegister('startDist') is None:\n"
-			+ "        setRegister('startDist', str(getCellDistance(getCell(), getCell(e))))\n"
-			+ "    moveToward(e)\n"
-			+ "    setRegister('endDist', str(getCellDistance(getCell(), getCell(e))))\n";
+			+ "    me = Fight.me\n"
+			+ "    e = Fight.getNearestEnemy()\n"
+			+ "    if Registers.get('startDist') is None:\n"
+			+ "        Registers.set('startDist', str(me.cell.distance(e)))\n"
+			+ "    me.moveToward(e)\n"
+			+ "    Registers.set('endDist', str(me.cell.distance(e)))\n";
 		attachPyAI(leek1, moverAi);
 		attachPyAI(leek2, moverAi);
 		runFight();

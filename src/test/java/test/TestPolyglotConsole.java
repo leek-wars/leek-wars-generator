@@ -47,7 +47,7 @@ public class TestPolyglotConsole extends FightTestBase {
 	public void consoleLogInRealFight() throws Exception {
 		// En vrai combat : une IA qui fait console.log doit continuer (setRegister apres console.log).
 		AIFile f = new AIFile("console_test.js",
-			"function turn() { console.log('turn', getLife()); setRegister('ran', '1'); }",
+			"function turn() { console.log('turn', Fight.me.life); Registers.set('ran', '1'); }",
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek1.getId(), false);
 		leek1.setAIFile(f);
 		leek1.setLogs(new LeekLog(farmerLog, leek1));

@@ -516,6 +516,7 @@ public class PolyglotEntityAI extends EntityAI {
 				installGuestGetOperations();
 			} else {
 				guestBindings = null;
+				removeUnusedOpsHook();
 			}
 		}
 	}
@@ -636,30 +637,37 @@ public class PolyglotEntityAI extends EntityAI {
 	// graaljs fournit bien `console`, mais sa sortie part dans le nullOutputStream du sandbox (jetee) :
 	// une IA qui fait console.log ne verrait donc RIEN. On reroute console.* vers debug() (le log de
 	// combat, visible dans le rapport, avec ses propres limites anti-spam) -> les IA JS/TS peuvent
-	// deboguer avec le console.log familier. debug() (LeekScript) reste aussi disponible directement.
+	// deboguer avec le console.log familier. warn/error partent vers debugW/debugE (niveaux du log).
+	// Les fonctions sont capturees depuis le sac __lw (encore present : ce prelude tourne avant
+	// objects.js, qui le retire) -- il n'y a plus de globale debug().
 	private static final String JS_CONSOLE_SETUP =
 		"(function(){"
+		+ "var lw=globalThis.__lw;var D=lw?lw.debug:null;var W=lw?lw.debugW:null;var E=lw?lw.debugE:null;"
 		// try/catch autour de debug() : il peut lever (ex: contexte de combat incomplet) ; on ne veut
 		// JAMAIS que console.log fasse echouer l'IA. Visible quand debug marche, silencieux sinon.
-		+ "var L=function(){try{debug(Array.prototype.map.call(arguments,String).join(' '));}catch(e){}};"
-		+ "try{globalThis.console={log:L,info:L,debug:L,warn:L,error:L};}"
-		+ "catch(e){try{console.log=L;console.info=L;console.debug=L;console.warn=L;console.error=L;}catch(e2){}}"
+		+ "var mk=function(f){return function(){try{(f||D)(Array.prototype.map.call(arguments,String).join(' '));}catch(e){}};};"
+		+ "var L=mk(D);"
+		+ "try{globalThis.console={log:L,info:L,debug:L,warn:mk(W),error:mk(E)};}"
+		+ "catch(e){try{console.log=L;console.info=L;console.debug=L;console.warn=mk(W);console.error=mk(E);}catch(e2){}}"
 		+ "})();";
 
 	// GraalPython fournit print, mais sa sortie part dans le nullOutputStream du sandbox (jetee) : une IA
 	// qui fait print() ne verrait RIEN. On reroute print vers debug() (le log de combat, visible dans le
 	// rapport, avec ses limites anti-spam) -> les IA Python peuvent debuguer avec le print familier.
-	// debug() (LeekScript) reste aussi disponible directement. Miroir Python de JS_CONSOLE_SETUP.
+	// debug est capture en CLOSURE depuis le sac __lw (encore present : ce prelude tourne avant
+	// objects.py, qui le retire) -- plus de globale debug(), et objects.py nettoie _lw_mk_print/_lwc.
 	private static final String PY_CONSOLE_SETUP =
 		"import builtins as _lwc\n"
-		+ "def _lw_print(*a, sep=' ', end='\\n', file=None, flush=False):\n"
+		+ "def _lw_mk_print(_d):\n"
+		+ "    def _lw_print(*a, sep=' ', end='\\n', file=None, flush=False):\n"
 		// try/except autour de debug() : il peut lever (ex: contexte de combat incomplet) ; print ne doit
 		// JAMAIS faire echouer l'IA. Visible quand debug marche, silencieux sinon.
-		+ "    try:\n"
-		+ "        debug(sep.join(str(_x) for _x in a))\n"
-		+ "    except Exception:\n"
-		+ "        pass\n"
-		+ "_lwc.print = _lw_print\n";
+		+ "        try:\n"
+		+ "            _d(sep.join(str(_x) for _x in a))\n"
+		+ "        except Exception:\n"
+		+ "            pass\n"
+		+ "    return _lw_print\n"
+		+ "_lwc.print = _lw_mk_print(getattr(__lw, 'debug', None))\n";
 
 	// Montage des fichiers du joueur en TETE de sys.path, evalue en DERNIER (apres tous les preludes de
 	// confiance : guard determinisme, charge, console, objects.py). Ainsi les modules sensibles sont deja
@@ -704,21 +712,24 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
-	 * OPTIM getOperations COTE GUEST. Une IA de recherche appelle {@code getOperations()} des dizaines
-	 * de milliers de fois par tour pour borner son alpha-beta ; en tant que fonction HOTE bridgee, chaque
-	 * appel = un aller-retour hote + une lecture du compteur de statements dans l'isolate (~2,4 us,
-	 * profilé a ~360 ms/tour sur le port Quantum). On redirige donc {@code getOperations} vers une
-	 * implementation GUEST : {@code __lw_real + __lw_counter() * facteur}, ou {@code __lw_counter} est le
-	 * compteur de statements lu LOCALEMENT (il vit dans l'isolate, cote guest -> pas d'aller-retour) et
-	 * {@code __lw_real} est un miroir des ops HOTE (mOperations), rafraichi par l'hote apres chaque appel
-	 * de fonction de combat / facturation (cf {@link #syncRealToGuest}). Deterministe et identique a
-	 * l'implementation hote (meme formule) -> replays preserves. Actif seulement si l'instrument est la.
+	 * OPTIM System.operations COTE GUEST. Une IA de recherche lit {@code System.operations} des dizaines
+	 * de milliers de fois par tour pour borner son alpha-beta ; implemente en fonction HOTE bridgee, chaque
+	 * lecture = un aller-retour hote + une lecture du compteur de statements dans l'isolate (~2,4 us,
+	 * profilé a ~360 ms/tour sur le port Quantum). On branche donc (hook one-shot {@code __lw_setOps} /
+	 * {@code __lw_set_ops} pose par objects.js/objects.py) une implementation GUEST :
+	 * {@code __lw_real + __lw_counter() * facteur}, ou {@code __lw_counter} est le compteur de statements
+	 * lu LOCALEMENT (il vit dans l'isolate, cote guest -> pas d'aller-retour) et {@code __lw_real} est un
+	 * miroir des ops HOTE (mOperations), rafraichi par l'hote apres chaque appel de fonction de combat /
+	 * facturation (cf {@link #syncRealToGuest}). Deterministe et identique a l'implementation hote (meme
+	 * formule) -> replays preserves. Actif seulement si l'instrument est la.
 	 */
 	private static final String JS_GETOPS_OVERRIDE =
 		"(function(){var f=$F;var c=globalThis.__lw_counter;"
 		+ "var g=function(){return (globalThis.__lw_real||0)+c()*f;};"
-		+ "globalThis.getOperations=g;globalThis.getOperation=g;"
-		// Anti-triche : le compteur de statements alimente getOperations ET le compteur d'ops HOTE
+		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
+		// objects.js (le hook se supprime lui-meme du scope global une fois consomme).
+		+ "if(typeof globalThis.__lw_setOps==='function'){globalThis.__lw_setOps(g);}"
+		// Anti-triche : le compteur de statements alimente System.operations ET le compteur d'ops HOTE
 		// (meme instance d'instrument). Laisse sur globalThis, un joueur pouvait le remettre a zero
 		// (__lw_counter(x)) pour sous-evaluer ses ops et fouiller au-dela de son budget. On scelle un
 		// shim LECTURE SEULE (reset ignore) ; g garde la vraie reference `c` (capturee au-dessus) et
@@ -726,22 +737,44 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "try{Object.defineProperty(globalThis,'__lw_counter',{value:function(){return c();},writable:false,configurable:false});}catch(e){}"
 		+ "})();";
 	private static final String PY_GETOPS_OVERRIDE =
-		"import builtins as _lwb2\n"
+		"import builtins as _lw_ops_b\n"
 		// Capture le compteur dans une closure (au lieu de le lire par nom a chaque appel) pour pouvoir
 		// le RETIRER du scope guest ensuite : sinon un joueur pouvait faire __lw_counter(x) pour remettre
 		// a zero le compteur partage hote/guest et sous-evaluer ses ops. __lw_real reste lu au call (mis a
 		// jour par l'hote chaque sync). L'hote garde son handle instrument (polyglot bindings) pour reset.
 		+ "def _lw_make_getops(_counter, _factor):\n"
-		+ "    def getOperations():\n"
+		+ "    def _lw_ops():\n"
 		+ "        return __lw_real + _counter() * _factor\n"
-		+ "    return getOperations\n"
-		+ "_lwb2.getOperations = _lw_make_getops(__lw_counter, $F)\n"
-		+ "try:\n"
-		+ "    del globals()['__lw_counter']\n"
-		+ "except Exception:\n"
-		+ "    pass\n";
+		+ "    return _lw_ops\n"
+		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
+		// objects.py sur builtins (le hook se retire de builtins une fois consomme).
+		+ "_lw_setter = getattr(_lw_ops_b, '__lw_set_ops', None)\n"
+		+ "if _lw_setter is not None:\n"
+		+ "    _lw_setter(_lw_make_getops(__lw_counter, $F))\n"
+		+ "for _lw_n in ('__lw_counter', '_lw_make_getops', '_lw_setter', '_lw_ops_b', '_lw_n'):\n"
+		+ "    try:\n"
+		+ "        del globals()[_lw_n]\n"
+		+ "    except Exception:\n"
+		+ "        pass\n";
 
-	/** Fetch les bindings guest + redirige getOperations cote guest (si l'instrument deterministe est la). */
+	/** Sans instrument deterministe, le hook __lw_setOps/__lw_set_ops pose par objects.js/py ne sera jamais consomme : on le retire. */
+	private void removeUnusedOpsHook() {
+		try {
+			if ("js".equals(languageId)) {
+				context.eval(languageId, "try{delete globalThis.__lw_setOps;}catch(e){}");
+			} else if ("python".equals(languageId)) {
+				context.eval(languageId,
+					"import builtins as _lw_b3\n"
+					+ "try:\n"
+					+ "    delattr(_lw_b3, '__lw_set_ops')\n"
+					+ "except Exception:\n"
+					+ "    pass\n"
+					+ "del _lw_b3\n");
+			}
+		} catch (Exception ignore) {}
+	}
+
+	/** Fetch les bindings guest + branche System.operations cote guest (si l'instrument deterministe est la). */
 	private void installGuestGetOperations() {
 		try {
 			guestBindings.putMember("__lw_counter", statementCounter);
@@ -935,12 +968,13 @@ public class PolyglotEntityAI extends EntityAI {
 			// La valeur de retour de runIA est IGNOREE par le moteur en combat. Or une IA plate finissant
 			// sur None / un import / une affectation renvoie None ou les globals du module, dont le
 			// marshalling recurse dans les objets internes Python (__builtins__, me cyclique via
-			// cell.entity...) et heurte la garde de profondeur (Error.STACKOVERFLOW). Un echec de
-			// marshalling du RETOUR ne doit donc PAS interrompre l'IA (l'eval, lui, a deja reussi ;
-			// une vraie recursion du code joueur leve pendant l'eval, hors de ce try).
+			// cell.entity, modules patches comme os.environ...) et heurte la garde de profondeur
+			// (Error.STACKOVERFLOW) ou une operation interop non supportee (RuntimeException hote).
+			// Un echec de marshalling du RETOUR ne doit donc PAS interrompre l'IA (l'eval, lui, a deja
+			// reussi ; une vraie recursion du code joueur leve pendant l'eval, hors de ce try).
 			try {
 				return TypeMarshaller.toJava(value, this);
-			} catch (LeekRunException marshallingIgnored) {
+			} catch (LeekRunException | RuntimeException marshallingIgnored) {
 				return null;
 			}
 		} catch (PolyglotException e) {
