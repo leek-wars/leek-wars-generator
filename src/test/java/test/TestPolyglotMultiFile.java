@@ -268,9 +268,13 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
-	/** Un import sans extension ne doit JAMAIS s'appliquer a un dossier existant (paquet/dossier gagne). */
+	/**
+	 * Import sans extension quand un FICHIER {@code lib.js} et un DOSSIER {@code lib/} coexistent :
+	 * le fichier gagne (resolution TypeScript). Cas reel : un dossier {@code test/} dans le compte
+	 * rendait {@code import './test'} (visant test.ts) irresoluble en combat.
+	 */
 	@Test
-	public void jsExtensionlessProbeDoesNotShadowFolder() throws Exception {
+	public void jsExtensionlessProbePrefersFileOverFolder() throws Exception {
 		initFightOnly();
 		Map<String, String> files = new HashMap<>();
 		files.put("lib.js", "export const WHERE = 'racine';\n");
@@ -279,12 +283,25 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			"import { WHERE } from './lib';\n"
 			+ "globalThis.turn = function() { return WHERE; };\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
-			// 'lib' existe comme DOSSIER -> pas de reecriture vers lib.js ; l'import d'un dossier
-			// echoue (pas de resolution index.js, comme Node ESM) et l'erreur est rapportee.
+			Object r = multiFileAI(sb, "js", files, "main.js").runIA();
+			Assert.assertEquals("le fichier lib.js doit gagner sur le dossier lib/", "racine", String.valueOf(r));
+		}
+	}
+
+	/** Import d'un dossier SANS fichier candidat : echoue toujours (pas de magie index.js, comme Node ESM). */
+	@Test
+	public void jsImportFolderWithoutCandidateFileFails() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("lib/index.js", "export const WHERE = 'dossier';\n");
+		files.put("main.js",
+			"import { WHERE } from './lib';\n"
+			+ "globalThis.turn = function() { return WHERE; };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
 			PolyglotEntityAI ai = multiFileAI(sb, "js", files, "main.js");
 			try {
 				ai.runIA();
-				Assert.fail("l'import d'un dossier aurait du echouer (pas de magie index.js)");
+				Assert.fail("l'import d'un dossier sans lib.js voisin aurait du echouer (pas de magie index.js)");
 			} catch (LeekRunException e) {
 				Assert.assertEquals(Error.AI_INTERRUPTED, e.getError());
 			}

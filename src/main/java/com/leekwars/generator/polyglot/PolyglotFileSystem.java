@@ -146,20 +146,27 @@ public class PolyglotFileSystem implements FileSystem {
 	/**
 	 * Resolution tolerante d'un chemin demande absent (JS/TS uniquement, cf constructeur) :
 	 * <ol>
-	 * <li>import sans extension : {@code './lib'} -> {@code lib.js} / {@code lib.mjs} ;</li>
+	 * <li>import sans extension : {@code './lib'} -> {@code lib.js} / {@code lib.mjs}, meme si un
+	 *     DOSSIER {@code lib/} existe (resolution TypeScript : le fichier gagne sur le dossier —
+	 *     un dossier n'est de toute facon jamais importable en ESM, pas de magie index.js) ;</li>
 	 * <li>repli RACINE : {@code dossier/lib.js} absent -> {@code lib.js} racine s'il existe
 	 *     (specificateur bare depuis un sous-dossier alors que la lib vit a la racine — la
 	 *     resolution relative au module importeur a deja ete tentee par graaljs).</li>
 	 * </ol>
-	 * Un chemin existant (fichier OU dossier) n'est jamais reecrit.
+	 * Un FICHIER existant n'est jamais reecrit ; un dossier existant sans fichier candidat non plus.
 	 */
 	private String probe(String leek) {
-		if (probeExtensions.isEmpty() || files.contains(leek) || dirs.contains(leek)) {
+		if (probeExtensions.isEmpty() || files.contains(leek)) {
 			return leek;
 		}
+		// Le fichier probe ({@code lib.js}) gagne sur un dossier {@code lib/} homonyme : sinon un
+		// simple dossier 'test/' dans le compte rend 'import "./test"' (test.ts) irresoluble.
 		String withExt = probeWithExtensions(leek);
 		if (withExt != null) {
 			return withExt;
+		}
+		if (dirs.contains(leek)) {
+			return leek;
 		}
 		// Repli dossier de l'ENTREE : un import bare ('include.js' sans ./) est ancre a la racine
 		// par le loader, mais le joueur vise generalement le voisin de son fichier (ia-ts/test.js
