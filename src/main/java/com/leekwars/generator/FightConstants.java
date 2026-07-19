@@ -339,6 +339,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_FIRE_BALL(413, Type.INT),
 	CHIP_TREBUCHET(414, Type.INT),
 	CHIP_AWEKENING(415, Type.INT),
+	CHIP_AWAKENING(415, Type.INT), // alias correctement orthographie de CHIP_AWEKENING (conserve pour compat)
 	CHIP_THUNDER(416, Type.INT),
 	CHIP_KILL(417, Type.INT),
 	CHIP_APOCALYPSE(418, Type.INT),
