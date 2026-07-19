@@ -91,6 +91,37 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		return ai.runIA();
 	}
 
+	/**
+	 * #4540 : Debug.mark(Cell) plantait au combat avec « isinstance() arg 2 must be a type or tuple of
+	 * types ». Cause : le prelude de facturation (PY_CHARGE_GUARD) remplacait builtins.list par une
+	 * FONCTION -> `isinstance(x, list)` (dans objects.py _cidlist/_unwrap ET dans le code joueur) cassait.
+	 * Fix : proxy a metaclasse (les types restent des types pour isinstance ET la construction reste
+	 * facturee). On verifie les DEUX : semantique de type correcte + facturation conservee.
+	 */
+	@Test
+	public void debugMarkIsinstanceAndBillingOnBuiltinTypes() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// Code exact du rapport (une Cell + Color) : ne doit plus lever.
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Debug.mark(Field.cellFromXY(17, 0), Color.BLUE, 1)"));
+			// Variante liste, mentionnee par l'auteur.
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Debug.mark([Field.cellFromXY(17, 0), Field.cellFromXY(18, 0)], Color.RED, 1)"));
+			// isinstance / issubclass / fromkeys sur ces types (usage joueur courant) doivent marcher.
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance([], list)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance({}, dict)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(set(), set)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance((1,), tuple)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(frozenset(), frozenset)"));
+			Assert.assertEquals(Boolean.FALSE, evalPy(sb, "isinstance([], dict)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "dict.fromkeys([1, 2]) == {1: None, 2: None}"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "list(range(3)) == [0, 1, 2] and set([1, 1, 2]) == {1, 2}"));
+			// FACTURATION CONSERVEE : construire une grande collection doit couter ~N ops (le proxy facture
+			// via __call__). Un simple no-op coute une poignee d'ops -> le delta prouve le comptage.
+			long ops = ((Number) evalPy(sb, "(list(range(50000)), System.operations)[1]")).longValue();
+			Assert.assertTrue("list(range(50000)) doit etre facture (proxy), ops=" + ops, ops > 20000);
+		}
+	}
+
 	@Test
 	public void pythonObjectPropertiesReadState() throws Exception {
 		initFightOnly();

@@ -609,13 +609,23 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * FACTURATION DU TRAVAIL NATIF (Python). Enveloppe les builtins qui PARCOURENT tout leur argument
-	 * (sum, sorted, list, min, max...) pour facturer via {@code __lw_charge} au prorata de {@code len}
-	 * (le facteur de calibration est applique cote hote, cf {@link #chargeProxy}). On ne facture que la
-	 * FORME iterable (1 argument positionnel dont on peut prendre len) : la forme multi-args (min(a,b))
-	 * est O(1). On N'enveloppe PAS all/any (court-circuit : facturer len sur-penaliserait). Un
-	 * generateur sans len n'est pas facture ici mais son corps est deja compte par l'instrument. Les
-	 * operateurs ({@code 'x'*N}, {@code 10**N}) restent non factures mais sont bornes par le cap RAM +
-	 * wall-clock. Accumulateur PRIVE + flush (idem JS). Contournable par reflexion (idem JS).
+	 * pour facturer via {@code __lw_charge} au prorata de {@code len} (le facteur de calibration est
+	 * applique cote hote, cf {@link #chargeProxy}). On ne facture que la FORME iterable (1 argument
+	 * positionnel dont on peut prendre len) : la forme multi-args (min(a,b)) est O(1). On N'enveloppe PAS
+	 * all/any (court-circuit : facturer len sur-penaliserait). Un generateur sans len n'est pas facture
+	 * ici mais son corps est deja compte par l'instrument.
+	 *
+	 * <p>DEUX FAMILLES. (1) Les FONCTIONS (sum/sorted/min/max) : simple wrapper fonction. (2) Les
+	 * CONSTRUCTEURS DE TYPE (list/tuple/set/frozenset/dict) : on NE PEUT PAS les remplacer par une
+	 * fonction, ca les rend non-type et {@code isinstance(x, list)} leve « arg 2 must be a type or tuple
+	 * of types » (cassait Debug.mark et tout code joueur faisant isinstance sur ces types, #4540). On
+	 * met donc a la place un PROXY A METACLASSE : un vrai type dont {@code __call__} facture puis delegue
+	 * la construction au type original, et dont {@code __instancecheck__ / __subclasscheck__ / __getattr__}
+	 * deleguent au type original -> isinstance/issubclass/list.fromkeys marchent, la facturation est
+	 * conservee. LIMITE ASSUMEE : {@code type(x) is list} renvoie False (le type reel des litteraux reste
+	 * le type C, non substituable) et sous-classer ces types est degrade ; usages rares, isinstance
+	 * (idiome courant) est prioritaire. Cote JS, {@link #JS_CHARGE_GUARD} enveloppe des METHODES de
+	 * prototype (pas les types) -> pas ce probleme. Accumulateur PRIVE + flush. Contournable par reflexion.
 	 */
 	private static final String PY_CHARGE_GUARD =
 		"import builtins as _lwb\n"
@@ -627,6 +637,7 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        _acc[0] += n\n"
 		+ "        if _acc[0] >= _FLUSH:\n"
 		+ "            _C(_acc[0]); _acc[0] = 0\n"
+		// Fonctions : wrapper fonction simple.
 		+ "    def _wrap(_orig):\n"
 		+ "        def _f(*a, **k):\n"
 		+ "            if len(a) == 1:\n"
@@ -636,9 +647,31 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "                    pass\n"
 		+ "            return _orig(*a, **k)\n"
 		+ "        return _f\n"
-		+ "    for _n in ('sum','sorted','list','tuple','set','frozenset','min','max','dict'):\n"
+		+ "    for _n in ('sum','sorted','min','max'):\n"
 		+ "        try:\n"
 		+ "            setattr(_lwb, _n, _wrap(getattr(_lwb, _n)))\n"
+		+ "        except Exception:\n"
+		+ "            pass\n"
+		// Constructeurs de type : proxy a metaclasse (facture + reste un type pour isinstance, #4540).
+		+ "    def _wrap_type(_orig):\n"
+		+ "        class _M(type):\n"
+		+ "            def __call__(cls, *a, **k):\n"
+		+ "                if len(a) == 1:\n"
+		+ "                    try:\n"
+		+ "                        _ch(len(a[0]))\n"
+		+ "                    except TypeError:\n"
+		+ "                        pass\n"
+		+ "                return _orig(*a, **k)\n"
+		+ "            def __instancecheck__(cls, x):\n"
+		+ "                return isinstance(x, _orig)\n"
+		+ "            def __subclasscheck__(cls, c):\n"
+		+ "                return issubclass(c, _orig)\n"
+		+ "            def __getattr__(cls, n):\n"
+		+ "                return getattr(_orig, n)\n"
+		+ "        return _M(_orig.__name__, (), {})\n"
+		+ "    for _n in ('list','tuple','set','frozenset','dict'):\n"
+		+ "        try:\n"
+		+ "            setattr(_lwb, _n, _wrap_type(getattr(_lwb, _n)))\n"
 		+ "        except Exception:\n"
 		+ "            pass\n"
 		+ "_lw_install()\n";
