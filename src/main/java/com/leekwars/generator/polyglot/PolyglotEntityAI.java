@@ -91,6 +91,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private Context context;
 	private boolean initialized;
 	private Value entry;                       // fonction turn() si definie
+	private Value jsModuleNamespace;           // namespace du module ES (exports), pour resoudre `export function turn()`
 
 	private long turnWallClockLimitMs = DEFAULT_TURN_WALL_CLOCK_LIMIT_MS;
 	private int wallClockTimeouts;             // nb de tours coupes par le watchdog sur ce combat
@@ -525,19 +526,27 @@ public class PolyglotEntityAI extends EntityAI {
 	private Value loadEntryFirstTurn() throws LeekRunException {
 		if (jsModule) {
 			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
-			// resolvent contre /ai. L'IA expose sa logique via globalThis.turn.
+			// resolvent contre /ai. L'IA expose sa boucle via `export function turn()` ou globalThis.turn.
 			// import() est asynchrone : on capture sa rejection (erreur de syntaxe/exec dans un
-			// fichier importe) dans une variable, sinon elle serait silencieusement avalee.
+			// fichier importe) dans une variable, sinon elle serait silencieusement avalee. On capture
+			// aussi le namespace resolu (ses exports) pour resoudre une `export function turn()` : dans
+			// un module ES, un `function turn()` top-level est module-scoped (invisible du global), donc
+			// seul un export (ou un globalThis.turn) rend l'IA "avec etat".
 			context.eval(languageId,
-				"globalThis.__lw_loadError = null;"
+				"globalThis.__lw_loadError = null; globalThis.__lw_module = null;"
 				+ "import('" + PolyglotFileSystem.mountPath(entryPath) + "')"
-				+ ".catch(function(e){ globalThis.__lw_loadError = '' + (e && e.stack ? e.stack : e); });");
-			context.eval(languageId, "void 0;"); // draine les microtasks (eval du module + le .catch)
+				+ ".then(function(m){ globalThis.__lw_module = m; },"
+				+ " function(e){ globalThis.__lw_loadError = '' + (e && e.stack ? e.stack : e); });");
+			context.eval(languageId, "void 0;"); // draine les microtasks (eval du module + le .then)
 			Value loadError = context.getBindings(languageId).getMember("__lw_loadError");
 			if (loadError != null && !loadError.isNull()) {
 				throw new LeekRunException(Error.AI_INTERRUPTED, new String[] { loadError.asString() });
 			}
-			return null; // un module ne renvoie pas de valeur
+			Value ns = context.getBindings(languageId).getMember("__lw_module");
+			if (ns != null && !ns.isNull()) {
+				jsModuleNamespace = ns;
+			}
+			return null; // un module ne renvoie pas de valeur (turn() resolue via global ou namespace)
 		}
 		return context.eval(languageId, source); // JS script / Python : eval direct
 	}
@@ -950,6 +959,14 @@ public class PolyglotEntityAI extends EntityAI {
 				initialized = true;
 				Value top = loadEntryFirstTurn();
 				Value turnFn = context.getBindings(languageId).getMember(TURN_FUNCTION);
+				if ((turnFn == null || !turnFn.canExecute()) && jsModuleNamespace != null) {
+					// Module ES : turn() n'est pas dans le global. On la cherche dans les exports du
+					// module (`export function turn()`), en repli de globalThis.turn.
+					Value exported = jsModuleNamespace.getMember(TURN_FUNCTION);
+					if (exported != null && exported.canExecute()) {
+						turnFn = exported;
+					}
+				}
 				if (turnFn != null && turnFn.canExecute()) {
 					// IA avec etat : le top-level (classes + statics) n'etait que du setup execute
 					// une fois ; turn() est rejouee chaque tour (les statics de classe persistent).

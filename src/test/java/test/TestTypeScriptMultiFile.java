@@ -141,6 +141,33 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 			leek1.getRegister("x"));
 	}
 
+	/**
+	 * Regression #4536 : une IA module ES (import/export) exposant sa boucle via {@code export function
+	 * turn()} (au lieu de {@code globalThis.turn = ...}) doit etre reconnue "avec etat". Dans un module,
+	 * un {@code function turn()} top-level est module-scoped (invisible du global) ; on le resout donc
+	 * aussi dans le namespace exporte du module.
+	 */
+	@Test
+	public void tsMultiFileExportedTurnIsStateful() throws Exception {
+		Path dir = Files.createTempDirectory("ts-mf-exportturn-");
+		Files.writeString(dir.resolve("mem.ts"), "export class Mem { static n: number = 0; }\n");
+		Files.writeString(dir.resolve("main.ts"), String.join("\n",
+			"import { Mem } from './mem.js';",
+			"export function turn(): void {", // export, pas globalThis.turn
+			"  Mem.n = Mem.n + 1;",
+			"  Registers.set('turns', '' + Mem.n);",
+			"}"));
+
+		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
+		attachTsEntry(leek1, dir.toString(), "main.ts");
+		attachAI(leek2, "");
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		int turns = Integer.parseInt(leek1.getRegister("turns"));
+		Assert.assertTrue("export function turn() doit etre rejoue chaque tour (module ES avec etat), recu: " + turns, turns > 1);
+	}
+
 	@Test
 	public void tsMultiFileStatePersistsAcrossTurns() throws Exception {
 		Path dir = Files.createTempDirectory("ts-mf-state-");
