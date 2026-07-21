@@ -18,6 +18,8 @@ test {
 		events "passed", "skipped", "failed"
 		showStandardStreams = true
 	}
+	// Forward -Dleak.fights (et autres -D de diagnostic) au JVM de test forke.
+	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }
 
 jar {

@@ -28,9 +28,10 @@ import com.leekwars.generator.Log;
 /**
  * Fabrique de contextes GraalVM verrouilles pour l'execution d'IA en JS/Python.
  *
- * Un {@link Engine} est partage (idealement un par combat) pour amortir le warmup
- * Truffle entre les entites. Chaque entite recoit son propre {@link Context} (scope
- * global isole) construit via {@link #createContext(String)}.
+ * Un {@link Engine} par langage est partage par TOUS les combats de la JVM (statique, cf le champ
+ * ENGINES) : il porte l'isolate + le runtime compile (objet lourd), amorti une fois. Chaque entite
+ * recoit son propre {@link Context} (scope global isole) construit via {@link #createContext}, jetable
+ * en fin de combat.
  *
  * Securite : pas d'acces hote, pas d'IO, pas de threads, pas de natif, pas de process.
  * Les boucles pures guest sont bornees par un compteur de statements ; le travail
@@ -70,11 +71,21 @@ public class PolyglotSandbox implements AutoCloseable {
 	private final long statementLimit;
 	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
 	/**
-	 * Un Engine (= un isolate) PAR LANGAGE : les images isolate sont par-langage
-	 * (js-isolate != python-isolate), un meme isolate ne peut pas heberger js ET python. Lazy,
-	 * partage par tous les contextes du meme langage du combat (amortit le warmup).
+	 * Un Engine (= un isolate) PAR LANGAGE, partage par TOUS les combats de la JVM (statique).
+	 *
+	 * <p>HISTORIQUE #OOM worker (2026-07) : un Engine etait cree PAR COMBAT et cense etre rendu a
+	 * {@link #close()} via {@code engine.close()}. En pratique la memoire native de l'isolate (~215 Mo
+	 * de commit par combat sous charge) n'etait JAMAIS rendue -> le RSS du worker montait
+	 * lineairement jusqu'au SIGKILL du cgroup (reproduit par {@code TestPolyglotSandboxLeak}).
+	 *
+	 * <p>GraalVM concoit l'{@link Engine} comme l'objet LOURD partage (il porte l'isolate + le runtime
+	 * compile), les {@link Context} comme les objets JETABLES par unite de travail. On partage donc un
+	 * seul Engine par langage pour toute la JVM (warmup amorti une fois, memoire native bornee par
+	 * {@code engine.MaxIsolateMemory} au lieu de croitre par combat), et {@link #close()} ne ferme plus
+	 * QUE les contextes du combat. L'isolation entre combats tient toujours : chaque poireau a son
+	 * propre Context (globals separes) avec son propre cap {@code sandbox.MaxHeapMemory}.
 	 */
-	private final Map<String, Engine> engines = new ConcurrentHashMap<>();
+	private static final Map<String, Engine> ENGINES = new ConcurrentHashMap<>();
 	private final List<Context> contexts = Collections.synchronizedList(new ArrayList<>());
 
 	public PolyglotSandbox(String... languages) {
@@ -108,12 +119,12 @@ public class PolyglotSandbox implements AutoCloseable {
 		}
 	}
 
-	/** Langages dont l'engine a du basculer en isolate processus externe (cf engineFor). */
-	private final Set<String> externalIsolates = ConcurrentHashMap.newKeySet();
+	/** Langages dont l'engine a du basculer en isolate processus externe (cf engineFor). Statique : suit les ENGINES partages. */
+	private static final Set<String> EXTERNAL_ISOLATES = ConcurrentHashMap.newKeySet();
 
 	/** Vrai si l'engine de ce langage tourne en isolate processus EXTERNE (mode degrade, cf engineFor). */
 	public boolean isExternalIsolate(String languageId) {
-		return externalIsolates.contains(languageId);
+		return EXTERNAL_ISOLATES.contains(languageId);
 	}
 
 	/**
@@ -134,7 +145,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * </ul>
 	 */
 	private Engine engineFor(String languageId) {
-		return engines.computeIfAbsent(languageId, lang -> {
+		return ENGINES.computeIfAbsent(languageId, lang -> {
 			// L'image isolate combinee (js+python) embarque l'instrument pour TOUS ses langages ;
 			// si une image officielle (sans instrument) est revenue, l'echelle de replis ci-dessous
 			// retire simplement l'option.
@@ -157,7 +168,7 @@ public class PolyglotSandbox implements AutoCloseable {
 					Log.w("PolyglotSandbox", "Isolate in-process indisponible pour " + lang
 							+ " (une seule lib isolate par JVM) : bascule en isolate processus externe. "
 							+ e.getMessage());
-					externalIsolates.add(lang);
+					EXTERNAL_ISOLATES.add(lang);
 					external = true;
 				}
 			}
@@ -282,6 +293,10 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	@Override
 	public void close() {
+		// On ferme UNIQUEMENT les contextes du combat : leur memoire native (heap guest par poireau)
+		// est bien rendue a la fermeture. Les ENGINES (isolates) sont STATIQUES et partages par tous
+		// les combats -> jamais fermes ici (les fermer par combat fuitait la memoire native de
+		// l'isolate, cf #OOM worker et le champ ENGINES). Ils vivent le temps de la JVM.
 		synchronized (contexts) {
 			for (Context context : contexts) {
 				try {
@@ -292,14 +307,6 @@ public class PolyglotSandbox implements AutoCloseable {
 			}
 			contexts.clear();
 		}
-		for (Engine engine : engines.values()) {
-			try {
-				engine.close();
-			} catch (Exception ignore) {
-				// best effort
-			}
-		}
-		engines.clear();
 	}
 
 	// ---------- Watchdog wall-clock (anti-DoS) ----------
