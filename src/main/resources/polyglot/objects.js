@@ -30,36 +30,62 @@
 	function eid(x) { return (x instanceof Entity) ? x.id : x; }
 	function wid(x) { return (x instanceof Weapon) ? x.id : x; }
 	function cpid(x) { return (x instanceof Chip) ? x.id : x; }
+	// Tout objet rendu au joueur est GELÉ. Deux raisons. D'abord les enveloppes sont POOLÉES (une
+	// instance par id, cf plus bas) : sans gel, un `c.id = 42` du joueur empoisonnerait la cellule
+	// partagée pour tout le reste du combat, et chaque getPath()/getObstacles() retombant sur cet id
+	// rendrait un objet corrompu, sans le moindre message. Ensuite ça aligne le runtime sur ce que les
+	// déclarations annoncent déjà (readonly sur CHAQUE membre du .d.ts / du .pyi).
+	// Gel SUPERFICIEL, ce qui suffit : les objets poolés (Cell/Entity/Weapon/Chip) ne portent qu'un id,
+	// et le `raw` d'un Effect/Feature/Message reste mutable mais n'est jamais partagé.
+	// Le gel se fait dans les FABRIQUES, jamais dans un constructeur : Me redéfinit son `id` en accessor
+	// APRÈS super() (cf classe Me), ce qu'un objet gelé interdirait.
+	function frozen(o) { return Object.freeze(o); }
+	// Pools de singletons par id. Historiquement sur Weapon/Chip seulement ; étendus à Cell et Entity.
+	// GARANTIT que les valeurs renvoyees par l'API (me.weapon, entity.weapons, me.cell, getEnemies...)
+	// et les constantes objet (Weapon.pistol) sont LE MEME objet -> comparables par reference
+	// (me.weapon === Weapon.pistol, path[0] === me.cell). Sans ca, deux `new Weapon(id)` seraient !==
+	// et la comparaison serait toujours fausse.
+	// Sur Entity le pool economise en plus un getType() (15 operations) par emballage : le type d'une
+	// entite ne change jamais du combat, donc un seul suffit, la ou getEnemies() en payait un PAR
+	// ennemi et PAR appel. Sur Cell il economise l'allocation en rafale de getPath()/getObstacles().
+	var weaponPool = {};
+	var chipPool = {};
+	var cellPool = {};
+	var entityPool = {};
+	// Id d'item (arme OU puce) -> instance, remplie au boot par attachConstants (qui instancie deja les
+	// 37 armes et 110 puces). Permet a Effect.item de rendre l'objet SANS aucun appel hote : un
+	// isWeapon()+isChip() a l'acces couterait 25 operations, dans une boucle sur les effets.
+	var itemsById = {};
 	// Fabrique l'instance TYPÉE d'une entité selon son type (getType). Les classes sont déclarées
 	// plus bas mais ent() n'est appelée qu'au runtime (après chargement du module) -> OK.
 	function ent(id) {
 		if (id === null || id === undefined || id < 0) return null;
+		var e = entityPool[id];
+		if (e) return e;
 		switch (F.getType(id)) {
-			case F.ENTITY_LEEK: return new Leek(id);
-			case F.ENTITY_BULB: return new Bulb(id);
-			case F.ENTITY_TURRET: return new Turret(id);
-			case F.ENTITY_CHEST: return new Chest(id);
-			case F.ENTITY_MOB: return new Mob(id);
-			default: return new Entity(id);
+			case F.ENTITY_LEEK: e = new Leek(id); break;
+			case F.ENTITY_BULB: e = new Bulb(id); break;
+			case F.ENTITY_TURRET: e = new Turret(id); break;
+			case F.ENTITY_CHEST: e = new Chest(id); break;
+			case F.ENTITY_MOB: e = new Mob(id); break;
+			default: e = new Entity(id); break;
 		}
+		return (entityPool[id] = frozen(e));
 	}
 	function ents(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) { var e = ent(ids[i]); if (e) o.push(e); } return o; }
-	function cells(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(new Cell(ids[i])); return o; }
-	// Pool de singletons par id pour Weapon/Chip : une seule instance par id dans un contexte.
-	// GARANTIT que les valeurs renvoyees par l'API (me.weapon, entity.weapons...) et les constantes
-	// objet (Weapon.pistol) sont LE MEME objet -> comparables par reference (me.weapon === Weapon.pistol).
-	// Sans ca, deux `new Weapon(id)` seraient !== et la comparaison serait toujours fausse.
-	var weaponPool = {};
-	var chipPool = {};
-	function weap(id) { return (id === null || id === undefined || id <= 0) ? null : (weaponPool[id] || (weaponPool[id] = new Weapon(id))); }
-	function chp(id) { return (id === null || id === undefined || id <= 0) ? null : (chipPool[id] || (chipPool[id] = new Chip(id))); }
+	// Cellule poolée SANS garde de validité : conserve le comportement historique de `new Cell(id)`,
+	// qui rendait un objet même pour un id négatif (cf cells() et Entity.cell). cell() ajoute la garde.
+	function pooledCell(id) { return cellPool[id] || (cellPool[id] = frozen(new Cell(id))); }
+	function cells(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(pooledCell(ids[i])); return o; }
+	function weap(id) { return (id === null || id === undefined || id <= 0) ? null : (weaponPool[id] || (weaponPool[id] = frozen(new Weapon(id)))); }
+	function chp(id) { return (id === null || id === undefined || id <= 0) ? null : (chipPool[id] || (chipPool[id] = frozen(new Chip(id)))); }
 	function weaps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(weap(ids[i])); return o; }
 	function chps(ids) { var o = []; if (ids) for (var i = 0; i < ids.length; i++) o.push(chp(ids[i])); return o; }
 	function cidList(x) {
 		if (Array.isArray(x)) { var o = []; for (var i = 0; i < x.length; i++) o.push(cid(x[i])); return o; }
 		return cid(x);
 	}
-	function cell(id) { return (id === null || id === undefined || id < 0) ? null : new Cell(id); }
+	function cell(id) { return (id === null || id === undefined || id < 0) ? null : pooledCell(id); }
 	// Déballe UN argument vers son id brut (Entity/Weapon/Chip/Cell -> .id ; tableau -> déballé ;
 	// sinon inchangé). Sert aux helpers de ciblage (weaponCell...) pour accepter des objets
 	// quel que soit l'ordre des arguments, sans avoir à connaître leur rôle.
@@ -90,6 +116,9 @@
 		path(target, ignored) { return cells(ignored === undefined ? F.getPath(this.id, cid(target)) : F.getPath(this.id, cid(target), cidList(ignored))); }
 		// La case est-elle alignée (même ligne ou colonne) avec la cible.
 		onSameLine(target) { return F.isOnSameLine(this.id, cid(target)); }
+		// Cellule d'id `id`, ou null s'il est invalide. L'API ACCEPTE des ids partout (moveToward(210)),
+		// il faut donc pouvoir faire le chemin inverse : typiquement relire un id rangé dans un registre.
+		static get(id) { return cell(id); }
 	}
 
 	// ---- Item : base commune aux armes et puces. Porte les constantes partagees
@@ -97,6 +126,9 @@
 	// fonctions plates distinctes (getWeapon* vs getChip*), donc pas factorisables sans dispatch. ----
 	class Item {
 		constructor(id) { this.id = id; }
+		// L'item (arme OU puce) d'id `id`, ou null si l'id n'en designe aucun. Weapon.get/Chip.get
+		// restreignent a leur type. Lookup pur (itemsById), aucun appel hote.
+		static get(id) { return itemsById[id] || null; }
 	}
 
 	// ---- Weapon : une arme (stats) ----
@@ -119,6 +151,8 @@
 		get passiveFeatures() { return feats(F.getWeaponPassiveEffects(this.id)); }
 		// Zone d'effet réelle de l'arme sur `cell`, tirée depuis `from` (défaut : position courante). Cell[].
 		effectiveArea(cell, from) { return cells(from === undefined ? F.getWeaponEffectiveArea(this.id, cid(cell)) : F.getWeaponEffectiveArea(this.id, cid(cell), cid(from))); }
+		// L'arme d'id `id`, ou null si l'id n'est pas celui d'une arme.
+		static get(id) { var i = itemsById[id]; return (i instanceof Weapon) ? i : null; }
 		// Toutes les armes du jeu. Weapon[].
 		static getAll() { return weaps(F.getAllWeapons()); }
 		// La valeur est-elle un id d'arme valide.
@@ -152,6 +186,8 @@
 		get bulbStats() { return F.getBulbStats(this.id); }
 		// Zone d'effet réelle de la puce sur `cell`, lancée depuis `from` (défaut : position courante). Cell[].
 		effectiveArea(cell, from) { return cells(from === undefined ? F.getChipEffectiveArea(this.id, cid(cell)) : F.getChipEffectiveArea(this.id, cid(cell), cid(from))); }
+		// La puce d'id `id`, ou null si l'id n'est pas celui d'une puce.
+		static get(id) { var i = itemsById[id]; return (i instanceof Chip) ? i : null; }
 		// Toutes les puces du jeu. Chip[].
 		static getAll() { return chps(F.getAllChips()); }
 		// La valeur est-elle un id de puce valide.
@@ -167,7 +203,9 @@
 		get caster() { return ent(this.raw[2]); }
 		get turns() { return this.raw[3]; }
 		get critical() { return this.raw[4]; }
-		get item() { return this.raw[5]; }
+		// Arme ou puce qui a applique l'effet (null si aucune). Instance, comme caster/target sont des
+		// Entity : l'id brut reste accessible via raw[5]. Lookup dans itemsById -> AUCUN appel hote.
+		get item() { var id = this.raw[5]; return id ? (itemsById[id] || null) : null; }
 		get target() { return ent(this.raw[6]); }
 		get modifiers() { return this.raw[7]; }
 		// Liste des ids de TYPES d'effets existants (Effect.DAMAGE, Effect.HEAL...). number[].
@@ -188,8 +226,8 @@
 		get modifiers() { return this.raw[5]; }
 	}
 
-	function effs(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new Effect(arr[i])); return o; }
-	function feats(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(new Feature(arr[i])); return o; }
+	function effs(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(frozen(new Effect(arr[i]))); return o; }
+	function feats(arr) { var o = []; if (arr) for (var i = 0; i < arr.length; i++) o.push(frozen(new Feature(arr[i]))); return o; }
 
 	// ---- Entity : n'importe quelle entité (lecture d'état) ----
 	class Entity {
@@ -215,7 +253,7 @@
 		get frequency() { return F.getFrequency(this.id); }
 		get cores() { return F.getCores(this.id); }
 		get ram() { return F.getRAM(this.id); }
-		get cell() { return new Cell(F.getCell(this.id)); }
+		get cell() { return pooledCell(F.getCell(this.id)); }
 		get weapon() { return weap(F.getWeapon(this.id)); }
 		get weapons() { return weaps(F.getWeapons(this.id)); }
 		get chips() { return chps(F.getChips(this.id)); }
@@ -247,6 +285,9 @@
 		// Valeur d'une caractéristique par sa constante (Entity.Stat.STRENGTH...).
 		stat(stat) { return F.getStat(stat, this.id); }
 		distance(target) { return F.getCellDistance(F.getCell(this.id), cid(target)); }
+		// Entité d'id `id` (typée : Leek, Bulb, Mob...), ou null s'il est invalide. Chemin inverse des
+		// ids acceptés partout par l'API : relire un id d'entité rangé dans un registre, par exemple.
+		static get(id) { return ent(id); }
 	}
 
 	// ---- Sous-types d'entité : ent() (donc Fight.getNearestEnemy, getEnemies...) renvoie l'instance
@@ -330,6 +371,12 @@
 
 	// Instance unique de l'IA courante (Me), exposée via Fight.me. Une seule instance suffit : son id
 	// est un accessor dynamique qui suit l'entité courante (cf classe Me).
+	// PAS gelée, à la différence de tout le reste, et volontairement : `me` n'est pas une enveloppe
+	// poolée mais un singleton qui vit tout le combat, donc le joueur peut déjà y ranger son propre
+	// état d'un tour sur l'autre (me.cible = ...) et ça marche. Geler casserait ce comportement
+	// existant, sans rien protéger : il n'y a qu'un seul `me`, et son `id` est un accessor à setter
+	// no-op, donc déjà immunisé contre une écriture. ent() ne fabrique jamais de Me (Leek/Bulb/...),
+	// donc aucune instance de Me ne passe par frozen().
 	var meSelf = new Me();
 
 	// ---- Message : un message d'équipe reçu (cf Network) ----
@@ -384,7 +431,7 @@
 	// ---- Field : terrain et géométrie ----
 	var Field = {
 		get type() { return F.getMapType(); },
-		cellFromXY: function (x, y) { var c = F.getCellFromXY(x, y); return (c === null || c === undefined || c < 0) ? null : new Cell(c); },
+		cellFromXY: function (x, y) { var c = F.getCellFromXY(x, y); return cell(c); },
 		getObstacles: function () { return cells(F.getObstacles()); },
 		distance: function (a, b) { return F.getDistance(cid(a), cid(b)); },
 		cellDistance: function (a, b) { return F.getCellDistance(cid(a), cid(b)); },
@@ -404,7 +451,7 @@
 		// Messages reçus (de `entity` seulement si fourni). Retour Message[].
 		getMessages: function (entity) {
 			var raw = (entity === undefined) ? F.getMessages() : F.getMessages(eid(entity));
-			var o = []; if (raw) for (var i = 0; i < raw.length; i++) o.push(new Message(raw[i]));
+			var o = []; if (raw) for (var i = 0; i < raw.length; i++) o.push(frozen(new Message(raw[i])));
 			return o;
 		},
 	};
@@ -482,8 +529,10 @@
 			CRITICAL_FACTOR: Fight, MAX_TURNS: Fight, SUMMON_LIMIT: Fight };
 		// {p: préfixe, fn: attache custom} OU {p, c: conteneur, s?: sous-conteneur}. Nom = clé après préfixe.
 		var RULES = [
-			{ p: 'WEAPON_', fn: function (n, v) { Weapon[camel(n)] = weap(v); } },
-			{ p: 'CHIP_', fn: function (n, v) { Chip[camel(n)] = chp(v); } },
+			// Les items alimentent au passage itemsById (id -> instance), qui sert a Effect.item et aux
+			// accesseurs Item.get/Weapon.get/Chip.get sans jamais rappeler l'hote.
+			{ p: 'WEAPON_', fn: function (n, v) { itemsById[v] = Weapon[camel(n)] = weap(v); } },
+			{ p: 'CHIP_', fn: function (n, v) { itemsById[v] = Chip[camel(n)] = chp(v); } },
 			{ p: 'LAUNCH_TYPE_', c: Item, s: 'LaunchType' },
 			{ p: 'FIGHT_TYPE_', c: Fight, s: 'Type' },
 			{ p: 'FIGHT_CONTEXT_', c: Fight, s: 'Context' },
@@ -499,6 +548,12 @@
 			{ p: 'USE_', c: Fight, s: 'Use' },
 			{ p: 'MESSAGE_', c: Message, s: 'Type' },
 			{ p: 'MAP_', c: Field },
+			// EFFECT_* melangeait trois familles a plat : les TYPES d'effet (DAMAGE, HEAL...), les
+			// MODIFICATEURS (bitmask de effect.modifiers) et les CIBLES (bitmask de feature.targets).
+			// Les deux dernieres passent en sous-conteneurs -> Effect.Modifier.STACKABLE, Effect.Target.ALLIES.
+			// A garder AVANT 'EFFECT_' : le premier prefixe qui matche gagne.
+			{ p: 'EFFECT_MODIFIER_', c: Effect, s: 'Modifier' },
+			{ p: 'EFFECT_TARGET_', c: Effect, s: 'Target' },
 			{ p: 'EFFECT_', c: Effect },
 			{ p: 'STATE_', c: State },
 			{ p: 'COLOR_', c: Color },

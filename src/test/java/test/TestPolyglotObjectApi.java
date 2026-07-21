@@ -82,6 +82,16 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/** Comme evalPy, mais le corps de turn() est fourni tel quel (indenté) : permet un try/except, qui
+	 *  n'existe pas sous forme d'expression en Python. */
+	private Object evalPyBody(PolyglotSandbox sb, String body) throws Exception {
+		PolyglotEntityAI ai = new PolyglotEntityAI("python", "me = Fight.me\ndef turn():\n" + body, sb);
+		ai.setEntity(leek1);
+		ai.setLogs(new LeekLog(farmerLog, leek1));
+		ai.setFight(fight);
+		return ai.runIA();
+	}
+
 	private Object evalPy(PolyglotSandbox sb, String expr) throws Exception {
 		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté) avant le snippet.
 		PolyglotEntityAI ai = new PolyglotEntityAI("python", "me = Fight.me\ndef turn():\n    return " + expr + "\n", sb);
@@ -624,5 +634,141 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		System.out.println("[summon-erreur] ownerTurns=" + ownerTurns);
 		Assert.assertTrue("l'invocateur doit survivre a un callback de bulbe qui leve (ownerTurns=" + ownerTurns + ")",
 			ownerTurns >= 2);
+	}
+	/**
+	 * Enveloppes POOLÉES (une instance par id) et objets en LECTURE SEULE.
+	 *
+	 * <p>Le pool étend aux Cell/Entity ce que Weapon/Chip faisaient déjà : sans lui, deux emballages du
+	 * même id donnaient deux objets distincts, donc `me.cell === me.cell` valait false et toute
+	 * comparaison par référence était perdue. Il évite en plus un getType() (15 opérations) par entité
+	 * emballée, à chaque appel de getEnemies() & co.
+	 *
+	 * <p>Le partage impose le gel : sans lui un `c.id = 42` du joueur empoisonnerait la cellule partagée
+	 * pour tout le reste du combat. En JS mono-fichier (sloppy mode) l'écriture est silencieusement
+	 * ignorée, en Python elle lève.
+	 */
+	@Test
+	public void wrappersArePooledAndReadOnly() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// IDENTITÉ : deux chemins vers le même id donnent LE MÊME objet.
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "me.cell === me.cell;"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Cell.get(me.cell.id) === me.cell;"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Fight.getNearestEnemy() === Fight.getNearestEnemy();"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Fight.getNearestEnemy().cell.entity === Fight.getNearestEnemy();"));
+			// Le pool ne fausse PAS la lecture : les getters restent live (l'id porte, pas la valeur).
+			Assert.assertEquals((long) leek2.getFId(), ((Number) eval(sb, "Fight.getNearestEnemy().id;")).longValue());
+			// Idem en Python (identité par `is`).
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "me.cell is me.cell"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Cell.get(me.cell.id) is me.cell"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Fight.getNearestEnemy() is Fight.getNearestEnemy()"));
+
+			// LECTURE SEULE : l'écriture ne doit JAMAIS aboutir, donc jamais corrompre l'objet partagé.
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"var c = me.cell; var before = c.id; try { c.id = 999; } catch (e) {} c.id === before && me.cell.id === before;"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Object.isFrozen(me.cell) && Object.isFrozen(Fight.getNearestEnemy());"));
+			// Python lève (pas d'équivalent du no-op silencieux d'un objet gelé en sloppy mode JS), et
+			// surtout la cellule partagée sort intacte.
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    try:\n"
+				+ "        me.cell.id = 999\n"
+				+ "        return False\n"
+				+ "    except AttributeError:\n"
+				+ "        return me.cell.id != 999\n"));
+
+			// `me` reste inscriptible : singleton non poolé, où le joueur range déjà son état entre tours.
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "me.monEtat = 7; me.monEtat === 7;"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "(setattr(me, 'mon_etat', 7), me.mon_etat == 7)[1]"));
+		}
+	}
+
+	/**
+	 * Effect.item rend l'ARME ou la PUCE (comme caster/target rendent des Entity), au lieu d'un id nu.
+	 * Résolu par une table id -> instance bâtie au boot, donc sans appel hôte : un isWeapon()+isChip()
+	 * à chaque accès coûterait 25 opérations, dans une boucle sur les effets.
+	 */
+	/**
+	 * Effect.item rend l'ARME ou la PUCE (comme caster/target rendent des Entity), au lieu d'un id nu.
+	 * Résolu par une table id -> instance bâtie au boot, donc sans appel hôte : un isWeapon()+isChip()
+	 * à chaque accès coûterait 25 opérations, dans une boucle sur les effets.
+	 *
+	 * <p>Vrai combat (et pas un eval isolé) : les effets actifs n'existent qu'une fois le tour engagé,
+	 * avec des PT à dépenser. Résultats remontés par registres, comme activeEffectsWrapAfterSelfBuff.
+	 */
+	@Test
+	public void effectItemIsAnInstance() throws Exception {
+		String ai =
+			"function turn() {"
+			+ "  if (!Registers.get('done')) {"
+			+ "    me.useChip(Chip.protein, me);"
+			+ "    var withItem = me.effects.filter(function (x) { return x.item !== null; });"
+			+ "    Registers.set('n', '' + withItem.length);"
+			+ "    if (withItem.length > 0) {"
+			+ "      var e = withItem[0];"
+			+ "      Registers.set('isChip', e.item instanceof Chip ? '1' : '0');"
+			+ "      Registers.set('same', e.item === Chip.protein ? '1' : '0');"
+			+ "      Registers.set('rawId', '' + e.raw[5]);"
+			+ "      Registers.set('itemId', '' + e.item.id);"
+			+ "    }"
+			+ "    Registers.set('done', '1');"
+			+ "  }"
+			+ "}";
+		attachJsAI(leek1, ai);
+		attachJsAI(leek2, ai);
+		runFight();
+
+		int n = Integer.parseInt(leek1.getRegister("n"));
+		Assert.assertTrue("l'auto-buff doit produire un effet portant un item (n=" + n + ")", n >= 1);
+		// L'effet porte l'INSTANCE de la puce, la meme que la constante objet (pool partage).
+		Assert.assertEquals("Effect.item doit etre une instance de Chip", "1", leek1.getRegister("isChip"));
+		Assert.assertEquals("Effect.item doit etre LA constante Chip.protein", "1", leek1.getRegister("same"));
+		// L'id brut reste accessible via raw[5], et coincide avec celui de l'instance.
+		Assert.assertEquals(leek1.getRegister("rawId"), leek1.getRegister("itemId"));
+	}
+
+	/**
+	 * Accès par id : l'API ACCEPTE des ids partout (moveToward(210)) mais ne permettait pas le chemin
+	 * inverse, ce qui bloquait dès qu'on rangeait un id dans un registre (les registres ne stockent
+	 * que du texte, donc on en ressort un nombre, jamais un objet).
+	 */
+	@Test
+	public void gettersByIdRoundTrip() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Entity.get(Fight.getNearestEnemy().id) === Fight.getNearestEnemy();"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Weapon.get(Weapon.pistol.id) === Weapon.pistol;"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Chip.get(Chip.protein.id) === Chip.protein;"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Item.get(Weapon.pistol.id) === Weapon.pistol && Item.get(Chip.protein.id) === Chip.protein;"));
+			// Restriction de type : une puce n'est pas une arme, et un id inconnu ne rend rien.
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Weapon.get(Chip.protein.id) === null && Chip.get(Weapon.pistol.id) === null;"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Weapon.get(987654) === null && Cell.get(-1) === null;"));
+			// Le vrai cas d'usage : un id passé par un registre (texte) redevient une entité.
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"Registers.set('cible', Fight.getNearestEnemy().id);"
+				+ " Entity.get(parseInt(Registers.get('cible'))) === Fight.getNearestEnemy();"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Entity.get(Fight.getNearestEnemy().id) is Fight.getNearestEnemy()"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Weapon.get(Weapon.pistol.id) is Weapon.pistol and Chip.get(Weapon.pistol.id) is None"));
+		}
+	}
+
+	/**
+	 * EFFECT_* mélangeait trois familles à plat : les TYPES d'effet, les MODIFICATEURS (bitmask de
+	 * effect.modifiers) et les CIBLES (bitmask de feature.targets). Les deux dernières passent en
+	 * sous-conteneurs, et ne doivent PLUS être accessibles à plat.
+	 */
+	@Test
+	public void effectModifierAndTargetAreGrouped() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "typeof Effect.Modifier.STACKABLE === 'number';"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "typeof Effect.Target.ALLIES === 'number';"));
+			// Les types d'effet restent au niveau du conteneur.
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "typeof Effect.DAMAGE === 'number';"));
+			// Plus de forme à plat pour les deux familles déplacées.
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Effect.MODIFIER_STACKABLE === undefined && Effect.TARGET_ALLIES === undefined;"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"isinstance(Effect.Modifier.STACKABLE, int) and isinstance(Effect.Target.ALLIES, int) and isinstance(Effect.DAMAGE, int)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "not hasattr(Effect, 'MODIFIER_STACKABLE') and not hasattr(Effect, 'TARGET_ALLIES')"));
+		}
 	}
 }
