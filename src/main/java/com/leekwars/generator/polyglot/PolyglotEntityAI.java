@@ -116,6 +116,7 @@ public class PolyglotEntityAI extends EntityAI {
 		return false;
 	}
 	private long turnStartNanos;               // temps mur de debut de tour (repli si temps CPU indispo)
+	private long turnOperations;               // total d'ops du tour (guest + hote) fige en fin de tour, cf operations()
 	private long turnThreadId;                 // id du thread de combat du tour (pour lire son temps CPU)
 	private long turnStartCpuNanos = -1L;      // temps CPU du thread au debut du tour (base du terme synthetique)
 	// Budget temps (ns) au bout duquel le compteur synthetique atteint getMaxOperations(). Derive de
@@ -1044,6 +1045,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
+			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
 			if (!winRace(settled, watchdog)) {
 				throw onWallClockTimeout();
 			}
@@ -1222,6 +1224,44 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 		long synthetic = (long) ((double) getMaxOperations() * elapsed / opsBudgetNanos);
 		return real + synthetic;
+	}
+
+	/**
+	 * Operations du tour REPORTEES au moteur (statistiques du combat, ops cumulees de l'entite).
+	 *
+	 * <p>Le compteur HOTE {@code mOperations} ne compte que le travail hote (fonctions de combat +
+	 * facturation des builtins) : pour une IA polyglotte, tout le calcul guest est compte par
+	 * l'instrument de statements, terme ajoute par {@link #getOperations()}. Sans cet override, le
+	 * rapport affichait quelques milliers d'operations pour un tour ou l'IA lisait 10M sur
+	 * {@code System.operations} (issue #4586). On renvoie donc le MEME total que celui vu par l'IA.
+	 *
+	 * <p>La valeur est figee en fin de tour ({@link #snapshotTurnOperations()}) plutot que relue ici :
+	 * le moteur appelle {@code operations()} deux fois apres le tour, et le terme de repli (temps CPU)
+	 * continuerait de grimper entre les deux lectures.
+	 */
+	@Override
+	public long operations() {
+		return turnOperations;
+	}
+
+	/**
+	 * Remise a zero par tour du total reporte, en meme temps que le compteur hote (le moteur appelle
+	 * {@code resetCounter()} au debut de chaque tour / hook) : un tour ou l'IA ne tourne pas
+	 * (neutralisee apres depassements wall-clock) doit reporter 0, pas le total du tour precedent.
+	 */
+	@Override
+	public void resetCounter() {
+		super.resetCounter();
+		turnOperations = 0;
+	}
+
+	/** Fige le total d'operations du tour (guest + hote), lu par le moteur apres le tour. */
+	private void snapshotTurnOperations() {
+		try {
+			turnOperations = getOperations();
+		} catch (Exception e) {
+			turnOperations = super.getOperations();
+		}
 	}
 
 	private LeekRunException mapException(PolyglotException e) {
