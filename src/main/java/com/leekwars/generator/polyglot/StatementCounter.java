@@ -22,7 +22,9 @@ import org.graalvm.options.OptionStability;
 import org.graalvm.polyglot.SandboxPolicy;
 
 /**
- * Instrument Truffle qui compte les statements guest executes. Version SPIKE custom isolate.
+ * Instrument Truffle qui compte les unites de travail guest executees : STATEMENTS + EXPRESSIONS
+ * pour JS (granularite fine, proche du "1 op par operateur" LeekScript), STATEMENTS seulement pour
+ * les autres langages (GraalPy ne tague pas les expressions). Version SPIKE custom isolate.
  *
  * Compile DANS l'image native isolate (via isolate_deps / LW_INSTRUMENT). Le lookup de service
  * hote (engine.getInstruments().get(ID).lookup(Counter.class)) ne traverse PAS la frontiere
@@ -81,14 +83,26 @@ public final class StatementCounter extends TruffleInstrument {
 	@Override
 	protected void onCreate(Env env) {
 		env.registerService(counter);
-		SourceSectionFilter filter = SourceSectionFilter.newBuilder()
-				.tagIs(StandardTags.StatementTag.class)
-				.build();
-		env.getInstrumenter().attachExecutionEventListener(filter, new ExecutionEventListener() {
+		ExecutionEventListener listener = new ExecutionEventListener() {
 			@Override public void onEnter(EventContext context, VirtualFrame frame) { counter.increment(); }
 			@Override public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {}
 			@Override public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {}
-		});
+		};
+		// JS : granularite EXPRESSION (chaque sous-expression executee compte, proche du modele
+		// LeekScript "1 op par operateur" -> facteur de calibration cote generator proche de 1).
+		// Un noeud tague Statement ET Expression n'a qu'un seul probe -> compte UNE fois.
+		SourceSectionFilter jsFilter = SourceSectionFilter.newBuilder()
+				.sourceIs(source -> "js".equals(source.getLanguage()))
+				.tagIs(StandardTags.StatementTag.class, StandardTags.ExpressionTag.class)
+				.build();
+		env.getInstrumenter().attachExecutionEventListener(jsFilter, listener);
+		// Autres langages (Python) : STATEMENTS seulement. GraalPy ne tague pas les expressions
+		// (verifie) ; la fairness inter-langages reste portee par le facteur de calibration hote.
+		SourceSectionFilter defaultFilter = SourceSectionFilter.newBuilder()
+				.sourceIs(source -> !"js".equals(source.getLanguage()))
+				.tagIs(StandardTags.StatementTag.class)
+				.build();
+		env.getInstrumenter().attachExecutionEventListener(defaultFilter, listener);
 		// Publie la facade dans les polyglot bindings de chaque contexte cree (il faut etre
 		// entre dans le contexte pour y acceder). Tente aux deux hooks (creation + init
 		// langage) : le premier qui passe gagne, les erreurs sont loggees (jamais bloquant).

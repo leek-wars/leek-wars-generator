@@ -138,13 +138,14 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * CALIBRATION FAIRNESS INTER-LANGAGES (ops). LeekScript compte des OPERATIONS (granularite
-	 * expression : {@code s += i} ~ 4 ops), l'instrument compte des STATEMENTS (granularite ligne :
-	 * {@code s += i} = 1). Consequence mesuree (TestOpsCalibration) : a travail identique, JS
-	 * consomme ~2x MOINS d'ops que LeekScript et Python ~5x moins -> sans correction, un joueur
-	 * Python fait ~5x plus de calcul par tour a budget egal (avantage de recherche en arene classee).
-	 * On multiplie le terme guest de {@link #getOperations()} par ce facteur pour rendre le compteur
-	 * COMPARABLE entre langages. Compter les expressions serait plus principiel MAIS GraalPy ne tague
-	 * PAS les expressions (verifie) -> le multiplicateur est le seul levier commun.
+	 * expression : {@code s += i} ~ 4 ops). L'instrument compte, pour JS, les STATEMENTS +
+	 * EXPRESSIONS (granularite sous-expression : chaque operateur/lecture/appel d'une ligne
+	 * complexe compte, comme LeekScript) et, pour Python, les STATEMENTS seuls (granularite
+	 * ligne : GraalPy ne tague pas les expressions, verifie -> le multiplicateur reste son seul
+	 * levier). Consequence mesuree (TestOpsCalibration) : a travail identique, JS compte
+	 * ~1.7x PLUS d'evenements que LeekScript d'ops (chaque lecture de variable est un evenement)
+	 * et Python ~5x moins. On multiplie le terme guest de {@link #getOperations()} par ce facteur
+	 * pour rendre le compteur COMPARABLE entre langages.
 	 *
 	 * <p>Facteurs = mediane des workloads combat-typiques (entiers/branches/appels ; le flottant et
 	 * les strings ont un ratio different, non couvrable par une constante). AJUSTABLES (game design) :
@@ -153,7 +154,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private static double opsFactor(String languageId) {
 		switch (languageId) {
 			case "python": return 5.0;
-			case "js":     return 2.0;
+			case "js":     return 0.6; // 1/1.67 : mediane brute x1.67 (image expressions, 2026-07)
 			default:       return 1.0;
 		}
 	}
@@ -768,7 +769,9 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static final String JS_GETOPS_OVERRIDE =
 		"(function(){var f=$F;var c=globalThis.__lw_counter;"
-		+ "var g=function(){return (globalThis.__lw_real||0)+c()*f;};"
+		// Math.floor : meme troncature que l'hote ((long)(compteur * facteur)), sinon un facteur
+		// non entier (0.6) ferait remonter un System.operations flottant.
+		+ "var g=function(){return (globalThis.__lw_real||0)+Math.floor(c()*f);};"
 		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
 		// objects.js (le hook se supprime lui-meme du scope global une fois consomme).
 		+ "if(typeof globalThis.__lw_setOps==='function'){globalThis.__lw_setOps(g);}"
@@ -787,7 +790,8 @@ public class PolyglotEntityAI extends EntityAI {
 		// jour par l'hote chaque sync). L'hote garde son handle instrument (polyglot bindings) pour reset.
 		+ "def _lw_make_getops(_counter, _factor):\n"
 		+ "    def _lw_ops():\n"
-		+ "        return __lw_real + _counter() * _factor\n"
+		// int() : meme troncature que l'hote, cf JS_GETOPS_OVERRIDE
+		+ "        return __lw_real + int(_counter() * _factor)\n"
 		+ "    return _lw_ops\n"
 		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
 		// objects.py sur builtins (le hook se retire de builtins une fois consomme).

@@ -53,7 +53,7 @@ public class TestOpsCalibration extends FightTestBase {
 
 	private long jsOps(PolyglotSandbox sb, String body) {
 		try {
-			PolyglotEntityAI ai = new PolyglotEntityAI("js", "function turn() {\n" + body + "\nreturn getOperations();\n}", sb);
+			PolyglotEntityAI ai = new PolyglotEntityAI("js", "function turn() {\n" + body + "\nreturn System.operations;\n}", sb);
 			ai.setEntity(leek1);
 			ai.setLogs(new LeekLog(farmerLog, leek1));
 			ai.setFight(fight);
@@ -66,7 +66,7 @@ public class TestOpsCalibration extends FightTestBase {
 	private long pyOps(PolyglotSandbox sb, String bodyIndented) {
 		try {
 			PolyglotEntityAI ai = new PolyglotEntityAI("python",
-				"def turn():\n" + bodyIndented + "\n    return getOperations()\n", sb);
+				"def turn():\n" + bodyIndented + "\n    return System.operations\n", sb);
 			ai.setEntity(leek1);
 			ai.setLogs(new LeekLog(farmerLog, leek1));
 			ai.setFight(fight);
