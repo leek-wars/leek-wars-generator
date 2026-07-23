@@ -159,6 +159,10 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 	private final double opsFactor;
+	// Facteur applique par chargeProxy a la facturation des builtins natifs (sort, fill, sum...),
+	// cf le commentaire dans chargeProxy : 1.0 en JS (parite boucle explicite/LeekScript sous la
+	// granularite expression), opsFactor sinon (Python, coherent avec sa granularite ligne).
+	private final double builtinOpsFactor;
 
 	/**
 	 * CALIBRATION FAIRNESS INTER-LANGAGES (RAM). Le cap {@code min(50,RAM)*8Mo} est passe tel quel a
@@ -182,6 +186,7 @@ public class PolyglotEntityAI extends EntityAI {
 		this.fileSystem = fileSystem;
 		this.sandbox = sandbox;
 		this.opsFactor = opsFactor(languageId);
+		this.builtinOpsFactor = "js".equals(languageId) ? 1.0 : this.opsFactor;
 		this.jsModule = entryPath != null && usesEsModules(languageId, source);
 		this.valid = true;
 	}
@@ -863,10 +868,14 @@ public class PolyglotEntityAI extends EntityAI {
 				long n;
 				try { n = args[0].fitsInLong() ? args[0].asLong() : 0L; } catch (Exception e) { n = 0L; }
 				if (n > 0) {
-					// Le travail natif est du travail GUEST : on le scale par opsFactor comme les
-					// statements (cf getOperations), sinon un builtin resterait opsFactor x moins cher
-					// qu'une boucle explicite equivalente.
-					long scaled = (long) Math.min((double) n * opsFactor, Integer.MAX_VALUE);
+					// Facteur BUILTIN, distinct du facteur statements (opsFactor) : l'invariant est
+					// « un builtin coute comme la boucle explicite equivalente du MEME langage, et
+					// comme le builtin LeekScript ». En JS (granularite expression), une boucle
+					// explicite revient a ~1 op/element APRES calibration -> facturer 1.0/element
+					// (scaler par opsFactor=0.6 sous-facturerait les builtins de 40%). En Python
+					// (granularite ligne), la boucle explicite vaut 1 statement x opsFactor/element
+					// -> on garde opsFactor pour rester coherent avec elle.
+					long scaled = (long) Math.min((double) n * builtinOpsFactor, Integer.MAX_VALUE);
 					if (scaled > 0) {
 						try {
 							ops((int) scaled);
