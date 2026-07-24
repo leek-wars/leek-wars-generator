@@ -79,6 +79,20 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Object dObj = eval(sb, "me.cell.distance(Fight.getNearestEnemy());");
 			Object dField = eval(sb, "Field.cellDistance(me.cell, Fight.getNearestEnemy().cell);");
 			Assert.assertEquals(((Number) dField).longValue(), ((Number) dObj).longValue());
+			// #4634 : le genre d'entité est lisible sur l'instance et comparable aux constantes.
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Fight.getNearestEnemy().entityType === Entity.Type.LEEK;"));
+		}
+	}
+
+	@Test
+	public void entityTypeReadableOnInstances() throws Exception {
+		// #4634 : `enemy.Type` (namespace de constantes) n'est pas le genre de l'entité ;
+		// c'est `enemy.entityType` qui le porte, dans les deux langages.
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "me.entityType === Entity.Type.LEEK;"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Fight.getNearestEnemy().entityType == Entity.Type.LEEK"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "me.entityType == Entity.Type.LEEK"));
 		}
 	}
 

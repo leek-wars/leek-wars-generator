@@ -232,6 +232,9 @@
 	// ---- Entity : n'importe quelle entité (lecture d'état) ----
 	class Entity {
 		constructor(id) { this.id = id; }
+		// Genre d'entité (Entity.Type.LEEK/BULB/TURRET/CHEST/MOB), cf #4634. Ne pas
+		// confondre avec .type des sous-classes (sous-variante : Bulb.Type.*, etc.).
+		get entityType() { return F.getType(this.id); }
 		get life() { return F.getLife(this.id); }
 		get maxLife() { return F.getTotalLife(this.id); }
 		get tp() { return F.getTP(this.id); }

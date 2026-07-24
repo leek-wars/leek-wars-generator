@@ -294,6 +294,10 @@ def _lw_build(G, NAMES):
 
     class Entity(_ReadOnly):
         def __init__(self, id): object.__setattr__(self, 'id', id)
+        # Genre d'entite (Entity.Type.LEEK/BULB/TURRET/CHEST/MOB), cf #4634. Ne pas
+        # confondre avec .type des sous-classes (sous-variante : Bulb.Type.*, etc.).
+        @property
+        def entityType(self): return F.getType(self.id)
         @property
         def life(self): return F.getLife(self.id)
         @property
