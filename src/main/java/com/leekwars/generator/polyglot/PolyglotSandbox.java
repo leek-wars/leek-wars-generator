@@ -52,8 +52,14 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * Limite memoire TOTALE de l'isolate (par langage), en octets : adresse RESERVEE, committee a la
 	 * demande. Doit couvrir la somme des caps par-poireau (jusqu'a ~8 entites qui RETIENNENT leur RAM
 	 * entre tours) + l'overhead runtime GraalJS/GraalPy. TODO calibrer vs le nombre d'entites max.
+	 *
+	 * <p>Configurable par env POLYGLOT_MAX_ISOLATE_MB (#4631) : l'Engine statique partage vit au
+	 * plafond de son isolate (les contextes fermes ne sont recuperes que sous pression), donc ce
+	 * plafond doit etre dimensionne par PROCESSUS HOTE. Worker (28 Go) : defaut 4000. Daemon (4 Go,
+	 * -Xmx3g) : 512 via son Dockerfile, sinon les isolates le tuent par le cgroup.
 	 */
-	private static final long MAX_ISOLATE_MEMORY = 4_000_000_000L;
+	private static final long MAX_ISOLATE_MEMORY = Long.parseLong(
+		System.getenv().getOrDefault("POLYGLOT_MAX_ISOLATE_MB", "4000")) * 1_000_000L;
 
 	/** Cap RAM par defaut par contexte (par poireau) si non fourni (probes de validation), en octets. */
 	private static final long DEFAULT_MAX_HEAP_MEMORY = 100_000_000L;
