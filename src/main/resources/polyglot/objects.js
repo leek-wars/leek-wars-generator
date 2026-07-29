@@ -436,8 +436,11 @@
 		get type() { return F.getMapType(); },
 		cellFromXY: function (x, y) { var c = F.getCellFromXY(x, y); return cell(c); },
 		getObstacles: function () { return cells(F.getObstacles()); },
-		distance: function (a, b) { return F.getDistance(cid(a), cid(b)); },
+		// Distance en nombre de cases, comme Cell.distance et Entity.distance (alias : cellDistance).
+		distance: function (a, b) { return F.getCellDistance(cid(a), cid(b)); },
 		cellDistance: function (a, b) { return F.getCellDistance(cid(a), cid(b)); },
+		// Distance à vol d'oiseau (réel), l'ancien getDistance.
+		euclideanDistance: function (a, b) { return F.getDistance(cid(a), cid(b)); },
 		pathLength: function (a, b, ignored) { return ignored === undefined ? F.getPathLength(cid(a), cid(b)) : F.getPathLength(cid(a), cid(b), cidList(ignored)); },
 		lineOfSight: function (a, b, ignoredEntities) { return ignoredEntities === undefined ? F.lineOfSight(cid(a), cid(b)) : F.lineOfSight(cid(a), cid(b), unwrap(ignoredEntities)); },
 		onSameLine: function (a, b) { return F.isOnSameLine(cid(a), cid(b)); },

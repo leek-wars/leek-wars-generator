@@ -85,6 +85,30 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	@Test
+	public void fieldDistanceIsCellDistance() throws Exception {
+		// #4668 : Field.distance renvoyait le vol d'oiseau (réel) alors que Cell.distance et
+		// Entity.distance comptent des cases. Field.distance == cellDistance dans les deux langages,
+		// le vol d'oiseau vit désormais dans Field.euclideanDistance (et reste <= la distance en cases).
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"var e = Fight.getNearestEnemy();"
+				+ " Field.distance(me.cell, e.cell) === Field.cellDistance(me.cell, e.cell)"
+				+ " && Field.distance(me.cell, e.cell) === me.cell.distance(e);"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"var e = Fight.getNearestEnemy();"
+				+ " Field.euclideanDistance(me.cell, e.cell) <= Field.distance(me.cell, e.cell);"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"Field.distance(me.cell, Fight.getNearestEnemy().cell)"
+				+ " == Field.cellDistance(me.cell, Fight.getNearestEnemy().cell)"
+				+ " == me.cell.distance(Fight.getNearestEnemy())"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"Field.euclideanDistance(me.cell, Fight.getNearestEnemy().cell)"
+				+ " <= Field.distance(me.cell, Fight.getNearestEnemy().cell)"));
+		}
+	}
+
+	@Test
 	public void entityTypeReadableOnInstances() throws Exception {
 		// #4634 : `enemy.Type` (namespace de constantes) n'est pas le genre de l'entité ;
 		// c'est `enemy.entityType` qui le porte, dans les deux langages.

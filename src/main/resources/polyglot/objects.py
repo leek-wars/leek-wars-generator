@@ -555,8 +555,11 @@ def _lw_build(G, NAMES):
             c = F.getCellFromXY(x, y)
             return _cell(c)
         def getObstacles(self): return _cells(F.getObstacles())
-        def distance(self, a, b): return F.getDistance(_cid(a), _cid(b))
+        # Distance en nombre de cases, comme Cell.distance et Entity.distance (alias : cellDistance).
+        def distance(self, a, b): return F.getCellDistance(_cid(a), _cid(b))
         def cellDistance(self, a, b): return F.getCellDistance(_cid(a), _cid(b))
+        # Distance a vol d'oiseau (reel), l'ancien getDistance.
+        def euclideanDistance(self, a, b): return F.getDistance(_cid(a), _cid(b))
         def pathLength(self, a, b, ignored=None):
             return F.getPathLength(_cid(a), _cid(b)) if ignored is None else F.getPathLength(_cid(a), _cid(b), _cidlist(ignored))
         def lineOfSight(self, a, b, ignoredEntities=None):
