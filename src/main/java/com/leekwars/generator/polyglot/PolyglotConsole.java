@@ -132,6 +132,14 @@ public class PolyglotConsole implements AutoCloseable {
 			return new Result(display, ops);
 		} catch (PolyglotException e) {
 			throw new ConsoleException(formatError(e), readCounter() - before);
+		} catch (Throwable t) {
+			// Cf PolyglotSandbox.isMemoryExhaustion : un depassement du cap RAM peut remonter en
+			// Throwable BRUT (CancelExecution Truffle, hors taxonomie PolyglotException). Sans ce filet
+			// il traverserait le daemon au lieu de rendre une erreur de console au joueur.
+			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
+				throw t;
+			}
+			throw new ConsoleException("Execution interrupted (memory limit)", readCounter() - before);
 		} finally {
 			deadline.cancel(false);
 		}

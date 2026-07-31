@@ -58,11 +58,69 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * plafond doit etre dimensionne par PROCESSUS HOTE. Worker (28 Go) : defaut 4000. Daemon (4 Go,
 	 * -Xmx3g) : 512 via son Dockerfile, sinon les isolates le tuent par le cgroup.
 	 */
-	private static final long MAX_ISOLATE_MEMORY = Long.parseLong(
-		System.getenv().getOrDefault("POLYGLOT_MAX_ISOLATE_MB", "4000")) * 1_000_000L;
+	private static final long MAX_ISOLATE_MEMORY = envMegabytes("POLYGLOT_MAX_ISOLATE_MB", 4000);
+
+	/** Lit un budget memoire en Mo depuis l'environnement (recalibrage prod sans rebuild), en OCTETS. */
+	public static long envMegabytes(String variable, long defaultMb) {
+		return Long.parseLong(System.getenv().getOrDefault(variable, String.valueOf(defaultMb))) * 1_000_000L;
+	}
 
 	/** Cap RAM par defaut par contexte (par poireau) si non fourni (probes de validation), en octets. */
 	private static final long DEFAULT_MAX_HEAP_MEMORY = 100_000_000L;
+
+	/** Fragment stable du message GraalVM de depassement de {@code sandbox.MaxHeapMemory}. */
+	private static final String HEAP_LIMIT_MARKER = "heap memory limit";
+	/**
+	 * Nom du type d'erreur GUEST leve par GraalPy quand une allocation Python echoue (cap RAM du
+	 * contexte ou memoire de l'isolate epuisee), cf {@link #isGuestOutOfMemoryMessage}.
+	 */
+	private static final String PYTHON_OOM_TYPE = "MemoryError";
+	/** Garde-fou de traversee de la chaine de causes (cf {@link #isMemoryExhaustion}). */
+	private static final int MAX_CAUSE_DEPTH = 32;
+
+	/**
+	 * Vrai si ce throwable (ou une de ses causes) est un depassement du cap RAM guest
+	 * ({@code sandbox.MaxHeapMemory}), quelle que soit sa forme.
+	 *
+	 * <p>GraalVM remonte ce depassement sous DEUX formes selon l'endroit ou il survient : une
+	 * {@code PolyglotException} "resource exhausted" quand il casse un {@code eval} du tour, mais un
+	 * {@code PolyglotEngineImpl$CancelExecution} BRUT (classe interne Truffle, non convertie, et qui
+	 * n'herite PAS de PolyglotException) quand il casse le setup du contexte. Sans ce test sur le
+	 * MESSAGE, la seconde forme traversait tout PolyglotEntityAI, ressortait en
+	 * "Erreur importante dans l'IA" cote EntityAI, faisait planter le combat et remontait un rapport
+	 * d'erreur SERVEUR pour ce qui est une erreur JOUEUR (constate en prod 2026-07).
+	 */
+	public static boolean isMemoryExhaustion(Throwable t) {
+		// Profondeur bornee : une chaine de causes cyclique (un throwable qui se declare sa propre
+		// cause, ou un cycle a plusieurs maillons) ferait boucler la traversee a l'infini, dans un
+		// chemin de gestion d'erreur ou l'on ne peut se permettre de bloquer le combat.
+		Throwable cause = t;
+		for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
+			String message = cause.getMessage();
+			if (message != null && message.contains(HEAP_LIMIT_MARKER)) {
+				return true;
+			}
+			cause = cause.getCause();
+		}
+		return false;
+	}
+
+	/**
+	 * Vrai si ce message d'erreur GUEST est un epuisement memoire (Python {@code MemoryError}).
+	 *
+	 * <p>TROISIEME forme du meme epuisement : quand l'allocation qui echoue est faite par GraalPy
+	 * lui-meme, il leve un MemoryError Python ordinaire plutot que de laisser Truffle annuler le
+	 * contexte. Elle ne coche donc AUCUN predicat GraalVM (ni resource exhausted, ni cancelled) et
+	 * n'a pas le marqueur de {@link #isMemoryExhaustion} : sans ce tri elle tombait dans le
+	 * fourre-tout AI_INTERRUPTED, sans fermeture du contexte, et l'IA repartait re-saturer au tour
+	 * suivant (prod 2026-07 : 64 rapports en une semaine, tous sur le prelude d'import Python).
+	 *
+	 * <p>startsWith et non contains : le message d'une erreur guest est {@code "<Type>: <message>"},
+	 * on veut le TYPE leve, pas un code joueur qui mentionnerait MemoryError dans son propre message.
+	 */
+	public static boolean isGuestOutOfMemoryMessage(String message) {
+		return message != null && message.startsWith(PYTHON_OOM_TYPE);
+	}
 
 	// Limites exigees par SandboxPolicy.ISOLATED, posees GENEREUSEMENT : le vrai backstop reste le
 	// watchdog wall-clock de PolyglotEntityAI + le cap RAM par poireau. Regroupees ici (memes knobs

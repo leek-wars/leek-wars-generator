@@ -309,18 +309,14 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	}
 
 	/**
-	 * Poireau bas niveau (RAM 6 -> cap guest ~12,6 Mo avant fix) : la machinerie d'import GraalPy
+	 * Poireau bas niveau (RAM 6 -> cap guest ~12,6 Mo avant plancher) : la machinerie d'import GraalPy
 	 * explosait le cap heap sur un simple {@code import voisin} alors que le mono-fichier passait.
-	 * Le plancher Python de 32 Mo doit laisser passer l'import (#3179).
+	 * Le plancher Python doit laisser passer l'import (#3179).
 	 */
 	@Test
 	public void pythonMultiFileImportFitsLowLevelRamCap() throws Exception {
 		initFightOnly();
-		Leek small = new Leek(3, "Small", 0, 1, 100, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 6, 0, false, 0, 0, "", 0, "", "", "", 0);
-		small.setFight(fight);
-		// Enregistre l'entite dans l'etat : Fight.me resout par fid (contrairement a l'ancien
-		// getLife() 0-arg qui lisait l'entite directement), un fid non attribue viserait leek1.
-		fight.getState().addEntity(1, small);
+		Leek small = lowRamLeek();
 		Map<String, String> files = new HashMap<>();
 		files.put("strategie.py", "def pick():\n    return 42\n");
 		files.put("main.py", "import strategie\ndef turn():\n    return strategie.pick() + Fight.me.life\n");
@@ -328,6 +324,41 @@ public class TestPolyglotMultiFile extends FightTestBase {
 			long r = ((Number) multiFileAI(sb, "python", files, "main.py", small).runIA()).longValue();
 			Assert.assertEquals(42 + small.getLife(), r);
 		}
+	}
+
+	/**
+	 * Meme garde que ci-dessus, mais entree en SOUS-DOSSIER : la forme signalee en prod (2026-07, deux
+	 * joueurs annules a 33554432 octets des le setup du contexte sur du code trivial, dont un sur
+	 * {@code leek-war-scripts/basic.py}). Cumule les deux conditions du signalement, poireau bas
+	 * niveau ET entree en sous-dossier.
+	 *
+	 * <p>HONNETETE : ce cas minimal passait DEJA au plancher de 32 Mo en local (verifie en abaissant
+	 * temporairement la constante ; il ne casse qu'a 8 Mo). Il ne reproduit donc pas le franchissement
+	 * observe en prod, ou le vrai code joueur et l'etat de combat reel allouent davantage. Il garde le
+	 * chemin, pas le seuil.
+	 */
+	@Test
+	public void pythonSubfolderImportFitsLowLevelRamCap() throws Exception {
+		initFightOnly();
+		Leek small = lowRamLeek();
+		Map<String, String> files = new HashMap<>();
+		files.put("leek-war-scripts/strategie.py", "def pick():\n    return 42\n");
+		files.put("leek-war-scripts/basic.py", "import strategie\ndef turn():\n    return strategie.pick() + Fight.me.life\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "leek-war-scripts/basic.py", small).runIA()).longValue();
+			Assert.assertEquals(42 + small.getLife(), r);
+		}
+	}
+
+	/** Poireau RAM 6 enregistre dans l'etat : Fight.me resout par fid, un fid non attribue viserait leek1. */
+	private Leek lowRamLeek() {
+		// defaultLeek plutot qu'un 26e appel positionnel a new Leek(...) : le seul stat qui compte ici
+		// est la RAM, et il devient lisible au lieu d'etre le 16e argument d'une liste anonyme.
+		Leek small = defaultLeek(3, "Small");
+		small.setRAM(6);
+		small.setFight(fight);
+		fight.getState().addEntity(1, small);
+		return small;
 	}
 
 	@Test

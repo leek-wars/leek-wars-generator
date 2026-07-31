@@ -47,6 +47,12 @@ public class TestPolyglotRamLimit {
 				Assert.fail("le poireau glouton aurait du etre annule par MaxHeapMemory");
 			} catch (PolyglotException e) {
 				Assert.assertTrue("annulation ressource attendue", e.isResourceExhausted() || e.isCancelled());
+				// Epingle le marqueur de message contre les montees de version GraalVM : c'est lui qui
+				// reconnait les formes que les predicats ci-dessus ne signalent PAS (cf
+				// PolyglotSandbox.isMemoryExhaustion). S'il se reformule, ce test le dit ici plutot que
+				// la prod par des rapports d'erreur serveur.
+				Assert.assertTrue("le marqueur de message doit suivre le vrai message GraalVM : " + e.getMessage(),
+						PolyglotSandbox.isMemoryExhaustion(e));
 			}
 			// Un AUTRE poireau sur le meme sandbox (meme isolate) survit : isolation par-poireau.
 			Context nice = sb.createContext(lang, null, 32_000_000L);

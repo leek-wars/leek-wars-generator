@@ -174,6 +174,29 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static final double RAM_FACTOR = 3.8;
 
+	/**
+	 * PLANCHER de cap RAM guest pour Python, en octets (cf ensureContext). La machinerie d'import de
+	 * GraalPy (importlib + FileFinder sur le FS custom) et le prelude de determinisme allouent
+	 * plusieurs Mo AVANT la premiere ligne du joueur : sous ce plancher, un poireau bas niveau
+	 * (RAM 6 -> cap derive ~12.6 Mo) est annule sur du code trivial.
+	 *
+	 * <p>HISTORIQUE : 32 Mo, valeur mesuree "confortable" par TestPolyglotMultiFile. Le terrain a
+	 * dementi (prod 2026-07 : deux joueurs annules a 33554432 octets des le setup du contexte, sur du
+	 * code trivial, dont un inscrit de la semaine). ATTENTION : la marche exacte qui fait franchir
+	 * 32 Mo en prod n'est PAS reproduite par les tests (les cas minimaux passent encore a 32 Mo
+	 * localement, cf TestPolyglotMultiFile) : le vrai code joueur et l'etat de combat reel allouent
+	 * plus que le harnais. On ne calibre donc pas au plus juste, on prend de la marge : 64 Mo, et
+	 * configurable par env pour recalibrer en prod sans rebuild (meme knob que
+	 * POLYGLOT_MAX_ISOLATE_MB). 8 poireaux Python d'un combat au plancher = 512 Mo, tiennent
+	 * largement sous l'isolate du worker (4000 Mo). Le filet durable reste le mapping en
+	 * OUT_OF_MEMORY (cf isMemoryExhaustion) : ou que soit le seuil, le depassement est desormais une
+	 * erreur joueur lisible et non un plantage de combat.
+	 */
+	private static final long PYTHON_MIN_HEAP_BYTES = PolyglotSandbox.envMegabytes("POLYGLOT_PYTHON_MIN_HEAP_MB", 64);
+
+	/** Plancher de cap RAM guest pour les autres langages (JS/TS), en octets : runtime bien plus leger. */
+	private static final long DEFAULT_MIN_HEAP_BYTES = 8_000_000L;
+
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
 	}
@@ -491,25 +514,32 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	private void ensureContext() {
-		if (context == null) {
-			// Budgets calques sur le pipeline LeekScript (cf EntityAI.build) : RAM pour les
-			// LeekValue alloues cote hote, ops pour borner le travail hote des fonctions de combat.
-			setMaxRAM(Math.min(50, mEntity.getRAM()) * 8_000_000);
-			setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mEntity.getCores() * 1_000_000));
-			// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
-			// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
-			// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
-			// Cap RAM RETENUE du guest (par poireau, sandbox.MaxHeapMemory, en OCTETS) = budget RAM
-			// de l'entite DIVISE par RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de
-			// donnees que le mRAM LeekScript (TestRamCalibration) -> on divise pour la parite (cf
-			// RAM_FACTOR). Plancher a 8 Mo pour ne jamais etouffer un contexte legitime.
-			// Plancher PYTHON plus haut : la machinerie d'import de GraalPy (importlib + FileFinder
-			// sur le FS custom) alloue plusieurs Mo -> sous ~13 Mo (poireau bas niveau, RAM 6) un
-			// simple `import voisin` explosait le cap ("Maximum heap memory limit exceeded") alors
-			// que le mono-fichier passait. 32 Mo mesure confortable (TestPolyglotMultiFile).
-			long floor = "python".equals(languageId) ? 32_000_000L : 8_000_000L;
-			long guestRamCap = Math.max(floor, (long) (getMaxRAM() / RAM_FACTOR));
-			context = sandbox.createContext(languageId, fileSystem, guestRamCap);
+		if (context != null) {
+			return;
+		}
+		// Budgets calques sur le pipeline LeekScript (cf EntityAI.build) : RAM pour les
+		// LeekValue alloues cote hote, ops pour borner le travail hote des fonctions de combat.
+		setMaxRAM(Math.min(50, mEntity.getRAM()) * 8_000_000);
+		setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mEntity.getCores() * 1_000_000));
+		// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
+		// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
+		// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
+		// Cap RAM RETENUE du guest (par poireau, sandbox.MaxHeapMemory, en OCTETS) = budget RAM
+		// de l'entite DIVISE par RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de
+		// donnees que le mRAM LeekScript (TestRamCalibration) -> on divise pour la parite (cf
+		// RAM_FACTOR), avec un plancher par langage pour ne jamais etouffer un contexte legitime
+		// (cf PYTHON_MIN_HEAP_BYTES / DEFAULT_MIN_HEAP_BYTES).
+		long floor = "python".equals(languageId) ? PYTHON_MIN_HEAP_BYTES : DEFAULT_MIN_HEAP_BYTES;
+		long guestRamCap = Math.max(floor, (long) (getMaxRAM() / RAM_FACTOR));
+		context = sandbox.createContext(languageId, fileSystem, guestRamCap);
+		// TOUT-OU-RIEN : si le setup echoue en cours de route (typiquement le cap RAM sature par
+		// l'import Python du prelude), le contexte a demi construit ne doit PAS rester en place.
+		// Sinon le tour suivant le retrouve non-null, saute ce bloc, et fait tourner le code du
+		// joueur sans les gardes manquantes : plus de determinisme (random/horloge reels ->
+		// re-simulation divergente), plus de facturation des builtins, et pour Python /ai jamais
+		// monte (imports du joueur casses). On ferme donc et on relaie l'erreur, que runIA
+		// traduit en erreur JOUEUR ; le tour suivant repartira d'un contexte neuf.
+		try {
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
 			// Compteur de statements deterministe de l'image custom, lie a CE contexte (refetche
@@ -526,6 +556,9 @@ public class PolyglotEntityAI extends EntityAI {
 				guestBindings = null;
 				removeUnusedOpsHook();
 			}
+		} catch (Throwable t) {
+			closeContext();
+			throw t;
 		}
 	}
 
@@ -974,12 +1007,26 @@ public class PolyglotEntityAI extends EntityAI {
 			return null; // IA neutralisee (trop de depassements wall-clock) : n'agit plus, ne consomme plus.
 		}
 		markTurnStart(); // bases (temps mur + temps CPU) du terme d'ops synthetique, cf getOperations
-		ensureContext();
-		resetStatementCounter(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
-		syncRealToGuest(); // remet a 0 le miroir __lw_real (mOperations vient d etre reset par runTurn)
-		// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
-		// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
-		context.resetLimits();
+		// SETUP DU TOUR, hors du try/watchdog ci-dessous mais tout aussi faillible : la construction du
+		// contexte (createContext + bridge + prelude de determinisme) peut saturer le cap RAM guest AVANT
+		// la premiere ligne du joueur, surtout en Python (importlib). Sans ce mapping, l'annulation
+		// remontait BRUTE jusqu'a EntityAI -> combat plante + rapport d'erreur serveur, pour une erreur
+		// qui appartient au joueur. On la traduit ici comme n'importe quelle limite atteinte en cours de tour.
+		try {
+			ensureContext();
+			resetStatementCounter(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
+			syncRealToGuest(); // remet a 0 le miroir __lw_real (mOperations vient d etre reset par runTurn)
+			// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
+			// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
+			context.resetLimits();
+		} catch (PolyglotException e) {
+			throw mapException(e);
+		} catch (Throwable t) {
+			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
+				throw t; // erreur moteur inconnue : on ne la masque pas
+			}
+			throw outOfMemory();
+		}
 
 		// Garde-fou wall-clock : un tour qui depasse l'echeance (typiquement du travail natif que le
 		// statement limit ne compte pas, ex: 'x'*10**9) est coupe. Le watchdog et le tour se disputent un
@@ -1050,6 +1097,14 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!initialized) closeContext();
 			LeekRunException unwrapped = unwrapLeekRunException(e);
 			throw unwrapped != null ? unwrapped : new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
+		} catch (Throwable t) {
+			// Depassement du cap RAM remonte en Throwable BRUT (CancelExecution Truffle, hors taxonomie
+			// PolyglotException/RuntimeException) : erreur JOUEUR, on la traduit. Tout le reste (dont
+			// StackOverflowError, traite par EntityAI) est relance tel quel : le finally resout la course.
+			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
+				throw t;
+			}
+			throw outOfMemory();
 		} finally {
 			// Resolution UNIQUE de la course, pour TOUTE sortie du tour : succes, exception verifiee
 			// (LeekRunException du marshalling/chargement, non capturee ci-dessus), erreur hote, ET
@@ -1115,11 +1170,6 @@ public class PolyglotEntityAI extends EntityAI {
 			return null;
 		}
 		markTurnStart();
-		resetStatementCounter();
-		syncRealToGuest();
-		// Contexte reutilise entre tours (statement limit cumulatif) : on remet le budget a zero pour le
-		// tour du bulbe, exactement comme runIA pour un tour normal.
-		context.resetLimits();
 
 		final Context running = context;
 		final AtomicBoolean settled = new AtomicBoolean(false);
@@ -1129,6 +1179,13 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 		}, turnWallClockLimitMs);
 		try {
+			// Setup DANS le try, comme runIA : lui aussi peut echouer sur une limite atteinte, et une
+			// annulation qui s'echapperait d'ici planterait le combat au lieu d'etre une erreur joueur.
+			resetStatementCounter();
+			syncRealToGuest();
+			// Contexte reutilise entre tours (statement limit cumulatif) : on remet le budget a zero pour le
+			// tour du bulbe, exactement comme runIA pour un tour normal.
+			context.resetLimits();
 			// HostAccess.NONE ne gene PAS un appel host -> guest d'une Value executable (il ne gate que
 			// l'acces du guest aux objets hote) ; cf entry.execute() de runIA, meme contexte.
 			Value value = (guestArgs == null || guestArgs.length == 0) ? fn.execute() : fn.execute(guestArgs);
@@ -1138,6 +1195,12 @@ public class PolyglotEntityAI extends EntityAI {
 		} catch (RuntimeException e) {
 			LeekRunException unwrapped = unwrapLeekRunException(e);
 			throw unwrapped != null ? unwrapped : new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
+		} catch (Throwable t) {
+			// Cf runIA : cap RAM depasse remonte hors taxonomie -> erreur joueur, pas erreur moteur.
+			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
+				throw t;
+			}
+			throw outOfMemory();
 		} finally {
 			if (!winRace(settled, watchdog)) {
 				throw onWallClockTimeout();
@@ -1277,7 +1340,20 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 
+	/** Cap RAM guest sature : contexte ferme (le tour suivant en reconstruit un neuf), erreur JOUEUR. */
+	private LeekRunException outOfMemory() {
+		closeContext();
+		return new LeekRunException(Error.OUT_OF_MEMORY);
+	}
+
 	private LeekRunException mapException(PolyglotException e) {
+		// RAM saturee, sous l'une ou l'autre de ses formes. La confondre avec la limite d'operations
+		// affichait "trop d'operations" a un joueur qui avait en fait sature sa RAM : message trompeur,
+		// et l'IA repartait au tour suivant pour re-saturer aussitot. OUT_OF_MEMORY dit la verite et
+		// EntityAI.handleLeekRunException coupe l'IA pour le combat (parite LeekScript).
+		if (PolyglotSandbox.isMemoryExhaustion(e) || (e.isGuestException() && PolyglotSandbox.isGuestOutOfMemoryMessage(e.getMessage()))) {
+			return outOfMemory();
+		}
 		// Limite atteinte : le contexte passe en etat "cancelled", son close() auto relancerait
 		// l'exception -> on le ferme defensivement ici (le prochain tour en reconstruira un neuf).
 		if (e.isResourceExhausted() || e.isCancelled()) {
