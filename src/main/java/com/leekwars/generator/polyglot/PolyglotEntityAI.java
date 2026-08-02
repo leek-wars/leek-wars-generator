@@ -89,6 +89,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private final PolyglotFileSystem fileSystem; // fichiers du joueur montes (null = mono-fichier)
 	private final boolean jsModule;            // entree JS chargee comme module ES
 	private Context context;
+	private int contextGeneration;             // incremente a chaque fermeture : date les Value guest capturees
 	private boolean initialized;
 	private Value entry;                       // fonction turn() si definie
 	private Value jsModuleNamespace;           // namespace du module ES (exports), pour resoudre `export function turn()`
@@ -1159,14 +1160,15 @@ public class PolyglotEntityAI extends EntityAI {
 	 * moment {@code mEntity} pointe deja sur le bulbe (BulbAI.runIA), donc {@code getEntity()} (et {@code me}
 	 * une fois rendu dynamique) renvoie le bulbe.
 	 *
-	 * @param fn        la fonction guest a rejouer (liee au contexte de l'invocateur).
-	 * @param guestArgs arguments deja marshalles Java -&gt; guest (null/vide pour le callback de summon).
+	 * @param fn         la fonction guest a rejouer (liee au contexte de l'invocateur).
+	 * @param guestArgs  arguments deja marshalles Java -&gt; guest (null/vide pour le callback de summon).
+	 * @param generation {@link #contextGeneration} au moment ou {@code fn} a ete capturee.
 	 * @return la valeur de retour marshallee guest -&gt; Java, ou {@code null} si l'IA est neutralisee, le
 	 *         contexte ferme, ou le callback n'est plus executable (degradation gracieuse : le bulbe cesse
 	 *         d'agir, le combat continue).
 	 */
-	Object runGuestCallback(Value fn, Object[] guestArgs) throws LeekRunException {
-		if (disabled || context == null || fn == null || !fn.canExecute()) {
+	Object runGuestCallback(Value fn, Object[] guestArgs, int generation) throws LeekRunException {
+		if (disabled || context == null || fn == null || isUnusableCallback(fn, generation)) {
 			return null;
 		}
 		markTurnStart();
@@ -1206,6 +1208,38 @@ public class PolyglotEntityAI extends EntityAI {
 				throw onWallClockTimeout();
 			}
 		}
+	}
+
+	/**
+	 * Vrai si ce callback ne peut plus etre rejoue : Value PERIMEE, ou simplement pas executable.
+	 *
+	 * <p>Perimee : la Value est liee AU CONTEXTE qui l'a produite, or le callback d'un bulbe SURVIT a ce
+	 * contexte — l'invocateur en reconstruit un neuf apres toute fermeture (limite d'ops atteinte,
+	 * depassement wall-clock, cap RAM sature, cf {@link #closeContext}). L'executer viserait alors un
+	 * contexte MORT pendant que les gardes du tour (resetLimits, watchdog) visent le neuf. Deux
+	 * detecteurs pour ce meme fait : la GENERATION date la Value (toute fermeture par closeContext
+	 * l'incremente), et l'interrogation gardee rattrape les contextes fermes sans elle (fin de combat par
+	 * {@link PolyglotSandbox#close()}, Value d'origine externe) : sur une Value morte {@code canExecute()}
+	 * LEVE ({@link PolyglotException} "Context execution was cancelled" si le contexte a ete annule par
+	 * une limite, {@link IllegalStateException} s'il est ferme), ce qu'on traite comme la reponse "plus
+	 * executable" qu'elle signifie. Sans cela l'exception traversait BulbAI, ressortait en erreur INCONNUE
+	 * cote EntityAI et produisait un rapport d'erreur SERVEUR pour une situation normale du cote joueur
+	 * (prod 2026-08, #4691).
+	 */
+	private boolean isUnusableCallback(Value fn, int generation) {
+		if (generation != contextGeneration) {
+			return true;
+		}
+		try {
+			return !fn.canExecute();
+		} catch (PolyglotException | IllegalStateException stale) {
+			return true;
+		}
+	}
+
+	/** Date des Value guest capturees sur le contexte courant, cf {@link #runGuestCallback}. */
+	int contextGeneration() {
+		return contextGeneration;
 	}
 
 	/** Regle le backstop wall-clock par tour (defaut {@value #DEFAULT_TURN_WALL_CLOCK_LIMIT_MS} ms). */
@@ -1401,13 +1435,16 @@ public class PolyglotEntityAI extends EntityAI {
 			// chaque tour...) s'accumulerait dans la liste pour tout le combat (retention memoire).
 			sandbox.forgetContext(context);
 			context = null;
+			contextGeneration++; // toute Value capturee sur ce contexte (callback de bulbe) est desormais perimee
 			statementCounter = null; // binding lie au contexte ferme ; refetche par ensureContext
 			guestBindings = null;
 		}
 		// Le prochain ensureContext reconstruira un contexte neuf : on re-evaluera le source
-		// (entry pointait vers l'ancien contexte ferme).
+		// (entry et le namespace du module pointaient vers l'ancien contexte ferme ; garder ce dernier
+		// ferait lire ses exports via getMember sur un contexte mort -> IllegalStateException).
 		initialized = false;
 		entry = null;
+		jsModuleNamespace = null;
 	}
 
 	/** A appeler en fin de combat pour liberer le contexte (sinon ferme par PolyglotSandbox.close). */

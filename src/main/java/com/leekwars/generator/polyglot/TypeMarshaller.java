@@ -102,6 +102,9 @@ public final class TypeMarshaller {
 	 */
 	public static FunctionLeekValue<Object> wrapGuestFunction(Value fn, AI owner) {
 		final PolyglotEntityAI polyglotOwner = (owner instanceof PolyglotEntityAI) ? (PolyglotEntityAI) owner : null;
+		// Date du contexte qui porte `fn` : le callback survit aux reconstructions de contexte de
+		// l'invocateur, qui le perimeent (cf PolyglotEntityAI#isUnusableCallback).
+		final int generation = (polyglotOwner == null) ? 0 : polyglotOwner.contextGeneration();
 		// parametersCount = 0 : le callback de summon est appele sans argument (BulbAI borne argCount a
 		// getArgumentsCount()==-1?0 et passe un Object[] de nulls). Cf BulbAI.runIA.
 		return new FunctionLeekValue<Object>(0, "#guestSummonCallback") {
@@ -115,7 +118,7 @@ public final class TypeMarshaller {
 					}
 				}
 				if (polyglotOwner != null) {
-					return polyglotOwner.runGuestCallback(fn, guestArgs);
+					return polyglotOwner.runGuestCallback(fn, guestArgs, generation);
 				}
 				// Inatteignable (une fonction guest ne peut venir que d'un contexte polyglot) : execution
 				// non gardee en dernier recours, en deballant une eventuelle LeekRunException encapsulee.

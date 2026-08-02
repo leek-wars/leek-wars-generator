@@ -1,5 +1,8 @@
 package test;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Value;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -7,10 +10,12 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotSandbox;
+import com.leekwars.generator.polyglot.TypeMarshaller;
 import com.leekwars.generator.state.Entity;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
+import leekscript.runner.values.FunctionLeekValue;
 
 /**
  * API de combat ORIENTÉE OBJET (tranche 1 : me / Entity / Cell / Fight) pour les IA polyglot.
@@ -55,13 +60,18 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		fight.getState().addEntity(1, leek2);
 	}
 
-	private Object eval(PolyglotSandbox sb, String src) throws Exception {
-		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté) avant le snippet.
-		PolyglotEntityAI ai = new PolyglotEntityAI("js", "var me = Fight.me; " + src, sb);
+	/** IA polyglot câblée comme en combat (entité, logs, combat), prête à jouer un tour. */
+	private PolyglotEntityAI newAI(PolyglotSandbox sb, String language, String source) {
+		PolyglotEntityAI ai = new PolyglotEntityAI(language, source, sb);
 		ai.setEntity(leek1);
 		ai.setLogs(new LeekLog(farmerLog, leek1));
 		ai.setFight(fight);
-		return ai.runIA();
+		return ai;
+	}
+
+	private Object eval(PolyglotSandbox sb, String src) throws Exception {
+		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté) avant le snippet.
+		return newAI(sb, "js", "var me = Fight.me; " + src).runIA();
 	}
 
 	@Test
@@ -123,20 +133,12 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	/** Comme evalPy, mais le corps de turn() est fourni tel quel (indenté) : permet un try/except, qui
 	 *  n'existe pas sous forme d'expression en Python. */
 	private Object evalPyBody(PolyglotSandbox sb, String body) throws Exception {
-		PolyglotEntityAI ai = new PolyglotEntityAI("python", "me = Fight.me\ndef turn():\n" + body, sb);
-		ai.setEntity(leek1);
-		ai.setLogs(new LeekLog(farmerLog, leek1));
-		ai.setFight(fight);
-		return ai.runIA();
+		return newAI(sb, "python", "me = Fight.me\ndef turn():\n" + body).runIA();
 	}
 
 	private Object evalPy(PolyglotSandbox sb, String expr) throws Exception {
 		// `me` n'est plus un global : on le lie depuis Fight.me (usage documenté) avant le snippet.
-		PolyglotEntityAI ai = new PolyglotEntityAI("python", "me = Fight.me\ndef turn():\n    return " + expr + "\n", sb);
-		ai.setEntity(leek1);
-		ai.setLogs(new LeekLog(farmerLog, leek1));
-		ai.setFight(fight);
-		return ai.runIA();
+		return evalPyBody(sb, "    return " + expr + "\n");
 	}
 
 	/**
@@ -673,6 +675,75 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		Assert.assertTrue("l'invocateur doit survivre a un callback de bulbe qui leve (ownerTurns=" + ownerTurns + ")",
 			ownerTurns >= 2);
 	}
+
+	/** Invocateur polyglot avec un contexte vivant, celui de son premier tour joué. */
+	private PolyglotEntityAI polyglotOwner(PolyglotSandbox sb) throws Exception {
+		PolyglotEntityAI owner = newAI(sb, "js", "1;");
+		owner.runIA();
+		return owner;
+	}
+
+	/**
+	 * #4691 : le callback d'un bulbe est une Value liée AU CONTEXTE de l'invocateur. Quand ce contexte est
+	 * fermé en cours de combat (limite d'ops atteinte, wall-clock, RAM saturée), l'invocateur en
+	 * reconstruit un neuf au tour suivant — mais le bulbe rejoue TOUJOURS l'ancienne Value, désormais
+	 * périmée. La simple interrogation `canExecute()` levait alors « Context execution was cancelled »,
+	 * qui traversait BulbAI et ressortait en erreur INCONNUE : rapport d'erreur serveur (19 en prod) pour
+	 * une situation normale. Attendu : le callback périmé est inerte.
+	 */
+	@Test(timeout = 60_000)
+	public void staleSummonCallbackIsInertAfterContextRebuild() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI owner = polyglotOwner(sb);
+			// Callback capturé pendant que le contexte de l'invocateur est vivant. Il reste exécutable
+			// (contexte porteur intact) : seule sa PÉRIMATION doit le rendre inerte.
+			Value callback = sb.createContext("js").eval("js", "(function() { return 1; })");
+			FunctionLeekValue<Object> bulbCallback = TypeMarshaller.wrapGuestFunction(callback, owner);
+
+			owner.dispose(); // fermeture du contexte, comme après une limite atteinte
+			owner.runIA();   // tour suivant : contexte reconstruit, l'invocateur rejoue normalement
+
+			Assert.assertNull("un callback capture sur le contexte d'avant doit etre inerte",
+				bulbCallback.run(owner, null));
+		}
+	}
+
+	/**
+	 * Même régression, second détecteur : sur une Value dont le contexte a été ANNULÉ (limite de
+	 * ressource) puis FERMÉ, la moindre interrogation lève — ce doit rester « plus exécutable ».
+	 */
+	@Test(timeout = 60_000)
+	public void stalePolyglotValueNeverThrowsOutOfTheCallback() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI owner = polyglotOwner(sb);
+
+			// 1. Contexte ANNULÉ par sa limite de statements, comme un tour qui dépasse son budget.
+			try (PolyglotSandbox dying = new PolyglotSandbox(100_000L, "js")) {
+				Context cancelled = dying.createContext("js");
+				Value callback = cancelled.eval("js", "(function() { return 1; })");
+				try {
+					// Corps non vide : une boucle vide n'émet aucun statement comptable, donc ne serait
+					// jamais interrompue (cf TestPolyglotSpike.statementLimitStopsInfiniteLoop).
+					cancelled.eval("js", "var i = 0; while (true) { i++; }");
+					Assert.fail("le contexte doit etre annule par sa limite de statements");
+				} catch (PolyglotException limitReached) {
+					// Attendu : à partir d'ici toute utilisation de `callback` lève.
+				}
+				Assert.assertNull("un callback sur contexte annule doit etre inerte, pas lever",
+					TypeMarshaller.wrapGuestFunction(callback, owner).run(owner, null));
+			}
+
+			// 2. Contexte simplement FERMÉ, ce que fait closeContext() (close(true)).
+			Context closed = sb.createContext("js");
+			Value callback = closed.eval("js", "(function() { return 1; })");
+			closed.close(true);
+			Assert.assertNull("un callback sur contexte ferme doit etre inerte, pas lever",
+				TypeMarshaller.wrapGuestFunction(callback, owner).run(owner, null));
+		}
+	}
+
 	/**
 	 * Enveloppes POOLÉES (une instance par id) et objets en LECTURE SEULE.
 	 *
