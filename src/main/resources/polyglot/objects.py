@@ -642,21 +642,22 @@ def _lw_build(G, NAMES):
         def green(self, color): return F.getGreen(color)
         def blue(self, color): return F.getBlue(color)
 
-    # Math : la bibliotheque mathematique de LeekScript, exposee sous le meme nom que dans les
-    # trois autres langages. Python a bien un module `math`, mais il lui manque plusieurs
-    # fonctions (isPermutation, rotateLeft, setBit, realBits...) et surtout ses semantiques
-    # divergent : `round` fait de l'arrondi bancaire (2.5 -> 2) la ou LeekScript arrondit
-    # mathematiquement. Passer par l'hote garantit le MEME resultat que LeekScript, JS et TS.
+    # Math : UNIQUEMENT ce que Python n'a pas. Le module `math`, les builtins (abs, round, min,
+    # max, pow) et `random` restent la reference — le moteur seede deja `random` (cf.
+    # pythonDeterminismGuard), donc random.randrange() est deterministe et utilisable tel quel.
     #
-    # Le module `math` natif reste evidemment disponible : `Math` s'ajoute, ne remplace rien.
+    # On ne double PAS la stdlib : un conteneur Math qui reprendrait sqrt/cos/round ferait
+    # cohabiter `Math` et `math` a une majuscule pres, pour un doublon integral. Et surtout, une
+    # IA Python doit se comporter comme du Python : `round(2.5)` y vaut 2 (arrondi bancaire) et
+    # c'est ce que son auteur attend, meme si LeekScript et JS donnent 3. L'ecart est reel entre
+    # les langages, la doc le signale plutot que le masquer.
+    #
+    # Restent donc les fonctions sans contrepartie native, la plupart en 64 bits.
     _MATH_NAMES = (
-        'abs', 'acos', 'asin', 'atan', 'atan2', 'cbrt', 'ceil', 'cos', 'exp', 'floor', 'hypot',
-        'log', 'log2', 'log10', 'max', 'min', 'pow', 'round', 'signum', 'sin', 'sqrt', 'tan',
-        'toDegrees', 'toRadians', 'rand', 'randInt', 'randReal',
-        'isNaN', 'isFinite', 'isInfinite', 'isPermutation',
-        'binString', 'hexString', 'bitCount', 'bitLength', 'testBit', 'setBit',
-        'bitReverse', 'byteReverse', 'rotateLeft', 'rotateRight',
-        'leadingZeros', 'trailingZeros', 'realBits', 'bitsToReal',
+        'isPermutation', 'signum',
+        'setBit', 'testBit', 'bitReverse', 'byteReverse',
+        'rotateLeft', 'rotateRight', 'leadingZeros', 'trailingZeros',
+        'realBits', 'bitsToReal',
     )
 
     class _Math: pass

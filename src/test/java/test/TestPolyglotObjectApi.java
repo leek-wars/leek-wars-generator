@@ -209,16 +209,20 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			// randInt tire dans [a, b), borne haute exclue.
 			Assert.assertEquals(true, eval(sb, "(() => { for (let i = 0; i < 50; i++) { const r = Math.randInt(0, 3); if (r < 0 || r > 2) return false } return true })()"));
 
-			// Python : conteneur complet, y compris ce que le module math couvre déjà, pour que
-			// `Math.x` s'écrive pareil qu'en JS et en LeekScript.
-			Assert.assertEquals(4L, ((Number) evalPy(sb, "Math.bitCount(15)")).longValue());
+			// Python : Math ne contient QUE ce que le langage n'a pas. Pas de doublon de la
+			// stdlib — `Math` et `math` à une majuscule près auraient été une chausse-trappe.
 			Assert.assertEquals(true, evalPy(sb, "Math.testBit(4, 2)"));
-			Assert.assertEquals(3L, ((Number) evalPy(sb, "Math.sqrt(9)")).longValue());
-			// L'arrondi passe par l'hôte : arrondi MATHÉMATIQUE, pas le bancaire de Python
-			// (round(2.5) vaut 2 en Python natif).
-			Assert.assertEquals(3L, ((Number) evalPy(sb, "Math.round(2.5)")).longValue());
-			// Le module math natif reste disponible : Math s'ajoute, ne remplace rien.
+			Assert.assertEquals(true, evalPy(sb, "Math.isPermutation(123, 321)"));
+			Assert.assertEquals(-1L, ((Number) evalPy(sb, "Math.signum(-42)")).longValue());
+			// sqrt, round, abs... restent ceux de Python : Math ne les redéfinit pas.
+			Assert.assertEquals(false, evalPy(sb, "hasattr(Math, 'sqrt')"));
 			Assert.assertEquals(3L, ((Number) evalPy(sb, "__import__('math').floor(3.7)")).longValue());
+			// Une IA Python se comporte comme du Python : round(2.5) y vaut 2 (arrondi bancaire),
+			// là où LeekScript et JS donnent 3. L'écart est ASSUMÉ et documenté, pas masqué.
+			Assert.assertEquals(2L, ((Number) evalPy(sb, "round(2.5)")).longValue());
+			// random est seedé par pythonDeterminismGuard : randrange est déterministe, donc
+			// utilisable directement, sans passer par un Math.randInt maison.
+			Assert.assertEquals(true, evalPy(sb, "0 <= __import__('random').randrange(0, 3) < 3"));
 		}
 	}
 
