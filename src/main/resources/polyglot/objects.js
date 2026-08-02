@@ -510,6 +510,51 @@
 		writable: false, configurable: true,
 	});
 
+	// ---- Math : compléments LeekScript ----
+	// Ces fonctions portent standardClass="Number" dans le registre, donc en LeekScript v5 elles
+	// s'appellent DÉJÀ `Math.isPermutation(a, b)` (forme namespace). Les greffer sur le `Math`
+	// natif plutôt que d'inventer un conteneur donne le même nom dans les quatre langages : le
+	// même code s'écrit à l'identique en LS5, JS, TS et Python.
+	//
+	// Sans ça elles ne sont atteignables par AUCUNE IA polyglot : elles sont bien dans le sac
+	// __lw, mais rien ne les enveloppe, et le sac est supprimé du scope global juste après.
+	//
+	// On n'ajoute QUE ce qui manque à JS (garde `in Math`) : pas question de masquer un
+	// Math.abs natif par un aller-retour vers l'hôte, plus lent et facturé.
+	var MATH_EXTRA = {
+		isPermutation: function (a, b) { return F.isPermutation(a, b); },
+		toDegrees: function (radians) { return F.toDegrees(radians); },
+		toRadians: function (degrees) { return F.toRadians(degrees); },
+		// randInt tire dans [a, b) comme en LeekScript — l'écart avec un tirage inclusif est
+		// silencieux, autant garder la sémantique d'origine.
+		randInt: function (a, b) { return F.randInt(a, b); },
+		randReal: function (a, b) { return F.randReal(a, b); },
+		isInfinite: function (x) { return F.isInfinite(x); },
+		// Utilitaires de bits : les entiers LeekScript font 64 bits, là où les opérateurs
+		// bitwise de JS travaillent sur 32. Passer par l'hôte est donc la SEULE façon d'avoir
+		// le bon résultat au-delà de 2^31.
+		bitCount: function (x) { return F.bitCount(x); },
+		bitLength: function (x) { return F.bitLength(x); },
+		testBit: function (x, bit) { return F.testBit(x, bit); },
+		setBit: function (x, bit, value) { return value === undefined ? F.setBit(x, bit) : F.setBit(x, bit, value); },
+		bitReverse: function (x) { return F.bitReverse(x); },
+		byteReverse: function (x) { return F.byteReverse(x); },
+		rotateLeft: function (x, n) { return F.rotateLeft(x, n); },
+		rotateRight: function (x, n) { return F.rotateRight(x, n); },
+		leadingZeros: function (x) { return F.leadingZeros(x); },
+		trailingZeros: function (x) { return F.trailingZeros(x); },
+		realBits: function (x) { return F.realBits(x); },
+		bitsToReal: function (x) { return F.bitsToReal(x); },
+	};
+	for (var mk in MATH_EXTRA) {
+		// `in` et non hasOwnProperty : une future version de JS pourrait les poser sur le
+		// prototype, on ne veut pas la masquer non plus.
+		if (mk in Math) continue;
+		// Non énumérable et non modifiable, comme les membres natifs de Math : le joueur ne doit
+		// pas pouvoir les redéfinir pour fausser un calcul.
+		Object.defineProperty(Math, mk, { value: MATH_EXTRA[mk], writable: false, enumerable: false, configurable: false });
+	}
+
 	// ---- Color : couleurs du journal / des marquages ----
 	var Color = {
 		// Compose une couleur depuis ses composantes 0-255.

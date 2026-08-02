@@ -642,6 +642,33 @@ def _lw_build(G, NAMES):
         def green(self, color): return F.getGreen(color)
         def blue(self, color): return F.getBlue(color)
 
+    # Math : la bibliotheque mathematique de LeekScript, exposee sous le meme nom que dans les
+    # trois autres langages. Python a bien un module `math`, mais il lui manque plusieurs
+    # fonctions (isPermutation, rotateLeft, setBit, realBits...) et surtout ses semantiques
+    # divergent : `round` fait de l'arrondi bancaire (2.5 -> 2) la ou LeekScript arrondit
+    # mathematiquement. Passer par l'hote garantit le MEME resultat que LeekScript, JS et TS.
+    #
+    # Le module `math` natif reste evidemment disponible : `Math` s'ajoute, ne remplace rien.
+    _MATH_NAMES = (
+        'abs', 'acos', 'asin', 'atan', 'atan2', 'cbrt', 'ceil', 'cos', 'exp', 'floor', 'hypot',
+        'log', 'log2', 'log10', 'max', 'min', 'pow', 'round', 'signum', 'sin', 'sqrt', 'tan',
+        'toDegrees', 'toRadians', 'rand', 'randInt', 'randReal',
+        'isNaN', 'isFinite', 'isInfinite', 'isPermutation',
+        'binString', 'hexString', 'bitCount', 'bitLength', 'testBit', 'setBit',
+        'bitReverse', 'byteReverse', 'rotateLeft', 'rotateRight',
+        'leadingZeros', 'trailingZeros', 'realBits', 'bitsToReal',
+    )
+
+    class _Math: pass
+
+    Math = _Math()
+    for _mn in _MATH_NAMES:
+        # getattr conditionnel : le bridge filtre par min/maxVersion, une fonction retiree du
+        # langage n'est pas dans le sac et ne doit pas faire echouer le prelude entier.
+        _mf = getattr(F, _mn, None)
+        if _mf is not None:
+            setattr(Math, _mn, _mf)
+
     Fight = _Fight()
     Field = _Field()
     Network = _Network()
@@ -737,7 +764,7 @@ def _lw_build(G, NAMES):
         'Chest': Chest, 'Mob': Mob, 'Item': Item, 'Weapon': Weapon, 'Chip': Chip,
         'Effect': Effect, 'Feature': Feature, 'Message': Message, 'Me': Me, 'State': State,
         'Fight': Fight, 'Field': Field, 'Network': Network, 'Registers': Registers,
-        'Debug': Debug, 'System': System, 'Color': Color,
+        'Debug': Debug, 'System': System, 'Color': Color, 'Math': Math,
     }
 
 

@@ -189,6 +189,39 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Math : les utilitaires de standardClass="Number" que le langage hôte n'a pas. Sans le
+	 * complément du prélude ils sont dans le sac __lw mais enveloppés par AUCUN conteneur,
+	 * donc inaccessibles à une IA polyglot. Le nom est celui de la forme namespace v5, pour
+	 * que le même code s'écrive à l'identique dans les quatre langages.
+	 */
+	@Test
+	public void mathExtrasReachableInBothLanguages() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// JS : greffés sur le Math natif, sans masquer ce qui existe déjà.
+			Assert.assertEquals(4L, ((Number) eval(sb, "Math.bitCount(15)")).longValue());
+			Assert.assertEquals(4L, ((Number) eval(sb, "Math.bitLength(15)")).longValue());
+			Assert.assertEquals(true, eval(sb, "Math.testBit(4, 2)"));
+			Assert.assertEquals(180L, ((Number) eval(sb, "Math.toDegrees(Math.PI)")).longValue());
+			// Le natif n'est PAS remplacé : Math.abs reste la fonction du langage.
+			Assert.assertEquals(5L, ((Number) eval(sb, "Math.abs(-5)")).longValue());
+			// randInt tire dans [a, b), borne haute exclue.
+			Assert.assertEquals(true, eval(sb, "(() => { for (let i = 0; i < 50; i++) { const r = Math.randInt(0, 3); if (r < 0 || r > 2) return false } return true })()"));
+
+			// Python : conteneur complet, y compris ce que le module math couvre déjà, pour que
+			// `Math.x` s'écrive pareil qu'en JS et en LeekScript.
+			Assert.assertEquals(4L, ((Number) evalPy(sb, "Math.bitCount(15)")).longValue());
+			Assert.assertEquals(true, evalPy(sb, "Math.testBit(4, 2)"));
+			Assert.assertEquals(3L, ((Number) evalPy(sb, "Math.sqrt(9)")).longValue());
+			// L'arrondi passe par l'hôte : arrondi MATHÉMATIQUE, pas le bancaire de Python
+			// (round(2.5) vaut 2 en Python natif).
+			Assert.assertEquals(3L, ((Number) evalPy(sb, "Math.round(2.5)")).longValue());
+			// Le module math natif reste disponible : Math s'ajoute, ne remplace rien.
+			Assert.assertEquals(3L, ((Number) evalPy(sb, "__import__('math').floor(3.7)")).longValue());
+		}
+	}
+
 	@Test
 	public void weaponChipFieldObjects() throws Exception {
 		initFightOnly();
