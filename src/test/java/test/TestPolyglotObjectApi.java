@@ -370,6 +370,114 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/**
+	 * #4713 : les helpers d'arme acceptent une arme EXPLICITE en 2e argument (l'arme équipée par
+	 * défaut), comme les typages le documentent — `weaponCells(target, weapon?, ignoredCells?)`,
+	 * `weaponTargets(cell, weapon?)`. Les fonctions plates sous-jacentes, elles, prennent l'arme en
+	 * PREMIER : le prélude doit réordonner. Référence : équiper l'arme puis appeler sans la préciser.
+	 */
+	@Test
+	public void weaponHelpersAcceptExplicitWeapon() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// JS : arme explicite == arme équipée, et le résultat n'est pas vide.
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.pistol);"
+				+ "var e = Fight.getNearestEnemy();"
+				+ "var explicit = me.weaponCells(e, Weapon.magnum);"
+				+ "me.setWeapon(Weapon.magnum);"
+				+ "var equipped = me.weaponCells(e);"
+				+ "explicit.length > 0 && explicit.length === equipped.length"
+				+ " && explicit.every(function(c, i) { return c === equipped[i]; });"));
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.pistol);"
+				+ "var c = Fight.getNearestEnemy().cell;"
+				+ "var explicit = me.weaponTargets(c, Weapon.magnum);"
+				+ "me.setWeapon(Weapon.magnum);"
+				+ "var equipped = me.weaponTargets(c);"
+				+ "explicit.length === equipped.length"
+				+ " && explicit.every(function(t, i) { return t === equipped[i]; });"));
+			// Cellules ignorées SANS arme explicite : l'arme équipée doit être injectée en 1er argument.
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.magnum);"
+				+ "var e = Fight.getNearestEnemy();"
+				+ "var ign = me.weaponCells(e, undefined, [me.cell]);"
+				+ "var plain = me.weaponCells(e);"
+				+ "ign.length === plain.length && ign.every(function(c, i) { return c === plain[i]; });"));
+			// PYTHON : même chose, en positionnel puis en mot-clé (le bug du topic).
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.pistol)\n"
+				+ "    e = Fight.getNearestEnemy()\n"
+				+ "    explicit = me.weaponCells(e, Weapon.magnum)\n"
+				+ "    kw = me.weaponCells(target=e, weapon=Weapon.magnum)\n"
+				+ "    me.setWeapon(Weapon.magnum)\n"
+				+ "    return len(explicit) > 0 and explicit == kw == me.weaponCells(e)\n"));
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.pistol)\n"
+				+ "    e = Fight.getNearestEnemy()\n"
+				+ "    explicit = me.weaponCell(e, Weapon.magnum)\n"
+				+ "    me.setWeapon(Weapon.magnum)\n"
+				+ "    return explicit is not None and explicit is me.weaponCell(e)\n"));
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.pistol)\n"
+				+ "    c = Fight.getNearestEnemy().cell\n"
+				+ "    explicit = me.weaponTargets(c, Weapon.magnum)\n"
+				+ "    me.setWeapon(Weapon.magnum)\n"
+				+ "    return explicit == me.weaponTargets(c)\n"));
+			// Cellules ignorées seules (sans arme explicite) : l'arme équipée est injectée, et
+			// ignorer sa propre case (le défaut) ne change rien.
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.magnum)\n"
+				+ "    e = Fight.getNearestEnemy()\n"
+				+ "    return me.weaponCells(e, ignoredCells=[me.cell]) == me.weaponCells(e)\n"));
+			// weaponTargets/chipTargets ciblent une CASE : une entité y désigne LA SIENNE (et non son id,
+			// qui tomberait sur une case sans rapport).
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.magnum)\n"
+				+ "    e = Fight.getNearestEnemy()\n"
+				+ "    return me.weaponTargets(e) == me.weaponTargets(e.cell)\n"));
+			// canUseWeapon/canUseWeaponOnCell suivent la même forme (cible, arme?), et l'ordre historique
+			// arme-en-premier -- celui des fonctions plates -- continue de fonctionner.
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.pistol)\n"
+				+ "    e = Fight.getNearestEnemy()\n"
+				+ "    ref = me.canUseWeapon(Weapon.magnum, e)\n"
+				+ "    return (ref == me.canUseWeapon(e, Weapon.magnum) == me.canUseWeapon(e, weapon=Weapon.magnum)\n"
+				+ "        and me.canUseWeaponOnCell(Weapon.magnum, e.cell) == me.canUseWeaponOnCell(e.cell, Weapon.magnum)\n"
+				+ "        and (me.setWeapon(Weapon.magnum), ref == me.canUseWeapon(e))[1])\n"));
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.pistol);"
+				+ "var e = Fight.getNearestEnemy();"
+				+ "var ref = me.canUseWeapon(Weapon.magnum, e);"
+				+ "ref === me.canUseWeapon(e, Weapon.magnum)"
+				+ " && me.canUseWeaponOnCell(Weapon.magnum, e.cell) === me.canUseWeaponOnCell(e.cell, Weapon.magnum)"
+				+ " && (me.setWeapon(Weapon.magnum), ref === me.canUseWeapon(e));"));
+		}
+	}
+
+	/**
+	 * #4713 : en Python, les arguments optionnels doivent porter le nom PUBLIÉ par les typages
+	 * (leekwars-pyi.ts), sinon l'appel par mot-clé lève un TypeError. Un audit prélude <-> .pyi avait
+	 * laissé passer `ignored` pour `ignoredCells`, `c` pour `cell` et `e` pour `entity`.
+	 */
+	@Test
+	public void pythonKeywordArgumentsMatchPublishedNames() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    e = Fight.getNearestEnemy()\n"
+				+ "    return (me.cell.path(e, ignoredCells=[]) == me.cell.path(e, [])\n"
+				+ "        and me.cell.pathLength(e, ignoredCells=[]) == me.cell.pathLength(e, [])\n"
+				+ "        and Field.path(me.cell, e.cell, ignoredCells=[]) == Field.path(me.cell, e.cell, [])\n"
+				+ "        and Field.pathLength(me.cell, e.cell, ignoredCells=[]) == Field.pathLength(me.cell, e.cell, []))\n"));
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    return (Fight.getNearestEnemyToCell(cell=me.cell) is Fight.getNearestEnemyToCell(me.cell)\n"
+				+ "        and Fight.getNearestAllyToCell(cell=me.cell) is Fight.getNearestAllyToCell(me.cell)\n"
+				+ "        and Fight.getNextPlayer(entity=me) is Fight.getNextPlayer(me)\n"
+				+ "        and Fight.getPreviousPlayer(entity=me) is Fight.getPreviousPlayer(me))\n"));
+		}
+	}
+
 	/** Valeur hôte d'une constante de combat (source de vérité, les globales plates n'existant plus). */
 	private static long fc(String name) {
 		return com.leekwars.generator.FightConstants.valueOf(name).getIntValue();

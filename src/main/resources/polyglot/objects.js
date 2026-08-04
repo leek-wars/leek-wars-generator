@@ -87,14 +87,31 @@
 	}
 	function cell(id) { return (id === null || id === undefined || id < 0) ? null : pooledCell(id); }
 	// Déballe UN argument vers son id brut (Entity/Weapon/Chip/Cell -> .id ; tableau -> déballé ;
-	// sinon inchangé). Sert aux helpers de ciblage (weaponCell...) pour accepter des objets
-	// quel que soit l'ordre des arguments, sans avoir à connaître leur rôle.
+	// sinon inchangé). Sert aux helpers de ciblage (weaponCell...) pour accepter indifféremment un objet
+	// ou son id. Il ne RÉORDONNE rien : les fonctions plates ont leur propre ordre d'arguments, c'est à
+	// l'appelant de le respecter (cf weaponCall).
 	function unwrap(x) {
 		if (x instanceof Entity || x instanceof Weapon || x instanceof Chip || x instanceof Cell) return x.id;
 		if (Array.isArray(x)) { var o = []; for (var i = 0; i < x.length; i++) o.push(unwrap(x[i])); return o; }
 		return x;
 	}
 	function unwrapAll(args) { var o = []; for (var i = 0; i < args.length; i++) o.push(unwrap(args[i])); return o; }
+
+	// (#4713) Les fonctions plates d'arme prennent l'ARME EN PREMIER dès qu'elle est précisée
+	// (getCellsToUseWeapon(weapon, target) ; l'arme équipée dans la version à un argument), là où l'API
+	// objet met la cible d'abord et l'arme en 2e argument optionnel. Ce helper fait la traduction :
+	// réordonnancement, injection de l'arme équipée quand seules des cellules ignorées sont fournies, et
+	// tolérance de l'ordre inverse (weapon, target) -- sans ambiguïté, Weapon étant une classe.
+	// Rend null si l'entité n'a aucune arme : l'appelant rend alors le vide, comme le natif.
+	function weaponCall(onCell, onEntity, target, weapon, ignoredCells) {
+		if (target instanceof Weapon) { var swap = target; target = weapon; weapon = swap; }
+		var f = (target instanceof Cell) ? onCell : onEntity;
+		var t = unwrap(target);
+		if (weapon == null && ignoredCells == null) return f(t);
+		var w = (weapon == null) ? F.getWeapon() : unwrap(weapon);
+		if (w == null) return null;
+		return (ignoredCells == null) ? f(w, t) : f(w, t, cidList(ignoredCells));
+	}
 
 	// ---- Cell : une case du terrain ----
 	class Cell {
@@ -346,9 +363,16 @@
 		say(message) { return F.say(message); }
 		// Fait dire « lama » à l'entité (trophée).
 		lama() { return F.lama(); }
-		// Peut-on utiliser l'arme (courante, ou `weapon` en 1er argument) sur `target`.
-		canUseWeapon() { return F.canUseWeapon.apply(null, unwrapAll(arguments)); }
-		canUseWeaponOnCell() { return F.canUseWeaponOnCell.apply(null, unwrapAll(arguments)); }
+		// Peut-on utiliser l'arme (celle équipée, ou `weapon`) sur `target`. Même forme que weaponCell et
+		// weaponTargets — cible d'abord, arme optionnelle ensuite ; l'ordre inverse reste accepté.
+		canUseWeapon(target, weapon) {
+			if (target instanceof Weapon) { var swap = target; target = weapon; weapon = swap; }
+			return (weapon == null) ? F.canUseWeapon(eid(target)) : F.canUseWeapon(wid(weapon), eid(target));
+		}
+		canUseWeaponOnCell(cell, weapon) {
+			if (cell instanceof Weapon) { var swap = cell; cell = weapon; weapon = swap; }
+			return (weapon == null) ? F.canUseWeaponOnCell(cid(cell)) : F.canUseWeaponOnCell(wid(weapon), cid(cell));
+		}
 		canUseChip(chip, target) { return F.canUseChip(cpid(chip), eid(target)); }
 		canUseChipOnCell(chip, cell) { return F.canUseChipOnCell(cpid(chip), cid(cell)); }
 		resurrect(target, cell) { return F.resurrect(eid(target), cid(cell)); }
@@ -362,14 +386,25 @@
 			return (name === undefined) ? F.summon(cpid(chip), cid(cell), callback) : F.summon(cpid(chip), cid(cell), callback, name);
 		}
 		// Cellule (ou toutes les cellules) d'où utiliser l'arme/puce sur `target` — une entité OU une
-		// case (routage automatique). Retour Cell / Cell[]. Args déballés (objets ou ids, ordre libre).
-		weaponCell(target) { return cell(((target instanceof Cell) ? F.getCellToUseWeaponOnCell : F.getCellToUseWeapon).apply(null, unwrapAll(arguments))); }
-		weaponCells(target) { return cells(((target instanceof Cell) ? F.getCellsToUseWeaponOnCell : F.getCellsToUseWeapon).apply(null, unwrapAll(arguments))); }
-		chipCell(chip, target) { return cell(((target instanceof Cell) ? F.getCellToUseChipOnCell : F.getCellToUseChip).apply(null, unwrapAll(arguments))); }
-		chipCells(chip, target) { return cells(((target instanceof Cell) ? F.getCellsToUseChipOnCell : F.getCellsToUseChip).apply(null, unwrapAll(arguments))); }
-		// Entités touchées par une arme/puce lancée sur une cellule. Retour Entity[].
-		weaponTargets() { return ents(F.getWeaponTargets.apply(null, unwrapAll(arguments))); }
-		chipTargets() { return ents(F.getChipTargets.apply(null, unwrapAll(arguments))); }
+		// case (routage automatique). Retour Cell / Cell[]. Args déballés (objets ou ids).
+		// L'arme est celle équipée par défaut, ou celle passée en 2e argument (cf weaponCall).
+		weaponCell(target, weapon, ignoredCells) { return cell(weaponCall(F.getCellToUseWeaponOnCell, F.getCellToUseWeapon, target, weapon, ignoredCells)); }
+		weaponCells(target, weapon, ignoredCells) { return cells(weaponCall(F.getCellsToUseWeaponOnCell, F.getCellsToUseWeapon, target, weapon, ignoredCells)); }
+		chipCell(chip, target, ignoredCells) {
+			var f = (target instanceof Cell) ? F.getCellToUseChipOnCell : F.getCellToUseChip;
+			return cell((ignoredCells == null) ? f(cpid(chip), unwrap(target)) : f(cpid(chip), unwrap(target), cidList(ignoredCells)));
+		}
+		chipCells(chip, target, ignoredCells) {
+			var f = (target instanceof Cell) ? F.getCellsToUseChipOnCell : F.getCellsToUseChip;
+			return cells((ignoredCells == null) ? f(cpid(chip), unwrap(target)) : f(cpid(chip), unwrap(target), cidList(ignoredCells)));
+		}
+		// Entités touchées par une arme/puce lancée sur une cellule. Retour Entity[]. La cible est une
+		// CASE : une entité y est convertie en la sienne (cid), pas en son id.
+		weaponTargets(cell, weapon) {
+			if (cell instanceof Weapon) { var swap = cell; cell = weapon; weapon = swap; }
+			return ents((weapon == null) ? F.getWeaponTargets(cid(cell)) : F.getWeaponTargets(wid(weapon), cid(cell)));
+		}
+		chipTargets(chip, cell) { return ents(F.getChipTargets(cpid(chip), cid(cell))); }
 	}
 
 	// Instance unique de l'IA courante (Me), exposée via Fight.me. Une seule instance suffit : son id

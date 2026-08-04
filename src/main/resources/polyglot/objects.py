@@ -82,12 +82,28 @@ def _lw_build(G, NAMES):
     def _cidlist(x): return [_cid(i) for i in x] if isinstance(x, list) else _cid(x)
     def _cell(i): return None if i is None or i < 0 else _pooled_cell(i)
     # Déballe un argument vers son id brut (Entity/Weapon/Chip/Cell -> .id ; liste -> déballée). Sert aux
-    # helpers de ciblage pour accepter des objets quel que soit l'ordre des arguments.
+    # helpers de ciblage pour accepter indifféremment un objet ou son id. Il ne RÉORDONNE rien : les
+    # fonctions plates ont leur propre ordre d'arguments, c'est à l'appelant de le respecter (_weaponCall).
     def _unwrap(x):
         if isinstance(x, (Entity, Weapon, Chip, Cell)): return x.id
         if isinstance(x, list): return [_unwrap(i) for i in x]
         return x
     def _unwrapall(args): return [_unwrap(a) for a in args]
+
+    # (#4713) Les fonctions plates d'arme prennent l'ARME EN PREMIER des qu'elle est precisee
+    # (getCellsToUseWeapon(weapon, target) ; l'arme equipee dans la version a un argument), la ou l'API
+    # objet met la cible d'abord et l'arme en 2e argument optionnel. Ce helper fait la traduction :
+    # reordonnancement, injection de l'arme equipee quand seules des cellules ignorees sont fournies, et
+    # tolerance de l'ordre inverse (weapon, target) -- sans ambiguite, Weapon etant une classe.
+    # Rend None si l'entite n'a aucune arme : l'appelant rend alors le vide, comme le natif.
+    def _weaponCall(onCell, onEntity, target, weapon, ignoredCells):
+        if isinstance(target, Weapon): target, weapon = weapon, target
+        f = onCell if isinstance(target, Cell) else onEntity
+        t = _unwrap(target)
+        if weapon is None and ignoredCells is None: return f(t)
+        w = F.getWeapon() if weapon is None else _wid(weapon)
+        if w is None: return None
+        return f(w, t) if ignoredCells is None else f(w, t, _cidlist(ignoredCells))
 
     # Tout objet rendu au joueur est en LECTURE SEULE. Equivalent Python de l'Object.freeze du cote JS
     # (objects.js), pour la meme raison : les enveloppes sont POOLEES, donc sans garde un `c.id = 42`
@@ -126,14 +142,14 @@ def _lw_build(G, NAMES):
         @property
         def content(self): return F.getCellContent(self.id)
         def distance(self, target): return F.getCellDistance(self.id, _cid(target))
-        def pathLength(self, target, ignored=None):
-            return F.getPathLength(self.id, _cid(target)) if ignored is None else F.getPathLength(self.id, _cid(target), _cidlist(ignored))
+        def pathLength(self, target, ignoredCells=None):
+            return F.getPathLength(self.id, _cid(target)) if ignoredCells is None else F.getPathLength(self.id, _cid(target), _cidlist(ignoredCells))
         # Ligne de vue jusqu'à la cible, en ignorant éventuellement des entités (ignoredEntities).
         def lineOfSight(self, target, ignoredEntities=None):
             return F.lineOfSight(self.id, _cid(target)) if ignoredEntities is None else F.lineOfSight(self.id, _cid(target), _unwrap(ignoredEntities))
         # Chemin (liste de cellules) jusqu'à la cible. Retour list[Cell].
-        def path(self, target, ignored=None):
-            return _cells(F.getPath(self.id, _cid(target)) if ignored is None else F.getPath(self.id, _cid(target), _cidlist(ignored)))
+        def path(self, target, ignoredCells=None):
+            return _cells(F.getPath(self.id, _cid(target)) if ignoredCells is None else F.getPath(self.id, _cid(target), _cidlist(ignoredCells)))
         # La case est-elle alignée (même ligne ou colonne) avec la cible.
         def onSameLine(self, target): return F.isOnSameLine(self.id, _cid(target))
 
@@ -453,9 +469,14 @@ def _lw_build(G, NAMES):
         def say(self, message): return F.say(message)
         # Fait dire « lama » à l'entité (trophée).
         def lama(self): return F.lama()
-        # Peut-on utiliser l'arme (courante, ou weapon en 1er argument) sur target.
-        def canUseWeapon(self, *args): return F.canUseWeapon(*_unwrapall(args))
-        def canUseWeaponOnCell(self, *args): return F.canUseWeaponOnCell(*_unwrapall(args))
+        # Peut-on utiliser l'arme (celle equipee, ou `weapon`) sur target. Meme forme que weaponCell et
+        # weaponTargets -- cible d'abord, arme optionnelle ensuite ; l'ordre inverse reste accepte.
+        def canUseWeapon(self, target, weapon=None):
+            if isinstance(target, Weapon): target, weapon = weapon, target
+            return F.canUseWeapon(_eid(target)) if weapon is None else F.canUseWeapon(_wid(weapon), _eid(target))
+        def canUseWeaponOnCell(self, cell, weapon=None):
+            if isinstance(cell, Weapon): cell, weapon = weapon, cell
+            return F.canUseWeaponOnCell(_cid(cell)) if weapon is None else F.canUseWeaponOnCell(_wid(weapon), _cid(cell))
         def canUseChip(self, chip, target): return F.canUseChip(_cpid(chip), _eid(target))
         def canUseChipOnCell(self, chip, cell): return F.canUseChipOnCell(_cpid(chip), _cid(cell))
         def resurrect(self, target, cell): return F.resurrect(_eid(target), _cid(cell))
@@ -468,14 +489,24 @@ def _lw_build(G, NAMES):
         def summon(self, chip, cell, callback, name=None):
             return F.summon(_cpid(chip), _cid(cell), callback) if name is None else F.summon(_cpid(chip), _cid(cell), callback, name)
         # Cellule (ou toutes les cellules) d'ou utiliser l'arme/puce sur `target` -- une entite OU une case
-        # (routage automatique). Retour Cell / list[Cell]. Args deballes (objets ou ids, ordre libre).
-        def weaponCell(self, target, *rest): return _cell((F.getCellToUseWeaponOnCell if isinstance(target, Cell) else F.getCellToUseWeapon)(*_unwrapall((target,) + rest)))
-        def weaponCells(self, target, *rest): return _cells((F.getCellsToUseWeaponOnCell if isinstance(target, Cell) else F.getCellsToUseWeapon)(*_unwrapall((target,) + rest)))
-        def chipCell(self, chip, target, *rest): return _cell((F.getCellToUseChipOnCell if isinstance(target, Cell) else F.getCellToUseChip)(*_unwrapall((chip, target) + rest)))
-        def chipCells(self, chip, target, *rest): return _cells((F.getCellsToUseChipOnCell if isinstance(target, Cell) else F.getCellsToUseChip)(*_unwrapall((chip, target) + rest)))
-        # Entites touchees par une arme/puce lancee sur une cellule. Retour list[Entity].
-        def weaponTargets(self, *args): return _ents(F.getWeaponTargets(*_unwrapall(args)))
-        def chipTargets(self, *args): return _ents(F.getChipTargets(*_unwrapall(args)))
+        # (routage automatique). Retour Cell / list[Cell]. Args deballes (objets ou ids).
+        # L'arme est celle equipee par defaut, ou celle passee en 2e argument (cf _weaponCall).
+        def weaponCell(self, target, weapon=None, ignoredCells=None):
+            return _cell(_weaponCall(F.getCellToUseWeaponOnCell, F.getCellToUseWeapon, target, weapon, ignoredCells))
+        def weaponCells(self, target, weapon=None, ignoredCells=None):
+            return _cells(_weaponCall(F.getCellsToUseWeaponOnCell, F.getCellsToUseWeapon, target, weapon, ignoredCells))
+        def chipCell(self, chip, target, ignoredCells=None):
+            f = F.getCellToUseChipOnCell if isinstance(target, Cell) else F.getCellToUseChip
+            return _cell(f(_cpid(chip), _unwrap(target)) if ignoredCells is None else f(_cpid(chip), _unwrap(target), _cidlist(ignoredCells)))
+        def chipCells(self, chip, target, ignoredCells=None):
+            f = F.getCellsToUseChipOnCell if isinstance(target, Cell) else F.getCellsToUseChip
+            return _cells(f(_cpid(chip), _unwrap(target)) if ignoredCells is None else f(_cpid(chip), _unwrap(target), _cidlist(ignoredCells)))
+        # Entites touchees par une arme/puce lancee sur une cellule. Retour list[Entity]. La cible est une
+        # CASE : une entite y est convertie en la sienne (_cid), pas en son id.
+        def weaponTargets(self, cell, weapon=None):
+            if isinstance(cell, Weapon): cell, weapon = weapon, cell
+            return _ents(F.getWeaponTargets(_cid(cell)) if weapon is None else F.getWeaponTargets(_wid(weapon), _cid(cell)))
+        def chipTargets(self, chip, cell): return _ents(F.getChipTargets(_cpid(chip), _cid(cell)))
 
     # Sous-types d'entite : _ent() renvoie l'instance TYPEE selon getType() -> isinstance(x, Mob) marche.
     # Ceux qui ont une sous-categorie exposent leur propre .type (chest.type == Chest.Type.WOOD).
@@ -527,8 +558,8 @@ def _lw_build(G, NAMES):
         def getFarthestAlly(self): return _ent(F.getFarthestAlly())
         def getNearestEnemyTo(self, target): return _ent(F.getNearestEnemyTo(_eid(target)))
         def getNearestAllyTo(self, target): return _ent(F.getNearestAllyTo(_eid(target)))
-        def getNearestEnemyToCell(self, c): return _ent(F.getNearestEnemyToCell(_cid(c)))
-        def getNearestAllyToCell(self, c): return _ent(F.getNearestAllyToCell(_cid(c)))
+        def getNearestEnemyToCell(self, cell): return _ent(F.getNearestEnemyToCell(_cid(cell)))
+        def getNearestAllyToCell(self, cell): return _ent(F.getNearestAllyToCell(_cid(cell)))
         def getEnemies(self): return _ents(F.getEnemies())
         def getAllies(self): return _ents(F.getAllies())
         def getAliveEnemies(self): return _ents(F.getAliveEnemies())
@@ -543,8 +574,8 @@ def _lw_build(G, NAMES):
         def getAlliedTurret(self): return _ent(F.getAlliedTurret())
         def getEnemyTurret(self): return _ent(F.getEnemyTurret())
         # Joueur suivant / precedent dans l'ordre de jeu (defaut : relatif a soi).
-        def getNextPlayer(self, e=None): return _ent(F.getNextPlayer() if e is None else F.getNextPlayer(_eid(e)))
-        def getPreviousPlayer(self, e=None): return _ent(F.getPreviousPlayer() if e is None else F.getPreviousPlayer(_eid(e)))
+        def getNextPlayer(self, entity=None): return _ent(F.getNextPlayer() if entity is None else F.getNextPlayer(_eid(entity)))
+        def getPreviousPlayer(self, entity=None): return _ent(F.getPreviousPlayer() if entity is None else F.getPreviousPlayer(_eid(entity)))
         # Paroles prononcees (say) par les entites : liste de [entite, message].
         def listen(self): return F.listen()
 
@@ -560,14 +591,14 @@ def _lw_build(G, NAMES):
         def cellDistance(self, a, b): return F.getCellDistance(_cid(a), _cid(b))
         # Distance a vol d'oiseau (reel), l'ancien getDistance.
         def euclideanDistance(self, a, b): return F.getDistance(_cid(a), _cid(b))
-        def pathLength(self, a, b, ignored=None):
-            return F.getPathLength(_cid(a), _cid(b)) if ignored is None else F.getPathLength(_cid(a), _cid(b), _cidlist(ignored))
+        def pathLength(self, a, b, ignoredCells=None):
+            return F.getPathLength(_cid(a), _cid(b)) if ignoredCells is None else F.getPathLength(_cid(a), _cid(b), _cidlist(ignoredCells))
         def lineOfSight(self, a, b, ignoredEntities=None):
             return F.lineOfSight(_cid(a), _cid(b)) if ignoredEntities is None else F.lineOfSight(_cid(a), _cid(b), _unwrap(ignoredEntities))
         def onSameLine(self, a, b): return F.isOnSameLine(_cid(a), _cid(b))
         # Chemin (liste de cellules) de a a b. Retour list[Cell].
-        def path(self, a, b, ignored=None):
-            return _cells(F.getPath(_cid(a), _cid(b)) if ignored is None else F.getPath(_cid(a), _cid(b), _cidlist(ignored)))
+        def path(self, a, b, ignoredCells=None):
+            return _cells(F.getPath(_cid(a), _cid(b)) if ignoredCells is None else F.getPath(_cid(a), _cid(b), _cidlist(ignoredCells)))
 
     # Network : messages d'equipe entre IA alliees.
     class _Network:
