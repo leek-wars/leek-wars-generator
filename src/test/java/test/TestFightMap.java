@@ -173,4 +173,114 @@ public class TestFightMap {
 		 */
 
 	}
+
+	/**
+	 * BFS de référence : sur une grille à coût unitaire, il rend la longueur du
+	 * plus court chemin garantie (oracle indépendant de l'A*). Renvoie -1 si
+	 * aucun chemin. Longueur = nombre de pas (exclut la case de départ), comme
+	 * getAStarPath().size().
+	 */
+	private int bfsShortestLength(Map map, Cell start, Cell end) {
+		if (start == end)
+			return 0;
+		int n = map.getNbCell();
+		int[] dist = new int[n];
+		java.util.Arrays.fill(dist, -1);
+		java.util.ArrayDeque<Cell> queue = new java.util.ArrayDeque<>();
+		dist[start.getId()] = 0;
+		queue.add(start);
+		while (!queue.isEmpty()) {
+			Cell u = queue.poll();
+			if (u == end)
+				return dist[u.getId()];
+			for (Cell c : map.getCellsAround(u)) {
+				if (c == null || !c.isWalkable() || dist[c.getId()] != -1)
+					continue;
+				dist[c.getId()] = dist[u.getId()] + 1;
+				queue.add(c);
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Régression du bug #4744 : moveTowardCell(300) depuis la 409 empruntait un
+	 * détour de 12 pas au lieu du chemin optimal de 10, si bien que le poireau
+	 * n'atteignait jamais sa cible. Cause : java.util.PriorityQueue n'a pas de
+	 * decrease-key, donc l'A* fermait une case avec un coût sous-optimal.
+	 * On rejoue le layout réel du combat 53208119 (obstacles de la carte +
+	 * cases occupées par les entités) et on exige que l'A* rende bien la
+	 * longueur minimale (celle du BFS).
+	 */
+	@Test
+	public void astarShortestPathIssue4744() throws Exception {
+		Map map = new Map(18, 18);
+		// Cases bloquées au moment de l'action : obstacles de la carte + entités.
+		int[] blocked = {
+			3, 4, 12, 32, 39, 64, 65, 70, 72, 79, 83, 85, 94, 99, 128,
+			136, 142, 147, 152, 154, 155, 180, 183, 186, 194, 195, 207, 222, 223, 234,
+			237, 240, 248, 249, 251, 252, 274, 293, 295, 313, 319, 322, 327, 328, 337,
+			339, 340, 342, 345, 353, 372, 380, 386, 391, 396, 405, 407, 431, 435, 442,
+			443, 445, 447, 453, 455, 459, 472, 485, 509, 518, 521, 546, 582, 585, 610,
+			612
+		};
+		for (int id : blocked)
+			map.getCell(id).setWalkable(false);
+
+		Cell start = map.getCell(409);
+		Cell end = map.getCell(300);
+		Assert.assertTrue("409 doit être franchissable", start.isWalkable());
+		Assert.assertTrue("300 doit être franchissable", end.isWalkable());
+
+		int optimal = bfsShortestLength(map, start, end);
+		Assert.assertTrue("Un chemin 409->300 doit exister", optimal > 0);
+
+		List<Cell> path = map.getAStarPath(start, new Cell[] { end });
+		Assert.assertNotNull("L'A* doit trouver un chemin 409->300", path);
+		Assert.assertEquals("409->300 arrive bien sur la 300", 300, path.get(path.size() - 1).getId());
+		// Avant le correctif : 12 pas (détour), le BFS en donne 10.
+		Assert.assertEquals("L'A* doit rendre le plus court chemin", optimal, path.size());
+	}
+
+	/**
+	 * Propriété générale (fuzz déterministe façon rapport #4744) : sur des
+	 * milliers de layouts d'obstacles aléatoires, getAStarPath() doit TOUJOURS
+	 * rendre un chemin de longueur minimale, comparé au BFS de référence.
+	 */
+	@Test
+	public void astarAlwaysReturnsShortestPathFuzz() throws Exception {
+		java.util.Random rng = new java.util.Random(4744); // seed figée = déterministe
+		int suboptimal = 0, tested = 0;
+		for (int iter = 0; iter < 400; iter++) {
+			Map map = new Map(18, 18);
+			int n = map.getNbCell();
+			// 15 % à 40 % d'obstacles, comme le fuzz du rapport.
+			double density = 0.15 + rng.nextDouble() * 0.25;
+			for (int i = 0; i < n; i++) {
+				if (rng.nextDouble() < density)
+					map.getCell(i).setWalkable(false);
+			}
+			for (int p = 0; p < 6; p++) {
+				Cell a = map.getCell(rng.nextInt(n));
+				Cell b = map.getCell(rng.nextInt(n));
+				if (a == b || !a.isWalkable() || !b.isWalkable())
+					continue;
+				int bfs = bfsShortestLength(map, a, b);
+				List<Cell> path = map.getAStarPath(a, new Cell[] { b });
+				tested++;
+				if (bfs < 0) {
+					Assert.assertNull("Pas de chemin BFS => A* doit rendre null (" + a.getId() + "->" + b.getId() + ")", path);
+				} else {
+					Assert.assertNotNull("Chemin BFS existe => A* doit en trouver un (" + a.getId() + "->" + b.getId() + ")", path);
+					if (path.size() != bfs) {
+						suboptimal++;
+						System.out.println("Sous-optimal " + a.getId() + "->" + b.getId() + " : A*=" + path.size() + " BFS=" + bfs);
+					}
+				}
+			}
+		}
+		System.out.println("Fuzz A* : " + tested + " trajets testés, " + suboptimal + " sous-optimaux");
+		Assert.assertEquals("Aucun chemin ne doit être sous-optimal", 0, suboptimal);
+	}
+
 }

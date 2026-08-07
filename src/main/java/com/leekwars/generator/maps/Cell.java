@@ -21,7 +21,6 @@ public class Cell {
 	int astarVisitedRun = 0;
 	int astarClosedRun = 0;
 	short cost = 0;
-	float weight = 0;
 	Cell parent = null;
 
 	public Cell(Map map, int id) {

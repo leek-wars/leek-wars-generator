@@ -61,7 +61,21 @@ public class Map {
 	private State state;
 	private int astarRun = 0;
 
-	private static final Comparator<Cell> ASTAR_WEIGHT = (a, b) -> Float.compare(a.weight, b.weight);
+	// Entrée de la file ouverte de l'A*. Son poids f est figé à la construction :
+	// la clé de tri ne doit JAMAIS être mutée tant que l'entrée est dans le tas.
+	// java.util.PriorityQueue n'a pas de decrease-key et ne re-trie pas un élément
+	// déjà présent — modifier son poids en place corromprait l'invariant du tas et
+	// ferait rendre des chemins non minimaux. On empile donc une nouvelle entrée à
+	// chaque amélioration (lazy deletion) plutôt que de modifier une case en place.
+	private static final class AStarNode {
+		final Cell cell;
+		final float weight;
+		AStarNode(Cell cell, float weight) {
+			this.cell = cell;
+			this.weight = weight;
+		}
+	}
+	private static final Comparator<AStarNode> ASTAR_WEIGHT = (a, b) -> Float.compare(a.weight, b.weight);
 
 	public static Map generateMap(State state, int context, int width, int height, int obstacles_count, List<Team> teams, ObjectNode custom_map) {
 
@@ -1065,14 +1079,18 @@ public class Map {
 		final boolean smallIgnore = cells_to_ignore == null || cells_to_ignore.size() <= 4;
 		final Set<Cell> ignoreSet = smallIgnore ? null : new HashSet<>(cells_to_ignore);
 
-		PriorityQueue<Cell> open = new PriorityQueue<>(ASTAR_WEIGHT);
+		PriorityQueue<AStarNode> open = new PriorityQueue<>(ASTAR_WEIGHT);
 		c1.cost = 0;
-		c1.weight = 0;
 		c1.astarVisitedRun = run;
-		open.add(c1);
+		open.add(new AStarNode(c1, 0));
 
 		while (!open.isEmpty()) {
-			Cell u = open.poll();
+			Cell u = open.poll().cell;
+			// Lazy deletion : la première fois qu'une case sort du tas, son coût est
+			// optimal (heuristique consistante + poids figés) ; on la ferme. Les
+			// entrées périmées d'une case déjà fermée qui remontent ensuite sont
+			// ignorées ici.
+			if (u.astarClosedRun == run) continue;
 			u.astarClosedRun = run;
 
 			if (smallEnd ? endCells.contains(u) : endSet.contains(u)) {
@@ -1106,12 +1124,12 @@ public class Map {
 				boolean visited = c.astarVisitedRun == run;
 				if (!visited || u.cost + 1 < c.cost) {
 					c.cost = (short) (u.cost + 1);
-					c.weight = c.cost + Pathfinding.getCaseDistance(c, endCells);
 					c.parent = u;
-					if (!visited) {
-						c.astarVisitedRun = run;
-						open.add(c);
-					}
+					c.astarVisitedRun = run;
+					// Nouvelle entrée à chaque amélioration : son poids f est figé, ce
+					// qui garde le tas cohérent sans decrease-key. L'entrée périmée
+					// éventuelle sera sautée au poll() grâce au garde astarClosedRun.
+					open.add(new AStarNode(c, c.cost + Pathfinding.getCaseDistance(c, endCells)));
 				}
 			}
 		}
