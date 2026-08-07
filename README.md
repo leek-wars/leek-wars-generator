@@ -35,15 +35,25 @@ java -jar generator.jar test/scenario/scenario1.json
 
 Deux façons, selon le langage de l'IA.
 
-### Le plus simple : Docker (aucun build)
+### Docker (rien à installer côté Java)
 
-L'image publique embarque le moteur, l'isolate et les données — rien à compiler :
+Le `Dockerfile` récupère l'isolate **prébuilt** (release publique) et compile le
+générateur — **seul le Java est compilé, jamais GraalVM** (le build lourd de l'image
+isolate n'est pas rejoué) :
 
 ```sh
+git clone https://github.com/leek-wars/leek-wars-generator && cd leek-wars-generator
+git submodule update --init --recursive
+docker build -t leek-wars-generator .
+
 # IA LeekScript, JavaScript OU Python : monte le dossier courant sur /ai
-docker run --rm -v "$PWD":/ai ghcr.io/leek-wars/leek-wars-generator --analyze /ai/mon_ia.js
-docker run --rm -v "$PWD":/ai ghcr.io/leek-wars/leek-wars-generator /ai/scenario.json
+docker run --rm -v "$PWD":/ai leek-wars-generator --analyze /ai/mon_ia.js
+docker run --rm -v "$PWD":/ai leek-wars-generator /ai/scenario.json
 ```
+
+> La CI produit aussi une image `ghcr.io/leek-wars/leek-wars-generator`. Selon la
+> politique de l'organisation, elle peut n'être accessible qu'après `docker login ghcr.io` ;
+> le `docker build` ci-dessus, lui, marche pour tout le monde sans authentification.
 
 ### En Java, sans Docker
 
