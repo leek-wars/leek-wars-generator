@@ -1,0 +1,30 @@
+# Contexte de build minimal : on garde src/, leekscript/, data/, build.gradle,
+# settings.gradle, gradle/, libs/. Tout le reste est du bruit (ou trop lourd).
+.git
+.github
+.gradle
+bin
+build
+logs
+ai
+work
+generator.jar
+leekscript.jar
+libs/*.jar
+node_modules
+# dossiers lourds imbriqués (ex: sous-module leekscript) non nécessaires au build du jar
+**/build
+**/bin
+**/.gradle
+leekscript/ai
+.classpath
+.project
+.settings
+.vscode
+.idea
+*.png
+*.jpg
+*.jpeg
+*.gz
+*.xcf
+*.log

@@ -27,7 +27,13 @@ jar {
 	destinationDirectory = layout.buildDirectory.dir("..")
 	duplicatesStrategy = DuplicatesStrategy.INCLUDE
 	manifest {
-		attributes "Main-Class": "com.leekwars.Main"
+		// Multi-Release: true est OBLIGATOIRE pour un uber-jar embarquant Truffle/GraalVM :
+		// les classes vivent sous META-INF/versions/17, mais sans cet attribut la JVM les
+		// ignore et Truffle refuse de s'initialiser ("Multi-Release ... has been lost /
+		// invalid Uber JAR configuration") -> tout combat polyglot (IA JS/Python) plante en
+		// `java -jar`. La tache jar ne propage pas l'attribut, on le pose explicitement.
+		attributes "Main-Class": "com.leekwars.Main",
+		           "Multi-Release": "true"
 	}
 	from {
 		// Ne bundler que les dossiers de classes et les .jar : les deps GraalVM polyglot (js-community,
@@ -57,7 +63,7 @@ dependencies {
 	// darwin-amd64 ABSENT de Maven Central (pas de .module pour filtrer) -> cibler l'artefact plateforme.
 	// TODO deploy : ajouter les classifiers des autres plateformes (aarch64...) selon les workers/dev.
 	implementation 'org.graalvm.polyglot:polyglot:25.1.3'
-	// Image isolate COMBINEE js+python CUSTOM (repo prive leek-wars/graal-isolate) : remplace
+	// Image isolate COMBINEE js+python CUSTOM (repo PUBLIC leek-wars/leek-wars-graal-isolate) : remplace
 	// org.graalvm.polyglot:{js,python}-isolate-linux-amd64-community:25.1.3. UNE seule lib native
 	// (les deux langages coexistent en mode internal dans un worker : la limite GraalVM
 	// une-lib-isolate-par-JVM ne s'applique plus) + instrument StatementCounter compile dans
@@ -65,8 +71,10 @@ dependencies {
 	// l'engine et lu via les polyglot bindings, cf PolyglotSandbox). Les deps transitives des
 	// meta-poms remplaces (nativebridge, truffle-api) sont declarees explicitement ci-dessous.
 	// Le jar (127 Mo, au-dela de la limite git GitHub) n'est PAS commite : il vient de la RELEASE
-	// du repo prive leek-wars-graal-isolate (les workflows *-beta le telechargent dans libs/ via
-	// `gh release download` avant le build ; en local, copier dist/ du repo graal-isolate).
+	// PUBLIQUE du repo leek-wars-graal-isolate. En local, le recuperer dans libs/ :
+	//   curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
+	//     https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-2/js-isolate-resources-linux-amd64.jar
+	// (ou copier dist/ du repo graal-isolate si on l'a builde soi-meme).
 	implementation files('libs/js-isolate-resources-linux-amd64.jar')
 	implementation 'org.graalvm.sdk:nativebridge:25.1.3'
 	// truffle-api : compile StatementCounter (copie hote de l'instrument, ALIGNEE sur celle de
