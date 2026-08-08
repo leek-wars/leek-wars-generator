@@ -350,6 +350,42 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
+	/**
+	 * #4747 : poireau RAM 6 dont l'entree {@code import}e un module VOISIN a top-level charge (le vrai
+	 * cas signale : un {@code main.py} de 16 Ko qui, a l'import, construit un dict de 613 cases, delie
+	 * des listes-litterales de bordures et definit ses fonctions). A 64 Mo de plancher, ce setup
+	 * saturait le cap heap guest AVANT la 1re action -> IA annulee, 0 operation, poireau inerte tout le
+	 * combat. La baseline additive (cf PolyglotEntityAI) doit le laisser tourner.
+	 *
+	 * <p>Sandbox Python SEUL (et non "js","python") a dessein : c'est la config ou l'isolate Python est
+	 * charge EN PROCESSUS, donc ou {@code sandbox.MaxHeapMemory} est reellement applique. Avec les deux
+	 * langages, l'un bascule en isolate externe sans cap par contexte (cf PolyglotSandbox) et le test
+	 * ne verifierait alors rien du budget RAM.
+	 *
+	 * <p>HONNETETE (comme les tests voisins) : ce cas passe des ~16 Mo en local ; il ne reproduit pas le
+	 * seuil de prod (image isolate + etat de combat reels allouent davantage). Il garde le CHEMIN
+	 * — import multi-fichiers d'un module lourd sur poireau bas niveau, cap enforce — pas le seuil.
+	 */
+	@Test
+	public void pythonHeavyModuleImportFitsLowLevelRamCap() throws Exception {
+		initFightOnly();
+		Leek small = lowRamLeek();
+		Map<String, String> files = new HashMap<>();
+		// Voisin a top-level charge : dict de 613 cases + grosses listes-litterales, a la main.py de #4747.
+		files.put("strat.py",
+			"open_cells = {}\n"
+			+ "for entry in Field.getObstacles():\n    open_cells[entry.id] = False\n"
+			+ "for i in range(0, 613):\n    open_cells.setdefault(i, True)\n"
+			+ "left_border = [0, 18, 35, 53, 70, 88, 105, 123, 140, 158, 175, 193, 210, 228, 245]\n"
+			+ "right_border = [17, 34, 52, 69, 87, 104, 122, 139, 157, 174, 192, 209, 227, 244, 262]\n"
+			+ "def pick():\n    return 42\n");
+		files.put("main.py", "import strat\ndef turn():\n    return strat.pick() + Fight.me.life\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			long r = ((Number) multiFileAI(sb, "python", files, "main.py", small).runIA()).longValue();
+			Assert.assertEquals(42 + small.getLife(), r);
+		}
+	}
+
 	/** Poireau RAM 6 enregistre dans l'etat : Fight.me resout par fid, un fid non attribue viserait leek1. */
 	private Leek lowRamLeek() {
 		// defaultLeek plutot qu'un 26e appel positionnel a new Leek(...) : le seul stat qui compte ici

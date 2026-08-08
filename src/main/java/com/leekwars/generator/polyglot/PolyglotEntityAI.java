@@ -176,24 +176,36 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final double RAM_FACTOR = 3.8;
 
 	/**
-	 * PLANCHER de cap RAM guest pour Python, en octets (cf ensureContext). La machinerie d'import de
-	 * GraalPy (importlib + FileFinder sur le FS custom) et le prelude de determinisme allouent
-	 * plusieurs Mo AVANT la premiere ligne du joueur : sous ce plancher, un poireau bas niveau
-	 * (RAM 6 -> cap derive ~12.6 Mo) est annule sur du code trivial.
+	 * BASELINE de cap RAM guest pour Python, en octets (cf ensureContext) : le cout FIXE du runtime
+	 * avant la moindre ligne du joueur. GraalPy (runtime + importlib + FileFinder sur le FS custom),
+	 * le prelude de determinisme, l'API objet (objects.py instancie deja 37 armes + 110 puces + les
+	 * classes) ET la COMPILATION des modules du joueur (chaque {@code import} d'un fichier voisin fait
+	 * charger+compiler+executer son top-level) allouent plusieurs dizaines de Mo AVANT la premiere
+	 * action. Ce cout n'est PAS de la donnee joueur : le facturer sur le petit budget d'un poireau bas
+	 * niveau l'annule au setup, sur du code parfaitement legitime.
 	 *
-	 * <p>HISTORIQUE : 32 Mo, valeur mesuree "confortable" par TestPolyglotMultiFile. Le terrain a
-	 * dementi (prod 2026-07 : deux joueurs annules a 33554432 octets des le setup du contexte, sur du
-	 * code trivial, dont un inscrit de la semaine). ATTENTION : la marche exacte qui fait franchir
-	 * 32 Mo en prod n'est PAS reproduite par les tests (les cas minimaux passent encore a 32 Mo
-	 * localement, cf TestPolyglotMultiFile) : le vrai code joueur et l'etat de combat reel allouent
-	 * plus que le harnais. On ne calibre donc pas au plus juste, on prend de la marge : 64 Mo, et
-	 * configurable par env pour recalibrer en prod sans rebuild (meme knob que
-	 * POLYGLOT_MAX_ISOLATE_MB). 8 poireaux Python d'un combat au plancher = 512 Mo, tiennent
-	 * largement sous l'isolate du worker (4000 Mo). Le filet durable reste le mapping en
-	 * OUT_OF_MEMORY (cf isMemoryExhaustion) : ou que soit le seuil, le depassement est desormais une
-	 * erreur joueur lisible et non un plantage de combat.
+	 * <p>MODELE : le cap guest Python = cette baseline PLUS le budget derive de la RAM (cf
+	 * ensureContext), et non {@code max(baseline, derive)}. L'additif garde deux proprietes :
+	 * <ul>
+	 * <li>le setup ne mange jamais le budget de DONNEES du joueur (meme un poireau RAM 6 a la baseline
+	 *     entiere pour le runtime, plus ses ~12 Mo de donnees) ;</li>
+	 * <li>la RAM reste utile en Python (un poireau qui a investi la stat obtient un cap plus haut),
+	 *     la ou un simple plancher aplatissait tous les poireaux a la meme valeur.</li>
+	 * </ul>
+	 *
+	 * <p>HISTORIQUE : 32 Mo (2026-07, plancher), puis 64 Mo. Le terrain a re-demente (prod 2026-08,
+	 * #4747 : poireau RAM 6, IA multi-fichiers modeste — entree qui {@code import main} d'un module de
+	 * 16 Ko a top-level charge — annulee des le setup a 64 Mo, 0 operation, poireau inerte tout le
+	 * combat). ATTENTION : la marche exacte n'est PAS reproduite par les tests (localement ce meme cas
+	 * passe des ~16 Mo, cf TestPolyglotMultiFile) : le vrai code joueur, l'image isolate de prod et
+	 * l'etat de combat reel allouent bien plus que le harnais. On ne calibre donc pas au plus juste, on
+	 * prend de la marge : 128 Mo, configurable par env pour recalibrer en prod sans rebuild. Cout
+	 * isolate : une equipe de 12 poireaux Python RAM 50 = 12*(128+105) ~ 2,8 Go, sous l'isolate du
+	 * worker (4000 Mo, lui aussi env-tunable). Le filet durable reste le mapping en OUT_OF_MEMORY (cf
+	 * isMemoryExhaustion) : ou que soit le seuil, le depassement est une erreur joueur lisible et non
+	 * un plantage de combat.
 	 */
-	private static final long PYTHON_MIN_HEAP_BYTES = PolyglotSandbox.envMegabytes("POLYGLOT_PYTHON_MIN_HEAP_MB", 64);
+	private static final long PYTHON_BASE_HEAP_BYTES = PolyglotSandbox.envMegabytes("POLYGLOT_PYTHON_MIN_HEAP_MB", 128);
 
 	/** Plancher de cap RAM guest pour les autres langages (JS/TS), en octets : runtime bien plus leger. */
 	private static final long DEFAULT_MIN_HEAP_BYTES = 8_000_000L;
@@ -525,13 +537,17 @@ public class PolyglotEntityAI extends EntityAI {
 		// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
 		// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
 		// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
-		// Cap RAM RETENUE du guest (par poireau, sandbox.MaxHeapMemory, en OCTETS) = budget RAM
-		// de l'entite DIVISE par RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de
-		// donnees que le mRAM LeekScript (TestRamCalibration) -> on divise pour la parite (cf
-		// RAM_FACTOR), avec un plancher par langage pour ne jamais etouffer un contexte legitime
-		// (cf PYTHON_MIN_HEAP_BYTES / DEFAULT_MIN_HEAP_BYTES).
-		long floor = "python".equals(languageId) ? PYTHON_MIN_HEAP_BYTES : DEFAULT_MIN_HEAP_BYTES;
-		long guestRamCap = Math.max(floor, (long) (getMaxRAM() / RAM_FACTOR));
+		// Cap RAM RETENUE du guest (par poireau, sandbox.MaxHeapMemory, en OCTETS) = budget DONNEES
+		// de l'entite (RAM / RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de donnees que
+		// le mRAM LeekScript, cf RAM_FACTOR / TestRamCalibration).
+		//   - Python : on AJOUTE la baseline runtime (cf PYTHON_BASE_HEAP_BYTES) au budget donnees,
+		//     car le cout FIXE du runtime GraalPy + prelude + compilation des modules importes ne doit
+		//     pas etre facture sur le petit budget d'un poireau bas niveau (annulation au setup, #4747).
+		//   - JS/TS : runtime bien plus leger -> simple plancher (max), le modele historique.
+		long dataBudget = (long) (getMaxRAM() / RAM_FACTOR);
+		long guestRamCap = "python".equals(languageId)
+			? PYTHON_BASE_HEAP_BYTES + dataBudget
+			: Math.max(DEFAULT_MIN_HEAP_BYTES, dataBudget);
 		context = sandbox.createContext(languageId, fileSystem, guestRamCap);
 		// TOUT-OU-RIEN : si le setup echoue en cours de route (typiquement le cap RAM sature par
 		// l'import Python du prelude), le contexte a demi construit ne doit PAS rester en place.
