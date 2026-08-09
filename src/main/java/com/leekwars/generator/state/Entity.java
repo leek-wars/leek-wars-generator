@@ -118,6 +118,9 @@ public abstract class Entity {
 	private Weapon weapon = null;
 	private HashMap<Integer, Integer> itemUses = new HashMap<>();
 	private HashMap<String, FightLoadout> mLoadouts = new HashMap<>();
+	/** Part des stats de départ issue du capital investi (hors base de niveau, hors composants),
+	 * par stat. null quand l'information n'est pas fournie (scénarios de test). */
+	private Map<Integer, Integer> mCapitalStats = null;
 
 	private int usedTP;
 	private int usedMP;
@@ -354,10 +357,34 @@ public abstract class Entity {
 		}
 	}
 
+	public void setCapitalStats(Map<Integer, Integer> capitalStats) {
+		mCapitalStats = capitalStats;
+	}
+
 	/** True si au moins une stat finale du loadout diffère des stats actuelles de l'entity. */
 	public boolean loadoutStatsDiffer(FightLoadout loadout) {
 		for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
 			if (mBaseStats.getStat(e.getKey()) != e.getValue()) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * True si appliquer ce loadout impose de *réduire* le capital investi sur au moins une
+	 * stat — le seul cas qui coûte une potion de restat, comme côté UI. Un loadout qui
+	 * n'ajoute que des composants, ou qui ne fait qu'investir du capital libre, s'applique
+	 * gratuitement.
+	 *
+	 * Sans information de capital (scénarios de test), on retombe sur l'ancien critère :
+	 * toute différence de stat finale.
+	 */
+	public boolean loadoutRequiresRestat(FightLoadout loadout) {
+		var loadoutCapital = loadout.getCapitalStats();
+		if (mCapitalStats == null || loadoutCapital == null) {
+			return loadoutStatsDiffer(loadout);
+		}
+		for (Map.Entry<Integer, Integer> e : mCapitalStats.entrySet()) {
+			if (loadoutCapital.getOrDefault(e.getKey(), 0) < e.getValue()) return true;
 		}
 		return false;
 	}
@@ -380,6 +407,13 @@ public abstract class Entity {
 		if (applyStats) {
 			for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
 				mBaseStats.setStat(e.getKey(), e.getValue());
+			}
+		} else if (mCapitalStats != null && loadout.getCapitalStats() != null) {
+			// Capital inchangé (pas de restat), mais les composants du loadout s'équipent
+			// quand même : stat = base de niveau + composants du loadout + capital actuel.
+			for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
+				int withoutCapital = e.getValue() - loadout.getCapitalStats().getOrDefault(e.getKey(), 0);
+				mBaseStats.setStat(e.getKey(), withoutCapital + mCapitalStats.getOrDefault(e.getKey(), 0));
 			}
 		}
 

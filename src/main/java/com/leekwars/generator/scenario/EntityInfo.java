@@ -58,6 +58,9 @@ public class EntityInfo {
 	public List<Integer> chips = new ArrayList<Integer>();
 	public List<Integer> weapons = new ArrayList<Integer>();
 	public List<LoadoutData> loadouts = new ArrayList<>();
+	/** Entity.STAT_* → bonus apporté par le capital investi (hors base de niveau et hors
+	 * composants). Null quand l'information n'est pas fournie. */
+	public Map<Integer, Integer> capitalStats;
 	public Integer cell;
 
 	public static class LoadoutData {
@@ -66,13 +69,23 @@ public class EntityInfo {
 		public List<Integer> forgottenWeapons;
 		public List<Integer> chips;
 		public Map<Integer, Integer> stats; // Entity.STAT_* → final value (absolute)
+		/** Entity.STAT_* → part de `stats` apportée par le capital investi (null si inconnue). */
+		public Map<Integer, Integer> capitalStats;
+		/** True si le loadout réclame plus de capital que le niveau du poireau n'en donne. */
+		public boolean overCapital;
 
 		public LoadoutData(String name, List<Integer> weapons, List<Integer> forgottenWeapons, List<Integer> chips, Map<Integer, Integer> stats) {
+			this(name, weapons, forgottenWeapons, chips, stats, null, false);
+		}
+
+		public LoadoutData(String name, List<Integer> weapons, List<Integer> forgottenWeapons, List<Integer> chips, Map<Integer, Integer> stats, Map<Integer, Integer> capitalStats, boolean overCapital) {
 			this.name = name;
 			this.weapons = weapons;
 			this.forgottenWeapons = forgottenWeapons == null ? new ArrayList<>() : forgottenWeapons;
 			this.chips = chips;
 			this.stats = stats;
+			this.capitalStats = capitalStats;
+			this.overCapital = overCapital;
 		}
 	}
 	public int skin;
@@ -177,7 +190,23 @@ public class EntityInfo {
 						ss.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
 					}
 				}
-				this.loadouts.add(new LoadoutData(name, ws, fws, cs, ss));
+				Map<Integer, Integer> cap = null;
+				ObjectNode lcap = (ObjectNode) lo.get("capital_stats");
+				if (lcap != null) {
+					cap = new HashMap<>();
+					for (var entry : lcap.properties()) {
+						cap.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
+					}
+				}
+				boolean over = lo.has("over_capital") && lo.get("over_capital").booleanValue();
+				this.loadouts.add(new LoadoutData(name, ws, fws, cs, ss, cap, over));
+			}
+		}
+		ObjectNode capital = (ObjectNode) e.get("capital_stats");
+		if (capital != null) {
+			capitalStats = new HashMap<>();
+			for (var entry : capital.properties()) {
+				capitalStats.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
 			}
 		}
 	}
@@ -241,8 +270,9 @@ public class EntityInfo {
 			entity.addChip(Chips.getChip(chip));
 		}
 		for (LoadoutData ld : loadouts) {
-			entity.addLoadout(new FightLoadout(ld.name, ld.weapons, ld.forgottenWeapons, ld.chips, ld.stats));
+			entity.addLoadout(new FightLoadout(ld.name, ld.weapons, ld.forgottenWeapons, ld.chips, ld.stats, ld.capitalStats, ld.overCapital));
 		}
+		entity.setCapitalStats(capitalStats);
 
 		return entity;
 	}
@@ -301,9 +331,26 @@ public class EntityInfo {
 					ls.put(String.valueOf(entry.getKey()), entry.getValue());
 				}
 				lj.set("stats", ls);
+				if (ld.capitalStats != null) {
+					ObjectNode lcap = Json.createObject();
+					for (var entry : ld.capitalStats.entrySet()) {
+						lcap.put(String.valueOf(entry.getKey()), entry.getValue());
+					}
+					lj.set("capital_stats", lcap);
+				}
+				if (ld.overCapital) {
+					lj.put("over_capital", true);
+				}
 				loadoutsJson.add(lj);
 			}
 			json.set("loadouts", loadoutsJson);
+		}
+		if (capitalStats != null) {
+			ObjectNode capital = Json.createObject();
+			for (var entry : capitalStats.entrySet()) {
+				capital.put(String.valueOf(entry.getKey()), entry.getValue());
+			}
+			json.set("capital_stats", capital);
 		}
 		return json;
 	}

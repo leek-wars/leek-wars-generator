@@ -229,6 +229,114 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertEquals(1, fight.getState().getRestatPotionsAvailable(0));
 	}
 
+	// ---------- setLoadout : potion de restat vs composants (capital) ----------
+
+	/**
+	 * Loadout dont on connaît la part de capital : `life/strength/agility` sont les stats
+	 * finales, `*Capital` la part financée par le capital investi (le reste venant du niveau
+	 * et des composants).
+	 */
+	private static FightLoadout capitalLoadout(String name, int life, int strength, int agility,
+		int lifeCapital, int strengthCapital, int agilityCapital, boolean overCapital) {
+		var stats = new HashMap<Integer, Integer>();
+		stats.put(Entity.STAT_LIFE, life);
+		stats.put(Entity.STAT_STRENGTH, strength);
+		stats.put(Entity.STAT_AGILITY, agility);
+		var capital = new HashMap<Integer, Integer>();
+		capital.put(Entity.STAT_LIFE, lifeCapital);
+		capital.put(Entity.STAT_STRENGTH, strengthCapital);
+		capital.put(Entity.STAT_AGILITY, agilityCapital);
+		return new FightLoadout(name, java.util.Collections.emptyList(), java.util.Collections.emptyList(),
+			java.util.Collections.emptyList(), stats, capital, overCapital);
+	}
+
+	/** Part des stats de leek1 (500 vie / 100 force / 100 agilité) issue du capital. */
+	private void setLeek1Capital() {
+		var capital = new HashMap<Integer, Integer>();
+		capital.put(Entity.STAT_LIFE, 400);
+		capital.put(Entity.STAT_STRENGTH, 100);
+		capital.put(Entity.STAT_AGILITY, 100);
+		leek1.setCapitalStats(capital);
+	}
+
+	@Test
+	public void setLoadoutWithOnlyComponentsNeedsNoPotion() throws Exception {
+		// Même répartition de capital, mais des composants en plus (+110 vie) : aucun restat
+		// n'est nécessaire, donc aucune potion — et les composants s'appliquent bien.
+		fight.getState().setRestatPotionsAvailable(0, 0);
+		setLeek1Capital();
+		leek1.addLoadout(capitalLoadout("components", 610, 100, 100, 400, 100, 100, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('components'); }"
+			+ "setRegister('l', '' + getTotalLife());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("610", leek1.getRegister("l"));
+		Assert.assertNull(fight.getState().getRestatPotionsConsumed().get(0));
+	}
+
+	@Test
+	public void setLoadoutWithAdditiveCapitalNeedsNoPotion() throws Exception {
+		// Capital investi en plus sur la force, rien de retiré ailleurs : pas de restat.
+		fight.getState().setRestatPotionsAvailable(0, 0);
+		setLeek1Capital();
+		leek1.addLoadout(capitalLoadout("additive", 500, 150, 100, 400, 150, 100, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('additive'); }"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("150", leek1.getRegister("s"));
+		Assert.assertNull(fight.getState().getRestatPotionsConsumed().get(0));
+	}
+
+	@Test
+	public void setLoadoutLoweringCapitalConsumesPotion() throws Exception {
+		// Force réduite au profit de l'agilité : réallocation → potion.
+		fight.getState().setRestatPotionsAvailable(0, 1);
+		setLeek1Capital();
+		leek1.addLoadout(capitalLoadout("reroll", 500, 50, 150, 400, 50, 150, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('reroll'); }"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("50", leek1.getRegister("s"));
+		Assert.assertEquals(Integer.valueOf(1), fight.getState().getRestatPotionsConsumed().get(0));
+	}
+
+	@Test
+	public void setLoadoutWithoutPotionStillAppliesComponents() throws Exception {
+		// Réallocation refusée faute de potion : le capital reste celui du poireau, mais les
+		// composants du loadout (+110 vie) s'équipent quand même.
+		fight.getState().setRestatPotionsAvailable(0, 0);
+		setLeek1Capital();
+		leek1.addLoadout(capitalLoadout("reroll", 610, 50, 150, 400, 50, 150, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('reroll'); }"
+			+ "setRegister('l', '' + getTotalLife());"
+			+ "setRegister('s', '' + getStrength());"
+			+ "setRegister('a', '' + getAgility());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("610", leek1.getRegister("l"));
+		Assert.assertEquals("100", leek1.getRegister("s"));
+		Assert.assertEquals("100", leek1.getRegister("a"));
+	}
+
+	@Test
+	public void setLoadoutOverCapitalDoesNotApplyStats() throws Exception {
+		// Loadout conçu pour un poireau bien plus gros : les caractéristiques ne s'appliquent
+		// pas (et aucune potion n'est gaspillée), seul l'équipement suit.
+		fight.getState().setRestatPotionsAvailable(0, 999);
+		setLeek1Capital();
+		leek1.addLoadout(capitalLoadout("huge", 5000, 900, 100, 4900, 900, 100, true));
+		attachAI(leek1, "function beforeFight() { setLoadout('huge'); }"
+			+ "setRegister('l', '' + getTotalLife());"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("500", leek1.getRegister("l"));
+		Assert.assertEquals("100", leek1.getRegister("s"));
+		Assert.assertNull(fight.getState().getRestatPotionsConsumed().get(0));
+	}
+
 	// ---------- getWinner ----------
 
 	@Test

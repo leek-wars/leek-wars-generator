@@ -378,8 +378,9 @@
 		resurrect(target, cell) { return F.resurrect(eid(target), cid(cell)); }
 		// Nombre d'utilisations de l'item (arme ou puce) par l'entité courante ce tour.
 		itemUses(item) { return F.getItemUses(unwrap(item)); }
-		// Change l'équipement courant (nom du loadout).
-		setLoadout(name, keep) { return (keep === undefined) ? F.setLoadout(name) : F.setLoadout(name, keep); }
+		// Change l'équipement courant (nom du loadout). changeStats = appliquer aussi la
+		// répartition de capital du loadout (defaut true).
+		setLoadout(name, changeStats) { return (changeStats === undefined) ? F.setLoadout(name) : F.setLoadout(name, changeStats); }
 		// Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (pendant laquelle
 		// me/getEntity() designent le bulbe). cf TypeMarshaller.wrapGuestFunction + BulbAI.
 		summon(chip, cell, callback, name) {

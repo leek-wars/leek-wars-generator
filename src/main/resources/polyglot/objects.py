@@ -482,9 +482,10 @@ def _lw_build(G, NAMES):
         def resurrect(self, target, cell): return F.resurrect(_eid(target), _cid(cell))
         # Nombre d'utilisations de l'item (arme ou puce) par l'entité courante ce tour.
         def itemUses(self, item): return F.getItemUses(_unwrap(item))
-        # Change l'équipement courant (nom du loadout).
-        def setLoadout(self, name, keep=None):
-            return F.setLoadout(name) if keep is None else F.setLoadout(name, keep)
+        # Change l'équipement courant (nom du loadout). changeStats = appliquer aussi la
+        # répartition de capital du loadout (defaut True).
+        def setLoadout(self, name, changeStats=None):
+            return F.setLoadout(name) if changeStats is None else F.setLoadout(name, changeStats)
         # Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (me/getEntity() = bulbe).
         def summon(self, chip, cell, callback, name=None):
             return F.summon(_cpid(chip), _cid(cell), callback) if name is None else F.summon(_cpid(chip), _cid(cell), callback, name)

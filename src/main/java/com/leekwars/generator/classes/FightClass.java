@@ -1344,9 +1344,15 @@ public class FightClass {
 				}
 			}
 		}
-		// Pré-check statsDiffer pour ne pas gaspiller une potion sur un loadout identique.
+		// Pré-check statsDiffer pour ne pas gaspiller une potion sur un loadout identique, puis
+		// requiresRestat : seule une *baisse* du capital investi coûte une potion. Ajouter des
+		// composants ou investir du capital libre est gratuit, comme côté UI.
 		boolean applyStats = changeStats && entity.loadoutStatsDiffer(loadout);
-		if (applyStats && !ai.getFight().getState().consumeRestatPotion(farmerId)) {
+		if (applyStats && loadout.isOverCapital()) {
+			applyStats = false;
+			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_ENOUGH_CAPITAL,
+				new String[] { name });
+		} else if (applyStats && entity.loadoutRequiresRestat(loadout) && !ai.getFight().getState().consumeRestatPotion(farmerId)) {
 			applyStats = false;
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_NO_RESTAT_POTION,
 				new String[] { name });
