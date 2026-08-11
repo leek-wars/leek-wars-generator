@@ -200,6 +200,13 @@ public class Attack {
 					Cell destination = state.getMap().getPushLastAvailableCell(entity.getCell(), target, caster.getCell());
 					state.slideEntity(entity, destination, caster);
 				}
+			} else if (parameters.getId() == Effect.TYPE_REPEL) {
+				// Repousse d'un nombre de cases fixe (value1), loin du lanceur.
+				for (Entity entity : targetEntities) {
+					if (entity == caster) continue;
+					Cell destination = state.getMap().getRepelLastAvailableCell(entity.getCell(), caster.getCell(), (int) parameters.getValue1());
+					state.slideEntity(entity, destination, caster);
+				}
 			}
 
 			if (parameters.getId() == Effect.TYPE_TELEPORT) {

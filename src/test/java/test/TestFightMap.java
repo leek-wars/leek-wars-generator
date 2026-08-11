@@ -13,7 +13,6 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
-import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.Team;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
@@ -283,4 +282,35 @@ public class TestFightMap {
 		Assert.assertEquals("Aucun chemin ne doit être sous-optimal", 0, suboptimal);
 	}
 
+	@Test
+	public void repelDistanceTest() throws Exception {
+		Map map = new Map(18, 18);
+
+		Cell caster = map.getCell(5, 0);
+		Cell entity = map.getCell(6, 0); // juste à côté, direction +x
+
+		// Repoussée de 3 cases : l'entité s'éloigne du lanceur d'exactement 3 cases
+		Cell destination = map.getRepelLastAvailableCell(entity, caster, 3);
+		Assert.assertEquals(9, destination.getX());
+		Assert.assertEquals(0, destination.getY());
+
+		// Distance 0 : aucun déplacement
+		Assert.assertEquals(entity, map.getRepelLastAvailableCell(entity, caster, 0));
+
+		// Même case que le lanceur : pas de direction, aucun déplacement
+		Assert.assertEquals(caster, map.getRepelLastAvailableCell(caster, caster, 3));
+	}
+
+	@Test
+	public void repelStopsOnObstacleTest() throws Exception {
+		Map map = new Map(18, 18);
+
+		Cell caster = map.getCell(5, 0);
+		Cell entity = map.getCell(6, 0);
+		map.getCell(8, 0).setObstacle(1, 1); // barrage à 2 cases
+
+		// La repoussée s'arrête devant l'obstacle au lieu de le traverser
+		Cell destination = map.getRepelLastAvailableCell(entity, caster, 3);
+		Assert.assertEquals(7, destination.getX());
+	}
 }

@@ -1229,6 +1229,24 @@ public class Map {
 		return current;
 	}
 
+	/**
+	 * Repousse une entité de `distance` cases en s'éloignant du lanceur, et s'arrête net
+	 * sur le premier obstacle. Contrairement à getPushLastAvailableCell, la distance est
+	 * bornée et ne dépend pas de la case visée : c'est ce que porte EFFECT_REPEL.
+	 */
+	public Cell getRepelLastAvailableCell(Cell entity, Cell caster, int distance) {
+		int dx = (int) Math.signum(entity.x - caster.x);
+		int dy = (int) Math.signum(entity.y - caster.y);
+		if (dx == 0 && dy == 0) return entity; // même case : pas de direction
+		Cell current = entity;
+		for (int i = 0; i < distance; ++i) {
+			Cell next = current.next(this, dx, dy);
+			if (next == null || !next.available(this)) break;
+			current = next;
+		}
+		return current;
+	}
+
 	public Cell getAttractLastAvailableCell(Cell entity, Cell target, Cell caster) {
 		// Delta caster --> entity
 		int cdx = (int) Math.signum(entity.x - caster.x);

@@ -1303,5 +1303,77 @@
 		"forgotten": false,
 		"item": 278,
 		"max_uses": 1
+	},
+	"42": {
+		"id": 42,
+		"name": "sun_spear",
+		"level": 201,
+		"min_range": 1,
+		"max_range": 4,
+		"launch_type": 1,
+		"effects": [
+			{
+				"id": 1,
+				"value1": 75,
+				"value2": 15,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 1
+			},
+			{
+				"id": 53,
+				"value1": 4,
+				"value2": 0,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 0
+			}
+		],
+		"cost": 7,
+		"area": 2,
+		"los": true,
+		"template": 42,
+		"passive_effects": [],
+		"forgotten": false,
+		"item": 440,
+		"max_uses": 1
+	},
+	"41": {
+		"id": 41,
+		"name": "desert_saber",
+		"level": 151,
+		"min_range": 1,
+		"max_range": 1,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 1,
+				"value1": 75,
+				"value2": 10,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 1
+			},
+			{
+				"id": 59,
+				"value1": 12,
+				"value2": 0,
+				"turns": 2,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 0
+			}
+		],
+		"cost": 6,
+		"area": 1,
+		"los": true,
+		"template": 41,
+		"passive_effects": [],
+		"forgotten": false,
+		"item": 429,
+		"max_uses": 1
 	}
 }
