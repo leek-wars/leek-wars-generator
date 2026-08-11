@@ -13,4 +13,5 @@ public enum EntityState {
 	ROOTED, // 9
 	PETRIFIED, // 10
 	STATIC, // 11
+	STERILE, // 12 : ne peut plus invoquer
 }

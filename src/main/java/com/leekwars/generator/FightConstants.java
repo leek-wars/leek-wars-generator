@@ -134,6 +134,7 @@ public enum FightConstants implements ILeekConstant {
 	STATE_INVINCIBLE(EntityState.INVINCIBLE.ordinal(), Type.INT),
 	STATE_PACIFIST(EntityState.PACIFIST.ordinal(), Type.INT),
 	STATE_STATIC(EntityState.STATIC.ordinal(), Type.INT),
+	STATE_STERILE(EntityState.STERILE.ordinal(), Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
@@ -186,6 +187,7 @@ public enum FightConstants implements ILeekConstant {
 	WEAPON_EXCALIBUR(409, Type.INT),
 	WEAPON_SCYTHE(410, Type.INT),
 	WEAPON_QUANTUM_RIFLE(428, Type.INT),
+	WEAPON_DESERT_SABER(429, Type.INT),
 	WEAPON_PLUTONIUM_BAZOOKA(506, Type.INT),
 
 	// Messages

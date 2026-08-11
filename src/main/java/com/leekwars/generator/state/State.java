@@ -872,6 +872,11 @@ public class State {
 		if (teams.get(caster.getTeam()).getSummonCount() >= SUMMON_LIMIT) {
 			return -5;
 		}
+		// Entité stérile (sabre du désert) : ne peut plus invoquer. USE_FAILED plutôt qu'un
+		// nouveau code de retour, que les IA existantes ne sauraient pas interpréter.
+		if (caster.hasState(EntityState.STERILE)) {
+			return Attack.USE_FAILED;
+		}
 
 		boolean critical = generateCritical(caster);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
