@@ -188,14 +188,19 @@ public class Attack {
 
 			if (caster.isDead()) continue;
 
+			// Effets de mouvement : une cible tuée par un effet PRÉCÉDENT du même coup
+			// (ex. lance du soleil : dégâts puis repoussée) n'a plus de cellule — la
+			// déplacer ferait NPE (getCell() null). On l'ignore, comme le client.
 			if (parameters.getId() == Effect.TYPE_ATTRACT) {
 				for (Entity entity : targetEntities) {
+					if (entity.isDead() || entity.getCell() == null) continue;
 					// Attract directly to target cell
 					Cell destination = state.getMap().getAttractLastAvailableCell(entity.getCell(), target, caster.getCell());
 					state.slideEntity(entity, destination, caster);
 				}
 			} else if (parameters.getId() == Effect.TYPE_PUSH) {
 				for (Entity entity : targetEntities) {
+					if (entity.isDead() || entity.getCell() == null) continue;
 					// Find last available position to push
 					Cell destination = state.getMap().getPushLastAvailableCell(entity.getCell(), target, caster.getCell());
 					state.slideEntity(entity, destination, caster);
@@ -204,6 +209,7 @@ public class Attack {
 				// Repousse d'un nombre de cases fixe (value1), loin du lanceur.
 				for (Entity entity : targetEntities) {
 					if (entity == caster) continue;
+					if (entity.isDead() || entity.getCell() == null) continue;
 					Cell destination = state.getMap().getRepelLastAvailableCell(entity.getCell(), caster.getCell(), (int) parameters.getValue1());
 					state.slideEntity(entity, destination, caster);
 				}
