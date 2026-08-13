@@ -194,6 +194,31 @@ public class TestQuantumNewWeapons extends FightTestBase {
 			logs.contains("GENERATED FILE"));
 	}
 
+	/** Génère un rapport de combat rejouable (/fight/local) : duel lance à PV bas
+	 * pour obtenir des coups ET un kill à la lance dans le log — sert à vérifier
+	 * visuellement l'ordre dégâts → repoussée côté client. */
+	@Test
+	public void dumpSpearReport() throws Exception {
+		setupQuantum(440);
+		leek1.setLife(700); leek1.setTotalLife(700);
+		leek2.setLife(700); leek2.setTotalLife(700);
+		fight.setMaxTurns(30);
+		runFight();
+
+		String report = "{\"fight\": " + fight.getState().getActions().toJSON().toString() + ", \"logs\": {}}";
+		for (String client : new String[] { "/home/pierre/dev/leek-wars/client", "/home/pierre/dev/leek-wars/client-develop" }) {
+			java.nio.file.Path dir = java.nio.file.Path.of(client, "public", "static");
+			if (java.nio.file.Files.isDirectory(java.nio.file.Path.of(client))) {
+				java.nio.file.Files.createDirectories(dir);
+				java.nio.file.Files.writeString(dir.resolve("report.json"), report);
+				System.out.println("[dump] écrit " + dir.resolve("report.json"));
+			}
+		}
+		System.out.println("[dump] " + leek1.getName() + " vie=" + leek1.getLife()
+			+ " | " + leek2.getName() + " vie=" + leek2.getLife());
+		Assert.assertTrue("aucun mort : rejouer avec moins de PV", leek1.isDead() || leek2.isDead());
+	}
+
 	/** Témoin : arme historique (pistolet, template 1) — si Quantum n'attaque pas ici,
 	 * le problème est dans le harnais, pas dans l'intégration des nouvelles armes. */
 	@Test
