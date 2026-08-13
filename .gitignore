@@ -18,4 +18,5 @@ id_rsa*
 id_ed25519*
 .env
 .env.local
-.env.*.local
+.env.*.localdata/fullmoon.json
+src/test/java/test/TestScratch*.java
