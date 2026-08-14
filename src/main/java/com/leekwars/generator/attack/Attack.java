@@ -206,11 +206,14 @@ public class Attack {
 					state.slideEntity(entity, destination, caster);
 				}
 			} else if (parameters.getId() == Effect.TYPE_REPEL) {
-				// Repousse d'un nombre de cases fixe (value1), loin du lanceur.
+				// Repousse d'un nombre de cases fixe (value1), loin du lanceur. Un coup
+				// critique porte aussi sur la distance, avec le facteur et l'arrondi des
+				// autres effets (×1,3) : la lance du soleil repousse alors de 5 cases.
+				int repelDistance = (int) Math.round(parameters.getValue1() * (critical ? Effect.CRITICAL_FACTOR : 1.0));
 				for (Entity entity : targetEntities) {
 					if (entity == caster) continue;
 					if (entity.isDead() || entity.getCell() == null) continue;
-					Cell destination = state.getMap().getRepelLastAvailableCell(entity.getCell(), caster.getCell(), (int) parameters.getValue1());
+					Cell destination = state.getMap().getRepelLastAvailableCell(entity.getCell(), caster.getCell(), repelDistance);
 					state.slideEntity(entity, destination, caster);
 				}
 			}

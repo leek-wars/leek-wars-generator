@@ -75,4 +75,23 @@ public class TestRepelKill extends FightTestBase {
 		Assert.assertNotNull(victim.getCell());
 		Assert.assertEquals("cellule après repoussée", 414, victim.getCell().getId());
 	}
+
+	/** Le critique porte aussi sur la distance de repoussée : round(4 × 1,3) = 5 cases. */
+	@Test
+	public void repelCritiqueReculeDe5() throws Exception {
+		var spear = Weapons.getWeapon(440);
+		Assert.assertNotNull("lance du soleil absente du catalogue", spear);
+		setupAlignedMap();
+		caster.setWeapon(spear);
+		victim.setLife(5000);
+		victim.setTotalLife(5000);
+
+		var target = fight.getState().getMap().getCell(342);
+		spear.getAttack().applyOnCell(fight.getState(), caster, target, true);
+
+		Assert.assertFalse("la cible doit survivre", victim.isDead());
+		// 342 + 5×18 = 432.
+		Assert.assertNotNull(victim.getCell());
+		Assert.assertEquals("cellule après repoussée critique", 432, victim.getCell().getId());
+	}
 }
