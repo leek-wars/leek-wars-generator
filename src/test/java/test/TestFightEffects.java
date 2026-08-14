@@ -3,6 +3,7 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.leek.Leek;
 
@@ -124,6 +125,37 @@ public class TestFightEffects extends FightTestBase {
 		int countAfter2 = leek1.getEffects().size();
 		// Same count: existing effect was replaced (not added)
 		Assert.assertEquals("Non-stackable effect must not duplicate", countAfter1, countAfter2);
+	}
+
+	// ---------- State effects ----------
+
+	private int applyState(EntityState state, Leek target, Leek caster, boolean stackable) {
+		return Effect.createEffect(fight.getState(), Effect.TYPE_ADD_STATE, -1, 1, state.ordinal(), 0, false,
+			target, caster, null, 0, stackable, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+	}
+
+	@Test
+	public void stateEffectNeverStacks() throws Exception {
+		// La valeur d'un ADD_STATE est un identifiant d'état, jamais une quantité :
+		// la fusion d'effets l'additionnait (3 + 3 = 6), ce qui donnait un état
+		// inexistant côté client. Le Réveil, seul ADD_STATE créé avec stackable=true,
+		// plantait le rendu du combat à la deuxième résurrection de la même cible.
+		initFightOnly();
+		applyState(EntityState.INVINCIBLE, leek1, leek2, true);
+		applyState(EntityState.INVINCIBLE, leek1, leek2, true);
+		Assert.assertEquals("Un état ne se duplique pas", 1, leek1.getEffects().size());
+		Assert.assertEquals("La valeur doit rester l'identifiant de l'état",
+			EntityState.INVINCIBLE.ordinal(), leek1.getEffects().get(0).getValue());
+		Assert.assertTrue(leek1.hasState(EntityState.INVINCIBLE));
+	}
+
+	@Test
+	public void stateEffectIsReplacedNotDuplicated() throws Exception {
+		initFightOnly();
+		applyState(EntityState.STERILE, leek1, leek2, false);
+		applyState(EntityState.STERILE, leek1, leek2, false);
+		Assert.assertEquals(1, leek1.getEffects().size());
+		Assert.assertEquals(EntityState.STERILE.ordinal(), leek1.getEffects().get(0).getValue());
 	}
 
 	// ---------- Death clears effects ----------

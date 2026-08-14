@@ -227,9 +227,15 @@ public abstract class Effect implements Cloneable {
 		effect.propagate = propagate;
 		effect.modifiers = modifiers;
 
+		// La valeur d'un ADD_STATE est l'identifiant de l'état, pas une quantité : il se
+		// remplace toujours et ne s'empile jamais. La fusion additionnait les identifiants
+		// (invincible + invincible = 6, un état qui n'existe pas), ce qui figeait le rendu
+		// du combat côté client, faute d'icône pour l'état obtenu.
+		final boolean stacks = stackable && id != TYPE_ADD_STATE;
+
 		// Remove previous effect of the same type (that is not stackable)
 		if (effect.getTurns() != 0) {
-			if (!stackable) {
+			if (!stacks) {
 				var effects = target.getEffects();
 				for (int i = 0; i < effects.size(); ++i) {
 					var e = effects.get(i);
@@ -245,7 +251,7 @@ public abstract class Effect implements Cloneable {
 		effect.apply(state);
 
 		// Stack to previous item with the same characteristics
-		if (effect.value > 0) {
+		if (effect.value > 0 && id != TYPE_ADD_STATE) {
 			for (var e : target.getEffects()) {
 				if ((e.attack == null ? attack == null : attack != null && e.attack.getItemId() == attack.getItemId()) && e.getId() == id && e.turns == turns && e.caster == caster) {
 					e.mergeWith(effect);
