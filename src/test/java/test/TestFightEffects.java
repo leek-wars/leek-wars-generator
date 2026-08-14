@@ -129,9 +129,10 @@ public class TestFightEffects extends FightTestBase {
 
 	// ---------- State effects ----------
 
-	private int applyState(EntityState state, Leek target, Leek caster, boolean stackable) {
+	/** modifiers : IRREDUCTIBLE comme les puces d'état, 0 comme le Stérile du sabre du désert. */
+	private int applyState(EntityState state, Leek target, Leek caster, boolean stackable, int modifiers) {
 		return Effect.createEffect(fight.getState(), Effect.TYPE_ADD_STATE, -1, 1, state.ordinal(), 0, false,
-			target, caster, null, 0, stackable, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+			target, caster, null, 0, stackable, 0, 1, 0, modifiers);
 	}
 
 	@Test
@@ -141,8 +142,8 @@ public class TestFightEffects extends FightTestBase {
 		// inexistant côté client. Le Réveil, seul ADD_STATE créé avec stackable=true,
 		// plantait le rendu du combat à la deuxième résurrection de la même cible.
 		initFightOnly();
-		applyState(EntityState.INVINCIBLE, leek1, leek2, true);
-		applyState(EntityState.INVINCIBLE, leek1, leek2, true);
+		applyState(EntityState.INVINCIBLE, leek1, leek2, true, Effect.MODIFIER_IRREDUCTIBLE);
+		applyState(EntityState.INVINCIBLE, leek1, leek2, true, Effect.MODIFIER_IRREDUCTIBLE);
 		Assert.assertEquals("Un état ne se duplique pas", 1, leek1.getEffects().size());
 		Assert.assertEquals("La valeur doit rester l'identifiant de l'état",
 			EntityState.INVINCIBLE.ordinal(), leek1.getEffects().get(0).getValue());
@@ -152,10 +153,30 @@ public class TestFightEffects extends FightTestBase {
 	@Test
 	public void stateEffectIsReplacedNotDuplicated() throws Exception {
 		initFightOnly();
-		applyState(EntityState.STERILE, leek1, leek2, false);
-		applyState(EntityState.STERILE, leek1, leek2, false);
+		applyState(EntityState.STERILE, leek1, leek2, false, 0);
+		applyState(EntityState.STERILE, leek1, leek2, false, 0);
 		Assert.assertEquals(1, leek1.getEffects().size());
 		Assert.assertEquals(EntityState.STERILE.ordinal(), leek1.getEffects().get(0).getValue());
+	}
+
+	@Test
+	public void partialDebuffLeavesStateIntact() throws Exception {
+		// Libération (-40 %) mettait la valeur de l'effet à l'échelle, or c'est
+		// l'identifiant de l'état : Stérile (12) devenait 7, l'état magnétisé, et
+		// disparaissait de l'affichage du combat.
+		initFightOnly();
+		applyState(EntityState.STERILE, leek1, leek2, false, 0);
+		leek1.reduceEffects(0.40, leek2);
+		Assert.assertEquals("L'état survit à une réduction partielle", 1, leek1.getEffects().size());
+		Assert.assertEquals(EntityState.STERILE.ordinal(), leek1.getEffects().get(0).getValue());
+	}
+
+	@Test
+	public void totalDebuffRemovesState() throws Exception {
+		initFightOnly();
+		applyState(EntityState.STERILE, leek1, leek2, false, 0);
+		leek1.reduceEffectsTotal(1.0, leek2);
+		Assert.assertEquals("Seule une réduction totale retire l'état", 0, leek1.getEffects().size());
 	}
 
 	// ---------- Death clears effects ----------
