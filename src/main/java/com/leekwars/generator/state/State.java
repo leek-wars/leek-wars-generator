@@ -973,15 +973,6 @@ public class State {
 		invoc.setTeam(team);
 		teams.get(team).addEntity(invoc);
 
-		// Colosse : une invocation qui rejoint l'équipe du colosse (team 1) reçoit
-		// immédiatement le multiplicateur courant, au lieu d'attendre le prochain
-		// palier des 5 tours (forum #11869 : un bulbe invoqué entre deux paliers
-		// voyait ses stats sauter d'un coup ×N au palier suivant). `this.type` car
-		// le paramètre `type` de cette méthode désigne le type de bulbe.
-		if (this.type == TYPE_COLOSSUS && team == 1 && colossusMultiplier > 0) {
-			applyColossusMultiplier(invoc);
-		}
-
 		// On ajoute dans les tableaux
 		mEntities.put(invoc.getFId(), invoc);
 
@@ -993,6 +984,19 @@ public class State {
 
 		// On l'ajoute dans les infos du combat
 		actions.addEntity(invoc, critical);
+
+		// Colosse : une invocation qui rejoint l'équipe du colosse (team 1) reçoit
+		// immédiatement le multiplicateur courant, au lieu d'attendre le prochain
+		// palier des 5 tours (forum #11869 : un bulbe invoqué entre deux paliers
+		// voyait ses stats sauter d'un coup ×N au palier suivant). `this.type` car
+		// le paramètre `type` de cette méthode désigne le type de bulbe.
+		// IMPÉRATIF : après addEntity, qui fige le snapshot de stats lu par le client
+		// pour initialiser l'entité. Appliqué avant, le multiplicateur était déjà dans
+		// le snapshot ET rejoué par l'action d'effet, donc compté deux fois côté client
+		// (bulbe à 9900 PV au lieu de 3300, mort avec la barre aux deux tiers pleine).
+		if (this.type == TYPE_COLOSSUS && team == 1 && colossusMultiplier > 0) {
+			applyColossusMultiplier(invoc);
+		}
 
 		return invoc;
 	}
