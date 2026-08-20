@@ -465,7 +465,9 @@ public class State {
 			}
 		}
 
-		// Cooldowns initiaux
+		// Cooldowns initiaux : la puce n'est utilisable qu'à partir du tour
+		// initialCooldown + 1. Le compteur est décrémenté au début de chaque tour de
+		// l'entité, d'où le + 1.
 		for (Entry<Integer, Chip> entry : Chips.getTemplates().entrySet()) {
 			Chip chip = entry.getValue();
 			if (chip.getInitialCooldown() > 0) {
@@ -979,6 +981,12 @@ public class State {
 		// On ajoute dans l'ordre de jeu
 		order.addSummon(owner, invoc);
 
+		// Cooldowns initiaux de l'invocation. Ils se comptent depuis le début du
+		// combat, pas depuis l'invocation : sans ça une invocation les ignorait
+		// purement et simplement (bulbe tacticien lançant Inversion dès le tour 1,
+		// alors que la puce a un cooldown initial de 1).
+		applyInitialCooldowns(invoc);
+
 		// On met la cellule
 		this.map.setEntity(invoc, target);
 
@@ -999,6 +1007,30 @@ public class State {
 		}
 
 		return invoc;
+	}
+
+	/**
+	 * Applique à une invocation les cooldowns initiaux restants, calculés depuis le
+	 * début du combat : une puce de cooldown initial N reste indisponible jusqu'au
+	 * tour N + 1 du combat, quelle que soit la date d'invocation. Une invocation
+	 * apparue au tour N + 1 ou après peut donc la lancer immédiatement.
+	 *
+	 * L'invocation joue dans le tour courant, juste après son invocateur, et
+	 * décrémentera donc ses cooldowns une fois avant de pouvoir agir : d'où le + 1,
+	 * comme pour les entités présentes au lancement du combat.
+	 */
+	private void applyInitialCooldowns(Entity summon) {
+
+		int turn = order.getTurn();
+
+		for (Chip chip : Chips.getTemplates().values()) {
+			// Les cooldowns d'équipe sont déjà suivis au niveau de l'équipe, qui les
+			// a reçus au lancement du combat : les réécrire ici les relancerait.
+			if (chip.isTeamCooldown() || chip.getInitialCooldown() < turn) {
+				continue;
+			}
+			summon.addCooldown(chip, chip.getInitialCooldown() + 2 - turn);
+		}
 	}
 
 	public void removeInvocation(Entity invoc, boolean force) {
