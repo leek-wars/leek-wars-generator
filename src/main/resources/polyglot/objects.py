@@ -105,6 +105,31 @@ def _lw_build(G, NAMES):
         if w is None: return None
         return f(w, t) if ignoredCells is None else f(w, t, _cidlist(ignoredCells))
 
+    # (topic 12040) Les six helpers de ciblage n'AGISSENT pas, ils interrogent la carte. La seule
+    # trace de l'entite courante y est un defaut : l'arme equipee quand aucune n'est precisee, et sa
+    # case, que le moteur ignore d'office. Les ranger sur `me` seul laissait croire qu'ils ne
+    # parlaient que de soi, alors que weaponCells(cell, enemy.weapon) repond « d'ou l'ENNEMI peut
+    # frapper cette case ». Ils vivent donc sur Fight ; `me` les garde en alias (LES MEMES fonctions,
+    # pas une copie a maintenir), donc aucune IA existante ne casse.
+    # Cellule (ou toutes les cellules) d'ou utiliser l'arme/puce sur `target` -- une entite OU une
+    # case (routage automatique). Retour Cell / list[Cell]. Args deballes (objets ou ids).
+    def _weaponCell(target, weapon=None, ignoredCells=None):
+        return _cell(_weaponCall(F.getCellToUseWeaponOnCell, F.getCellToUseWeapon, target, weapon, ignoredCells))
+    def _weaponCells(target, weapon=None, ignoredCells=None):
+        return _cells(_weaponCall(F.getCellsToUseWeaponOnCell, F.getCellsToUseWeapon, target, weapon, ignoredCells))
+    def _chipCell(chip, target, ignoredCells=None):
+        f = F.getCellToUseChipOnCell if isinstance(target, Cell) else F.getCellToUseChip
+        return _cell(f(_cpid(chip), _unwrap(target)) if ignoredCells is None else f(_cpid(chip), _unwrap(target), _cidlist(ignoredCells)))
+    def _chipCells(chip, target, ignoredCells=None):
+        f = F.getCellsToUseChipOnCell if isinstance(target, Cell) else F.getCellsToUseChip
+        return _cells(f(_cpid(chip), _unwrap(target)) if ignoredCells is None else f(_cpid(chip), _unwrap(target), _cidlist(ignoredCells)))
+    # Entites touchees par une arme/puce lancee sur une cellule. Retour list[Entity]. La cible est une
+    # CASE : une entite y est convertie en la sienne (_cid), pas en son id.
+    def _weaponTargets(cell, weapon=None):
+        if isinstance(cell, Weapon): cell, weapon = weapon, cell
+        return _ents(F.getWeaponTargets(_cid(cell)) if weapon is None else F.getWeaponTargets(_wid(weapon), _cid(cell)))
+    def _chipTargets(chip, cell): return _ents(F.getChipTargets(_cpid(chip), _cid(cell)))
+
     # Tout objet rendu au joueur est en LECTURE SEULE. Equivalent Python de l'Object.freeze du cote JS
     # (objects.js), pour la meme raison : les enveloppes sont POOLEES, donc sans garde un `c.id = 42`
     # du joueur empoisonnerait la cellule partagee pour tout le reste du combat, et chaque getPath()
@@ -489,25 +514,16 @@ def _lw_build(G, NAMES):
         # Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (me/getEntity() = bulbe).
         def summon(self, chip, cell, callback, name=None):
             return F.summon(_cpid(chip), _cid(cell), callback) if name is None else F.summon(_cpid(chip), _cid(cell), callback, name)
-        # Cellule (ou toutes les cellules) d'ou utiliser l'arme/puce sur `target` -- une entite OU une case
-        # (routage automatique). Retour Cell / list[Cell]. Args deballes (objets ou ids).
-        # L'arme est celle equipee par defaut, ou celle passee en 2e argument (cf _weaponCall).
-        def weaponCell(self, target, weapon=None, ignoredCells=None):
-            return _cell(_weaponCall(F.getCellToUseWeaponOnCell, F.getCellToUseWeapon, target, weapon, ignoredCells))
-        def weaponCells(self, target, weapon=None, ignoredCells=None):
-            return _cells(_weaponCall(F.getCellsToUseWeaponOnCell, F.getCellsToUseWeapon, target, weapon, ignoredCells))
-        def chipCell(self, chip, target, ignoredCells=None):
-            f = F.getCellToUseChipOnCell if isinstance(target, Cell) else F.getCellToUseChip
-            return _cell(f(_cpid(chip), _unwrap(target)) if ignoredCells is None else f(_cpid(chip), _unwrap(target), _cidlist(ignoredCells)))
-        def chipCells(self, chip, target, ignoredCells=None):
-            f = F.getCellsToUseChipOnCell if isinstance(target, Cell) else F.getCellsToUseChip
-            return _cells(f(_cpid(chip), _unwrap(target)) if ignoredCells is None else f(_cpid(chip), _unwrap(target), _cidlist(ignoredCells)))
-        # Entites touchees par une arme/puce lancee sur une cellule. Retour list[Entity]. La cible est une
-        # CASE : une entite y est convertie en la sienne (_cid), pas en son id.
-        def weaponTargets(self, cell, weapon=None):
-            if isinstance(cell, Weapon): cell, weapon = weapon, cell
-            return _ents(F.getWeaponTargets(_cid(cell)) if weapon is None else F.getWeaponTargets(_wid(weapon), _cid(cell)))
-        def chipTargets(self, chip, cell): return _ents(F.getChipTargets(_cpid(chip), _cid(cell)))
+        # Helpers de ciblage : LES MEMES fonctions que Fight.weaponCell... (cf _weaponCell), gardees
+        # ici parce que l'API les a d'abord exposees sur `me`. staticmethod et non un passe-plat :
+        # une signature recopiee finirait par diverger, et les noms d'arguments sont publics en
+        # Python (me.weaponCells(target=..., weapon=...)).
+        weaponCell = staticmethod(_weaponCell)
+        weaponCells = staticmethod(_weaponCells)
+        chipCell = staticmethod(_chipCell)
+        chipCells = staticmethod(_chipCells)
+        weaponTargets = staticmethod(_weaponTargets)
+        chipTargets = staticmethod(_chipTargets)
 
     # Sous-types d'entite : _ent() renvoie l'instance TYPEE selon getType() -> isinstance(x, Mob) marche.
     # Ceux qui ont une sous-categorie exposent leur propre .type (chest.type == Chest.Type.WOOD).
@@ -582,6 +598,15 @@ def _lw_build(G, NAMES):
         def getPreviousPlayer(self, entity=None): return _ent(F.getPreviousPlayer() if entity is None else F.getPreviousPlayer(_eid(entity)))
         # Paroles prononcees (say) par les entites : liste de [entite, message].
         def listen(self): return F.listen()
+        # Ciblage : d'ou peut-on atteindre une cible, et qui serait touche. Ne dependent d'aucune
+        # entite en particulier -- l'arme equipee n'est qu'un DEFAUT (cf _weaponCell). Egalement
+        # exposes sur `me`, ou l'API les a publies en premier.
+        weaponCell = staticmethod(_weaponCell)
+        weaponCells = staticmethod(_weaponCells)
+        chipCell = staticmethod(_chipCell)
+        chipCells = staticmethod(_chipCells)
+        weaponTargets = staticmethod(_weaponTargets)
+        chipTargets = staticmethod(_chipTargets)
 
     class _Field:
         @property

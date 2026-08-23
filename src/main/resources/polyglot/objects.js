@@ -113,6 +113,34 @@
 		return (ignoredCells == null) ? f(w, t) : f(w, t, cidList(ignoredCells));
 	}
 
+	// (topic 12040) Les six helpers de ciblage n'AGISSENT pas, ils interrogent la carte. La seule trace
+	// de l'entité courante y est un défaut : l'arme équipée quand aucune n'est précisée, et sa case, que
+	// le moteur ignore d'office. Les ranger sur `me` seul laissait croire qu'ils ne parlaient que de soi,
+	// alors que weaponCells(cell, enemy.weapon) répond « d'où l'ENNEMI peut frapper cette case ». Ils
+	// vivent donc sur Fight ; `me` les garde en alias — LES MÊMES fonctions, pas une copie à maintenir,
+	// donc aucune IA existante ne casse.
+	var targeting = {
+		// Cellule (ou toutes les cellules) d'où utiliser l'arme/puce sur `target` — une entité OU une
+		// case (routage automatique). Retour Cell / Cell[]. Args déballés (objets ou ids).
+		weaponCell: function (target, weapon, ignoredCells) { return cell(weaponCall(F.getCellToUseWeaponOnCell, F.getCellToUseWeapon, target, weapon, ignoredCells)); },
+		weaponCells: function (target, weapon, ignoredCells) { return cells(weaponCall(F.getCellsToUseWeaponOnCell, F.getCellsToUseWeapon, target, weapon, ignoredCells)); },
+		chipCell: function (chip, target, ignoredCells) {
+			var f = (target instanceof Cell) ? F.getCellToUseChipOnCell : F.getCellToUseChip;
+			return cell((ignoredCells == null) ? f(cpid(chip), unwrap(target)) : f(cpid(chip), unwrap(target), cidList(ignoredCells)));
+		},
+		chipCells: function (chip, target, ignoredCells) {
+			var f = (target instanceof Cell) ? F.getCellsToUseChipOnCell : F.getCellsToUseChip;
+			return cells((ignoredCells == null) ? f(cpid(chip), unwrap(target)) : f(cpid(chip), unwrap(target), cidList(ignoredCells)));
+		},
+		// Entités touchées par une arme/puce lancée sur une cellule. Retour Entity[]. La cible est une
+		// CASE : une entité y est convertie en la sienne (cid), pas en son id.
+		weaponTargets: function (c, weapon) {
+			if (c instanceof Weapon) { var swap = c; c = weapon; weapon = swap; }
+			return ents((weapon == null) ? F.getWeaponTargets(cid(c)) : F.getWeaponTargets(wid(weapon), cid(c)));
+		},
+		chipTargets: function (chip, c) { return ents(F.getChipTargets(cpid(chip), cid(c))); },
+	};
+
 	// ---- Cell : une case du terrain ----
 	class Cell {
 		constructor(id) { this.id = id; }
@@ -386,26 +414,11 @@
 		summon(chip, cell, callback, name) {
 			return (name === undefined) ? F.summon(cpid(chip), cid(cell), callback) : F.summon(cpid(chip), cid(cell), callback, name);
 		}
-		// Cellule (ou toutes les cellules) d'où utiliser l'arme/puce sur `target` — une entité OU une
-		// case (routage automatique). Retour Cell / Cell[]. Args déballés (objets ou ids).
-		// L'arme est celle équipée par défaut, ou celle passée en 2e argument (cf weaponCall).
-		weaponCell(target, weapon, ignoredCells) { return cell(weaponCall(F.getCellToUseWeaponOnCell, F.getCellToUseWeapon, target, weapon, ignoredCells)); }
-		weaponCells(target, weapon, ignoredCells) { return cells(weaponCall(F.getCellsToUseWeaponOnCell, F.getCellsToUseWeapon, target, weapon, ignoredCells)); }
-		chipCell(chip, target, ignoredCells) {
-			var f = (target instanceof Cell) ? F.getCellToUseChipOnCell : F.getCellToUseChip;
-			return cell((ignoredCells == null) ? f(cpid(chip), unwrap(target)) : f(cpid(chip), unwrap(target), cidList(ignoredCells)));
-		}
-		chipCells(chip, target, ignoredCells) {
-			var f = (target instanceof Cell) ? F.getCellsToUseChipOnCell : F.getCellsToUseChip;
-			return cells((ignoredCells == null) ? f(cpid(chip), unwrap(target)) : f(cpid(chip), unwrap(target), cidList(ignoredCells)));
-		}
-		// Entités touchées par une arme/puce lancée sur une cellule. Retour Entity[]. La cible est une
-		// CASE : une entité y est convertie en la sienne (cid), pas en son id.
-		weaponTargets(cell, weapon) {
-			if (cell instanceof Weapon) { var swap = cell; cell = weapon; weapon = swap; }
-			return ents((weapon == null) ? F.getWeaponTargets(cid(cell)) : F.getWeaponTargets(wid(weapon), cid(cell)));
-		}
-		chipTargets(chip, cell) { return ents(F.getChipTargets(cpid(chip), cid(cell))); }
+	}
+	// Les helpers de ciblage restent atteignables depuis `me` (l'API les y a publiés en premier) :
+	// posés sur le prototype en NON énumérable, comme les méthodes de classe qu'ils remplacent.
+	for (var tk in targeting) {
+		Object.defineProperty(Me.prototype, tk, { value: targeting[tk], writable: true, enumerable: false, configurable: true });
 	}
 
 	// Instance unique de l'IA courante (Me), exposée via Fight.me. Une seule instance suffit : son id
@@ -467,6 +480,14 @@
 		getPreviousPlayer: function (e) { return ent(e === undefined ? F.getPreviousPlayer() : F.getPreviousPlayer(eid(e))); },
 		// Paroles prononcées (say) par les entités : liste de [entité, message].
 		listen: function () { return F.listen(); },
+		// Ciblage : d'où peut-on atteindre une cible, et qui serait touché. Ne dépendent d'aucune entité
+		// en particulier — l'arme équipée n'est qu'un DÉFAUT (cf targeting). Également exposés sur `me`.
+		weaponCell: targeting.weaponCell,
+		weaponCells: targeting.weaponCells,
+		chipCell: targeting.chipCell,
+		chipCells: targeting.chipCells,
+		weaponTargets: targeting.weaponTargets,
+		chipTargets: targeting.chipTargets,
 	};
 
 	// ---- Field : terrain et géométrie ----

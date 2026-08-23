@@ -471,6 +471,49 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	/**
+	 * #4713 (suite, topic 12040) : les six helpers de ciblage ne CALCULENT rien qui dépende de
+	 * l'entité courante — l'arme équipée n'y est qu'un défaut — donc ils vivent aussi sur `Fight`,
+	 * là où on peut cartographier ce qu'un ENNEMI atteint avec sa propre arme. `me` les garde en
+	 * alias : ce sont LES MÊMES fonctions, aucune IA existante ne casse.
+	 */
+	@Test
+	public void targetingHelpersLiveOnFight() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// JS : Fight.* == me.* (cellules poolées -> comparables par identité).
+			Assert.assertEquals(true, eval(sb,
+				"me.setWeapon(Weapon.magnum);"
+				+ "var e = Fight.getNearestEnemy();"
+				+ "function same(a, b) { return a.length === b.length && a.every(function(x, i) { return x === b[i]; }); }"
+				+ "same(Fight.weaponCells(e), me.weaponCells(e))"
+				+ " && Fight.weaponCells(e, Weapon.pistol).length > 0"
+				+ " && same(Fight.weaponCells(e, Weapon.pistol), me.weaponCells(e, Weapon.pistol))"
+				+ " && Fight.weaponCell(e) === me.weaponCell(e)"
+				+ " && same(Fight.chipCells(Chip.lightning, e), me.chipCells(Chip.lightning, e))"
+				+ " && Fight.chipCell(Chip.lightning, e) === me.chipCell(Chip.lightning, e)"
+				+ " && same(Fight.weaponTargets(e.cell, Weapon.magnum), me.weaponTargets(e.cell))"
+				+ " && same(Fight.chipTargets(Chip.lightning, e.cell), me.chipTargets(Chip.lightning, e.cell));"));
+			// Le cas du rapport : cartographier l'ennemi avec SON arme, sans passer par `me`.
+			Assert.assertEquals(true, eval(sb,
+				"var e = Fight.getNearestEnemy();"
+				+ "var reach = Fight.weaponCells(me.cell, Weapon.pistol);"
+				+ "reach.length > 0 && reach.every(function(c) { return c instanceof Cell; });"));
+			// PYTHON : mêmes fonctions, mots-clés publiés compris (c'est l'appel qui levait un TypeError).
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    me.setWeapon(Weapon.magnum)\n"
+				+ "    e = Fight.getNearestEnemy()\n"
+				+ "    return (Fight.weaponCells(e) == me.weaponCells(e)\n"
+				+ "        and len(Fight.weaponCells(target=e, weapon=Weapon.pistol)) > 0\n"
+				+ "        and Fight.weaponCells(target=e, weapon=Weapon.pistol) == me.weaponCells(e, Weapon.pistol)\n"
+				+ "        and Fight.weaponCell(e) is me.weaponCell(e)\n"
+				+ "        and Fight.chipCells(Chip.lightning, e) == me.chipCells(Chip.lightning, e)\n"
+				+ "        and Fight.chipCell(Chip.lightning, e) is me.chipCell(Chip.lightning, e)\n"
+				+ "        and Fight.weaponTargets(e.cell, Weapon.magnum) == me.weaponTargets(e.cell)\n"
+				+ "        and Fight.chipTargets(Chip.lightning, e.cell) == me.chipTargets(Chip.lightning, e.cell))\n"));
+		}
+	}
+
+	/**
 	 * #4713 : en Python, les arguments optionnels doivent porter le nom PUBLIÉ par les typages
 	 * (leekwars-pyi.ts), sinon l'appel par mot-clé lève un TypeError. Un audit prélude <-> .pyi avait
 	 * laissé passer `ignored` pour `ignoredCells`, `c` pour `cell` et `e` pour `entity`.
