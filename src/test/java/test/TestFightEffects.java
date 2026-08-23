@@ -57,6 +57,28 @@ public class TestFightEffects extends FightTestBase {
 		Assert.assertEquals(0, result);
 	}
 
+	// ---------- Couverture de la table des effets ----------
+
+	@Test
+	public void effectTableCoversEveryDeclaredEffectId() throws Exception {
+		// Régression #4870 : getAllEffects() itère sur Effect.effects.length, et la
+		// table s'arrêtait à 62 alors que EFFECT_DAMAGE_TO_RESISTANCE vaut 63 — l'effet
+		// n'était donc jamais renvoyé. Tout nouvel effet, même passif (pas de classe
+		// Effect, case null), doit avoir sa case dans la table.
+		int maxId = 0;
+		String maxName = null;
+		for (var field : Effect.class.getFields()) {
+			if (!field.getName().startsWith("TYPE_")) continue;
+			int id = field.getInt(null);
+			if (id > maxId) {
+				maxId = id;
+				maxName = field.getName();
+			}
+		}
+		Assert.assertEquals("Effect.effects doit avoir une case par id d'effet (dernier : " + maxName + ")",
+			maxId, Effect.effects.length);
+	}
+
 	// ---------- Buff strength ----------
 
 	@Test

@@ -103,6 +103,9 @@ public abstract class Effect implements Cloneable {
 	// Effect factories indexed by effect id (1-based). Used by createEffect to
 	// avoid getDeclaredConstructor().newInstance() reflection on every buff/debuff,
 	// which the JIT can't easily inline.
+	// Le tableau doit contenir UNE case par id d'effet, y compris pour les effets
+	// passifs qui n'ont pas de classe Effect (case null) : sa longueur est aussi le
+	// nombre d'effets du jeu, ce que renvoie getAllEffects().
 	@SuppressWarnings("unchecked")
 	public final static Supplier<Effect>[] effects = new Supplier[] {
 		(Supplier<Effect>) EffectDamage::new, // 1
@@ -167,6 +170,7 @@ public abstract class Effect implements Cloneable {
 		(Supplier<Effect>) EffectTotalDebuff::new, // 60
 		(Supplier<Effect>) EffectStealLife::new, // 61
 		(Supplier<Effect>) EffectMultiplyStats::new, // 62
+		null, // 63
 	};
 
 	// Effect characteristics
