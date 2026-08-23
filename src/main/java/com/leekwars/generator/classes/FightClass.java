@@ -1298,6 +1298,18 @@ public class FightClass {
 		return ai.getState().getContext();
 	}
 
+	/**
+	 * Le combat fait-il partie d'un LOT (#4779) ?
+	 *
+	 * Un lot sert à mesurer une IA sur plusieurs combats d'affilée : l'IA peut vouloir s'y
+	 * taire (les logs coûtent des opérations) ou y désactiver ce qu'elle réserve aux vrais
+	 * combats. Rien d'autre ne permettait de distinguer les deux cas, un combat de lot ayant
+	 * le même type et le même contexte qu'un combat lancé seul.
+	 */
+	public static boolean isBatchFight(EntityAI ai) {
+		return ai.getState().isBatch();
+	}
+
 	public static long getFightID(EntityAI ai) {
 		return ai.getFight().getId();
 	}

@@ -489,6 +489,7 @@ public class FightFunctions {
 		method("getFightID", "Fight", 5, true, Type.INT, new Type[0]);
 		method("getFightType", "Fight", 10, true, Type.INT, new Type[0]);
 		method("getFightContext", "Fight", 10, true, Type.INT, new Type[0]);
+		method("isBatchFight", "Fight", 10, true, Type.BOOL, new Type[0]);
 		method("getFightBoss", "Fight", 10, true, Type.INT, new Type[0]);
 		method("getCellsToUseWeapon", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),

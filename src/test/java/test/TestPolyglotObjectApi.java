@@ -119,6 +119,21 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	@Test
+	public void fightBatchedReadableInBothLanguages() throws Exception {
+		// #4779 : le drapeau de lot se lit sur Fight.batched, dans les deux langages. Faux par
+		// defaut ; on le pose ensuite pour verifier que la propriete lit bien l'etat du combat
+		// et ne renvoie pas une constante.
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.FALSE, eval(sb, "Fight.batched;"));
+			Assert.assertEquals(Boolean.FALSE, evalPy(sb, "Fight.batched"));
+			fight.getState().setBatch(true);
+			Assert.assertEquals(Boolean.TRUE, eval(sb, "Fight.batched;"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Fight.batched"));
+		}
+	}
+
+	@Test
 	public void entityTypeReadableOnInstances() throws Exception {
 		// #4634 : `enemy.Type` (namespace de constantes) n'est pas le genre de l'entité ;
 		// c'est `enemy.entityType` qui le porte, dans les deux langages.

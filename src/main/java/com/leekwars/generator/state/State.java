@@ -142,6 +142,13 @@ public class State {
 	private String mLeekDatas = "";
 	private int context;
 	private int type;
+	/**
+	 * Combat lancé dans un LOT (#4779), et non un par un.
+	 *
+	 * L'information ne se déduit d'aucune autre : un combat de lot a exactement le même type
+	 * et le même contexte qu'un combat lancé seul. Elle vient du serveur, avec le scénario.
+	 */
+	private boolean batch = false;
 	public ObjectNode custom_map = null;
 	public StatisticsManager statistics;
 	private RegisterManager registerManager;
@@ -207,6 +214,7 @@ public class State {
 		this.fullType = state.fullType;
 		this.type = state.type;
 		this.context = state.context;
+		this.batch = state.batch;
 		this.mNextEntityId = state.mNextEntityId;
 		this.mStartFarmer = state.mStartFarmer;
 		this.lastTurn = state.lastTurn;
@@ -1159,6 +1167,10 @@ public class State {
 		return context;
 	}
 
+	public boolean isBatch() {
+		return batch;
+	}
+
 	public static int getFightContext(int type) {
 		if (type == TYPE_SOLO_GARDEN || type == TYPE_TEAM_GARDEN || type == TYPE_FARMER_GARDEN || type == FULL_TYPE_WAR_GARDEN || type == FULL_TYPE_CHEST_HUNT_GARDEN || type == FULL_TYPE_COLOSSUS_GARDEN) {
 			return CONTEXT_GARDEN;
@@ -1217,6 +1229,9 @@ public class State {
 
 	public void setContext(int context) {
 		this.context = context;
+	}
+	public void setBatch(boolean batch) {
+		this.batch = batch;
 	}
 	public void setType(int type) {
 		this.type = type;

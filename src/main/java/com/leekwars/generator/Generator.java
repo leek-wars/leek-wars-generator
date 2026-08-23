@@ -153,6 +153,7 @@ public class Generator {
 		fight.setMaxTurns(scenario.maxTurns);
 		fight.getState().setType(scenario.type);
 		fight.getState().setContext(scenario.context);
+		fight.getState().setBatch(scenario.batch);
 		fight.getState().setCustomMap(scenario.map);
 		fight.getState().seed(scenario.seed);
 		for (var farmer : scenario.farmers.values()) {

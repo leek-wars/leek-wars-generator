@@ -27,6 +27,8 @@ public class Scenario {
 	public int maxTurns = 64;
 	public int type = 0;
 	public int context = 0;
+	/** Combat lancé dans un lot (#4779) : le type et le contexte ne le disent pas. */
+	public boolean batch = false;
 	public int fightID = 0;
 	public int boss = 0;
 	public Map<Integer, FarmerInfo> farmers = new HashMap<Integer, FarmerInfo>();
@@ -54,6 +56,9 @@ public class Scenario {
         }
         if (json.has("max_turns")) {
 			scenario.maxTurns = json.get("max_turns").intValue();
+		}
+		if (json.has("batch")) {
+			scenario.batch = json.get("batch").booleanValue();
 		}
 		for (var farmerJson : (ArrayNode) json.get("farmers")) {
 			FarmerInfo farmer = new FarmerInfo();

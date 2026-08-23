@@ -183,6 +183,24 @@ public class TestFightConfig extends FightTestBase {
 		Assert.assertEquals("" + Fight.CONTEXT_TOURNAMENT, leek1.getRegister("ctx"));
 	}
 
+	// #4779 : le drapeau de lot ne se deduit ni du type ni du contexte, il doit se lire tel quel.
+	@Test
+	public void setBatchIsReflectedInIsBatchFight() throws Exception {
+		fight.getState().setBatch(true);
+		attachAI(leek1, "setRegister('b', '' + isBatchFight());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("true", leek1.getRegister("b"));
+	}
+
+	@Test
+	public void isBatchFightIsFalseByDefault() throws Exception {
+		attachAI(leek1, "setRegister('b', '' + isBatchFight());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("false", leek1.getRegister("b"));
+	}
+
 	@Test
 	public void setTypeIsReflectedInGetFightType() throws Exception {
 		fight.getState().setType(State.TYPE_TEAM);

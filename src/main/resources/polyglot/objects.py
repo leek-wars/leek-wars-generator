@@ -545,6 +545,9 @@ def _lw_build(G, NAMES):
         def type(self): return F.getFightType()
         @property
         def context(self): return F.getFightContext()
+        # Combat lancé dans un lot (#4779) : même type et même contexte qu'un combat seul.
+        @property
+        def batched(self): return F.isBatchFight()
         @property
         def boss(self): return F.getFightBoss()
         @property

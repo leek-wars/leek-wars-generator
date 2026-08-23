@@ -434,6 +434,8 @@
 		get id() { return F.getFightID(); },
 		get type() { return F.getFightType(); },
 		get context() { return F.getFightContext(); },
+		// Combat lancé dans un lot (#4779) : même type et même contexte qu'un combat seul.
+		get batched() { return F.isBatchFight(); },
 		get boss() { return F.getFightBoss(); },
 		get winner() { return F.getWinner(); },
 		get alliesLife() { return F.getAlliesLife(); },
