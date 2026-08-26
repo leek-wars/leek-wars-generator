@@ -77,11 +77,17 @@ public class TestCompileCheck {
 			System.out.println("included   = " + (result.includedAIs == null ? -1 : result.includedAIs.size()));
 			System.out.println("problems   = " + result.informations.size());
 			System.out.println("\n--- problèmes ([level, file, l1, c1, l2, c2, errorOrdinal, params]) ---");
+			// COMPILE_WARNINGS=<motif> : imprime aussi les WARNINGS dont le fichier
+			// contient le motif (vide = tous) — les warnings de nullabilité signalent de
+			// vrais risques et le compte seul ne dit pas où ils sont.
+			String warnFilter = System.getenv("COMPILE_WARNINGS");
 			for (JsonNode p : result.informations) {
 				int level = p.get(0).asInt();
 				if (level == 0) {
 					errorCount++;
 					System.out.println("ERROR    " + p.toString());
+				} else if (warnFilter != null && p.get(1).toString().contains(warnFilter)) {
+					System.out.println("WARNING  " + p.toString());
 				}
 			}
 			int warnings = result.informations.size() - errorCount;
