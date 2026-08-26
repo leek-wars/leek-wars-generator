@@ -1290,6 +1290,16 @@ public abstract class Entity {
 		this.mBaseStats.setStat(STAT_ABSOLUTE_SHIELD, shield);
 	}
 
+	/**
+	 * Renvoi de dégâts. Symétrique des deux boucliers ci-dessus, il manquait : seul le
+	 * getter existait. Ajouté pour les harnais qui REPOSENT un état de combat capturé
+	 * (testsuite des cas du ramener) — sans lui, un ennemi exporté avec 248 de renvoi
+	 * revenait à 0 et le plan calculé sur ce plateau n'était pas celui de la prod.
+	 */
+	public void setDamageReturn(int value) {
+		this.mBaseStats.setStat(STAT_DAMAGE_RETURN, value);
+	}
+
 	public boolean hasState(EntityState state) {
 		return this.states.contains(state);
 	}
