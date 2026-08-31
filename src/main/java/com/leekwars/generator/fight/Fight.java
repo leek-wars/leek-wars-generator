@@ -16,6 +16,7 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.Order;
 import com.leekwars.generator.state.State;
+import com.leekwars.generator.bulbs.Bulbs;
 import com.leekwars.generator.fight.entity.BulbAI;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
@@ -412,9 +413,15 @@ public class Fight {
 	public int useChip(Entity caster, Cell target, Chip template) {
 
 		// Invocation mais sans IA
-		if (template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON) != null) {
-			((EntityAI) caster.getAI()).addSystemLog(LeekLog.WARNING, FarmerLog.BULB_WITHOUT_AI);
-			((EntityAI) caster.getAI()).addSystemLog(LeekLog.STANDARD, Error.HELP_PAGE_LINK, new String[] { "summons" });
+		var summonParams = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);
+		if (summonParams != null) {
+			// Une invocation qui ne peut rien faire (aucune puce, 0 PT — ex. cactus)
+			// n'a pas besoin d'IA : pas d'avertissement pour elle.
+			var summonTemplate = Bulbs.getInvocationTemplate((int) summonParams.getValue1());
+			if (summonTemplate == null || summonTemplate.canAct()) {
+				((EntityAI) caster.getAI()).addSystemLog(LeekLog.WARNING, FarmerLog.BULB_WITHOUT_AI);
+				((EntityAI) caster.getAI()).addSystemLog(LeekLog.STANDARD, Error.HELP_PAGE_LINK, new String[] { "summons" });
+			}
 			return summonEntity(caster, target, template, null);
 		}
 

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.util.Json;
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.entity.Bulb;
@@ -19,6 +20,10 @@ public class BulbTemplate {
 	private final String mName;
 
 	private final ArrayList<Chip> mChips;
+
+	// États permanents de l'invocation (ex. ROOTED pour les plantes), appliqués
+	// à l'apparition (et réappliqués à la résurrection).
+	private final ArrayList<EntityState> mStates;
 
 	private final int mMinLife;
 	private final int mMaxLife;
@@ -48,6 +53,10 @@ public class BulbTemplate {
 	private final int mMaxMp;
 
 	public BulbTemplate(int id, String name, ArrayNode chips, ObjectNode characteristics) {
+		this(id, name, chips, characteristics, null);
+	}
+
+	public BulbTemplate(int id, String name, ArrayNode chips, ObjectNode characteristics, ArrayNode states) {
 
 		mId = id;
 		mName = name;
@@ -88,6 +97,17 @@ public class BulbTemplate {
 				}
 			}
 		}
+
+		mStates = new ArrayList<EntityState>();
+		if (states != null) {
+			for (var s : states) {
+				if (s == null) continue;
+				int ordinal = s.intValue();
+				if (ordinal > 0 && ordinal < EntityState.values().length) {
+					mStates.add(EntityState.values()[ordinal]);
+				}
+			}
+		}
 	}
 
 	public int getId() {
@@ -124,11 +144,23 @@ public class BulbTemplate {
 			inv.addChip(chip);
 		}
 
+		inv.setTemplate(this);
+
 		return inv;
 	}
 
 	public ArrayList<Chip> getChips() {
 		return mChips;
+	}
+
+	public ArrayList<EntityState> getStates() {
+		return mStates;
+	}
+
+	// Une invocation qui ne peut rien faire (aucune puce, 0 PT max) n'a pas
+	// besoin d'IA : pas d'avertissement BULB_WITHOUT_AI pour elle (ex. cactus).
+	public boolean canAct() {
+		return !mChips.isEmpty() || mMaxTp > 0;
 	}
 
 	public int getMinLife() { return mMinLife; }

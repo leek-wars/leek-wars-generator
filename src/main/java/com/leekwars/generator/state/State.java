@@ -821,6 +821,7 @@ public class State {
 	public int moveEntity(Entity entity, List<Cell> path) {
 
 		if (entity.hasState(EntityState.STATIC)) return 0; // Static entity cannot move.
+		if (entity.hasState(EntityState.ROOTED)) return 0; // Rooted entity cannot move.
 
 		int size = path.size();
 		if (size == 0) {
@@ -842,6 +843,7 @@ public class State {
 	public void moveEntity(Entity entity, Cell cell) {
 
 		if (entity.hasState(EntityState.STATIC)) return; // Static entity cannot move.
+		if (entity.hasState(EntityState.ROOTED)) return; // Rooted entity cannot move.
 
 		this.map.moveEntity(entity, cell);
 	}
@@ -863,6 +865,9 @@ public class State {
 	public void slideEntity(Entity entity, Cell cell, Entity caster) {
 
 		if (entity.hasState(EntityState.STATIC)) return;
+		// Enraciné : ni poussée, ni attraction. L'inversion (invertEntities) reste
+		// possible, c'est ce qui distingue ROOTED de STATIC.
+		if (entity.hasState(EntityState.ROOTED)) return;
 
 		Cell start = entity.getCell();
 
@@ -938,6 +943,11 @@ public class State {
 
 		// On balance l'action
 		actions.log(new ActionInvocation(summon, result));
+
+		// États permanents du template (ex. Enraciné pour les plantes), appliqués
+		// APRÈS le log de l'ActionInvocation pour que le client rejoue l'ajout
+		// d'effet sur une entité déjà apparue.
+		applySummonStates(summon);
 
 		// Colosse : une invocation qui rejoint l'équipe du colosse reçoit immédiatement
 		// le multiplicateur courant, au lieu d'attendre le prochain palier des 5 tours
@@ -1125,6 +1135,21 @@ public class State {
 
 		// On balance l'action
 		actions.log(new ActionResurrect(owner, entity));
+
+		// La mort a purgé tous les effets, y compris les états permanents du
+		// template (ex. Enraciné) : on les réapplique.
+		applySummonStates(entity);
+	}
+
+	// Applique à une invocation les états permanents de son template (ex. Enraciné
+	// pour les plantes) : effet ADD_STATE infini, irréductible, auto-appliqué.
+	private void applySummonStates(Entity summon) {
+		if (!(summon instanceof Bulb bulb) || bulb.getTemplate() == null) {
+			return;
+		}
+		for (EntityState s : bulb.getTemplate().getStates()) {
+			Effect.createEffect(this, Effect.TYPE_ADD_STATE, -1, 1, s.ordinal(), 0, false, summon, summon, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+		}
 	}
 
 	public int getTurn() {

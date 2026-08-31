@@ -37,6 +37,11 @@ public enum FightConstants implements ILeekConstant {
 	BULB_TACTICIAN(11, Type.INT),
 	BULB_SAVANT(12, Type.INT),
 
+	// Summon types (plantes — pas des bulbes)
+	SUMMON_CORN(9, Type.INT),
+	SUMMON_CHILLI_PEPPER(10, Type.INT),
+	SUMMON_CACTUS(13, Type.INT),
+
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, Type.INT),
 	EFFECT_TARGET_ENEMIES(Effect.TARGET_ENEMIES, Type.INT),
@@ -128,11 +133,13 @@ public enum FightConstants implements ILeekConstant {
 	EFFECT_STEAL_LIFE(Effect.TYPE_STEAL_LIFE, Type.INT),
 	EFFECT_MULTIPLY_STATS(Effect.TYPE_MULTIPLY_STATS, Type.INT),
 	EFFECT_DAMAGE_TO_RESISTANCE(Effect.TYPE_DAMAGE_TO_RESISTANCE, Type.INT),
+	EFFECT_SUPERINFECTION(Effect.TYPE_SUPERINFECTION, Type.INT),
 
 	// États
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
 	STATE_INVINCIBLE(EntityState.INVINCIBLE.ordinal(), Type.INT),
 	STATE_PACIFIST(EntityState.PACIFIST.ordinal(), Type.INT),
+	STATE_ROOTED(EntityState.ROOTED.ordinal(), Type.INT),
 	STATE_STATIC(EntityState.STATIC.ordinal(), Type.INT),
 	STATE_STERILE(EntityState.STERILE.ordinal(), Type.INT),
 
@@ -335,6 +342,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_BRAMBLE(172, Type.INT),
 	CHIP_DOME(173, Type.INT),
 	CHIP_MANUMISSION(174, Type.INT),
+	CHIP_HEMORRHAGE(273, Type.INT),
 	CHIP_PRISM(276, Type.INT),
 	CHIP_SHURIKEN(411, Type.INT),
 	CHIP_KEMURIDAMA(412, Type.INT),
@@ -346,6 +354,9 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_KILL(417, Type.INT),
 	CHIP_APOCALYPSE(418, Type.INT),
 	CHIP_DIVINE_PROTECTION(419, Type.INT),
+	CHIP_CACTUS(441, Type.INT),
+	CHIP_MATURATION(442, Type.INT),
+	CHIP_SUPERINFECTION(443, Type.INT),
 
 	MAP_NEXUS(1, Type.INT),
 	MAP_FACTORY(2, Type.INT),

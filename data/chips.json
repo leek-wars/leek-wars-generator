@@ -3329,5 +3329,182 @@
 		"template": 114,
 		"type": 0,
 		"max_uses": -1
+	},
+	"164": {
+		"id": 164,
+		"name": "corn",
+		"level": 88,
+		"min_range": 1,
+		"max_range": 5,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 14,
+				"value1": 9,
+				"value2": 0,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 8
+			}
+		],
+		"cost": 6,
+		"area": 1,
+		"cooldown": 8,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 90,
+		"type": 8,
+		"max_uses": -1
+	},
+	"165": {
+		"id": 165,
+		"name": "chilli_pepper",
+		"level": 113,
+		"min_range": 1,
+		"max_range": 7,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 14,
+				"value1": 10,
+				"value2": 0,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 8
+			}
+		],
+		"cost": 6,
+		"area": 1,
+		"cooldown": 8,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 91,
+		"type": 8,
+		"max_uses": -1
+	},
+	"273": {
+		"id": 273,
+		"name": "hemorrhage",
+		"level": 102,
+		"min_range": 1,
+		"max_range": 2,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 59,
+				"value1": 2,
+				"value2": 0,
+				"turns": 2,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 9
+			}
+		],
+		"cost": 10,
+		"area": 1,
+		"cooldown": 5,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 101,
+		"type": 9,
+		"max_uses": -1
+	},
+	"441": {
+		"id": 441,
+		"name": "cactus",
+		"level": 42,
+		"min_range": 1,
+		"max_range": 10,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 14,
+				"value1": 13,
+				"value2": 0,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 8
+			}
+		],
+		"cost": 4,
+		"area": 1,
+		"cooldown": 3,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 117,
+		"type": 8,
+		"max_uses": -1
+	},
+	"442": {
+		"id": 442,
+		"name": "maturation",
+		"level": 205,
+		"min_range": 1,
+		"max_range": 7,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 12,
+				"value1": 100,
+				"value2": 0,
+				"turns": 0,
+				"targets": 18,
+				"modifiers": 0,
+				"type": 2
+			},
+			{
+				"id": 52,
+				"value1": 5,
+				"value2": 0,
+				"turns": -1,
+				"targets": 18,
+				"modifiers": 17,
+				"type": 5
+			}
+		],
+		"cost": 6,
+		"area": 1,
+		"cooldown": 1,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 115,
+		"type": 2,
+		"max_uses": -1
+	},
+	"443": {
+		"id": 443,
+		"name": "superinfection",
+		"level": 230,
+		"min_range": 1,
+		"max_range": 6,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 64,
+				"value1": 50,
+				"value2": 0,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 6
+			}
+		],
+		"cost": 7,
+		"area": 1,
+		"cooldown": 4,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 116,
+		"type": 6,
+		"max_uses": -1
 	}
 }

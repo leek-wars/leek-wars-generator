@@ -4,8 +4,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.leekwars.generator.attack.EntityState;
+import com.leekwars.generator.bulbs.Bulbs;
+import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.maps.Cell;
 
 /**
  * Effect creation and lifecycle (buffs, poison, shields). Uses Effect.createEffect
@@ -199,6 +202,143 @@ public class TestFightEffects extends FightTestBase {
 		applyState(EntityState.STERILE, leek1, leek2, false, 0);
 		leek1.reduceEffectsTotal(1.0, leek2);
 		Assert.assertEquals("Seule une réduction totale retire l'état", 0, leek1.getEffects().size());
+	}
+
+	// ---------- État Enraciné (ROOTED) ----------
+
+	/** Première case libre et praticable de la carte, différente des cases exclues. */
+	private Cell freeCell(Cell... excluded) {
+		var map = fight.getState().getMap();
+		outer:
+		for (int i = 0; i < 613; ++i) {
+			Cell c = map.getCell(i);
+			if (c == null || !c.available(map)) continue;
+			for (Cell e : excluded) {
+				if (c == e) continue outer;
+			}
+			return c;
+		}
+		return null;
+	}
+
+	@Test
+	public void rootedBlocksSlideButAllowsInversion() throws Exception {
+		initFightOnly();
+		applyState(EntityState.ROOTED, leek1, leek2, false, Effect.MODIFIER_IRREDUCTIBLE);
+		Assert.assertTrue(leek1.hasState(EntityState.ROOTED));
+
+		var state = fight.getState();
+		Cell start = leek1.getCell();
+
+		// Poussée/attraction (slideEntity) : un enraciné ne bouge pas
+		Cell dest = freeCell(start);
+		Assert.assertNotNull(dest);
+		state.slideEntity(leek1, dest, leek2);
+		Assert.assertEquals("Un enraciné ne peut être ni poussé ni attiré", start, leek1.getCell());
+
+		// Déplacement volontaire : bloqué aussi
+		int used = state.moveEntity(leek1, java.util.Arrays.asList(dest));
+		Assert.assertEquals("Un enraciné ne peut pas se déplacer", 0, used);
+		Assert.assertEquals(start, leek1.getCell());
+
+		// L'Inversion, elle, fonctionne (c'est la différence avec STATIC)
+		Cell cell2 = leek2.getCell();
+		state.invertEntities(leek2, leek1);
+		Assert.assertEquals("L'inversion fonctionne sur un enraciné", cell2, leek1.getCell());
+		Assert.assertEquals(start, leek2.getCell());
+	}
+
+	@Test
+	public void staticStillBlocksInversion() throws Exception {
+		initFightOnly();
+		applyState(EntityState.STATIC, leek1, leek2, false, Effect.MODIFIER_IRREDUCTIBLE);
+		Cell start = leek1.getCell();
+		Cell cell2 = leek2.getCell();
+		fight.getState().invertEntities(leek2, leek1);
+		Assert.assertEquals("STATIC bloque aussi l'inversion", start, leek1.getCell());
+		Assert.assertEquals(cell2, leek2.getCell());
+	}
+
+	// ---------- Invocations plantes (Enraciné via template) ----------
+
+	@Test
+	public void plantSummonTemplatesHaveRootedState() throws Exception {
+		// corn (9), chilli_pepper (10) et cactus (13) sont enracinés par données
+		for (int id : new int[] { 9, 10, 13 }) {
+			var template = Bulbs.getInvocationTemplate(id);
+			Assert.assertNotNull("Template d'invocation " + id + " chargé", template);
+			Assert.assertTrue("Template " + id + " enraciné", template.getStates().contains(EntityState.ROOTED));
+		}
+		// Le cactus ne peut pas agir (0 PT, aucune puce) : pas d'avertissement sans IA
+		Assert.assertFalse(Bulbs.getInvocationTemplate(13).canAct());
+		Assert.assertTrue(Bulbs.getInvocationTemplate(9).canAct());
+	}
+
+	@Test
+	public void summonedPlantIsRootedAndUnpushable() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		var corn = Chips.getChip(164);
+		Assert.assertNotNull(corn);
+
+		// summonEntity exige que le lanceur soit l'entité courante de l'ordre de jeu
+		var caster = state.getOrder().current();
+		Assert.assertNotNull(caster);
+
+		// Une case à portée de la puce (1-5, cercle) autour du lanceur
+		Cell target = null;
+		var map = state.getMap();
+		for (int i = 0; i < 613 && target == null; ++i) {
+			Cell c = map.getCell(i);
+			if (c == null || !c.available(map)) continue;
+			if (map.canUseAttack(caster.getCell(), c, corn.getAttack())) target = c;
+		}
+		Assert.assertNotNull("Une case de plantation valide existe", target);
+
+		int result = state.summonEntity(caster, target, corn);
+		Assert.assertTrue("L'invocation du maïs réussit : " + result, result > 0);
+
+		var plant = state.getLastEntity();
+		Assert.assertTrue("La plante est enracinée à l'apparition", plant.hasState(EntityState.ROOTED));
+
+		// Impoussable
+		Cell before = plant.getCell();
+		Cell dest = freeCell(before, caster.getCell(), leek1.getCell(), leek2.getCell());
+		state.slideEntity(plant, dest, leek2);
+		Assert.assertEquals(before, plant.getCell());
+	}
+
+	// ---------- Surinfection ----------
+
+	@Test
+	public void superinfectionConvertsHalfOfRemainingPoison() throws Exception {
+		initFightOnly();
+		// Un poison de 5 tours sur leek1
+		applyEffect(Effect.TYPE_POISON, 5, 30, leek1, leek2, false);
+		var poison = leek1.getEffects().get(0);
+		int perTurn = poison.getValue();
+		Assert.assertTrue(perTurn > 0);
+		int lifeBefore = leek1.getLife();
+
+		int expectedNewPerTurn = (int) Math.round(perTurn * 0.5);
+		int expectedDamage = (perTurn - expectedNewPerTurn) * 5;
+
+		int dealt = applyEffect(Effect.TYPE_SUPERINFECTION, 0, 50, leek1, leek2, false);
+
+		Assert.assertEquals("50 % du poison restant part en dégâts immédiats", expectedDamage, dealt);
+		Assert.assertEquals(lifeBefore - expectedDamage, leek1.getLife());
+		// Conversion, pas duplication : le poison restant est réduit d'autant
+		Assert.assertEquals(1, leek1.getEffects().size());
+		Assert.assertEquals(expectedNewPerTurn, leek1.getEffects().get(0).getValue());
+	}
+
+	@Test
+	public void superinfectionWithoutPoisonDoesNothing() throws Exception {
+		initFightOnly();
+		int lifeBefore = leek1.getLife();
+		int dealt = applyEffect(Effect.TYPE_SUPERINFECTION, 0, 50, leek1, leek2, false);
+		Assert.assertEquals(0, dealt);
+		Assert.assertEquals(lifeBefore, leek1.getLife());
 	}
 
 	// ---------- Death clears effects ----------
