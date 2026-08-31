@@ -263,13 +263,13 @@ public class TestFightEffects extends FightTestBase {
 
 	@Test
 	public void plantSummonTemplatesHaveRootedState() throws Exception {
-		// corn (9), chilli_pepper (10) et cactus (13) sont enracinés par données
+		// corn (9), chilli_pepper (10) et prototaxites (13) sont enracinés par données
 		for (int id : new int[] { 9, 10, 13 }) {
 			var template = Bulbs.getInvocationTemplate(id);
 			Assert.assertNotNull("Template d'invocation " + id + " chargé", template);
 			Assert.assertTrue("Template " + id + " enraciné", template.getStates().contains(EntityState.ROOTED));
 		}
-		// Le cactus ne peut pas agir (0 PT, aucune puce) : pas d'avertissement sans IA
+		// Le prototaxites ne peut pas agir (0 PT, aucune puce) : pas d'avertissement sans IA
 		Assert.assertFalse(Bulbs.getInvocationTemplate(13).canAct());
 		Assert.assertTrue(Bulbs.getInvocationTemplate(9).canAct());
 	}
