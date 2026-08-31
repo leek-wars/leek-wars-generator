@@ -900,6 +900,21 @@ public class State {
 
 		// On balance l'action
 		actions.log(new ActionInvocation(summon, result));
+
+		// Colosse : une invocation qui rejoint l'équipe du colosse reçoit immédiatement
+		// le multiplicateur courant, au lieu d'attendre le prochain palier des 5 tours
+		// (forum #11869 : un bulbe invoqué entre deux paliers voyait ses stats sauter
+		// d'un coup ×N au palier suivant).
+		// IMPÉRATIF : après addEntity (dans createSummon), qui fige le snapshot de
+		// stats lu par le client, ET après le log de l'ActionInvocation ci-dessus.
+		// Logé avant l'invocation, l'effet était pris par le client pour la signature
+		// des combats d'avant le correctif du snapshot (19e3ba0), qui divisait alors
+		// un snapshot déjà de base : bulbe affiché à 600 PV au lieu de 1800, encore
+		// vivant avec la barre de vie à zéro (forum #12080, combat 53484250).
+		if (this.type == TYPE_COLOSSUS && summon.getTeam() == 1 && colossusMultiplier > 0) {
+			applyColossusMultiplier(summon);
+		}
+
 		statistics.summon(caster, summon);
 		statistics.useChip(caster, template, target, new ArrayList<>(), null);
 
@@ -1001,18 +1016,9 @@ public class State {
 		// On l'ajoute dans les infos du combat
 		actions.addEntity(invoc, critical);
 
-		// Colosse : une invocation qui rejoint l'équipe du colosse (team 1) reçoit
-		// immédiatement le multiplicateur courant, au lieu d'attendre le prochain
-		// palier des 5 tours (forum #11869 : un bulbe invoqué entre deux paliers
-		// voyait ses stats sauter d'un coup ×N au palier suivant). `this.type` car
-		// le paramètre `type` de cette méthode désigne le type de bulbe.
-		// IMPÉRATIF : après addEntity, qui fige le snapshot de stats lu par le client
-		// pour initialiser l'entité. Appliqué avant, le multiplicateur était déjà dans
-		// le snapshot ET rejoué par l'action d'effet, donc compté deux fois côté client
-		// (bulbe à 9900 PV au lieu de 3300, mort avec la barre aux deux tiers pleine).
-		if (this.type == TYPE_COLOSSUS && team == 1 && colossusMultiplier > 0) {
-			applyColossusMultiplier(invoc);
-		}
+		// Colosse : le multiplicateur de l'invocation est appliqué par summonEntity,
+		// APRÈS le log de l'ActionInvocation, pour que l'action d'effet suive
+		// l'action d'invocation dans le déroulé rejoué par le client.
 
 		return invoc;
 	}
