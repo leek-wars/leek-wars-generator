@@ -49,6 +49,10 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 		});
+		method("getStats", "Entity", 40, true, new CallableVersion[] {
+			new CallableVersion(Type.compound(Type.map(Type.INT, Type.INT), Type.NULL), new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.map(Type.INT, Type.INT)),
+		});
 		method("getCell", "Entity", 5, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL),

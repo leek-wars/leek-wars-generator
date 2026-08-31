@@ -75,6 +75,33 @@ public class TestLeekFunctions {
 	}
 
 	@Test
+	public void getStatsTest() throws Exception {
+		ArrayList<String> codes = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
+
+		// Une entrée par constante STAT_*
+		codes.add("mapSize(getStats())");
+		values.add(16);
+
+		// Mêmes valeurs que getStat, pour soi et pour une autre entité
+		codes.add("getStats()[STAT_STRENGTH]");
+		values.add(mLeek1.getStat(Entity.STAT_STRENGTH));
+		codes.add("getStats()[STAT_LIFE]");
+		values.add(mLeek1.getStat(Entity.STAT_LIFE));
+		codes.add("getStats(" + mLeek2.getFId() + ")[STAT_AGILITY]");
+		values.add(mLeek2.getStat(Entity.STAT_AGILITY));
+		codes.add("getStats(" + mLeek2.getFId() + ")[STAT_RAM]");
+		values.add(mLeek2.getStat(Entity.STAT_RAM));
+
+		// Entité inexistante
+		codes.add("getStats(-1)");
+		values.add(null);
+
+		// Test AI
+		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
+	@Test
 	public void LeekFunctionsTest() throws Exception {
 		ArrayList<String> codes = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();

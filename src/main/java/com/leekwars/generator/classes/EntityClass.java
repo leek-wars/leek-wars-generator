@@ -17,6 +17,7 @@ import leekscript.AILog;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
+import leekscript.runner.values.MapLeekValue;
 import leekscript.runner.values.SetLeekValue;
 
 public class EntityClass {
@@ -44,7 +45,7 @@ public class EntityClass {
 	 *
 	 * Masked via this helper: getLife, getForce/Strength, getWisdom, getResistance,
 	 * getAgility, getScience, getMagic, getAbsoluteShield, getRelativeShield,
-	 * getDamageReturn, getFrequency, getCores, getRAM, getStat, getMP, getTP,
+	 * getDamageReturn, getFrequency, getCores, getRAM, getStat, getStats, getMP, getTP,
 	 * getTotalMP, getTotalTP, getPower, getTotalLife, getWeapon, getWeapons,
 	 * getChips, getEffects, getLaunchedEffects, getPassiveEffects.
 	 *
@@ -197,6 +198,28 @@ public class EntityClass {
 	public static Long getStat(EntityAI ai, Object entity, long stat) {
 		var l = resolveStatTarget(ai, entity);
 		return l == null ? null : (long) l.getStat((int) stat);
+	}
+
+	private final static int[] ALL_STATS = { Entity.STAT_LIFE, Entity.STAT_TP, Entity.STAT_MP,
+		Entity.STAT_STRENGTH, Entity.STAT_AGILITY, Entity.STAT_FREQUENCY, Entity.STAT_WISDOM,
+		Entity.STAT_ABSOLUTE_SHIELD, Entity.STAT_RELATIVE_SHIELD, Entity.STAT_RESISTANCE,
+		Entity.STAT_SCIENCE, Entity.STAT_MAGIC, Entity.STAT_DAMAGE_RETURN, Entity.STAT_POWER,
+		Entity.STAT_CORES, Entity.STAT_RAM };
+
+	public static MapLeekValue getStats(EntityAI ai) throws LeekRunException {
+		return statsMap(ai, ai.getEntity());
+	}
+
+	public static MapLeekValue getStats(EntityAI ai, Object entity) throws LeekRunException {
+		var l = resolveStatTarget(ai, entity);
+		return l == null ? null : statsMap(ai, l);
+	}
+
+	private static MapLeekValue statsMap(EntityAI ai, Entity l) throws LeekRunException {
+		var map = new MapLeekValue(ai);
+		for (var stat : ALL_STATS)
+			map.set(ai, (long) stat, (long) l.getStat(stat));
+		return map;
 	}
 
 	public static Long getCell(EntityAI ai) throws LeekRunException {
