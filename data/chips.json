@@ -3333,7 +3333,7 @@
 	"164": {
 		"id": 164,
 		"name": "corn",
-		"level": 88,
+		"level": 63,
 		"min_range": 1,
 		"max_range": 5,
 		"launch_type": 7,
@@ -3361,7 +3361,7 @@
 	"165": {
 		"id": 165,
 		"name": "chilli_pepper",
-		"level": 113,
+		"level": 179,
 		"min_range": 1,
 		"max_range": 7,
 		"launch_type": 7,
@@ -3389,7 +3389,7 @@
 	"273": {
 		"id": 273,
 		"name": "hemorrhage",
-		"level": 102,
+		"level": 196,
 		"min_range": 1,
 		"max_range": 2,
 		"launch_type": 7,
@@ -3398,7 +3398,7 @@
 				"id": 59,
 				"value1": 2,
 				"value2": 0,
-				"turns": 2,
+				"turns": 1,
 				"targets": 31,
 				"modifiers": 0,
 				"type": 9
@@ -3417,7 +3417,7 @@
 	"441": {
 		"id": 441,
 		"name": "prototaxites",
-		"level": 42,
+		"level": 152,
 		"min_range": 1,
 		"max_range": 10,
 		"launch_type": 7,
@@ -3445,14 +3445,14 @@
 	"442": {
 		"id": 442,
 		"name": "maturation",
-		"level": 205,
+		"level": 267,
 		"min_range": 1,
 		"max_range": 7,
 		"launch_type": 7,
 		"effects": [
 			{
 				"id": 12,
-				"value1": 100,
+				"value1": 75,
 				"value2": 0,
 				"turns": 0,
 				"targets": 18,
@@ -3469,9 +3469,9 @@
 				"type": 5
 			}
 		],
-		"cost": 6,
+		"cost": 12,
 		"area": 1,
-		"cooldown": 1,
+		"cooldown": 5,
 		"los": true,
 		"team_cooldown": false,
 		"initial_cooldown": 0,
@@ -3482,9 +3482,9 @@
 	"443": {
 		"id": 443,
 		"name": "superinfection",
-		"level": 230,
+		"level": 232,
 		"min_range": 1,
-		"max_range": 6,
+		"max_range": 2,
 		"launch_type": 7,
 		"effects": [
 			{
@@ -3499,7 +3499,7 @@
 		],
 		"cost": 7,
 		"area": 1,
-		"cooldown": 4,
+		"cooldown": 5,
 		"los": true,
 		"team_cooldown": false,
 		"initial_cooldown": 0,

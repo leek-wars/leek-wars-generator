@@ -40,7 +40,7 @@ public enum FightConstants implements ILeekConstant {
 	// Summon types (plantes — pas des bulbes)
 	SUMMON_CORN(9, Type.INT),
 	SUMMON_CHILLI_PEPPER(10, Type.INT),
-	SUMMON_PROTOTAXITES(13, Type.INT),
+	SUMMON_PROTOTAXITE(13, Type.INT),
 
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, Type.INT),
@@ -354,7 +354,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_KILL(417, Type.INT),
 	CHIP_APOCALYPSE(418, Type.INT),
 	CHIP_DIVINE_PROTECTION(419, Type.INT),
-	CHIP_PROTOTAXITES(441, Type.INT),
+	CHIP_PROTOTAXITE(441, Type.INT),
 	CHIP_MATURATION(442, Type.INT),
 	CHIP_SUPERINFECTION(443, Type.INT),
 
