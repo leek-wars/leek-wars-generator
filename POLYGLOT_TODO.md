@@ -58,7 +58,10 @@
 
 - [ ] Doc joueur : écrire une IA en JS / TS / Python (contrat `turn()`, entrée, multi-fichiers)
 - [ ] Doc de l'API objet (`me`, `Entity`, `Cell`, `Weapon`, `Chip`, `Fight`, `Field`, `Registers`, `Debug`, `Effect`/`EffectTemplate`)
-- [ ] Mentionner les limites (heap non bornée, pas de hooks beforeFight/afterFight, dépréciation forme plate)
+- [ ] Mentionner les limites (heap non bornée, dépréciation forme plate)
+- [ ] Documenter les hooks `beforeFight()` / `afterFight()` (supportés depuis le 03/09/2026, cf `TestPolyglotHooks`) :
+      fonction globale (JS : `globalThis.beforeFight` ou `export function` dans un module ES ; Python : `def beforeFight()`),
+      et **nécessitent une IA avec `turn()`** — dans une IA plate, le top-level tournerait une fois de plus pendant le hook.
 
 ## E. Release prod 2.49
 

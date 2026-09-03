@@ -608,6 +608,31 @@ public class PolyglotEntityAI extends EntityAI {
 		return context.eval(languageId, source); // JS script / Python : eval direct
 	}
 
+	/**
+	 * Resout une fonction de premier niveau definie par le joueur ({@code turn}, {@code beforeFight},
+	 * {@code afterFight}) : d'abord dans le global, puis dans les exports du module ES. Dans un module ES
+	 * un {@code function f()} top-level est module-scoped (invisible du global) : seul un
+	 * {@code export function f()} ou un {@code globalThis.f} la rend visible d'ici.
+	 *
+	 * @return la fonction, ou null si absente / non executable / contexte inutilisable.
+	 */
+	private Value resolveGuestFunction(String name) {
+		if (context == null) return null;
+		try {
+			Value fn = context.getBindings(languageId).getMember(name);
+			if (fn != null && fn.canExecute()) return fn;
+			if (jsModuleNamespace != null) {
+				Value exported = jsModuleNamespace.getMember(name);
+				if (exported != null && exported.canExecute()) return exported;
+			}
+		} catch (PolyglotException | IllegalStateException unusable) {
+			// Contexte annule (limite atteinte) ou ferme : interroger ses bindings LEVE. C'est la
+			// reponse "pas de fonction utilisable", pas une erreur a propager (cf isUnusableCallback).
+			return null;
+		}
+		return null;
+	}
+
 	/** Tours suivants d'une IA plate (sans turn()). */
 	private Value replayFlatTurn() {
 		if (jsModule) {
@@ -1069,16 +1094,8 @@ public class PolyglotEntityAI extends EntityAI {
 				// (les tours suivants passeront par replayFlatTurn, inertes, plutot que de boucler).
 				initialized = true;
 				Value top = loadEntryFirstTurn();
-				Value turnFn = context.getBindings(languageId).getMember(TURN_FUNCTION);
-				if ((turnFn == null || !turnFn.canExecute()) && jsModuleNamespace != null) {
-					// Module ES : turn() n'est pas dans le global. On la cherche dans les exports du
-					// module (`export function turn()`), en repli de globalThis.turn.
-					Value exported = jsModuleNamespace.getMember(TURN_FUNCTION);
-					if (exported != null && exported.canExecute()) {
-						turnFn = exported;
-					}
-				}
-				if (turnFn != null && turnFn.canExecute()) {
+				Value turnFn = resolveGuestFunction(TURN_FUNCTION);
+				if (turnFn != null) {
 					// IA avec etat : le top-level (classes + statics) n'etait que du setup execute
 					// une fois ; turn() est rejouee chaque tour (les statics de classe persistent).
 					entry = turnFn;
@@ -1131,6 +1148,124 @@ public class PolyglotEntityAI extends EntityAI {
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
+			if (!winRace(settled, watchdog)) {
+				throw onWallClockTimeout();
+			}
+		}
+	}
+
+	/**
+	 * Hooks de combat ({@code beforeFight} / {@code afterFight}) pour une IA polyglot : la fonction est
+	 * cherchee dans le global du guest (ou les exports du module ES), la ou LeekScript cherche une methode
+	 * {@code f_<name>} sur la classe compilee.
+	 *
+	 * <p><b>Pourquoi un pre-filtre textuel.</b> Savoir si le guest definit {@code beforeFight} demande
+	 * d'avoir EVALUE le source, or il ne l'est qu'au 1er tour ({@code initialized}) — et le charger pour
+	 * tout le monde changerait le modele d'execution des IA "plates" (sans {@code turn()}), dont le source
+	 * EST la logique de tour : il tournerait pendant la phase de hook, ou les actions de combat sont
+	 * interdites. On ne charge donc en avance que si le nom du hook APPARAIT dans les sources du joueur.
+	 * Faux positif possible (le nom cite en commentaire) : sans consequence, {@link #invokeHook} ne trouve
+	 * alors aucune fonction et ne fait rien. Faux negatif impossible en pratique : pour etre appelable, le
+	 * nom doit etre ecrit quelque part dans les fichiers scannes.
+	 */
+	@Override
+	public boolean hasHook(String name) {
+		if (disabled || !HOOK_NAMES.contains(name)) {
+			return false;
+		}
+		if (initialized) {
+			return resolveGuestFunction(name) != null; // source deja evalue : reponse exacte
+		}
+		return sourceMentionsHook(name);
+	}
+
+	/** Memoise le pre-filtre textuel : au plus un scan des sources par nom de hook et par combat. */
+	private final Map<String, Boolean> hookMentions = new HashMap<>();
+
+	/** Vrai si le nom du hook apparait comme identifiant dans l'entree ou dans un fichier importable. */
+	private boolean sourceMentionsHook(String name) {
+		return hookMentions.computeIfAbsent(name, n -> {
+			Pattern identifier = Pattern.compile("\\b" + Pattern.quote(n) + "\\b");
+			if (identifier.matcher(source).find()) {
+				return true;
+			}
+			// Multi-fichiers : le hook peut etre pose depuis un module importe (globalThis.beforeFight = ...).
+			if (fileSystem != null) {
+				for (String path : fileSystem.filePaths()) {
+					String content = fileSystem.readFile(path);
+					if (content != null && identifier.matcher(content).find()) {
+						return true;
+					}
+				}
+			}
+			return false;
+		});
+	}
+
+	/**
+	 * Execute le hook guest avec LES MEMES gardes qu'un tour ({@link #runIA}) : compteur de statements et
+	 * limites du contexte remis a zero, backstop wall-clock, exceptions guest traduites en
+	 * {@link LeekRunException} (rapportee par {@code EntityAI.runHook}). La phase de hook, qui interdit les
+	 * actions de combat, est deja installee par l'appelant.
+	 *
+	 * <p>Pour {@code beforeFight} le source n'a pas encore ete evalue : on le charge ici, exactement comme
+	 * au 1er tour (meme resolution de {@code turn()}), si bien que le tour 1 rejoue seulement {@code turn()}.
+	 * Une IA plate (sans {@code turn()}) voit donc son top-level tourner une fois de plus, pendant le hook :
+	 * les hooks supposent une IA avec {@code turn()}.
+	 */
+	@Override
+	protected void invokeHook(String name) throws Throwable {
+		if (disabled) {
+			return;
+		}
+		markTurnStart();
+		// Setup faillible (construction du contexte, cf runIA) : une saturation RAM ici appartient au joueur.
+		try {
+			ensureContext();
+			resetStatementCounter();
+			syncRealToGuest();
+			context.resetLimits();
+		} catch (PolyglotException e) {
+			throw mapException(e);
+		} catch (Throwable t) {
+			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
+				throw t;
+			}
+			throw outOfMemory();
+		}
+
+		final Context running = context;
+		final AtomicBoolean settled = new AtomicBoolean(false);
+		final ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
+			if (settled.compareAndSet(false, true)) {
+				PolyglotSandbox.interruptAsync(running);
+			}
+		}, turnWallClockLimitMs);
+		try {
+			if (!initialized) {
+				// beforeFight : chargement de l'entree AVANT le tour 1 (le chargement est aussi du code
+				// joueur, donc sous les memes gardes). initialized marque tot, comme dans runIA.
+				initialized = true;
+				loadEntryFirstTurn();
+				entry = resolveGuestFunction(TURN_FUNCTION);
+			}
+			Value hook = resolveGuestFunction(name);
+			if (hook == null) {
+				return; // hook cite dans le source mais pas defini : rien a faire
+			}
+			hook.execute();
+		} catch (PolyglotException e) {
+			throw mapException(e);
+		} catch (RuntimeException e) {
+			LeekRunException unwrapped = unwrapLeekRunException(e);
+			throw unwrapped != null ? unwrapped : new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
+		} catch (Throwable t) {
+			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
+				throw t; // dont StackOverflowError, traite par EntityAI.runHook
+			}
+			throw outOfMemory();
+		} finally {
+			snapshotTurnOperations();
 			if (!winRace(settled, watchdog)) {
 				throw onWallClockTimeout();
 			}

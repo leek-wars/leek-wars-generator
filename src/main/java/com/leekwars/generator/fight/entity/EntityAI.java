@@ -447,10 +447,20 @@ public class EntityAI extends AI {
 		return found;
 	}
 
-	public void runHook(String name, HookPhase phase) {
-
+	/**
+	 * Invocation effective du hook, une fois la phase installée. LeekScript : la méthode
+	 * {@code f_<name>} de la classe compilée. Surchargée par
+	 * {@code PolyglotEntityAI} pour appeler la fonction guest du même nom (JS/TS/Python).
+	 */
+	protected void invokeHook(String name) throws Throwable {
 		var method = findHookMethod(this.getClass(), name);
 		if (method == null) return;
+		method.invoke(this);
+	}
+
+	public void runHook(String name, HookPhase phase) {
+
+		if (!hasHook(name)) return;
 
 		long startTime = System.nanoTime();
 		long savedMaxOps = getMaxOperations();
@@ -467,13 +477,17 @@ public class EntityAI extends AI {
 				staticInitialized = true;
 			}
 			hookPhase = phase;
-			method.invoke(this);
+			invokeHook(name);
 
 		} catch (StackOverflowError e) {
 			fight.log(new ActionAIError(mEntity));
 			addSystemLog(LeekLog.ERROR, Error.STACKOVERFLOW, e.getStackTrace());
 			fight.getState().statistics.stackOverflow(mEntity);
 			fight.getState().statistics.error(mEntity);
+		} catch (LeekRunException e) {
+			// Erreur joueur remontée directement (pas via la réflexion) : IA polyglot, dont
+			// invokeHook lève la LeekRunException déjà traduite (limite d'ops, RAM, wall-clock...).
+			handleLeekRunException(e);
 		} catch (java.lang.reflect.InvocationTargetException ite) {
 			Throwable cause = ite.getCause();
 			if (cause instanceof LeekRunException) {

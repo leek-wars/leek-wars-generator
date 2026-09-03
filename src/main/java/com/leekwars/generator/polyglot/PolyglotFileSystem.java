@@ -108,6 +108,23 @@ public class PolyglotFileSystem implements FileSystem {
 		this.passthroughRootReal = real;
 	}
 
+	/** Chemins LeekScript des fichiers du joueur montes (lecture seule). */
+	public Set<String> filePaths() {
+		return java.util.Collections.unmodifiableSet(files);
+	}
+
+	/** Contenu d'un fichier du joueur, ou null s'il est absent ou illisible. */
+	public String readFile(String leekPath) {
+		if (!files.contains(leekPath)) {
+			return null;
+		}
+		try {
+			return read.apply(leekPath);
+		} catch (RuntimeException unreadable) {
+			return null;
+		}
+	}
+
 	/** Chemin absolu normalise : les chemins relatifs sont ancres au point de montage (pas le CWD). */
 	private static Path abs(Path p) {
 		return (p.isAbsolute() ? p : Path.of(MOUNT).resolve(p)).normalize();

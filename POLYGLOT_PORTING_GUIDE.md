@@ -54,8 +54,12 @@ pour des combats classés.
   le scope global** → appel direct, sans import.
 - Entrée : le fichier racine définit `turn()` (JS : `globalThis.turn = …` ; Python :
   `def turn()`). **Le source est évalué UNE fois** (les `static`/globals persistent tout le
-  combat), puis `turn()` est rejouée chaque tour. `beforeFight()` est appelée avant le combat
-  si définie.
+  combat), puis `turn()` est rejouée chaque tour.
+- Hooks de combat : `beforeFight()` (avant le tour 1, pour `me.setLoadout(nom)`) et
+  `afterFight()` (après le combat, `Fight.winner`) sont appelées si définies — même
+  visibilité que `turn()` (global, ou `export` dans un module ES). Elles supposent une IA
+  **avec `turn()`** : dans une IA plate (sans `turn()`), le source est la logique de tour et
+  tournerait une fois de plus pendant le hook, où les actions de combat sont interdites.
 - La stdlib LeekScript se scinde en deux :
   - **Bridgée** par le runtime (`PolyglotAPIBridge` installe `FightFunctions` +
     `LeekFunctions.getStandardFunctions()`) : `round/min/max/abs`, `getColor`, etc.
