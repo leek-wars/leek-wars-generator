@@ -2,6 +2,7 @@ package test;
 
 import static org.junit.Assert.fail;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.state.Team;
+import com.leekwars.generator.turret.Turret;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
 
@@ -133,6 +135,58 @@ public class TestFightMap {
 		Assert.assertNotNull(l2.getCell());
 		List<Cell> patj = map.getAStarPath(l1.getCell(), new Cell[] { l2.getCell() });
 		Assert.assertNotNull("Les deux joueurs doivent être sur la même composante connexe", patj);
+	}
+
+	@Test
+	public void composanteTest() throws Exception {
+
+		// Le trophée Planqué compare les numéros de composante des cases de départ et
+		// d'arrivée d'une téléportation : ils doivent décrire la carte DÉFINITIVE. Une
+		// tourelle déblaie les obstacles autour d'elle, donc la numérotation qui la
+		// précède est périmée et débloquerait le trophée sur une case accessible à pied.
+		for (int run = 0; run < 20; ++run) {
+
+			var team1 = new Team();
+			var team2 = new Team();
+			team1.addEntity(new Leek(1, "Bob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0));
+			team1.addEntity(new Turret());
+			team2.addEntity(new Leek(2, "Martin", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0));
+			team2.addEntity(new Turret());
+			var teams = new ArrayList<Team>();
+			teams.add(team1);
+			teams.add(team2);
+
+			Map map = Map.generateMap(fight.getState(), 0, 18, 18, 50, teams, null);
+
+			// Composantes recalculées à part, par simple parcours en largeur
+			int[] reachable = new int[map.getNbCell()];
+			int component = 0;
+			for (int i = 0; i < map.getNbCell(); ++i) {
+				if (reachable[i] != 0) continue;
+				component++;
+				var queue = new ArrayDeque<Cell>();
+				reachable[i] = component;
+				queue.add(map.getCell(i));
+				while (!queue.isEmpty()) {
+					Cell cell = queue.poll();
+					for (int[] dir : new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) {
+						Cell next = map.getCell(cell.getX() + dir[0], cell.getY() + dir[1]);
+						if (next == null || next.isWalkable() != map.getCell(i).isWalkable()) continue;
+						if (reachable[next.getId()] != 0) continue;
+						reachable[next.getId()] = component;
+						queue.add(next);
+					}
+				}
+			}
+
+			for (int i = 0; i < map.getNbCell(); ++i) {
+				for (int j = i + 1; j < map.getNbCell(); ++j) {
+					Assert.assertEquals("cases " + i + " et " + j,
+						reachable[i] == reachable[j],
+						map.getCell(i).getComposante() == map.getCell(j).getComposante());
+				}
+			}
+		}
 	}
 
 	@Test

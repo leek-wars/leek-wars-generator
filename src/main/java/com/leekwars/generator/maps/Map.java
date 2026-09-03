@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -212,7 +213,6 @@ public class Map {
 						c.setObstacle(type, size);
 					}
 				}
-				map.computeComposantes();
 				ArrayList<Entity> leeks = new ArrayList<Entity>();
 
 				// Set entities positions
@@ -256,6 +256,10 @@ public class Map {
 						}
 					}
 				}
+
+				// Les tourelles viennent peut-être de déblayer des obstacles : on ne
+				// numérote les composantes qu'une fois la carte définitive.
+				map.computeComposantes();
 
 				// Check paths
 				valid = true;
@@ -538,47 +542,37 @@ public class Map {
 		return getRandomCell(state);
 	}
 
+	/**
+	 * Numérote les composantes connexes : deux cellules portent le même numéro si et
+	 * seulement si on passe de l'une à l'autre en ne traversant que des cellules de
+	 * même nature (toutes marchables, ou toutes obstacles).
+	 *
+	 * À rappeler après toute modification de la marchabilité (les obstacles retirés
+	 * autour d'une tourelle, par exemple) : le trophée Planqué compare ces numéros, et
+	 * un numéro périmé le débloque sur une case parfaitement accessible à pied.
+	 */
 	public void computeComposantes() {
 		var connexe = new int[this.coord.length][this.coord[0].length];
-		int x, y, x2, y2, ni = 1;
-		for (x = 0; x < connexe.length; x++) {
-			for (y = 0; y < connexe[x].length; y++)
-				connexe[x][y] = -1;
+		for (var column : connexe) {
+			Arrays.fill(column, 0); // 0 = pas encore visitée
 		}
-
-		// On cherche les composantes connexes
-		for (x = 0; x < connexe.length; x++) {
-			for (y = 0; y < connexe[x].length; y++) {
-				Cell c = this.coord[x][y];
-				if (c == null) {
-					continue;
-				}
-				int cur_number = 0;
-				if (x > 0 && this.coord[x - 1][y] != null && this.coord[x - 1][y].isWalkable() == c.isWalkable())
-					cur_number = connexe[x - 1][y];
-
-				if (y > 0 && this.coord[x][y - 1] != null && this.coord[x][y - 1].isWalkable() == c.isWalkable()) {
-					if (cur_number == 0)
-						cur_number = connexe[x][y - 1];
-					else if (cur_number != connexe[x][y - 1]) {
-						int target_number = connexe[x][y - 1];
-						for (x2 = 0; x2 < connexe.length; x2++) {
-							for (y2 = 0; y2 <= y; y2++) {
-								if (connexe[x2][y2] == target_number)
-									connexe[x2][y2] = cur_number;
-							}
-						}
-					}
-				}
-
-				// On regarde si y'a un numéro de composante
-				if (cur_number == 0) {
-					// Si y'en a pas on lui en donen un
-					connexe[x][y] = ni;
-					ni++;
-				} else {
-					// Si y'en a un on le met
-					connexe[x][y] = cur_number;
+		int ni = 0;
+		var stack = new ArrayDeque<Cell>();
+		for (var start : this.cells) {
+			if (connexe[start.getX() - this.min_x][start.getY() - this.min_y] != 0) {
+				continue;
+			}
+			ni++;
+			connexe[start.getX() - this.min_x][start.getY() - this.min_y] = ni;
+			stack.push(start);
+			while (!stack.isEmpty()) {
+				var cell = stack.pop();
+				for (var dir : COMPOSANTE_NEIGHBORS) {
+					var next = getCell(cell.getX() + dir[0], cell.getY() + dir[1]);
+					if (next == null || next.isWalkable() != start.isWalkable()) continue;
+					if (connexe[next.getX() - this.min_x][next.getY() - this.min_y] != 0) continue;
+					connexe[next.getX() - this.min_x][next.getY() - this.min_y] = ni;
+					stack.push(next);
 				}
 			}
 		}
@@ -586,6 +580,8 @@ public class Map {
 			cell.composante = connexe[cell.getX() - this.min_x][cell.getY() - this.min_y];
 		}
 	}
+
+	private final static int[][] COMPOSANTE_NEIGHBORS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
 
 	public void drawMap() {
 		drawMap(new ArrayList<Cell>());
