@@ -44,6 +44,8 @@ public class FarmerLog {
 	public static final int LOADOUT_FORGOTTEN_ALREADY_EQUIPPED = 1009;
 	public static final int SET_LOADOUT_NO_RESTAT_POTION = 1010;
 	public static final int LOADOUT_NOT_ENOUGH_CAPITAL = 1011;
+	public static final int HOOK_REQUIRES_TURN = 1012;
+	public static final int HOOK_TOP_LEVEL_ACTS = 1013;
 
 	private boolean tooMuchDebug = false;
 

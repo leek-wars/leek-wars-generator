@@ -119,6 +119,30 @@ public class EntityAI extends AI {
 	}
 
 	/**
+	 * Hooks que le combat a PROPOSÉS à cette IA (tous ceux de {@link #HOOK_NAMES}, en pratique) et
+	 * ceux qui ont réellement tourné. L'écart est ce qui permet d'avertir le joueur — une IA polyglot
+	 * dont le hook est défini mais impossible à appeler (cf {@code PolyglotEntityAI}) le saurait sinon
+	 * jamais, et le hook serait silencieusement ignoré.
+	 */
+	private final java.util.Set<String> hooksOffered = new java.util.HashSet<>();
+	private final java.util.Set<String> hooksRun = new java.util.HashSet<>();
+
+	/** Le combat s'apprête à jouer ce hook : à appeler AVANT {@link #hasHook}, qui peut le refuser. */
+	public void offerHook(String name) {
+		hooksOffered.add(name);
+	}
+
+	/** Le hook a effectivement été exécuté (renseigné par les implémentations d'{@link #invokeHook}). */
+	protected void markHookRun(String name) {
+		hooksRun.add(name);
+	}
+
+	/** Vrai si le combat a proposé ce hook sans qu'il tourne : candidat à un avertissement joueur. */
+	protected boolean isHookOfferedButNotRun(String name) {
+		return hooksOffered.contains(name) && !hooksRun.contains(name);
+	}
+
+	/**
 	 * Chargement SPÉCULATIF du source pendant un hook (IA polyglot uniquement, cf
 	 * {@code PolyglotEntityAI.preloadEntryForHook}) : le top-level du joueur tourne dans le seul but
 	 * de découvrir si le hook existe, et sera <b>jeté puis rejoué au tour 1</b> s'il s'avère être la

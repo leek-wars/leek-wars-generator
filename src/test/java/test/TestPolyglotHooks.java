@@ -305,6 +305,62 @@ public class TestPolyglotHooks extends FightTestBase {
 		}
 	}
 
+	// ---- Le hook impossible est signale au joueur (jamais ignore en silence) ----
+
+	@Test
+	public void skippedHookIsReportedWhenTheTopLevelActs() throws Exception {
+		leek1.addWeapon(Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			EntityAI ai = buildAI(sb, "js",
+				"Fight.me.setWeapon(Weapon.pistol);\n"
+				+ "function beforeFight() { Registers.set('hook', 'yes'); }\n"
+				+ "function turn() {}\n");
+			ai.offerHook("beforeFight"); // ce que fait Fight.runHooks
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			ai.runIA();
+			String logs = farmerLog.toJSON().toString();
+			Assert.assertTrue("le joueur doit etre averti (HOOK_TOP_LEVEL_ACTS) : " + logs,
+				logs.contains("1013"));
+		}
+	}
+
+	@Test
+	public void skippedHookIsReportedWhenTheAiHasNoTurn() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// IA plate qui definit bien beforeFight : le hook ne peut pas etre appele (l'appeler
+			// demanderait de faire tourner le top-level avant le combat), on le dit.
+			EntityAI ai = buildAI(sb, "js",
+				"function beforeFight() { Registers.set('hook', 'yes'); }\n"
+				+ "// pas de turn() ici\n"
+				+ "Registers.set('runs', 'ran');\n");
+			ai.offerHook("beforeFight");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			ai.runIA();
+			Assert.assertEquals("ran", leek1.getRegister("runs"));
+			Assert.assertNull("le hook n'a pas tourne", leek1.getRegister("hook"));
+			String logs = farmerLog.toJSON().toString();
+			Assert.assertTrue("le joueur doit etre averti (HOOK_REQUIRES_TURN) : " + logs,
+				logs.contains("1012"));
+		}
+	}
+
+	@Test
+	public void noWarningWhenTheAiSimplyHasNoHook() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Pas de hook ecrit = rien a signaler, meme si l'IA est plate.
+			EntityAI ai = buildAI(sb, "js", "Registers.set('runs', 'ran');\n");
+			ai.offerHook("beforeFight");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			ai.runIA();
+			String logs = farmerLog.toJSON().toString();
+			Assert.assertFalse("aucun avertissement de hook : " + logs, logs.contains("1012"));
+			Assert.assertFalse("aucun avertissement de hook : " + logs, logs.contains("1013"));
+		}
+	}
+
 	// ---- Phase de hook ----
 
 	@Test
@@ -437,6 +493,9 @@ public class TestPolyglotHooks extends FightTestBase {
 		String registers = registerStore.get(leek1.getId());
 		Assert.assertTrue("beforeFight() ne doit pas avoir tourne : " + registers,
 			registers == null || !registers.contains("\"before\""));
+		// ... mais le joueur en est averti (le cablage passe ici par le vrai Fight.runHooks).
+		String logs = farmerLog.toJSON().toString();
+		Assert.assertTrue("avertissement HOOK_TOP_LEVEL_ACTS attendu : " + logs, logs.contains("1013"));
 	}
 
 	/** Attache une IA TypeScript a un poireau (transpilee au build, puis executee par le moteur js). */

@@ -342,6 +342,9 @@ public class Fight {
 			if (!(ai instanceof EntityAI)) continue;
 			var entityAI = (EntityAI) ai;
 			if (!entityAI.isValid()) continue;
+			// Proposé AVANT le filtre : une IA qui définit le hook sans pouvoir le jouer doit pouvoir
+			// s'en apercevoir (avertissement au tour 1), plutôt que d'être ignorée en silence.
+			entityAI.offerHook(name);
 			if (!entityAI.hasHook(name)) continue;
 			entityAI.setEntity(entity);
 			entityAI.runHook(name, phase);

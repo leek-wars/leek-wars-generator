@@ -24,9 +24,11 @@ import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.state.Entity;
 
+import leekscript.AILog;
 import leekscript.common.Error;
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
@@ -1095,6 +1097,7 @@ public class PolyglotEntityAI extends EntityAI {
 				initialized = true;
 				Value top = loadEntryFirstTurn();
 				Value turnFn = resolveGuestFunction(TURN_FUNCTION);
+				warnAboutSkippedHooks(turnFn != null); // hook defini mais jamais appele : on le dit
 				if (turnFn != null) {
 					// IA avec etat : le top-level (classes + statics) n'etait que du setup execute
 					// une fois ; turn() est rejouee chaque tour (les statics de classe persistent).
@@ -1250,6 +1253,7 @@ public class PolyglotEntityAI extends EntityAI {
 			if (hook == null) {
 				return; // hook cite dans le source mais pas defini : rien a faire
 			}
+			markHookRun(name); // avant l'appel : un hook qui LEVE a bien tourne (l'erreur est rapportee)
 			hook.execute();
 		} catch (PolyglotException e) {
 			throw mapException(e);
@@ -1291,6 +1295,10 @@ public class PolyglotEntityAI extends EntityAI {
 	 * refera au tour 1). Il faut pour cela une IA plate qui cite {@code turn} sans en definir : le
 	 * pre-filtre de {@link #hasHook} ecarte deja tout le reste.
 	 *
+	 * <p>Le rejet n'est pas muet pour autant : la raison est retenue ({@link #hookSkip}) et devient un
+	 * avertissement au tour 1 ({@link #warnAboutSkippedHooks}), une fois le source charge pour de bon —
+	 * c'est le seul moment ou on sait AVEC CERTITUDE que le joueur a bien ecrit un hook.
+	 *
 	 * @return true si le chargement est conserve (l'appelant peut invoquer le hook), false s'il a ete
 	 *         jete (rien n'a bouge : ni action, ni log, ni contexte).
 	 */
@@ -1302,16 +1310,48 @@ public class PolyglotEntityAI extends EntityAI {
 			loadEntryFirstTurn();
 			entry = resolveGuestFunction(TURN_FUNCTION);
 		} catch (Throwable loadFailed) {
+			// L'erreur elle-meme sera levee et rapportee au tour 1, en rechargeant : pas d'avertissement
+			// de hook par-dessus, qui ne ferait que brouiller le vrai diagnostic.
+			hookSkip = HookSkip.LOAD_FAILED;
 			closeContext();
 			return false;
 		} finally {
 			acted = endHookLoad();
 		}
 		if (entry == null || acted) {
+			hookSkip = acted ? HookSkip.TOP_LEVEL_ACTS : HookSkip.NO_TURN;
 			closeContext();
 			return false;
 		}
 		return true;
+	}
+
+	/** Pourquoi le chargement speculatif d'un hook a ete jete (cf {@link #warnAboutSkippedHooks}). */
+	private enum HookSkip { NONE, NO_TURN, TOP_LEVEL_ACTS, LOAD_FAILED }
+	private HookSkip hookSkip = HookSkip.NONE;
+
+	/**
+	 * Avertit le joueur, au chargement du tour 1, d'un hook qu'il a bien defini mais que le combat n'a
+	 * pas pu appeler. C'est ici (et pas dans le hook) que l'information est SURE : le source vient
+	 * d'etre evalue, donc {@code resolveGuestFunction} repond exactement, la ou la phase de hook ne
+	 * disposait que d'un pre-filtre textuel. Sans cela le hook serait ignore en silence.
+	 *
+	 * @param hasTurn si {@code turn()} a ete resolue par ce chargement.
+	 */
+	private void warnAboutSkippedHooks(boolean hasTurn) {
+		if (hookSkip == HookSkip.LOAD_FAILED) {
+			return; // le tour 1 va rapporter l'erreur de chargement elle-meme
+		}
+		for (String name : HOOK_NAMES) {
+			if (!isHookOfferedButNotRun(name) || resolveGuestFunction(name) == null) {
+				continue;
+			}
+			if (hookSkip == HookSkip.TOP_LEVEL_ACTS) {
+				addSystemLog(AILog.WARNING, FarmerLog.HOOK_TOP_LEVEL_ACTS, new String[] { name });
+			} else if (!hasTurn) {
+				addSystemLog(AILog.WARNING, FarmerLog.HOOK_REQUIRES_TURN, new String[] { name });
+			}
+		}
 	}
 
 	/**
