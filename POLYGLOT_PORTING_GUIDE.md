@@ -58,8 +58,11 @@ pour des combats classés.
 - Hooks de combat : `beforeFight()` (avant le tour 1, pour `me.setLoadout(nom)`) et
   `afterFight()` (après le combat, `Fight.winner`) sont appelées si définies — même
   visibilité que `turn()` (global, ou `export` dans un module ES). Elles supposent une IA
-  **avec `turn()`** : dans une IA plate (sans `turn()`), le source est la logique de tour et
-  tournerait une fois de plus pendant le hook, où les actions de combat sont interdites.
+  **avec `turn()` et dont le top-level n'est que du setup** : appeler `beforeFight()` demande
+  d'évaluer le source AVANT le tour 1. Le moteur le charge donc à l'essai et **jette le
+  chargement** (contexte fermé, rechargé au tour 1) si le top-level est en fait la logique de
+  tour — pas de `turn()`, ou une action de combat tentée à la racine, qui serait refusée par la
+  phase de hook. Dans ce cas le hook n'est pas appelé, mais le tour 1 est intact.
 - La stdlib LeekScript se scinde en deux :
   - **Bridgée** par le runtime (`PolyglotAPIBridge` installe `FightFunctions` +
     `LeekFunctions.getStandardFunctions()`) : `round/min/max/abs`, `getColor`, etc.

@@ -29,9 +29,7 @@ public class EntityClass {
 	// corrupt fight state or be misattributed in the report (the client falls back to
 	// the current-turn entity, which is undefined outside a turn → frozen report).
 	private static boolean denyDuringHook(EntityAI ai, String funcName) {
-		if (!ai.isInHook()) return false;
-		ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
-		return true;
+		return ai.denyDuringHook(funcName);
 	}
 
 	/**

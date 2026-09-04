@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
@@ -16,6 +17,7 @@ import com.leekwars.generator.polyglot.PolyglotFileSystem;
 import com.leekwars.generator.polyglot.PolyglotSandbox;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
+import com.leekwars.generator.weapons.Weapons;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
@@ -210,6 +212,99 @@ public class TestPolyglotHooks extends FightTestBase {
 		}
 	}
 
+	// ---- IA "plate" (sans turn()) : le top-level ne doit JAMAIS tourner en phase de hook ----
+
+	@Test
+	public void flatAiIsNeverLoadedByAHook() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Le nom du hook apparait (commentaire), mais l'IA n'a pas de turn() : son top-level EST la
+			// logique de tour. Le charger avant le combat lui ferait perdre son tour -> pas de hook.
+			EntityAI ai = buildAI(sb, "js",
+				"// pas de beforeFight ici\n"
+				+ "Registers.set('runs', '' + (1 + Number(Registers.get('runs') || 0)));\n");
+			Assert.assertFalse(ai.hasHook("beforeFight"));
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertNull("le top-level ne doit pas avoir tourne", leek1.getRegister("runs"));
+			ai.runIA();
+			Assert.assertEquals("1", leek1.getRegister("runs"));
+		}
+	}
+
+	@Test
+	public void flatAiPassingThePrefilterKeepsItsFirstTurn() throws Exception {
+		leek1.addWeapon(Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Les deux noms sont cites sans etre definis : le pre-filtre laisse passer, mais le
+			// chargement speculatif ne trouve pas de turn() -> il est JETE, et le tour 1 recharge le
+			// source dans un contexte neuf, actions autorisees.
+			EntityAI ai = buildAI(sb, "js",
+				"// ni beforeFight ni turn, juste cites\n"
+				+ "Fight.me.setWeapon(Weapon.pistol);\n");
+			Assert.assertTrue(ai.hasHook("beforeFight"));
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertNull("aucune action pendant la phase de hook", leek1.getWeapon());
+			ai.runIA();
+			Assert.assertNotNull("le tour 1 doit faire son travail", leek1.getWeapon());
+		}
+	}
+
+	@Test
+	public void flatEsModuleIsReExecutedAfterADiscardedHookLoad() throws Exception {
+		// Un module ES n'est evalue qu'UNE fois par contexte : si le chargement speculatif le gardait,
+		// l'IA plate resterait inerte tout le combat (replayFlatTurn ne rejoue pas un module). Le rejet
+		// ferme le contexte, donc le tour 1 reimporte vraiment le module.
+		leek1.addWeapon(Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("lib.mjs", "export var plan = 'ok'; // beforeFight, turn : cites, pas definis\n");
+		files.put("main.mjs", "import { plan } from './lib.mjs';\nFight.me.setWeapon(Weapon.pistol);\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			EntityAI ai = multiFileAI(sb, "js", files, "main.mjs");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertNull("aucune action pendant la phase de hook", leek1.getWeapon());
+			ai.runIA();
+			Assert.assertNotNull("le module doit etre reevalue au tour 1", leek1.getWeapon());
+		}
+	}
+
+	@Test
+	public void topLevelActionIsNotSwallowedByTheHookLoad() throws Exception {
+		leek1.addWeapon(Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Regression : le code a la racine du fichier agissait pendant beforeFight, ou les actions
+			// sont interdites -> "setWeapon() ne peut pas etre appelee dans un hook" ET arme perdue.
+			// Le chargement speculatif est jete des qu'il tente une action : le tour 1 la rejoue.
+			EntityAI ai = buildAI(sb, "js",
+				"Fight.me.setWeapon(Weapon.pistol);\n"
+				+ "function beforeFight() { Registers.set('hook', 'yes'); }\n"
+				+ "function turn() {}\n");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertNull("l'arme ne doit pas etre equipee pendant le hook", leek1.getWeapon());
+			ai.runIA();
+			Assert.assertNotNull("setWeapon() a la racine doit s'appliquer au tour 1", leek1.getWeapon());
+		}
+	}
+
+	@Test
+	public void pureSetupTopLevelStillAllowsTheHook() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Contre-epreuve : un top-level qui n'agit pas (du pur setup) reste charge par le hook,
+			// et le tour 1 ne rejoue que turn().
+			EntityAI ai = buildAI(sb, "js",
+				"globalThis.plan = 'ok';\n"
+				+ "globalThis.loads = (globalThis.loads || 0) + 1;\n"
+				+ "function beforeFight() { Registers.set('hook', globalThis.plan); }\n"
+				+ "function turn() { return globalThis.loads; }\n");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertEquals("ok", leek1.getRegister("hook"));
+			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
 	// ---- Phase de hook ----
 
 	@Test
@@ -320,6 +415,38 @@ public class TestPolyglotHooks extends FightTestBase {
 		String registers = registerStore.get(leek1.getId());
 		Assert.assertNotNull(registers);
 		Assert.assertTrue("turn() doit s'etre execute : " + registers, registers.contains("\"turn\""));
+	}
+
+	@Test
+	public void typescriptRootLevelActionSurvivesTheHookInRealFight() throws Exception {
+		// Le bug tel que rapporte : une IA TypeScript avec du code A LA RACINE du fichier voyait ses
+		// actions refusees ("setWeapon() ne peut pas etre appelee dans un hook") alors que le joueur
+		// n'est pas dans un hook. Bout en bout, l'arme doit bien etre equipee.
+		leek1.addWeapon(Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		attachTsAI(leek1,
+			"function beforeFight(): void { Registers.set('before', 'ran'); }\n"
+			+ "function turn(): void {}\n"
+			+ "Fight.me.setWeapon(Weapon.pistol);\n");
+		attachAI(leek2, "");
+		runFight();
+
+		Assert.assertTrue("leek1 doit utiliser une IA polyglot", leek1.getAI() instanceof PolyglotEntityAI);
+		Assert.assertNotNull("setWeapon() a la racine doit s'appliquer", leek1.getWeapon());
+		// Corollaire assume : un top-level qui agit interdit le hook (l'appeler demanderait de faire
+		// tourner ce top-level avant le combat).
+		String registers = registerStore.get(leek1.getId());
+		Assert.assertTrue("beforeFight() ne doit pas avoir tourne : " + registers,
+			registers == null || !registers.contains("\"before\""));
+	}
+
+	/** Attache une IA TypeScript a un poireau (transpilee au build, puis executee par le moteur js). */
+	private void attachTsAI(Leek leek, String code) {
+		AIFile file = new AIFile("polyglot_hooks_" + System.nanoTime() + ".ts", code,
+			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
+		leek.setAIFile(file);
+		leek.setLogs(new LeekLog(farmerLog, leek));
+		leek.setFight(fight);
+		leek.setBirthTurn(1);
 	}
 
 	/** Attache une IA JS a un poireau via un AIFile dont le chemin se termine par .js. */

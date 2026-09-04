@@ -19,9 +19,7 @@ import leekscript.runner.values.LegacyArrayLeekValue;
 public class WeaponClass {
 
 	private static boolean denyDuringHook(EntityAI ai, String funcName) {
-		if (!ai.isInHook()) return false;
-		ai.addSystemLog(AILog.WARNING, FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
-		return true;
+		return ai.denyDuringHook(funcName);
 	}
 
 	// ----- Fonctions Weapon -----

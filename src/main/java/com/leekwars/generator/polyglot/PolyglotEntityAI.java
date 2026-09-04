@@ -1163,10 +1163,12 @@ public class PolyglotEntityAI extends EntityAI {
 	 * d'avoir EVALUE le source, or il ne l'est qu'au 1er tour ({@code initialized}) — et le charger pour
 	 * tout le monde changerait le modele d'execution des IA "plates" (sans {@code turn()}), dont le source
 	 * EST la logique de tour : il tournerait pendant la phase de hook, ou les actions de combat sont
-	 * interdites. On ne charge donc en avance que si le nom du hook APPARAIT dans les sources du joueur.
-	 * Faux positif possible (le nom cite en commentaire) : sans consequence, {@link #invokeHook} ne trouve
-	 * alors aucune fonction et ne fait rien. Faux negatif impossible en pratique : pour etre appelable, le
-	 * nom doit etre ecrit quelque part dans les fichiers scannes.
+	 * interdites. On ne charge donc en avance que si le nom du hook APPARAIT dans les sources du joueur —
+	 * ET le nom {@code turn}, car sans {@code turn()} le top-level est la logique de tour et n'a rien a
+	 * faire avant le combat. Les deux pre-filtres ont le meme faux negatif (impossible en pratique : pour
+	 * etre appelable, le nom doit etre ecrit quelque part) et le meme faux positif (nom cite en
+	 * commentaire), sans consequence : le chargement speculatif de {@link #invokeHook} est jete des qu'il
+	 * ne trouve pas de {@code turn()}.
 	 */
 	@Override
 	public boolean hasHook(String name) {
@@ -1176,14 +1178,14 @@ public class PolyglotEntityAI extends EntityAI {
 		if (initialized) {
 			return resolveGuestFunction(name) != null; // source deja evalue : reponse exacte
 		}
-		return sourceMentionsHook(name);
+		return sourceMentionsIdentifier(name) && sourceMentionsIdentifier(TURN_FUNCTION);
 	}
 
-	/** Memoise le pre-filtre textuel : au plus un scan des sources par nom de hook et par combat. */
+	/** Memoise le pre-filtre textuel : au plus un scan des sources par identifiant et par combat. */
 	private final Map<String, Boolean> hookMentions = new HashMap<>();
 
-	/** Vrai si le nom du hook apparait comme identifiant dans l'entree ou dans un fichier importable. */
-	private boolean sourceMentionsHook(String name) {
+	/** Vrai si le nom apparait comme identifiant dans l'entree ou dans un fichier importable. */
+	private boolean sourceMentionsIdentifier(String name) {
 		return hookMentions.computeIfAbsent(name, n -> {
 			Pattern identifier = Pattern.compile("\\b" + Pattern.quote(n) + "\\b");
 			if (identifier.matcher(source).find()) {
@@ -1208,10 +1210,9 @@ public class PolyglotEntityAI extends EntityAI {
 	 * {@link LeekRunException} (rapportee par {@code EntityAI.runHook}). La phase de hook, qui interdit les
 	 * actions de combat, est deja installee par l'appelant.
 	 *
-	 * <p>Pour {@code beforeFight} le source n'a pas encore ete evalue : on le charge ici, exactement comme
-	 * au 1er tour (meme resolution de {@code turn()}), si bien que le tour 1 rejoue seulement {@code turn()}.
-	 * Une IA plate (sans {@code turn()}) voit donc son top-level tourner une fois de plus, pendant le hook :
-	 * les hooks supposent une IA avec {@code turn()}.
+	 * <p>Pour {@code beforeFight} le source n'a pas encore ete evalue : on le charge ici, mais de facon
+	 * SPECULATIVE et reversible ({@link #preloadEntryForHook}) — le top-level du joueur n'a le droit de
+	 * tourner en phase de hook que s'il n'est que du setup.
 	 */
 	@Override
 	protected void invokeHook(String name) throws Throwable {
@@ -1242,12 +1243,8 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 		}, turnWallClockLimitMs);
 		try {
-			if (!initialized) {
-				// beforeFight : chargement de l'entree AVANT le tour 1 (le chargement est aussi du code
-				// joueur, donc sous les memes gardes). initialized marque tot, comme dans runIA.
-				initialized = true;
-				loadEntryFirstTurn();
-				entry = resolveGuestFunction(TURN_FUNCTION);
+			if (!initialized && !preloadEntryForHook()) {
+				return; // chargement jete : l'IA sera chargee au tour 1, comme si le hook n'existait pas
 			}
 			Value hook = resolveGuestFunction(name);
 			if (hook == null) {
@@ -1270,6 +1267,51 @@ public class PolyglotEntityAI extends EntityAI {
 				throw onWallClockTimeout();
 			}
 		}
+	}
+
+	/**
+	 * Chargement SPECULATIF de l'entree pendant {@code beforeFight} : a ce moment le source n'a jamais
+	 * ete evalue, et rien ne dit que son top-level est du setup. Il peut aussi bien ETRE la logique de
+	 * tour (IA "plate", sans {@code turn()}) : la faire tourner ici lui ferait perdre toutes ses actions,
+	 * refusees par la phase de hook — c'est la regression #1 des hooks polyglot, un
+	 * "setWeapon() ne peut pas etre appelee dans un hook" sur du code a la racine du fichier.
+	 *
+	 * <p>On charge donc a l'essai, et on ne GARDE le chargement que s'il est inoffensif : {@code turn()}
+	 * resolue (le top-level n'etait que du setup) et aucune action de combat tentee en chemin. Sinon on
+	 * jette tout ({@link #closeContext} remet {@code initialized}, {@code entry} et le namespace du
+	 * module a zero, et le contexte guest part avec ses effets de bord) : le tour 1 rechargera le source
+	 * dans un contexte neuf, actions autorisees, exactement comme si les hooks n'existaient pas. Un echec
+	 * de chargement (syntaxe, RAM, recursion) se jette pareil et sera rapporte UNE fois, au tour 1.
+	 *
+	 * <p>Corollaire assume : une IA dont le top-level agit ne peut pas avoir de hook — l'appeler
+	 * demanderait d'evaluer ce top-level avant le combat. Les hooks supposent une IA avec {@code turn()}.
+	 *
+	 * <p>Limite connue : seuls le contexte guest et les ACTIONS de combat sont annules par le rejet. Un
+	 * top-level qui ecrit un registre ou un log de debug avant d'etre jete l'a fait pour de bon (et le
+	 * refera au tour 1). Il faut pour cela une IA plate qui cite {@code turn} sans en definir : le
+	 * pre-filtre de {@link #hasHook} ecarte deja tout le reste.
+	 *
+	 * @return true si le chargement est conserve (l'appelant peut invoquer le hook), false s'il a ete
+	 *         jete (rien n'a bouge : ni action, ni log, ni contexte).
+	 */
+	private boolean preloadEntryForHook() {
+		initialized = true; // comme dans runIA : un chargement qui echoue ne doit pas boucler
+		beginHookLoad();    // les actions du top-level sont refusees EN SILENCE, et notees
+		boolean acted;
+		try {
+			loadEntryFirstTurn();
+			entry = resolveGuestFunction(TURN_FUNCTION);
+		} catch (Throwable loadFailed) {
+			closeContext();
+			return false;
+		} finally {
+			acted = endHookLoad();
+		}
+		if (entry == null || acted) {
+			closeContext();
+			return false;
+		}
+		return true;
 	}
 
 	/**

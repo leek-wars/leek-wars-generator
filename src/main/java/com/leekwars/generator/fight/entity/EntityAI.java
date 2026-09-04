@@ -118,6 +118,45 @@ public class EntityAI extends AI {
 		return hookPhase != HookPhase.NONE;
 	}
 
+	/**
+	 * Chargement SPÉCULATIF du source pendant un hook (IA polyglot uniquement, cf
+	 * {@code PolyglotEntityAI.preloadEntryForHook}) : le top-level du joueur tourne dans le seul but
+	 * de découvrir si le hook existe, et sera <b>jeté puis rejoué au tour 1</b> s'il s'avère être la
+	 * logique de tour. Une action de combat tentée pendant ce chargement n'est donc PAS une faute du
+	 * joueur : on la refuse en silence (rien ne doit toucher le combat) et on note le fait, ce qui
+	 * fait jeter le chargement à l'appelant.
+	 */
+	private boolean hookLoading = false;
+	private boolean hookLoadActed = false;
+
+	/** Ouvre un chargement spéculatif : les actions refusées ne sont plus reprochées au joueur. */
+	protected void beginHookLoad() {
+		hookLoading = true;
+		hookLoadActed = false;
+	}
+
+	/** Ferme le chargement spéculatif. @return true si le top-level a tenté une action de combat. */
+	protected boolean endHookLoad() {
+		hookLoading = false;
+		return hookLoadActed;
+	}
+
+	/**
+	 * Porte des actions de combat en phase de hook, commune à toutes les fonctions concernées
+	 * (useWeapon, useChip, moveToward, setWeapon, say...).
+	 *
+	 * @return true si l'action doit être refusée (l'appelant renvoie alors son échec).
+	 */
+	public boolean denyDuringHook(String funcName) {
+		if (!isInHook()) return false;
+		if (hookLoading) {
+			hookLoadActed = true;
+			return true; // chargement spéculatif : refus SILENCIEUX, le tour 1 rejouera l'action
+		}
+		addSystemLog(AILog.WARNING, com.leekwars.generator.leek.FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
+		return true;
+	}
+
 	private static final int HOOK_OPS_BONUS = 1_000_000;
 
 	public EntityAI(int instructions, int version) {

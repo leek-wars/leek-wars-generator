@@ -61,7 +61,8 @@
 - [ ] Mentionner les limites (heap non bornée, dépréciation forme plate)
 - [ ] Documenter les hooks `beforeFight()` / `afterFight()` (supportés depuis le 03/09/2026, cf `TestPolyglotHooks`) :
       fonction globale (JS : `globalThis.beforeFight` ou `export function` dans un module ES ; Python : `def beforeFight()`),
-      et **nécessitent une IA avec `turn()`** — dans une IA plate, le top-level tournerait une fois de plus pendant le hook.
+      et **nécessitent une IA avec `turn()` dont le top-level n'agit pas** — sinon le chargement spéculatif est jeté
+      et le hook n'est pas appelé (le tour 1, lui, est intact).
 
 ## E. Release prod 2.49
 

@@ -25,10 +25,7 @@ import leekscript.runner.values.MapLeekValue;
 public class FightClass {
 
 	private static boolean denyDuringHook(EntityAI ai, String funcName) {
-		if (!ai.isInHook()) return false;
-		ai.addSystemLog(leekscript.AILog.WARNING,
-			com.leekwars.generator.leek.FarmerLog.ACTION_DENIED_IN_HOOK, new String[] { funcName });
-		return true;
+		return ai.denyDuringHook(funcName);
 	}
 
 	// ---- Fonctions Fight ----
