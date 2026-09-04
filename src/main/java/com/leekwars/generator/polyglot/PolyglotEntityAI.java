@@ -1329,6 +1329,7 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Pourquoi le chargement speculatif d'un hook a ete jete (cf {@link #warnAboutSkippedHooks}). */
 	private enum HookSkip { NONE, NO_TURN, TOP_LEVEL_ACTS, LOAD_FAILED }
 	private HookSkip hookSkip = HookSkip.NONE;
+	private boolean hookWarningDone = false;
 
 	/**
 	 * Avertit le joueur, au chargement du tour 1, d'un hook qu'il a bien defini mais que le combat n'a
@@ -1339,9 +1340,13 @@ public class PolyglotEntityAI extends EntityAI {
 	 * @param hasTurn si {@code turn()} a ete resolue par ce chargement.
 	 */
 	private void warnAboutSkippedHooks(boolean hasTurn) {
-		if (hookSkip == HookSkip.LOAD_FAILED) {
+		if (hookWarningDone || hookSkip == HookSkip.LOAD_FAILED) {
 			return; // le tour 1 va rapporter l'erreur de chargement elle-meme
 		}
+		// Une SEULE fois par combat : ce chemin est celui du (re)chargement de l'entree, et il est
+		// rejoue a chaque tour par une IA dont le contexte est reconstruit (depassement wall-clock,
+		// cap RAM) — sans ce verrou, l'avertissement se repeterait jusqu'a 64 fois.
+		hookWarningDone = true;
 		for (String name : HOOK_NAMES) {
 			if (!isHookOfferedButNotRun(name) || resolveGuestFunction(name) == null) {
 				continue;

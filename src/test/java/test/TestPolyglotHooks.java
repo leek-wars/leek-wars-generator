@@ -347,6 +347,72 @@ public class TestPolyglotHooks extends FightTestBase {
 	}
 
 	@Test
+	public void skippedHookIsReportedEvenWhenNeverLoaded() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Le cas le plus courant : IA plate qui definit beforeFight() sans jamais citer turn. Le
+			// pre-filtre de hasHook() refuse net (le source n'est meme pas charge), donc l'avertissement
+			// ne peut venir que du tour 1 — c'est tout l'interet de le poser la.
+			EntityAI ai = buildAI(sb, "js",
+				"function beforeFight() { Registers.set('hook', 'yes'); }\n"
+				+ "Registers.set('runs', 'ran');\n");
+			ai.offerHook("beforeFight");
+			Assert.assertFalse(ai.hasHook("beforeFight"));
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			ai.runIA();
+			String logs = farmerLog.toJSON().toString();
+			Assert.assertTrue("le joueur doit etre averti (HOOK_REQUIRES_TURN) : " + logs,
+				logs.contains("1012"));
+		}
+	}
+
+	@Test
+	public void skippedHookIsReportedOnlyOnce() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// Le contexte d'une IA peut etre reconstruit en cours de combat (depassement wall-clock,
+			// cap RAM) : le chargement de l'entree est alors rejoue, l'avertissement ne doit pas l'etre.
+			PolyglotEntityAI ai = buildAI(sb, "js",
+				"function beforeFight() { Registers.set('hook', 'yes'); }\n"
+				+ "Registers.set('runs', 'ran');\n");
+			ai.offerHook("beforeFight");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			ai.runIA();
+			ai.dispose(); // ferme le contexte, comme un depassement : le tour suivant recharge
+			ai.runIA();
+			String logs = farmerLog.toJSON().toString();
+			Assert.assertEquals("un seul avertissement : " + logs, 1, countOccurrences(logs, "1012"));
+		}
+	}
+
+	private static int countOccurrences(String haystack, String needle) {
+		int n = 0;
+		for (int i = haystack.indexOf(needle); i >= 0; i = haystack.indexOf(needle, i + needle.length())) {
+			n++;
+		}
+		return n;
+	}
+
+	@Test
+	public void pythonTopLevelActionIsNotSwallowedByTheHookLoad() throws Exception {
+		leek1.addWeapon(Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			// Meme garde en Python (le chargement speculatif est commun aux deux langages).
+			EntityAI ai = buildAI(sb, "python",
+				"def beforeFight():\n    Registers.set('hook', 'yes')\n\n"
+				+ "def turn():\n    pass\n\n"
+				+ "Fight.me.setWeapon(Weapon.pistol)\n");
+			ai.offerHook("beforeFight");
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertNull("l'arme ne doit pas etre equipee pendant le hook", leek1.getWeapon());
+			ai.runIA();
+			Assert.assertNotNull("setWeapon() a la racine doit s'appliquer au tour 1", leek1.getWeapon());
+			Assert.assertTrue(farmerLog.toJSON().toString().contains("1013"));
+		}
+	}
+
+	@Test
 	public void noWarningWhenTheAiSimplyHasNoHook() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
