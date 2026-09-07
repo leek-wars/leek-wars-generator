@@ -91,6 +91,8 @@ public class PolyglotEntityAI extends EntityAI {
 	private final PolyglotFileSystem fileSystem; // fichiers du joueur montes (null = mono-fichier)
 	private final boolean jsModule;            // entree JS chargee comme module ES
 	private Context context;
+	/** Cap RAM guest (sandbox.MaxHeapMemory, octets) pose sur le contexte courant, pour les journaux de depassement. */
+	private long guestRamCap;
 	private int contextGeneration;             // incremente a chaque fermeture : date les Value guest capturees
 	private boolean initialized;
 	private Value entry;                       // fonction turn() si definie
@@ -547,7 +549,7 @@ public class PolyglotEntityAI extends EntityAI {
 		//     pas etre facture sur le petit budget d'un poireau bas niveau (annulation au setup, #4747).
 		//   - JS/TS : runtime bien plus leger -> simple plancher (max), le modele historique.
 		long dataBudget = (long) (getMaxRAM() / RAM_FACTOR);
-		long guestRamCap = "python".equals(languageId)
+		guestRamCap = "python".equals(languageId)
 			? PYTHON_BASE_HEAP_BYTES + dataBudget
 			: Math.max(DEFAULT_MIN_HEAP_BYTES, dataBudget);
 		context = sandbox.createContext(languageId, fileSystem, guestRamCap);
@@ -999,19 +1001,27 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * Garde Python : seede random, ET re-route toutes les sources d'entropie OS (os.urandom,
-	 * SystemRandom, uuid4, random.seed() sans argument) vers un PRNG seede, et fige l'horloge.
-	 * Sans cela un simple {@code import os; os.urandom(1)} contournerait silencieusement la seed.
+	 * SystemRandom, random.seed() sans argument, et uuid4 par transitivite via os.urandom) vers un PRNG
+	 * seede, et fige l'horloge. Sans cela un simple {@code import os; os.urandom(1)} contournerait
+	 * silencieusement la seed.
 	 */
 	private static String pythonDeterminismGuard(long seed) {
 		return
-			// On importe+patche ICI les modules sensibles (random/os/time/datetime/uuid) AVANT tout
+			// On importe+patche ICI les modules sensibles (random/os/time/datetime) AVANT tout
 			// montage des fichiers du joueur : une fois en cache dans sys.modules, un `import random`
 			// renverra la version seedee meme si le joueur a un fichier random.py (Python consulte
 			// sys.modules avant sys.path). Le montage de /ai se fait ensuite en TETE de path (PY_MOUNT_AI,
 			// apres tous les preludes de confiance) pour que les fichiers du joueur (test.py, utils.py...)
 			// resolvent bien vers leur fichier, sans pouvoir masquer les modules deja proteges.
+			// PAS d'import de uuid ici (#4999) : sous l'engine partage, `import uuid` retient ~8 Mo PAR
+			// CONTEXTE dans l'isolate GraalPy, jamais rendus a la fermeture (le module appelle
+			// platform.system() au chargement). Quelque 180 poireaux Python plus tard, l'isolate
+			// (4 Go) est plein et TOUTE IA Python meurt au setup jusqu'au redemarrage du worker : c'est
+			// la panne de #4627/#4747/#4999. Mesure par TestPythonSetupPressure (bissection des
+			// etapes du setup) : sans cet import, 300 contextes ne fuient plus rien. uuid4 reste
+			// deterministe sans patch : il tire ses 16 octets de os.urandom, patche ci-dessous.
 			"import sys\n"
-			+ "import os, random, uuid, time, datetime\n"
+			+ "import os, random, time, datetime\n"
 			+ "_lw_r = random.Random(" + seed + ")\n"
 			+ "os.urandom = lambda n: bytes(_lw_r.getrandbits(8) for _ in range(n))\n"
 			+ "random.SystemRandom = random.Random\n"
@@ -1019,7 +1029,6 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "def _lw_seed_guard(a=None, *ar, **kw):\n    return _lw_seed(" + seed + " if a is None else a, *ar, **kw)\n"
 			+ "random.seed = _lw_seed_guard\n"
 			+ "random.seed(" + seed + ")\n"
-			+ "uuid.uuid4 = lambda: uuid.UUID(int=_lw_r.getrandbits(128))\n"
 			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
 			+ "time.time_ns = lambda: 0\ntime.monotonic_ns = lambda: 0\ntime.perf_counter_ns = lambda: 0\n"
 			+ "time.gmtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
@@ -1069,7 +1078,7 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
 				throw t; // erreur moteur inconnue : on ne la masque pas
 			}
-			throw outOfMemory();
+			throw outOfMemory(t);
 		}
 
 		// Garde-fou wall-clock : un tour qui depasse l'echeance (typiquement du travail natif que le
@@ -1141,7 +1150,7 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
 				throw t;
 			}
-			throw outOfMemory();
+			throw outOfMemory(t);
 		} finally {
 			// Resolution UNIQUE de la course, pour TOUTE sortie du tour : succes, exception verifiee
 			// (LeekRunException du marshalling/chargement, non capturee ci-dessus), erreur hote, ET
@@ -1235,7 +1244,7 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
 				throw t;
 			}
-			throw outOfMemory();
+			throw outOfMemory(t);
 		}
 
 		final Context running = context;
@@ -1264,7 +1273,7 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
 				throw t; // dont StackOverflowError, traite par EntityAI.runHook
 			}
-			throw outOfMemory();
+			throw outOfMemory(t);
 		} finally {
 			snapshotTurnOperations();
 			if (!winRace(settled, watchdog)) {
@@ -1440,7 +1449,7 @@ public class PolyglotEntityAI extends EntityAI {
 			if (!PolyglotSandbox.isMemoryExhaustion(t)) {
 				throw t;
 			}
-			throw outOfMemory();
+			throw outOfMemory(t);
 		} finally {
 			if (!winRace(settled, watchdog)) {
 				throw onWallClockTimeout();
@@ -1612,9 +1621,23 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 
-	/** Cap RAM guest sature : contexte ferme (le tour suivant en reconstruit un neuf), erreur JOUEUR. */
-	private LeekRunException outOfMemory() {
+	/**
+	 * Cap RAM guest sature : contexte ferme (le tour suivant en reconstruit un neuf), erreur JOUEUR.
+	 *
+	 * <p>Le message GraalVM est journalise AVANT d'etre traduit : il contient la taille retenue
+	 * mesuree ("Current memory at least Y bytes"), seule donnee qui permette de calibrer la baseline
+	 * Python (#4999, #5000) : ce chiffre n'existe que sous pression de l'isolate, donc en prod.
+	 */
+	private LeekRunException outOfMemory(Throwable cause) {
+		String message = PolyglotSandbox.memoryExhaustionMessage(cause);
+		Log.w("PolyglotEntityAI", "Cap RAM guest sature (" + languageId + ", cap " + guestRamCap / 1_000_000L
+				+ " Mo, RAM " + (mEntity != null ? mEntity.getRAM() : -1) + ", tour " + (fight != null ? fight.getTurn() : -1)
+				+ ") : " + (message != null ? message : String.valueOf(cause)));
 		closeContext();
+		// Joueur trop gourmand, ou isolate a bout (#4631, #4999) ? La sonde tranche, et son verdict est
+		// lu par le worker pour se recycler : sans elle, un isolate sature ne produit que des erreurs
+		// joueur et le processus reste empoisonne jusqu'au prochain seuil RSS.
+		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId);
 		return new LeekRunException(Error.OUT_OF_MEMORY);
 	}
 
@@ -1624,7 +1647,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// et l'IA repartait au tour suivant pour re-saturer aussitot. OUT_OF_MEMORY dit la verite et
 		// EntityAI.handleLeekRunException coupe l'IA pour le combat (parite LeekScript).
 		if (PolyglotSandbox.isMemoryExhaustion(e) || (e.isGuestException() && PolyglotSandbox.isGuestOutOfMemoryMessage(e.getMessage()))) {
-			return outOfMemory();
+			return outOfMemory(e);
 		}
 		// Limite atteinte : le contexte passe en etat "cancelled", son close() auto relancerait
 		// l'exception -> on le ferme defensivement ici (le prochain tour en reconstruira un neuf).

@@ -45,6 +45,8 @@ jobs:
       run: gradle jar
     - name: Unit tests
       run: gradle :test
+    - name: Python isolate leak test (#4999)
+      run: gradle :pythonLeakTest
     - name: Integration tests
       run: |
         java -jar generator.jar --analyze test/ai/basic.leek

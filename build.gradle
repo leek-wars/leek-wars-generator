@@ -22,6 +22,29 @@ test {
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }
 
+// Non-regression de la fuite d'isolate Python (#4999) : 200 contextes Python montes puis fermes,
+// comme des combats successifs, dans un isolate REDUIT a 1000 Mo. Avec la fuite d'origine (~8 Mo
+// par contexte, `import uuid` dans la garde de determinisme) l'isolate deborde vers le 100e ;
+// sain, les 200 passent. JVM dediee : le plafond d'isolate est statique par processus, on ne peut
+// pas le reduire dans la suite ordinaire. Skippe sans PRESSURE_CONTEXTS (cf TestPythonSetupPressure).
+tasks.register('pythonLeakTest', Test) {
+	description = "Fuite de contextes Python dans l'isolate partage (#4999)"
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	filter { includeTestsMatching 'test.TestPythonSetupPressure.trivialSetupSurvivesIsolatePressure' }
+	environment 'POLYGLOT_MAX_ISOLATE_MB', '1000'
+	environment 'POLYGLOT_PYTHON_MIN_HEAP_MB', '32'
+	environment 'PRESSURE_CONTEXTS', '200'
+	environment 'PRESSURE_PER_SANDBOX', '4'
+	environment 'PRESSURE_TURNS', '1'
+	environment 'PRESSURE_CHURN_MB', '64'
+	outputs.upToDateWhen { false }
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+}
+
 jar {
 	archiveBaseName = "generator"
 	destinationDirectory = layout.buildDirectory.dir("..")
