@@ -534,4 +534,71 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertNotNull(leek1.getRegister("type"));
 		Assert.assertNotNull(leek1.getRegister("context"));
 	}
+
+	// ---------- setLoadout : cœurs, RAM et fréquence suivent l'ensemble de combat ----------
+	//
+	// Le budget d'opérations (cœurs × 1 M), le budget mémoire (RAM × 8 M) et l'ordre de jeu
+	// (fréquence) étaient figés AVANT beforeFight(). Un poireau pouvait entrer avec des
+	// composants à cœurs/fréquence, basculer sur son vrai ensemble et garder leurs effets.
+
+	private static FightLoadout enginesLoadout(String name, int cores, int ram, int frequency) {
+		var stats = new HashMap<Integer, Integer>();
+		stats.put(Entity.STAT_CORES, cores);
+		stats.put(Entity.STAT_RAM, ram);
+		stats.put(Entity.STAT_FREQUENCY, frequency);
+		return new FightLoadout(name, java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), stats);
+	}
+
+	@Test
+	public void setLoadoutInBeforeFightRebasesOperationsAndRamBudgets() throws Exception {
+		// Entrée : 8 cœurs / 30 RAM (defaultLeek). L'ensemble n'en donne que 2 / 4.
+		leek1.addLoadout(enginesLoadout("classic", 2, 4, 10));
+		attachAI(leek1, "function beforeFight() { setLoadout('classic'); }"
+			+ "setRegister('cores', '' + getCores());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("2", leek1.getRegister("cores"));
+		var ai = (EntityAI) leek1.getAI();
+		Assert.assertEquals(2_000_000L, ai.getMaxOperations());
+		Assert.assertEquals(4 * 8_000_000L, ai.getMaxRAM());
+	}
+
+	@Test
+	public void withoutSetLoadoutBudgetsFollowEntryStats() throws Exception {
+		attachAI(leek1, "");
+		attachAI(leek2, "");
+		runFight();
+		var ai = (EntityAI) leek1.getAI();
+		Assert.assertEquals(8_000_000L, ai.getMaxOperations());
+		Assert.assertEquals(30 * 8_000_000L, ai.getMaxRAM());
+	}
+
+	/** Coéquipier de leek1 à fréquence 50 (leek1 : 10) : sans changement, il joue avant lui. */
+	private Leek addFasterTeammate() {
+		var mate = new Leek(3, "L3", 0, 10, 500, 6, 7, 100, 100, 50, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
+		fight.getState().addEntity(0, mate);
+		attachAI(mate, "");
+		return mate;
+	}
+
+	@Test
+	public void withoutSetLoadoutStartOrderFollowsEntryFrequency() throws Exception {
+		var mate = addFasterTeammate();
+		attachAI(leek1, "");
+		attachAI(leek2, "");
+		runFight();
+		var order = fight.getState().getInitialOrder();
+		Assert.assertTrue("le coéquipier plus rapide joue avant leek1", order.indexOf(mate) < order.indexOf(leek1));
+	}
+
+	@Test
+	public void setLoadoutInBeforeFightRedrawsStartOrderOnNewFrequency() throws Exception {
+		var mate = addFasterTeammate();
+		leek1.addLoadout(enginesLoadout("fast", 8, 30, 500));
+		attachAI(leek1, "function beforeFight() { setLoadout('fast'); }");
+		attachAI(leek2, "");
+		runFight();
+		var order = fight.getState().getInitialOrder();
+		Assert.assertTrue("leek1 passe devant son coéquipier avec la fréquence de l'ensemble", order.indexOf(leek1) < order.indexOf(mate));
+	}
 }

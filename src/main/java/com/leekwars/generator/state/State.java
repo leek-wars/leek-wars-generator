@@ -127,6 +127,9 @@ public class State {
 
 	private final List<Team> teams;
 	private final List<Entity> initialOrder;
+	// Fréquence de chaque entité (par fId) au moment où l'ordre de jeu a été tiré, pour
+	// savoir si un setLoadout() dans beforeFight() l'a rendue caduque.
+	private final HashMap<Integer, Integer> startOrderFrequencies = new HashMap<>();
 	private int mNextEntityId = 0;
 	private final java.util.Map<Integer, Entity> mEntities;
 	private int mId;
@@ -453,20 +456,8 @@ public class State {
 		this.map = Map.generateMap(this, context, 18, 18, obstacle_count, teams, custom_map);
 
 		// Initialize positions and game order
-		StartOrder bootorder = new StartOrder();
-		this.order = new Order();
-
-		for (Team t : teams) {
-			for (Entity e : t.getEntities()) {
-				bootorder.addEntity(e);
-			}
-		}
-		for (Entity e : bootorder.compute(this)) {
-			if (e.isAlive()) {
-				this.order.addEntity(e);
-			}
-			initialOrder.add(e);
-
+		computeStartOrder();
+		for (Entity e : initialOrder) {
 			// Coffre ?
 			if (e.getType() == Entity.TYPE_CHEST) {
 				statistics.chest();
@@ -488,6 +479,53 @@ public class State {
 		}
 
 		this.mState = STATE_RUNNING;
+	}
+
+	/**
+	 * Tire l'ordre de jeu à partir des fréquences courantes des entités des équipes
+	 * (tri intra-équipe, puis tirage aléatoire des équipes), et remplit `order` et
+	 * `initialOrder`. Mémorise les fréquences utilisées.
+	 */
+	private void computeStartOrder() {
+		StartOrder bootorder = new StartOrder();
+		this.order = new Order();
+		this.initialOrder.clear();
+		this.startOrderFrequencies.clear();
+
+		for (Team t : teams) {
+			for (Entity e : t.getEntities()) {
+				bootorder.addEntity(e);
+				startOrderFrequencies.put(e.getFId(), e.getFrequency());
+			}
+		}
+		for (Entity e : bootorder.compute(this)) {
+			if (e.isAlive()) {
+				this.order.addEntity(e);
+			}
+			initialOrder.add(e);
+		}
+	}
+
+	/**
+	 * Retire l'ordre de jeu si un hook beforeFight() a changé la fréquence d'au moins une
+	 * entité (setLoadout() sur un ensemble aux composants différents). La fréquence ne sert
+	 * qu'à l'ordre de passage : sans ce recalcul, un poireau entrait avec des composants à
+	 * fréquence, basculait sur son vrai ensemble et gardait la place tirée avec l'ancienne.
+	 *
+	 * Conditionnel pour ne consommer l'aléa du combat que dans ce cas : un combat sans
+	 * changement de fréquence reste identique, graine pour graine.
+	 */
+	public void refreshStartOrderAfterHooks() {
+		boolean changed = false;
+		for (Team t : teams) {
+			for (Entity e : t.getEntities()) {
+				Integer before = startOrderFrequencies.get(e.getFId());
+				if (before == null || before != e.getFrequency()) {
+					changed = true;
+				}
+			}
+		}
+		if (changed) computeStartOrder();
 	}
 
 	/**

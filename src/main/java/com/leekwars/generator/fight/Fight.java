@@ -184,6 +184,16 @@ public class Fight {
 
 		runHooks("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
 
+		// Un setLoadout() dans beforeFight() a pu changer les cœurs, la RAM et la fréquence :
+		// les budgets d'exécution et l'ordre de jeu suivent l'équipement de combat, pas
+		// celui porté à l'entrée (sinon les composants d'entrée profitent au vrai ensemble).
+		for (var entity : state.getEntities().values()) {
+			if (entity.getAI() instanceof EntityAI ai) {
+				ai.applyEntityBudgets();
+			}
+		}
+		state.refreshStartOrderAfterHooks();
+
 		// Snapshot of initial entity state (life, stats, equipment) sent to the client
 		// is captured here so that any setLoadout() applied in beforeFight() is reflected
 		// in the report's max-life / displayed stats.

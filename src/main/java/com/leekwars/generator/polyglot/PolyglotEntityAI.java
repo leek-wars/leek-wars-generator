@@ -536,8 +536,10 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 		// Budgets calques sur le pipeline LeekScript (cf EntityAI.build) : RAM pour les
 		// LeekValue alloues cote hote, ops pour borner le travail hote des fonctions de combat.
-		setMaxRAM(Math.min(50, mEntity.getRAM()) * 8_000_000);
-		setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mEntity.getCores() * 1_000_000));
+		// Le contexte est construit au premier hook ou au premier tour : le cap RAM du guest
+		// (guestRamCap, fige a la creation) suit donc l'entite d'entree, tandis que les
+		// budgets hote sont rafraichis apres beforeFight() par applyEntityBudgets().
+		applyEntityBudgets();
 		// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
 		// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
 		// stdlib localisable) -> contexte sans FS (stdlib lue en interne).

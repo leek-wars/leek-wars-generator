@@ -254,9 +254,7 @@ public class EntityAI extends AI {
 			ai.valid = true;
 			ai.setEntity(entity);
 			ai.setLogs((LeekLog) entity.getLogs());
-			// System.out.println("Coeurs = " + entity.getCores() + " RAM = " + entity.getRAM());
-			ai.setMaxRAM(Math.min(50, entity.getRAM()) * 8_000_000);
-			ai.setMaxOperations(entity.getCores() * 1_000_000);
+			ai.applyEntityBudgets();
 			return ai;
 
 		} catch (LeekScriptException e) {
@@ -300,6 +298,21 @@ public class EntityAI extends AI {
 		mEntity = entity;
 		mInitialEntity = entity;
 		this.fight = (Fight) entity.getFight();
+	}
+
+	/**
+	 * Budgets d'exécution dérivés des caractéristiques de l'entité : opérations par tour
+	 * (cœurs) et mémoire (RAM).
+	 *
+	 * Appelé à la construction, puis de nouveau après les hooks beforeFight() : un
+	 * setLoadout() y change les cœurs et la RAM, et le budget doit suivre l'équipement
+	 * avec lequel le poireau combat, pas celui qu'il portait à l'entrée. Sinon un poireau
+	 * entre avec des composants à cœurs, bascule sur un ensemble classique et garde les
+	 * opérations des cœurs qu'il ne porte plus.
+	 */
+	public void applyEntityBudgets() {
+		setMaxRAM(Math.min(50, mInitialEntity.getRAM()) * 8_000_000);
+		setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mInitialEntity.getCores() * 1_000_000));
 	}
 
 	public void addSystemLog(int type, Error error, String[] parameters) {
