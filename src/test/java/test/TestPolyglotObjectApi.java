@@ -1083,4 +1083,24 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "not hasattr(Effect, 'MODIFIER_STACKABLE') and not hasattr(Effect, 'TARGET_ALLIES')"));
 		}
 	}
+
+	/**
+	 * #5031 : GraalPy s'annonce Python 3.12 mais son module `math` n'a ni cbrt ni exp2 (CPython 3.11+),
+	 * une IA Python plantait en AttributeError sur math.cbrt. Le prélude les comble dans `math` même,
+	 * en Python pur, avec les erreurs de CPython sur une entrée non numérique.
+	 */
+	@Test
+	public void mathCbrtAndExp2AreFilledIn() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			// 64 : la puissance 1/3 nue donne 3.9999999999999996, le pas de Newton rend 4.0.
+			Assert.assertEquals("(4.0, -2.0, 10.0, 0.0, -0.0, inf, True, 1024.0, 0.5)", evalPyBody(sb,
+				"    import math\n" +
+				"    return repr((math.cbrt(64), math.cbrt(-8), math.cbrt(1000), math.cbrt(0), math.cbrt(-0.0),\n" +
+				"        math.cbrt(math.inf), abs(math.cbrt(2.0) ** 3 - 2.0) < 1e-12, math.exp2(10), math.exp2(-1)))\n"));
+			Assert.assertEquals("TypeError", evalPyBody(sb,
+				"    import math\n    try:\n        math.cbrt(None)\n    except Exception as e:\n        return type(e).__name__\n"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "'cbrt' in getattr(__import__('math'), '__all__', ['cbrt'])"));
+		}
+	}
 }

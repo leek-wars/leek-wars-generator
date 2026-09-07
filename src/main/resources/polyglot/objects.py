@@ -702,6 +702,33 @@ def _lw_build(G, NAMES):
         def green(self, color): return F.getGreen(color)
         def blue(self, color): return F.getBlue(color)
 
+    # Trous de GraalPy par rapport a CPython 3.11+ : `math.cbrt` et `math.exp2` manquent alors que
+    # le runtime s'annonce 3.12 (#5031). On les comble DANS le module `math`, la ou un auteur
+    # Python les cherche, seulement s'ils manquent, et en Python pur : pas d'aller-retour hote
+    # (invisible au compteur d'operations) et les memes erreurs que CPython (float(x) leve
+    # TypeError / OverflowError). Racine cubique par puissance 1/3 puis un pas de Newton, exacte
+    # sur les cubes parfaits (64 -> 4.0 la ou 64 ** (1/3) donne 3.9999999999999996).
+    import math as _math
+    def _cbrt(x):
+        x = float(x)
+        if x == 0.0 or not _math.isfinite(x):
+            return x
+        a = abs(x)
+        y = a ** (1.0 / 3.0)
+        y -= (y * y * y - a) / (3.0 * y * y)
+        return -y if x < 0 else y
+    def _exp2(x):
+        return 2.0 ** float(x)
+    for _fn in (_cbrt, _exp2):
+        _name = _fn.__name__[1:]
+        if not hasattr(_math, _name):
+            try:
+                setattr(_math, _name, _fn)
+                if isinstance(getattr(_math, '__all__', None), list):
+                    _math.__all__.append(_name)
+            except Exception:
+                pass  # module fige : on prefere une IA sans cbrt a aucune IA Python
+
     # Math : UNIQUEMENT ce que Python n'a pas. Le module `math`, les builtins (abs, round, min,
     # max, pow) et `random` restent la reference — le moteur seede deja `random` (cf.
     # pythonDeterminismGuard), donc random.randrange() est deterministe et utilisable tel quel.
@@ -721,18 +748,6 @@ def _lw_build(G, NAMES):
     )
 
     class _Math: pass
-
-    # Trous de GraalPy par rapport a CPython 3.11+ : `math.cbrt` et `math.exp2` manquent alors que
-    # le runtime s'annonce 3.12 (#5031). On les comble DANS le module `math`, la ou un auteur
-    # Python les cherche, et seulement s'ils manquent : une future image qui les fournit prime.
-    # cbrt passe par la fonction Java (Math.cbrt) : exacte sur les cubes parfaits (27 -> 3.0),
-    # contrairement a `x ** (1/3)`, et definie sur les negatifs.
-    import math as _math
-    _cbrt = getattr(F, 'cbrt', None)
-    if not hasattr(_math, 'cbrt') and _cbrt is not None:
-        _math.cbrt = lambda x: float(_cbrt(x))
-    if not hasattr(_math, 'exp2'):
-        _math.exp2 = lambda x: 2.0 ** x
 
     Math = _Math()
     for _mn in _MATH_NAMES:
