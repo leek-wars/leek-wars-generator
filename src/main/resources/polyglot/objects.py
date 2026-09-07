@@ -722,6 +722,18 @@ def _lw_build(G, NAMES):
 
     class _Math: pass
 
+    # Trous de GraalPy par rapport a CPython 3.11+ : `math.cbrt` et `math.exp2` manquent alors que
+    # le runtime s'annonce 3.12 (#5031). On les comble DANS le module `math`, la ou un auteur
+    # Python les cherche, et seulement s'ils manquent : une future image qui les fournit prime.
+    # cbrt passe par la fonction Java (Math.cbrt) : exacte sur les cubes parfaits (27 -> 3.0),
+    # contrairement a `x ** (1/3)`, et definie sur les negatifs.
+    import math as _math
+    _cbrt = getattr(F, 'cbrt', None)
+    if not hasattr(_math, 'cbrt') and _cbrt is not None:
+        _math.cbrt = lambda x: float(_cbrt(x))
+    if not hasattr(_math, 'exp2'):
+        _math.exp2 = lambda x: 2.0 ** x
+
     Math = _Math()
     for _mn in _MATH_NAMES:
         # getattr conditionnel : le bridge filtre par min/maxVersion, une fonction retiree du
