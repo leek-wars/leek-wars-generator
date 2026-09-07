@@ -1100,7 +1100,6 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				"        math.cbrt(math.inf), abs(math.cbrt(2.0) ** 3 - 2.0) < 1e-12, math.exp2(10), math.exp2(-1)))\n"));
 			Assert.assertEquals("TypeError", evalPyBody(sb,
 				"    import math\n    try:\n        math.cbrt(None)\n    except Exception as e:\n        return type(e).__name__\n"));
-			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "'cbrt' in getattr(__import__('math'), '__all__', ['cbrt'])"));
 		}
 	}
 }

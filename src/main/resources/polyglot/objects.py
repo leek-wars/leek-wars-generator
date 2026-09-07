@@ -719,15 +719,11 @@ def _lw_build(G, NAMES):
         return -y if x < 0 else y
     def _exp2(x):
         return 2.0 ** float(x)
-    for _fn in (_cbrt, _exp2):
-        _name = _fn.__name__[1:]
-        if not hasattr(_math, _name):
-            try:
-                setattr(_math, _name, _fn)
-                if isinstance(getattr(_math, '__all__', None), list):
-                    _math.__all__.append(_name)
-            except Exception:
-                pass  # module fige : on prefere une IA sans cbrt a aucune IA Python
+    try:
+        if not hasattr(_math, 'cbrt'): _math.cbrt = _cbrt
+        if not hasattr(_math, 'exp2'): _math.exp2 = _exp2
+    except Exception:
+        pass  # module fige par une future image : une IA sans cbrt vaut mieux qu'aucune IA Python
 
     # Math : UNIQUEMENT ce que Python n'a pas. Le module `math`, les builtins (abs, round, min,
     # max, pow) et `random` restent la reference — le moteur seede deja `random` (cf.
