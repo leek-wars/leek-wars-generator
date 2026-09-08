@@ -143,6 +143,14 @@ def _lw_build(G, NAMES):
             raise AttributeError("les objets de l'API Leek Wars sont en lecture seule")
         def __delattr__(self, name):
             raise AttributeError("les objets de l'API Leek Wars sont en lecture seule")
+        # `str(cell)` / `Debug.log(cell)` : `Cell(42)` plutôt que le `<_lw_build.<locals>.Cell object
+        # at 0x…>` par défaut (forum #12096). Les enveloppes sur tableau brut (Effect, Feature,
+        # Message) montrent leur contenu. Le joueur peut toujours définir __str__ dans ses classes.
+        def __repr__(self):
+            id = getattr(self, 'id', None)
+            if id is not None: return f"{type(self).__name__}({id})"
+            raw = getattr(self, 'raw', None)
+            return f"{type(self).__name__}({list(raw) if raw is not None else ''})"
 
     class Cell(_ReadOnly):
         def __init__(self, id): object.__setattr__(self, 'id', id)

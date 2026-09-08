@@ -1102,4 +1102,45 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				"    import math\n    try:\n        math.cbrt(None)\n    except Exception as e:\n        return type(e).__name__\n"));
 		}
 	}
+
+	/**
+	 * Forum #12096 (relecture de la doc Python, catégories Numbers et Strings) : ce que la doc
+	 * annonce désormais pour Python doit être ce que le moteur fait. `str()` natif (True/None avec
+	 * la majuscule), objets de l'API lisibles (`Cell(42)` et non `<... object at 0x…>`), `min`/`max`
+	 * variadiques ou sur itérable et sur tout type comparable, tranche à trois nombres, `math`
+	 * qui lève hors domaine là où LeekScript renvoie NaN.
+	 */
+	@Test
+	public void pythonStdlibBehavesAsDocumented() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals("True|None|[1, 2, 3]|{'a': 1}|lowr|a|1|1|Cell|str", evalPyBody(sb,
+				"    try:\n" +
+				"        cell = Field.cellFromXY(1, 2)\n" +
+				"        class P:\n            def __str__(self): return 'P!'\n" +
+				"        parts = [str(True), str(None), str([1, 2, 3]), str({'a': 1}), 'Hello world!'[2:10:2],\n" +
+				"            min('b', 'a', 'c'), str(min([3, 1, 2])), str(max(1, 0, -5)), type(cell).__name__, type(str(P())).__name__]\n" +
+				"        return '|'.join(parts)\n" +
+				"    except Exception as e:\n        return type(e).__name__ + ': ' + str(e)\n"));
+			// Représentation des enveloppes : le type et l'id, le contenu pour un tableau brut.
+			Assert.assertEquals("True", evalPyBody(sb,
+				"    cell = Field.cellFromXY(1, 2)\n" +
+				"    w = me.weapons[0] if me.weapons else None\n" +
+				"    ok = str(cell) == 'Cell(' + str(cell.id) + ')' and repr(me).startswith('Me(')\n" +
+				"    ok = ok and (w is None or str(w) == 'Weapon(' + str(w.id) + ')')\n" +
+				"    ok = ok and str(Fight.getNearestEnemy()).startswith('Leek(')\n" +
+				"    ok = ok and str(me.effects) == '[]' and 'object at 0x' not in str(cell)\n" +
+				"    return str(ok)\n"));
+			// Miroir JS : String(cell) / `${cell}` donnent la même forme, plus de `[object Object]`.
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"String(me.cell) === 'Cell(' + me.cell.id + ')' && `${me}`.startsWith('Me(') && String(Fight.getNearestEnemy()).startsWith('Leek(');"));
+			Assert.assertEquals("ValueError,ValueError,ValueError,ValueError,ValueError", evalPyBody(sb,
+				"    import math\n" +
+				"    names = []\n" +
+				"    for f, x in ((math.log10, 0), (math.log2, -1), (math.log, 0), (math.sqrt, -1), (math.log10, -3)):\n" +
+				"        try:\n            f(x)\n            names.append('none')\n" +
+				"        except Exception as e:\n            names.append(type(e).__name__)\n" +
+				"    return ','.join(names)\n"));
+		}
+	}
 }

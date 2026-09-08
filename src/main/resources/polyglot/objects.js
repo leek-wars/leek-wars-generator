@@ -142,8 +142,13 @@
 	};
 
 	// ---- Cell : une case du terrain ----
+	// `String(cell)` / `${cell}` / debug(cell) : `Cell(42)` plutôt que `[object Object]` — miroir du
+	// __repr__ de _ReadOnly côté Python (forum #12096). Les enveloppes sur tableau brut (Effect,
+	// Feature, Message) montrent leur contenu.
+	function describe(o) { return o.constructor.name + '(' + ('id' in o ? o.id : (o.raw ? Array.from(o.raw).join(', ') : '')) + ')'; }
 	class Cell {
 		constructor(id) { this.id = id; }
+		toString() { return describe(this); }
 		get x() { return F.getCellX(this.id); }
 		get y() { return F.getCellY(this.id); }
 		get empty() { return F.isEmptyCell(this.id); }
@@ -171,6 +176,7 @@
 	// fonctions plates distinctes (getWeapon* vs getChip*), donc pas factorisables sans dispatch. ----
 	class Item {
 		constructor(id) { this.id = id; }
+		toString() { return describe(this); }
 		// L'item (arme OU puce) d'id `id`, ou null si l'id n'en designe aucun. Weapon.get/Chip.get
 		// restreignent a leur type. Lookup pur (itemsById), aucun appel hote.
 		static get(id) { return itemsById[id] || null; }
@@ -243,6 +249,7 @@
 	// Tableau brut = [type, value, caster, turns, critical, item, target, modifiers].
 	class Effect {
 		constructor(raw) { this.raw = raw; }
+		toString() { return describe(this); }
 		get type() { return this.raw[0]; }
 		get value() { return this.raw[1]; }
 		get caster() { return ent(this.raw[2]); }
@@ -263,6 +270,7 @@
 	// maxValue, turns, targets, modifiers]. ----
 	class Feature {
 		constructor(raw) { this.raw = raw; }
+		toString() { return describe(this); }
 		get type() { return this.raw[0]; }
 		get minValue() { return this.raw[1]; }
 		get maxValue() { return this.raw[2]; }
@@ -277,6 +285,7 @@
 	// ---- Entity : n'importe quelle entité (lecture d'état) ----
 	class Entity {
 		constructor(id) { this.id = id; }
+		toString() { return describe(this); }
 		// Genre d'entité (Entity.Type.LEEK/BULB/TURRET/CHEST/MOB), cf #4634. Ne pas
 		// confondre avec .type des sous-classes (sous-variante : Bulb.Type.*, etc.).
 		get entityType() { return F.getType(this.id); }
@@ -434,6 +443,7 @@
 	// ---- Message : un message d'équipe reçu (cf Network) ----
 	class Message {
 		constructor(raw) { this.raw = raw; }
+		toString() { return describe(this); }
 		get author() { return ent(F.getMessageAuthor(this.raw)); }
 		get type() { return F.getMessageType(this.raw); }
 		get params() { return F.getMessageParams(this.raw); }
