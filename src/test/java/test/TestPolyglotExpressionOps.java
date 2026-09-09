@@ -13,8 +13,8 @@ import com.leekwars.generator.polyglot.PolyglotSandbox;
 /**
  * COMPTAGE PAR EXPRESSION (JS). Depuis l'image isolate v25.1.3-combined-2, l'instrument compte
  * pour JS les statements + expressions (chaque operateur/lecture/appel d'une ligne complexe,
- * comme le « 1 op par operateur » LeekScript), scale par opsFactor(js)=0.6 ; Python reste a la
- * granularite statement. Ces tests verrouillent les invariants (granularite, valeur entiere,
+ * comme le « 1 op par operateur » LeekScript), scale par opsFactor(js)=0.6. Depuis
+ * v25.1.3-combined-3 Python compte aussi par expression (patches/graalpython.patch). Ces tests verrouillent les invariants (granularite, valeur entiere,
  * parite de facturation des builtins) sans figer les comptes exacts, recalibrables.
  */
 public class TestPolyglotExpressionOps extends FightTestBase {
@@ -96,17 +96,47 @@ public class TestPolyglotExpressionOps extends FightTestBase {
 		}
 	}
 
-	/** Python reste a la granularite STATEMENT : ligne complexe ~= ligne simple a iterations egales. */
+	/**
+	 * Python compte aussi par EXPRESSION depuis l'image isolate v25.1.3-combined-3
+	 * (patches/graalpython.patch) : une ligne complexe coute nettement plus qu'une ligne simple.
+	 * Sous l'ancienne granularite statement les deux coutaient pareil (1 ligne = 1 evenement).
+	 */
 	@Test
-	public void pythonKeepsStatementGranularity() throws Exception {
+	public void pythonComplexLineCostsEachOperation() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
 			long simple = run(sb, "python",
 				"    s = 0\n    for i in range(20000):\n        s += i\n    return System.operations");
 			long complex = run(sb, "python",
 				"    s = 0\n    for i in range(20000):\n        s += ((i * 3 + 1) ^ (i - 2)) // (i + 1) + (i % 7) * (s & 15)\n    return System.operations");
-			assertTrue("Python : ligne complexe (" + complex + ") doit rester ~= ligne simple (" + simple + ")",
-				complex < simple * 1.3);
+			assertTrue("Python : ligne complexe (" + complex + ") doit couter > 1.5x la ligne simple (" + simple + ")",
+				complex > simple * 1.5);
+		}
+	}
+
+	/**
+	 * Une comprehension et une boucle sur UNE ligne sont facturees par ITERATION, comme la boucle
+	 * explicite multi-lignes : plus de travail gratuit dans un one-liner (faille de fairness de
+	 * l'ancienne granularite ligne, cf TestOpsAdversarial).
+	 */
+	@Test
+	public void pythonOneLinersBilledPerIteration() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			long loop = run(sb, "python",
+				"    s = 0\n    for i in range(20000):\n        s += i * i\n    return System.operations");
+			long comprehension = run(sb, "python",
+				"    a = [i * i for i in range(20000)]\n    return System.operations");
+			long oneLine = run(sb, "python",
+				"    s = 0\n    for i in range(20000): s += i * i\n    return System.operations");
+			long plain = run(sb, "python",
+				"    a = [i for i in range(20000)]\n    return System.operations");
+			assertTrue("comprehension (" + comprehension + ") doit etre du meme ordre que la boucle (" + loop + ")",
+				comprehension > loop / 4);
+			assertTrue("boucle sur une ligne (" + oneLine + ") doit couter comme la boucle multi-lignes (" + loop + ")",
+				oneLine > loop / 2);
+			assertTrue("[i for i in r] (" + plain + ") doit etre facturee par element",
+				plain > 20000 / 2);
 		}
 	}
 }

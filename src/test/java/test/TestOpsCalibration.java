@@ -149,6 +149,7 @@ public class TestOpsCalibration extends FightTestBase {
 		}
 		System.out.println("\n===================================================================\n");
 		System.out.println("Lecture : PY x0.20 = un algo qui coute 100k ops en LeekScript n'en coute que 20k en");
-		System.out.println("Python -> le joueur Python peut faire ~5x plus de calcul par tour a budget egal.\n");
+		System.out.println("Python -> le joueur Python pourrait faire ~5x plus de calcul par tour a budget egal.");
+		System.out.println("Les colonnes JS/PY incluent le facteur opsFactor du generator (0.6 / 1.0).\n");
 	}
 }

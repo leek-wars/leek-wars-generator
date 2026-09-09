@@ -143,14 +143,16 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * CALIBRATION FAIRNESS INTER-LANGAGES (ops). LeekScript compte des OPERATIONS (granularite
-	 * expression : {@code s += i} ~ 4 ops). L'instrument compte, pour JS, les STATEMENTS +
-	 * EXPRESSIONS (granularite sous-expression : chaque operateur/lecture/appel d'une ligne
-	 * complexe compte, comme LeekScript) et, pour Python, les STATEMENTS seuls (granularite
-	 * ligne : GraalPy ne tague pas les expressions, verifie -> le multiplicateur reste son seul
-	 * levier). Consequence mesuree (TestOpsCalibration) : a travail identique, JS compte
-	 * ~1.7x PLUS d'evenements que LeekScript d'ops (chaque lecture de variable est un evenement)
-	 * et Python ~5x moins. On multiplie le terme guest de {@link #getOperations()} par ce facteur
-	 * pour rendre le compteur COMPARABLE entre langages.
+	 * expression : {@code s += i} ~ 4 ops). L'instrument compte, pour JS ET Python, les STATEMENTS +
+	 * EXPRESSIONS (chaque operateur/lecture/appel d'une ligne complexe compte, comme LeekScript).
+	 * GraalJS tague nativement ; GraalPy ne taguait que les statements (une ligne = un evenement,
+	 * d'ou un ancien facteur 5.0 et des one-liners/comprehensions gratuits) : depuis l'image isolate
+	 * v25.1.3-combined-3, patches/graalpython.patch (repo leek-wars-graal-isolate) ouvre un
+	 * Tag(Expression) sur chaque noeud d'expression et un Tag(Statement) par statement execute.
+	 * Consequence mesuree (TestOpsCalibration, 2026-09) : a travail identique, JS compte ~1.7x PLUS
+	 * d'evenements que LeekScript d'ops et Python ~1.0x (mediane ; fib recursif x2.4, flottant x0.6).
+	 * On multiplie le terme guest de {@link #getOperations()} par ce facteur pour rendre le
+	 * compteur COMPARABLE entre langages.
 	 *
 	 * <p>Facteurs = mediane des workloads combat-typiques (entiers/branches/appels ; le flottant et
 	 * les strings ont un ratio different, non couvrable par une constante). AJUSTABLES (game design) :
@@ -158,15 +160,15 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static double opsFactor(String languageId) {
 		switch (languageId) {
-			case "python": return 5.0;
+			case "python": return 1.0; // mediane brute x1.0 (image expressions, 2026-09)
 			case "js":     return 0.6; // 1/1.67 : mediane brute x1.67 (image expressions, 2026-07)
 			default:       return 1.0;
 		}
 	}
 	private final double opsFactor;
 	// Facteur applique par chargeProxy a la facturation des builtins natifs (sort, fill, sum...),
-	// cf le commentaire dans chargeProxy : 1.0 en JS (parite boucle explicite/LeekScript sous la
-	// granularite expression), opsFactor sinon (Python, coherent avec sa granularite ligne).
+	// cf le commentaire dans chargeProxy : 1.0 (parite boucle explicite/LeekScript sous la
+	// granularite expression, en JS comme en Python).
 	private final double builtinOpsFactor;
 
 	/**
@@ -226,7 +228,7 @@ public class PolyglotEntityAI extends EntityAI {
 		this.fileSystem = fileSystem;
 		this.sandbox = sandbox;
 		this.opsFactor = opsFactor(languageId);
-		this.builtinOpsFactor = "js".equals(languageId) ? 1.0 : this.opsFactor;
+		this.builtinOpsFactor = 1.0;
 		this.jsModule = entryPath != null && usesEsModules(languageId, source);
 		this.valid = true;
 	}
@@ -951,11 +953,10 @@ public class PolyglotEntityAI extends EntityAI {
 				if (n > 0) {
 					// Facteur BUILTIN, distinct du facteur statements (opsFactor) : l'invariant est
 					// « un builtin coute comme la boucle explicite equivalente du MEME langage, et
-					// comme le builtin LeekScript ». En JS (granularite expression), une boucle
-					// explicite revient a ~1 op/element APRES calibration -> facturer 1.0/element
-					// (scaler par opsFactor=0.6 sous-facturerait les builtins de 40%). En Python
-					// (granularite ligne), la boucle explicite vaut 1 statement x opsFactor/element
-					// -> on garde opsFactor pour rester coherent avec elle.
+					// comme le builtin LeekScript ». Sous la granularite expression (JS et Python
+					// depuis v25.1.3-combined-3), une boucle explicite revient a ~1 op/element APRES
+					// calibration -> facturer 1.0/element (scaler par opsFactor=0.6 en JS
+					// sous-facturerait les builtins de 40%).
 					long scaled = (long) Math.min((double) n * builtinOpsFactor, Integer.MAX_VALUE);
 					if (scaled > 0) {
 						try {
