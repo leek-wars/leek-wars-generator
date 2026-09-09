@@ -43,6 +43,14 @@ public class PolyglotAPIBridge {
 	/** Package des classes implementant la bibliotheque standard LeekScript (getColor, round, min...). */
 	private static final String STD_CLASSES_PACKAGE = "leekscript.runner.classes.";
 
+	/**
+	 * nom de fonction -&gt; cout declare dans le registre (LeekFunctions.getOperations()). LeekScript
+	 * facture ce cout a chaque appel par codegen ({@code ops(expr, N)}) ; le pont doit faire pareil,
+	 * sinon une IA JS/Python appelle getCellToUseWeapon (38 080 ops en LeekScript) pour le seul prix
+	 * de ses expressions. Le travail proportionnel (chemins, messages) reste facture par la fonction
+	 * elle-meme via ai.ops(), comme en LeekScript. Declare AVANT FUNCTIONS : rempli par addFunctions.
+	 */
+	private static final Map<String, Integer> COSTS = new HashMap<>();
 	/** nom de fonction -&gt; (arite utilisateur -&gt; methode statique). Resolu une seule fois. */
 	private static final Map<String, Map<Integer, Method>> FUNCTIONS = resolveFunctions();
 	/** nom de constante -&gt; valeur (long pour les INT, double sinon). Resolu une seule fois. */
@@ -87,6 +95,7 @@ public class PolyglotAPIBridge {
 				continue; // deja fourni par une source prioritaire (combat)
 			}
 			LeekFunctions fn = entry.getValue();
+			COSTS.put(entry.getKey(), fn.getOperations());
 			// On cible la derniere version : on ignore les fonctions retirees ou pas encore disponibles.
 			if (LeekScript.LATEST_VERSION < fn.getMinVersion() || LeekScript.LATEST_VERSION > fn.getMaxVersion()) {
 				continue;
@@ -192,6 +201,16 @@ public class PolyglotAPIBridge {
 				callArgs[i] = TypeMarshaller.coerce(a, params[i], ai);
 			}
 			try {
+				// Cout declare de la fonction, comme le ops(N) que LeekScript compile autour de l'appel.
+				// LeekRunException (TOO_MUCH_OPERATIONS) est checked : emballee, runIA la deballe.
+				int cost = COSTS.getOrDefault(name, 0);
+				if (cost > 0) {
+					try {
+						ai.ops(cost);
+					} catch (leekscript.runner.LeekRunException e) {
+						throw new RuntimeException(e);
+					}
+				}
 				Object result = TypeMarshaller.toGuest(m.invoke(null, callArgs));
 				// La fonction de combat a pu charger des ops (ai.ops) : rafraichir le miroir __lw_real
 				// pour le getOperations() cote guest (cf PolyglotEntityAI.installGuestGetOperations).

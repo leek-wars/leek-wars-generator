@@ -14,7 +14,7 @@
 FROM eclipse-temurin:25-jdk AS build
 ARG GRADLE_VERSION=9.2.1
 # Release publique de l'image isolate (bump en même temps que la dépendance GraalVM).
-ARG ISOLATE_TAG=v25.1.3-combined-3
+ARG ISOLATE_TAG=v25.1.3-combined-4
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl unzip \
  && rm -rf /var/lib/apt/lists/*

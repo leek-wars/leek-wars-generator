@@ -39,7 +39,7 @@ jobs:
       run: |
         mkdir -p libs
         curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-          https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-3/js-isolate-resources-linux-amd64.jar
+          https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-4/js-isolate-resources-linux-amd64.jar
 
     - name: Build
       run: gradle jar

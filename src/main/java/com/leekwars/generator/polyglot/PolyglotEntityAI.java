@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.SourceSection;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
@@ -148,7 +149,8 @@ public class PolyglotEntityAI extends EntityAI {
 	 * GraalJS tague nativement ; GraalPy ne taguait que les statements (une ligne = un evenement,
 	 * d'ou un ancien facteur 5.0 et des one-liners/comprehensions gratuits) : depuis l'image isolate
 	 * v25.1.3-combined-3, patches/graalpython.patch (repo leek-wars-graal-isolate) ouvre un
-	 * Tag(Expression) sur chaque noeud d'expression et un Tag(Statement) par statement execute.
+	 * Tag(Expression) sur chaque noeud d'expression et un Tag(Statement) par statement execute ;
+	 * depuis combined-4 les preludes (sources lw:, cf evalPrelude) ne sont plus comptes.
 	 * Consequence mesuree (TestOpsCalibration, 2026-09) : a travail identique, JS compte ~1.7x PLUS
 	 * d'evenements que LeekScript d'ops et Python ~1.0x (mediane ; fib recursif x2.4, flottant x0.6).
 	 * On multiplie le terme guest de {@link #getOperations()} par ce facteur pour rendre le
@@ -587,6 +589,18 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 
+	/**
+	 * Evalue du code de CONFIANCE du generator (preludes : API objet, gardes, enveloppes de
+	 * facturation, override de System.operations, glue de chargement) sous une source nommee
+	 * {@code lw:<nom>}. L'instrument StatementCounter (image isolate combined-4) ne compte PAS les
+	 * sources de ce prefixe : le joueur ne paie que son code, la stdlib, le cout LeekScript des
+	 * fonctions de combat et la facturation au prorata des builtins. Le code du joueur, lui, est
+	 * evalue par {@code context.eval(languageId, source)} sous un nom par defaut, donc compte.
+	 */
+	private Value evalPrelude(String name, String code) {
+		return context.eval(Source.newBuilder(languageId, code, "lw:" + name).buildLiteral());
+	}
+
 	/** Chargement de l'entree au 1er tour, selon le mode (module ES / script). */
 	private Value loadEntryFirstTurn() throws LeekRunException {
 		if (jsModule) {
@@ -597,12 +611,12 @@ public class PolyglotEntityAI extends EntityAI {
 			// aussi le namespace resolu (ses exports) pour resoudre une `export function turn()` : dans
 			// un module ES, un `function turn()` top-level est module-scoped (invisible du global), donc
 			// seul un export (ou un globalThis.turn) rend l'IA "avec etat".
-			context.eval(languageId,
+			evalPrelude("module-load",
 				"globalThis.__lw_loadError = null; globalThis.__lw_module = null;"
 				+ "import('" + PolyglotFileSystem.mountPath(entryPath) + "')"
 				+ ".then(function(m){ globalThis.__lw_module = m; },"
 				+ " function(e){ globalThis.__lw_loadError = '' + (e && e.stack ? e.stack : e); });");
-			context.eval(languageId, "void 0;"); // draine les microtasks (eval du module + le .then)
+			evalPrelude("module-drain", "void 0;"); // draine les microtasks (eval du module + le .then)
 			Value loadError = context.getBindings(languageId).getMember("__lw_loadError");
 			if (loadError != null && !loadError.isNull()) {
 				throw new LeekRunException(Error.AI_INTERRUPTED, new String[] { loadError.asString() });
@@ -896,9 +910,9 @@ public class PolyglotEntityAI extends EntityAI {
 	private void removeUnusedOpsHook() {
 		try {
 			if ("js".equals(languageId)) {
-				context.eval(languageId, "try{delete globalThis.__lw_setOps;}catch(e){}");
+				evalPrelude("ops-hook-cleanup", "try{delete globalThis.__lw_setOps;}catch(e){}");
 			} else if ("python".equals(languageId)) {
-				context.eval(languageId,
+				evalPrelude("ops-hook-cleanup",
 					"import builtins as _lw_b3\n"
 					+ "try:\n"
 					+ "    delattr(_lw_b3, '__lw_set_ops')\n"
@@ -916,7 +930,7 @@ public class PolyglotEntityAI extends EntityAI {
 			guestBindings.putMember("__lw_real", super.getOperations());
 			String src = ("js".equals(languageId) ? JS_GETOPS_OVERRIDE : PY_GETOPS_OVERRIDE)
 					.replace("$F", String.valueOf(opsFactor));
-			context.eval(languageId, src);
+			evalPrelude("ops-override", src);
 		} catch (Exception e) {
 			// Best effort : si l'override echoue, le getOperations HOTE (bridge) reste en place.
 			guestBindings = null;
@@ -981,24 +995,24 @@ public class PolyglotEntityAI extends EntityAI {
 		if ("js".equals(languageId)) {
 			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
 			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
-			context.eval(languageId, JS_DETERMINISM_GUARD);
-			context.eval(languageId, JS_CHARGE_GUARD);
-			context.eval(languageId, JS_CONSOLE_SETUP);
+			evalPrelude("determinism", JS_DETERMINISM_GUARD);
+			evalPrelude("charge", JS_CHARGE_GUARD);
+			evalPrelude("console", JS_CONSOLE_SETUP);
 			if (JS_OBJECT_API != null) {
-				context.eval(languageId, JS_OBJECT_API);
+				evalPrelude("objects", JS_OBJECT_API);
 			}
 		} else if ("python".equals(languageId)) {
 			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
 			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
 			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
-			context.eval(languageId, pythonDeterminismGuard(seed));
-			context.eval(languageId, PY_CHARGE_GUARD);
-			context.eval(languageId, PY_CONSOLE_SETUP);
+			evalPrelude("determinism", pythonDeterminismGuard(seed));
+			evalPrelude("charge", PY_CHARGE_GUARD);
+			evalPrelude("console", PY_CONSOLE_SETUP);
 			if (PY_OBJECT_API != null) {
-				context.eval(languageId, PY_OBJECT_API);
+				evalPrelude("objects", PY_OBJECT_API);
 			}
 			// EN DERNIER : monte /ai + le dossier de l'entree en tete de path pour le code du joueur.
-			context.eval(languageId, pythonMountGuard(entryPath));
+			evalPrelude("mount", pythonMountGuard(entryPath));
 		}
 	}
 

@@ -96,7 +96,7 @@ dependencies {
 	// Le jar (127 Mo, au-dela de la limite git GitHub) n'est PAS commite : il vient de la RELEASE
 	// PUBLIQUE du repo leek-wars-graal-isolate. En local, le recuperer dans libs/ :
 	//   curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-	//     https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-3/js-isolate-resources-linux-amd64.jar
+	//     https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-4/js-isolate-resources-linux-amd64.jar
 	// (ou copier dist/ du repo graal-isolate si on l'a builde soi-meme).
 	implementation files('libs/js-isolate-resources-linux-amd64.jar')
 	implementation 'org.graalvm.sdk:nativebridge:25.1.3'

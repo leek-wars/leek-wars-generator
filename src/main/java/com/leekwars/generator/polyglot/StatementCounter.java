@@ -97,7 +97,14 @@ public final class StatementCounter extends TruffleInstrument {
 		// les operateurs, appels, acces d'attribut/indice, litteraux et chaque iteration de
 		// comprehension, et un Tag(Statement) par statement meme sur la ligne du parent.
 		// Un noeud tague Statement ET Expression n'a qu'un seul probe -> compte UNE fois.
+		// Les sources nommees "lw:..." (preludes du generator : API objet, gardes de determinisme,
+		// enveloppes de facturation, override de System.operations) ne sont PAS comptees : leur
+		// travail est O(1) par appel ou deja facture par l'hote (fonctions de combat au cout
+		// LeekScript, builtins natifs au prorata via __lw_charge). Sans ce filtre, `min(a, b)`
+		// coutait ~13 et `me.cell` ~40 rien qu'en expressions du prelude. Le code du joueur et la
+		// bibliotheque standard (sources nommees autrement) restent comptes.
 		SourceSectionFilter filter = SourceSectionFilter.newBuilder()
+				.sourceIs(source -> source.getName() == null || !source.getName().startsWith("lw:"))
 				.tagIs(StandardTags.StatementTag.class, StandardTags.ExpressionTag.class)
 				.build();
 		env.getInstrumenter().attachExecutionEventListener(filter, listener);

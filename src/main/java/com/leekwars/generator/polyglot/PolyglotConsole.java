@@ -80,10 +80,11 @@ public class PolyglotConsole implements AutoCloseable {
 		bindings.putMember("__lw_log", (ProxyExecutable) args -> { sink.log(1, joinArg(args)); return null; });
 		bindings.putMember("__lw_warn", (ProxyExecutable) args -> { sink.log(2, joinArg(args)); return null; });
 		bindings.putMember("__lw_err", (ProxyExecutable) args -> { sink.log(3, joinArg(args)); return null; });
+		// Source "lw:" : non comptee par l'instrument (cf PolyglotEntityAI.evalPrelude).
 		if ("js".equals(languageId)) {
-			context.eval("js", JS_SETUP);
+			context.eval(Source.newBuilder("js", JS_SETUP, "lw:console-setup").buildLiteral());
 		} else {
-			context.eval("python", PY_SETUP);
+			context.eval(Source.newBuilder("python", PY_SETUP, "lw:console-setup").buildLiteral());
 		}
 	}
 
