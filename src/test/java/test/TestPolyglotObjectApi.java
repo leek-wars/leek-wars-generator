@@ -1143,4 +1143,24 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				"    return ','.join(names)\n"));
 		}
 	}
+
+	/**
+	 * `import json` / `import re` dans une IA Python : enum (importe par re) sous-classe dict
+	 * (`class _EnumDict(dict)`). Le proxy de facturation de dict/list/set/tuple renvoyait un dict NU
+	 * pour toute sous-classe -> AttributeError _member_names au premier import. Le proxy herite
+	 * maintenant du vrai type et laisse les sous-classes se construire normalement.
+	 */
+	@Test
+	public void playerCanSubclassBuiltinsAndImportJsonRe() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals("8|3|True|True|[1, 2]|Sub", evalPyBody(sb,
+				"    import json, re\n" +
+				"    class Sub(dict):\n        def hello(self): return 'Sub'\n" +
+				"    s = Sub(); s['a'] = 1\n" +
+				"    parts = [str(len(json.dumps({'a': 1}))), str(len(re.findall('a', 'banana'))),\n" +
+				"        str(isinstance(s, dict)), str(isinstance([], list)), str(list((1, 2))), s.hello()]\n" +
+				"    return '|'.join(parts)\n"));
+		}
+	}
 }

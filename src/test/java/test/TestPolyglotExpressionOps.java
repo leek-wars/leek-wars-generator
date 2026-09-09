@@ -139,4 +139,31 @@ public class TestPolyglotExpressionOps extends FightTestBase {
 				plain > 20000 / 2);
 		}
 	}
+
+	/**
+	 * ALIGNEMENT STDLIB (2026-09) : un natif qui a un equivalent LeekScript coute le cout du registre
+	 * (mesure par BenchStdlibCosts) dans les 3 langages. Ici cos = 3 : 20 000 appels doivent peser au
+	 * moins 60 000 ops en JS et en Python, et pas plus de ~10 ops par appel (expressions de la ligne).
+	 */
+	@Test
+	public void nativeStdlibBilledAtRegistryCost() throws Exception {
+		initFightOnly();
+		int cos = leekscript.runner.LeekFunctions.getValue("cos", false).getOperations();
+		assertTrue("cos au registre (" + cos + ") doit valoir >= 2 pour que le test ait un sens", cos >= 2);
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			long js = run(sb, "js",
+				"var s = 0; for (var i = 0; i < 20000; i++) { s += Math.cos(i); }\nreturn System.operations;");
+			long py = run(sb, "python",
+				"    import math\n    s = 0\n    for i in range(20000):\n        s += math.cos(i)\n    return System.operations");
+			assertTrue("JS : 20000 Math.cos (" + js + ") doivent couter >= 20000 x " + cos, js >= 20000L * cos);
+			assertTrue("JS : trop cher (" + js + ")", js <= 20000L * (cos + 10));
+			assertTrue("Python : 20000 math.cos (" + py + ") doivent couter >= 20000 x " + cos, py >= 20000L * cos);
+			assertTrue("Python : trop cher (" + py + ")", py <= 20000L * (cos + 10));
+			// Le prelude Python definit math.cbrt lui-meme : facture aussi (cbrt = 5 au registre).
+			long cbrt = run(sb, "python",
+				"    import math\n    s = 0\n    for i in range(20000):\n        s += math.cbrt(i)\n    return System.operations");
+			int cbrtCost = leekscript.runner.LeekFunctions.getValue("cbrt", false).getOperations();
+			assertTrue("Python : math.cbrt (" + cbrt + ") doit couter >= 20000 x " + cbrtCost, cbrt >= 20000L * cbrtCost);
+		}
+	}
 }

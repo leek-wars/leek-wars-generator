@@ -33,6 +33,7 @@ import leekscript.AILog;
 import leekscript.common.Error;
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
+import leekscript.runner.LeekFunctions;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.Session;
 
@@ -136,6 +137,9 @@ public class PolyglotEntityAI extends EntityAI {
 	// Bindings globaux du guest (cache) : sert a rafraichir le miroir __lw_real pour le getOperations
 	// cote guest (cf installGuestGetOperations). null si l'override guest n'est pas actif.
 	private Value guestBindings;
+	// Fonction guest __lw_flush (accumulateur de facturation des builtins/natifs), capturee a la
+	// construction du contexte et retiree du scope guest : l'hote la joue en fin de tour.
+	private Value chargeFlush;
 	// Engine en isolate processus EXTERNE (repli une-lib-par-JVM, cf PolyglotSandbox.engineFor) :
 	// le guest tourne dans un AUTRE process, le temps CPU du thread de combat ne mesure plus son
 	// travail -> le terme d'ops synthetique doit passer au temps MUR (sinon la garde getOperations()
@@ -709,6 +713,10 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "['slice','concat','flat'].forEach(wrapRes);"
 		+ "var AF=Array.from;if(AF)Object.defineProperty(Array,'from',{value:function(){var r=AF.apply(Array,arguments);ch((r&&r.length)>>>0);return r;},writable:false,configurable:false});"
 		+ "var RP=String.prototype.repeat;if(RP)Object.defineProperty(String.prototype,'repeat',{value:function(){var r=RP.apply(this,arguments);ch(r.length>>>0);return r;},writable:false,configurable:false});"
+		// Hooks consommes (puis retires du global) par JS_NATIVE_COSTS, l'override de System.operations
+		// (pending : charges accumulees pas encore flushees, pour un compteur exact a la lecture) et
+		// l'hote (flush en fin de tour, cf captureChargeFlush).
+		+ "globalThis.__lw_ch=ch;globalThis.__lw_pending=function(){return acc;};globalThis.__lw_flush=function(){if(acc>0){C(acc);acc=0;}};"
 		+ "})();";
 
 	/**
@@ -757,9 +765,16 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        except Exception:\n"
 		+ "            pass\n"
 		// Constructeurs de type : proxy a metaclasse (facture + reste un type pour isinstance, #4540).
+		// Le proxy HERITE du vrai type (bases (_orig,)) : une sous-classe joueur ou stdlib
+		// (`class _EnumDict(dict)` dans enum, donc `import re`/`import json`) se construit alors
+		// normalement (type.__call__) avec de vraies instances du type ; seul le proxy lui-meme
+		// facture puis delegue au type d'origine. Avant, __call__ renvoyait un dict NU pour toute
+		// sous-classe : `import json` plantait en AttributeError _member_names.
 		+ "    def _wrap_type(_orig):\n"
 		+ "        class _M(type):\n"
 		+ "            def __call__(cls, *a, **k):\n"
+		+ "                if cls is not _M._lw_proxy:\n"
+		+ "                    return type.__call__(cls, *a, **k)\n"
 		+ "                if len(a) == 1:\n"
 		+ "                    try:\n"
 		+ "                        _ch(len(a[0]))\n"
@@ -767,18 +782,100 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "                        pass\n"
 		+ "                return _orig(*a, **k)\n"
 		+ "            def __instancecheck__(cls, x):\n"
-		+ "                return isinstance(x, _orig)\n"
+		+ "                return isinstance(x, _orig) if cls is _M._lw_proxy else type.__instancecheck__(cls, x)\n"
 		+ "            def __subclasscheck__(cls, c):\n"
-		+ "                return issubclass(c, _orig)\n"
-		+ "            def __getattr__(cls, n):\n"
-		+ "                return getattr(_orig, n)\n"
-		+ "        return _M(_orig.__name__, (), {})\n"
+		+ "                return issubclass(c, _orig) if cls is _M._lw_proxy else type.__subclasscheck__(cls, c)\n"
+		+ "        _M._lw_proxy = _M(_orig.__name__, (_orig,), {})\n"
+		+ "        return _M._lw_proxy\n"
 		+ "    for _n in ('list','tuple','set','frozenset','dict'):\n"
 		+ "        try:\n"
 		+ "            setattr(_lwb, _n, _wrap_type(getattr(_lwb, _n)))\n"
 		+ "        except Exception:\n"
 		+ "            pass\n"
+		// Hooks consommes (puis retires de builtins) par PY_NATIVE_COSTS, l'override de
+		// System.operations (pending) et l'hote (flush en fin de tour, cf captureChargeFlush).
+		+ "    def _flush():\n"
+		+ "        if _acc[0] > 0:\n"
+		+ "            _C(_acc[0]); _acc[0] = 0\n"
+		+ "    _lwb.__lw_ch = _ch\n"
+		+ "    _lwb.__lw_pending = lambda: _acc[0]\n"
+		+ "    _lwb.__lw_flush = _flush\n"
 		+ "_lw_install()\n";
+
+
+	/**
+	 * ALIGNEMENT DES COUTS DE LA STDLIB (2026-09). LeekScript facture chaque fonction de sa bibliotheque
+	 * au cout du registre ({@link LeekFunctions}, valeurs mesurees par BenchStdlibCosts) ; en JS et en
+	 * Python les equivalents sont des natifs de l'hote (Math.cos, math.cos...) qui ne coutaient que
+	 * leurs expressions. On enveloppe les natifs qui ont un equivalent LeekScript de cout > 1 pour leur
+	 * facturer le MEME cout, via l'accumulateur du charge guard (pas d'aller-retour hote par appel).
+	 * Les couts arrivent par {@code __lw_stdcosts_json} (registre LeekScript serialise par l'hote) :
+	 * une seule source de verite. Evalue APRES objects.js/py (math.cbrt est un shim du prelude Python)
+	 * et sous une source lw: (non comptee). Math.random en JS est scelle par la garde de determinisme
+	 * (non configurable) : non facturable, cout 3 non applique.
+	 */
+	private static final String JS_NATIVE_COSTS =
+		"(function(){var ch=globalThis.__lw_ch;try{delete globalThis.__lw_ch;}catch(e){}"
+		+ "var j=globalThis.__lw_stdcosts_json;try{delete globalThis.__lw_stdcosts_json;}catch(e){}"
+		+ "if(!ch||!j)return;var costs=JSON.parse(j);"
+		+ "var T={cos:'cos',sin:'sin',tan:'tan',acos:'acos',asin:'asin',atan:'atan',atan2:'atan2',sqrt:'sqrt',cbrt:'cbrt',"
+		+ "exp:'exp',log:'log',log2:'log2',log10:'log10',pow:'pow',hypot:'hypot',rand:'random'};"
+		+ "Object.keys(T).forEach(function(ls){var c=costs[ls]|0;var n=T[ls];var o=Math[n];"
+		+ "if(c>1&&typeof o==='function'){try{Object.defineProperty(Math,n,{value:function(){ch(c);return o.apply(Math,arguments);},writable:false,configurable:false});}catch(e){}}});"
+		+ "})();";
+	private static final String PY_NATIVE_COSTS =
+		"import builtins as _lwnb, math as _lwnm, random as _lwnr\n"
+		+ "def _lw_bill_natives():\n"
+		+ "    _ch = getattr(_lwnb, '__lw_ch', None)\n"
+		+ "    if _ch is None:\n"
+		+ "        return\n"
+		+ "    costs = eval(__lw_stdcosts_json, {'__builtins__': {}}, {})\n"
+		+ "    def bill(orig, n):\n"
+		+ "        def f(*a, **k):\n"
+		+ "            _ch(n)\n"
+		+ "            return orig(*a, **k)\n"
+		+ "        f.__name__ = getattr(orig, '__name__', 'f')\n"
+		+ "        f.__qualname__ = getattr(orig, '__qualname__', f.__name__)\n"
+		+ "        f.__doc__ = getattr(orig, '__doc__', None)\n"
+		+ "        return f\n"
+		// (nom LeekScript, module, attribut natif). pow : builtin ET math.pow ; randInt : randrange ET randint.
+		+ "    table = [('cos', _lwnm, 'cos'), ('sin', _lwnm, 'sin'), ('tan', _lwnm, 'tan'), ('acos', _lwnm, 'acos'),\n"
+		+ "        ('asin', _lwnm, 'asin'), ('atan', _lwnm, 'atan'), ('atan2', _lwnm, 'atan2'), ('sqrt', _lwnm, 'sqrt'),\n"
+		+ "        ('cbrt', _lwnm, 'cbrt'), ('exp', _lwnm, 'exp'), ('log', _lwnm, 'log'), ('log2', _lwnm, 'log2'),\n"
+		+ "        ('log10', _lwnm, 'log10'), ('pow', _lwnm, 'pow'), ('pow', _lwnb, 'pow'), ('hypot', _lwnm, 'hypot'),\n"
+		+ "        ('toRadians', _lwnm, 'radians'), ('toDegrees', _lwnm, 'degrees'), ('rand', _lwnr, 'random'),\n"
+		+ "        ('randInt', _lwnr, 'randrange'), ('randInt', _lwnr, 'randint'), ('randReal', _lwnr, 'uniform'),\n"
+		+ "        ('binString', _lwnb, 'bin'), ('hexString', _lwnb, 'hex')]\n"
+		+ "    for ls, mod, attr in table:\n"
+		+ "        c = costs.get(ls, 0)\n"
+		+ "        orig = getattr(mod, attr, None)\n"
+		+ "        if c > 1 and orig is not None:\n"
+		+ "            setattr(mod, attr, bill(orig, c))\n"
+		+ "_lw_bill_natives()\n"
+		+ "try:\n"
+		+ "    delattr(_lwnb, '__lw_ch')\n"
+		+ "except Exception:\n"
+		+ "    pass\n"
+		+ "for _lwn in ('_lw_bill_natives', '_lwnb', '_lwnm', '_lwnr', '__lw_stdcosts_json', '_lwn'):\n"
+		+ "    try:\n"
+		+ "        del globals()[_lwn]\n"
+		+ "    except Exception:\n"
+		+ "        pass\n";
+
+	private static String stdCostsJson;
+
+	/** Registre LeekScript des fonctions standard serialise en JSON {nom: cout}, calcule une fois. */
+	private static synchronized String stdCostsJson() {
+		if (stdCostsJson == null) {
+			StringBuilder sb = new StringBuilder("{");
+			for (Map.Entry<String, LeekFunctions> e : LeekFunctions.getStandardFunctions().entrySet()) {
+				if (sb.length() > 1) sb.append(',');
+				sb.append('"').append(e.getKey()).append("\":").append(e.getValue().getOperations());
+			}
+			stdCostsJson = sb.append('}').toString();
+		}
+		return stdCostsJson;
+	}
 
 	// graaljs fournit bien `console`, mais sa sortie part dans le nullOutputStream du sandbox (jetee) :
 	// une IA qui fait console.log ne verrait donc RIEN. On reroute console.* vers debug() (le log de
@@ -871,9 +968,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static final String JS_GETOPS_OVERRIDE =
 		"(function(){var f=$F;var c=globalThis.__lw_counter;"
+		// pending : charges de builtins/natifs accumulees dans le charge guard, pas encore flushees.
+		+ "var p=globalThis.__lw_pending||function(){return 0;};try{delete globalThis.__lw_pending;}catch(e){}"
 		// Math.floor : meme troncature que l'hote ((long)(compteur * facteur)), sinon un facteur
 		// non entier (0.6) ferait remonter un System.operations flottant.
-		+ "var g=function(){return (globalThis.__lw_real||0)+Math.floor(c()*f);};"
+		+ "var g=function(){return (globalThis.__lw_real||0)+Math.floor(c()*f)+p();};"
 		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
 		// objects.js (le hook se supprime lui-meme du scope global une fois consomme).
 		+ "if(typeof globalThis.__lw_setOps==='function'){globalThis.__lw_setOps(g);}"
@@ -890,16 +989,20 @@ public class PolyglotEntityAI extends EntityAI {
 		// le RETIRER du scope guest ensuite : sinon un joueur pouvait faire __lw_counter(x) pour remettre
 		// a zero le compteur partage hote/guest et sous-evaluer ses ops. __lw_real reste lu au call (mis a
 		// jour par l'hote chaque sync). L'hote garde son handle instrument (polyglot bindings) pour reset.
-		+ "def _lw_make_getops(_counter, _factor):\n"
+		+ "def _lw_make_getops(_counter, _factor, _pending):\n"
 		+ "    def _lw_ops():\n"
-		// int() : meme troncature que l'hote, cf JS_GETOPS_OVERRIDE
-		+ "        return __lw_real + int(_counter() * _factor)\n"
+		// int() : meme troncature que l'hote, cf JS_GETOPS_OVERRIDE ; _pending = charges accumulees non flushees
+		+ "        return __lw_real + int(_counter() * _factor) + _pending()\n"
 		+ "    return _lw_ops\n"
 		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
 		// objects.py sur builtins (le hook se retire de builtins une fois consomme).
 		+ "_lw_setter = getattr(_lw_ops_b, '__lw_set_ops', None)\n"
 		+ "if _lw_setter is not None:\n"
-		+ "    _lw_setter(_lw_make_getops(__lw_counter, $F))\n"
+		+ "    _lw_setter(_lw_make_getops(__lw_counter, $F, getattr(_lw_ops_b, '__lw_pending', lambda: 0)))\n"
+		+ "try:\n"
+		+ "    delattr(_lw_ops_b, '__lw_pending')\n"
+		+ "except Exception:\n"
+		+ "    pass\n"
 		+ "for _lw_n in ('__lw_counter', '_lw_make_getops', '_lw_setter', '_lw_ops_b', '_lw_n'):\n"
 		+ "    try:\n"
 		+ "        del globals()[_lw_n]\n"
@@ -995,24 +1098,61 @@ public class PolyglotEntityAI extends EntityAI {
 		if ("js".equals(languageId)) {
 			context.getBindings(languageId).putMember("__lw_random", (ProxyExecutable) args -> getRandom().getDouble());
 			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
+			context.getBindings(languageId).putMember("__lw_stdcosts_json", stdCostsJson());
 			evalPrelude("determinism", JS_DETERMINISM_GUARD);
 			evalPrelude("charge", JS_CHARGE_GUARD);
 			evalPrelude("console", JS_CONSOLE_SETUP);
 			if (JS_OBJECT_API != null) {
 				evalPrelude("objects", JS_OBJECT_API);
 			}
+			evalPrelude("native-costs", JS_NATIVE_COSTS);
+			captureChargeFlush();
 		} else if ("python".equals(languageId)) {
 			// Plage bornee a l'int : getLong caste en int et un (max-min+1) qui overflow renvoie 0.
 			long seed = getRandom().getLong(0, Integer.MAX_VALUE - 1);
 			context.getBindings(languageId).putMember("__lw_charge", chargeProxy());
+			context.getBindings(languageId).putMember("__lw_stdcosts_json", stdCostsJson());
 			evalPrelude("determinism", pythonDeterminismGuard(seed));
 			evalPrelude("charge", PY_CHARGE_GUARD);
 			evalPrelude("console", PY_CONSOLE_SETUP);
 			if (PY_OBJECT_API != null) {
 				evalPrelude("objects", PY_OBJECT_API);
 			}
+			evalPrelude("native-costs", PY_NATIVE_COSTS);
+			captureChargeFlush();
 			// EN DERNIER : monte /ai + le dossier de l'entree en tete de path pour le code du joueur.
 			evalPrelude("mount", pythonMountGuard(entryPath));
+		}
+	}
+
+	/**
+	 * Capture la fonction guest {@code __lw_flush} du charge guard (vide l'accumulateur de facturation
+	 * vers l'hote) puis la retire du scope guest : seul l'hote la joue, en fin de tour, pour que les
+	 * charges de builtins/natifs du tour soient dans le compteur reel avant le snapshot du rapport.
+	 */
+	private void captureChargeFlush() {
+		chargeFlush = null;
+		try {
+			if ("js".equals(languageId)) {
+				chargeFlush = evalPrelude("flush-capture", "globalThis.__lw_flush");
+				evalPrelude("flush-hide", "try{delete globalThis.__lw_flush;}catch(e){}");
+			} else {
+				chargeFlush = evalPrelude("flush-capture", "__lw_flush");
+				evalPrelude("flush-hide", "import builtins as _lwfb\ntry:\n    delattr(_lwfb, '__lw_flush')\nexcept Exception:\n    pass\ndel _lwfb\n");
+			}
+			if (chargeFlush != null && !chargeFlush.canExecute()) chargeFlush = null;
+		} catch (Exception e) {
+			chargeFlush = null;
+		}
+	}
+
+	/** Fin de tour : pousse les charges accumulees vers le compteur hote (best effort, contexte peut etre ferme). */
+	private void flushPendingCharges() {
+		if (chargeFlush == null) return;
+		try {
+			chargeFlush.execute();
+		} catch (Exception ignore) {
+			// contexte annule/ferme, ou budget depasse au flush : le tour est fini, rien a interrompre
 		}
 	}
 
@@ -1176,6 +1316,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
+			flushPendingCharges(); // charges de builtins/natifs du tour -> compteur reel, avant le snapshot
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
 			if (!winRace(settled, watchdog)) {
 				throw onWallClockTimeout();
@@ -1703,6 +1844,7 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	private void closeContext() {
+		chargeFlush = null;
 		if (context != null) {
 			try {
 				context.close(true); // cancelIfExecuting : ferme sans relancer
