@@ -385,6 +385,10 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		});
+		method("getPlantType", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
 		method("getMobType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),

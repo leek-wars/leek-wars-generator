@@ -56,6 +56,7 @@ def _lw_build(G, NAMES):
         elif t == F.ENTITY_TURRET: e = Turret(i)
         elif t == F.ENTITY_CHEST: e = Chest(i)
         elif t == F.ENTITY_MOB: e = Mob(i)
+        elif t == F.ENTITY_PLANT: e = Plant(i)
         else: e = Entity(i)
         _entity_pool[i] = e
         return e
@@ -546,6 +547,11 @@ def _lw_build(G, NAMES):
     class Mob(Entity):
         @property
         def type(self): return F.getMobType(self.id)
+    # Plante (invocation enracinee) : un type d'entite a part, pas un bulbe. `type` donne l'espece
+    # (Plant.Type.CORN...), getBulbType renverrait -1 sur elle.
+    class Plant(Entity):
+        @property
+        def type(self): return F.getPlantType(self.id)
 
     # Message : un message d'equipe recu (cf Network).
     class Message(_ReadOnly):
@@ -803,6 +809,7 @@ def _lw_build(G, NAMES):
         ('CELL_', 'cat', Cell, 'Type'),
         ('CHEST_', 'cat', Chest, 'Type'),
         ('BULB_', 'cat', Bulb, 'Type'),
+        ('PLANT_', 'cat', Plant, 'Type'),
         ('MOB_', 'cat', Mob, 'Type'),
         ('BOSS_', 'cat', Fight, 'Boss'),
         ('EROSION_', 'cat', Fight, 'Erosion'),
@@ -852,7 +859,7 @@ def _lw_build(G, NAMES):
                 break
 
     return {
-        'Cell': Cell, 'Entity': Entity, 'Leek': Leek, 'Turret': Turret, 'Bulb': Bulb,
+        'Cell': Cell, 'Entity': Entity, 'Leek': Leek, 'Turret': Turret, 'Bulb': Bulb, 'Plant': Plant,
         'Chest': Chest, 'Mob': Mob, 'Item': Item, 'Weapon': Weapon, 'Chip': Chip,
         'Effect': Effect, 'Feature': Feature, 'Message': Message, 'Me': Me, 'State': State,
         'Fight': Fight, 'Field': Field, 'Network': Network, 'Registers': Registers,

@@ -578,6 +578,9 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			// Types des sous-classes d'entité.
 			Assert.assertEquals(fc("CHEST_WOOD"), ((Number) eval(sb, "Chest.Type.WOOD;")).longValue());
 			Assert.assertEquals(fc("MOB_GRAAL"), ((Number) eval(sb, "Mob.Type.GRAAL;")).longValue());
+			// Plantes 2.50 : famille propre (Plant.Type), pas rangée sous Bulb.
+			Assert.assertEquals(fc("PLANT_CORN"), ((Number) eval(sb, "Plant.Type.CORN;")).longValue());
+			Assert.assertEquals(true, eval(sb, "Plant.Type.PUNY === undefined && Bulb.Type.CORN === undefined;"));
 			// Feature.type est une catégorie Effect (le "croisement" assumé).
 			Assert.assertEquals(true, eval(sb, "var f = Weapon.pistol.features; f.length === 0 || typeof f[0].type === 'number';"));
 			// Dispatch : dans un combat leek vs leek, l'ennemi est une instance Leek (donc Entity).
@@ -603,6 +606,9 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals(fc("MAP_NEXUS"), ((Number) evalPy(sb, "Field.NEXUS")).longValue());
 			Assert.assertEquals(fc("CHEST_WOOD"), ((Number) evalPy(sb, "Chest.Type.WOOD")).longValue());
 			Assert.assertEquals(fc("MOB_GRAAL"), ((Number) evalPy(sb, "Mob.Type.GRAAL")).longValue());
+			// Plantes 2.50 : famille propre (Plant.Type), pas rangée sous Bulb.
+			Assert.assertEquals(fc("PLANT_CORN"), ((Number) evalPy(sb, "Plant.Type.CORN")).longValue());
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "not hasattr(Plant.Type, 'PUNY') and not hasattr(Bulb.Type, 'CORN')"));
 			Assert.assertEquals(fc("MESSAGE_HEAL"), ((Number) evalPy(sb, "Message.Type.HEAL")).longValue());
 			// Dispatch : l'ennemi (leek) est une instance Leek (donc Entity).
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "isinstance(Fight.getNearestEnemy(), Leek) and isinstance(Fight.getNearestEnemy(), Entity)"));

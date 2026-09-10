@@ -68,6 +68,7 @@
 			case F.ENTITY_TURRET: e = new Turret(id); break;
 			case F.ENTITY_CHEST: e = new Chest(id); break;
 			case F.ENTITY_MOB: e = new Mob(id); break;
+			case F.ENTITY_PLANT: e = new Plant(id); break;
 			default: e = new Entity(id); break;
 		}
 		return (entityPool[id] = frozen(e));
@@ -360,6 +361,11 @@
 	}
 	class Mob extends Entity {
 		get type() { return F.getMobType(this.id); }
+	}
+	// Plante (invocation enracinée) : un type d'entité à part, pas un bulbe. `type` donne l'espèce
+	// (Plant.Type.CORN...), getBulbType renverrait -1 sur elle.
+	class Plant extends Entity {
+		get type() { return F.getPlantType(this.id); }
 	}
 
 	// ---- me : l'IA courante (Entity + actions) ----
@@ -662,6 +668,7 @@
 			{ p: 'CELL_', c: Cell, s: 'Type' },
 			{ p: 'CHEST_', c: Chest, s: 'Type' },
 			{ p: 'BULB_', c: Bulb, s: 'Type' },
+			{ p: 'PLANT_', c: Plant, s: 'Type' },
 			{ p: 'MOB_', c: Mob, s: 'Type' },
 			{ p: 'BOSS_', c: Fight, s: 'Boss' },
 			{ p: 'EROSION_', c: Fight, s: 'Erosion' },
@@ -706,6 +713,7 @@
 	globalThis.Bulb = Bulb;
 	globalThis.Chest = Chest;
 	globalThis.Mob = Mob;
+	globalThis.Plant = Plant;
 	globalThis.Item = Item;
 	globalThis.Weapon = Weapon;
 	globalThis.Chip = Chip;

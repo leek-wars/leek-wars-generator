@@ -301,6 +301,11 @@ public class TestFightEffects extends FightTestBase {
 		var plant = state.getLastEntity();
 		Assert.assertTrue("La plante est enracinée à l'apparition", plant.hasState(EntityState.ROOTED));
 
+		// Type d'entité à part : une plante n'est pas un bulbe (getType -> ENTITY_PLANT côté IA,
+		// c'est getPlantType qui donne l'espèce, getBulbType renvoie -1).
+		Assert.assertEquals(com.leekwars.generator.state.Entity.TYPE_PLANT, plant.getType());
+		Assert.assertEquals(9, plant.getSkin());
+
 		// Impoussable
 		Cell before = plant.getCell();
 		Cell dest = freeCell(before, caster.getCell(), leek1.getCell(), leek2.getCell());

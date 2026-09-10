@@ -24,6 +24,7 @@ public enum FightConstants implements ILeekConstant {
 	ENTITY_TURRET(3, Type.INT),
 	ENTITY_CHEST(4, Type.INT),
 	ENTITY_MOB(5, Type.INT),
+	ENTITY_PLANT(6, Type.INT),
 
 	// Bulb types
 	BULB_PUNY(1, Type.INT),
@@ -37,10 +38,11 @@ public enum FightConstants implements ILeekConstant {
 	BULB_TACTICIAN(11, Type.INT),
 	BULB_SAVANT(12, Type.INT),
 
-	// Summon types (plantes — pas des bulbes)
-	SUMMON_CORN(9, Type.INT),
-	SUMMON_CHILLI_PEPPER(10, Type.INT),
-	SUMMON_PROTOTAXITE(13, Type.INT),
+	// Plant types (invocations enracinées : type d'entité ENTITY_PLANT, espèce par getPlantType).
+	// Même numérotation que les bulbes (ce sont des templates d'invocation), famille à part.
+	PLANT_CORN(9, Type.INT),
+	PLANT_CHILLI_PEPPER(10, Type.INT),
+	PLANT_PROTOTAXITE(13, Type.INT),
 
 	// Constants
 	EFFECT_TARGET_ALLIES(Effect.TARGET_ALLIES, Type.INT),

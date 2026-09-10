@@ -157,6 +157,13 @@ public class BulbTemplate {
 		return mStates;
 	}
 
+	// Une plante est une invocation enracinée : c'est l'état ROOTED du template qui la définit,
+	// pas une liste d'ids en dur (Maïs 9, Piment 10, Prototaxite 13 aujourd'hui). Détermine le
+	// type d'entité vu par les IA (ENTITY_PLANT au lieu de ENTITY_BULB).
+	public boolean isPlant() {
+		return mStates.contains(EntityState.ROOTED);
+	}
+
 	// Une invocation qui ne peut rien faire (aucune puce, 0 PT max) n'a pas
 	// besoin d'IA : pas d'avertissement BULB_WITHOUT_AI pour elle (ex. prototaxites).
 	public boolean canAct() {

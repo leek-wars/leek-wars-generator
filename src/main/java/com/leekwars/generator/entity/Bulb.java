@@ -40,7 +40,10 @@ public class Bulb extends Entity {
 
 	@Override
 	public int getType() {
-		return Entity.TYPE_BULB;
+		// Les plantes (invocations enracinées) forment leur propre type d'entité : getType() renvoie
+		// ENTITY_PLANT et c'est getPlantType() — pas getBulbType() — qui donne leur espèce.
+		// mTemplate est posé juste après le constructeur (createInvocation) : null = bulbe.
+		return mTemplate != null && mTemplate.isPlant() ? Entity.TYPE_PLANT : Entity.TYPE_BULB;
 	}
 
 	public static int base(int base, int bonus, double coeff) {

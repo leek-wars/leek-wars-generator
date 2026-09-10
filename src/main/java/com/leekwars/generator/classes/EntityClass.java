@@ -49,7 +49,7 @@ public class EntityClass {
 	 *
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
-	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType,
+	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
 	 * the lobby or fixed at fight init regardless of loadout.
@@ -875,6 +875,32 @@ public class EntityClass {
 			var l = ai.getFight().getEntity(n.intValue());
 			if (l != null) {
 				if (l.getType() == Entity.TYPE_BULB) {
+					return (long) l.getSkin();
+				}
+				return -1L;
+			}
+		}
+		return null;
+	}
+
+	public static long getPlantType(EntityAI ai) throws LeekRunException {
+		if (ai.getEntity().getType() == Entity.TYPE_PLANT) {
+			return (long) ai.getEntity().getSkin();
+		}
+		return -1;
+	}
+
+	public static Long getPlantType(EntityAI ai, Object value) throws LeekRunException {
+		if (value == null) {
+			if (ai.getEntity().getType() == Entity.TYPE_PLANT) {
+				return (long) ai.getEntity().getSkin();
+			}
+			return -1L;
+		}
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
+			if (l != null) {
+				if (l.getType() == Entity.TYPE_PLANT) {
 					return (long) l.getSkin();
 				}
 				return -1L;

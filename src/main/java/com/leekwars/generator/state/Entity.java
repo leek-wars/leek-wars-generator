@@ -44,6 +44,9 @@ public abstract class Entity {
 	public static final int TYPE_TURRET = 2;
 	public static final int TYPE_CHEST = 3;
 	public static final int TYPE_MOB = 4;
+	// v2.50 — les plantes (Maïs, Piment, Prototaxite) sont des invocations, mais pas des bulbes :
+	// enracinées, elles ne jouent pas leur tour. Type à part pour que l'IA les distingue.
+	public static final int TYPE_PLANT = 5;
 
 	// Stats constants
 	public final static int STAT_LIFE = 0;
