@@ -359,6 +359,12 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_PROTOTAXITE(441, Type.INT),
 	CHIP_MATURATION(442, Type.INT),
 	CHIP_SUPERINFECTION(443, Type.INT),
+	// Puces des plantes : jamais obtenables, mais l'IA d'une invocation Maïs ou Piment les lance
+	// (même statut que les puces de boss 417-419).
+	CHIP_PIQUANT(444, Type.INT),
+	CHIP_CAPSAICIN(445, Type.INT),
+	CHIP_SUGAR(446, Type.INT),
+	CHIP_POPCORN(447, Type.INT),
 
 	MAP_NEXUS(1, Type.INT),
 	MAP_FACTORY(2, Type.INT),
