@@ -284,6 +284,11 @@ public class TestFightEffects extends FightTestBase {
 		// summonEntity exige que le lanceur soit l'entité courante de l'ordre de jeu
 		var caster = state.getOrder().current();
 		Assert.assertNotNull(caster);
+		// Les PT du poireau de test ne couvrent pas le coût de la puce (8 PT depuis
+		// l'équilibrage du 10/09) : ce test-ci porte sur l'enracinement, pas sur
+		// l'économie de PT.
+		caster.setTP(corn.getCost() + 2);
+		caster.refillTP();
 
 		// Une case à portée de la puce (1-5, cercle) autour du lanceur
 		Cell target = null;

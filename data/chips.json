@@ -3348,7 +3348,7 @@
 				"type": 8
 			}
 		],
-		"cost": 6,
+		"cost": 8,
 		"area": 1,
 		"cooldown": 8,
 		"los": true,
@@ -3376,7 +3376,7 @@
 				"type": 8
 			}
 		],
-		"cost": 6,
+		"cost": 10,
 		"area": 1,
 		"cooldown": 8,
 		"los": true,
@@ -3432,7 +3432,7 @@
 				"type": 8
 			}
 		],
-		"cost": 4,
+		"cost": 6,
 		"area": 1,
 		"cooldown": 3,
 		"los": true,
