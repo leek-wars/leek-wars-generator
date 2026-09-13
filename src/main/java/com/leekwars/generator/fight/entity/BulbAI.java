@@ -28,13 +28,33 @@ public class BulbAI extends EntityAI {
 
 	@Override
 	public Object runIA(Session session) throws LeekRunException {
-		if (mAIFunction != null) {
-			mOwnerAI.mEntity = mEntity;
+		if (mAIFunction == null) {
+			return null;
+		}
+		// La fonction du bulbe est une fermeture de l'IA de l'invocateur : c'est cette
+		// IA-là qui l'exécute, avec mEntity pointé sur le bulbe. Un réveil de plante
+		// se produit AU MILIEU du tour de quelqu'un d'autre — potentiellement de
+		// l'invocateur lui-même, qui vient d'entrer dans la zone de sa propre plante.
+		// Sans cette sauvegarde, il reprendrait la main en croyant être la plante.
+		Entity previous = mOwnerAI.mEntity;
+		mOwnerAI.mEntity = mEntity;
+		try {
 			var argCount = mAIFunction.getArgumentsCount() == -1 ? 0 : mAIFunction.getArgumentsCount();
 			var args = new Object[argCount];
+			// Une fonction sans paramètre reste valide : l'entité déclenchante est
+			// simplement ignorée. Comme partout dans l'API, une entité se passe par son
+			// id, en long.
+			// Éveil : l'entité entrante est le premier argument. Elle est portée par la
+			// plante (setAwakeningTrigger) et pas par cette IA, qui n'est pas celle qui
+			// exécute la fermeture.
+			var trigger = mEntity.getAwakeningTrigger();
+			if (argCount > 0 && trigger != null) {
+				args[0] = (long) trigger.getFId();
+			}
 			return mAIFunction.run(mOwnerAI, null, args);
+		} finally {
+			mOwnerAI.mEntity = previous;
 		}
-		return null;
 	}
 
 	@Override

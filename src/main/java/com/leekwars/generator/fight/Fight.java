@@ -87,6 +87,8 @@ public class Fight {
 
 		this.generator = generator;
 		this.listener = listener;
+		// State sait quand une plante se réveille, Fight sait lancer une IA.
+		this.state.setPlantAwakening(this::runPlantAwakening);
 	}
 
 	public void addFlag(int team, int flag) {
@@ -375,11 +377,18 @@ public class Fight {
 		}
 		// Log.i(TAG, "Start turn of " + current.getName());
 
+		// Son tour recommence : elle peut de nouveau réveiller chaque plante.
+		state.clearPlantTriggers(current);
+
 		current.startTurn();
 
 		if (!current.isDead()) {
 
-			var ai = (EntityAI) current.getAI();
+			// Une plante à zone ne joue pas de tour : elle n'agit qu'à ses réveils. Son
+			// passage dans l'ordre ne sert plus qu'à l'entretien de début de tour, que
+			// current.startTurn() vient de faire — poisons subis, séquelles posées qui
+			// vieillissent. Sans lui, une Capsaïcine empoisonnerait pour toujours.
+			var ai = current.hasAwakening() ? null : (EntityAI) current.getAI();
 			if (ai != null) {
 				if (ai.isValid()) {
 					ai.setEntity(current);
@@ -400,7 +409,7 @@ public class Fight {
 					log(new ActionAIError(current));
 					state.statistics.error(current);
 				}
-			} else {
+			} else if (!current.hasAwakening()) {
 				// Pas d'IA équipée : juste un warning
 				((LeekLog) current.getLogs()).addSystemLog(LeekLog.SWARNING, Error.NO_AI_EQUIPPED);
 			}
@@ -428,6 +437,26 @@ public class Fight {
 		return state.useChip(caster, target, template);
 	}
 
+	/**
+	 * Fait jouer une plante qui se réveille. Même exécution qu'un tour — compteur
+	 * d'opérations remis à zéro et erreurs du joueur attrapées par runTurn — mais
+	 * l'entité qui vient d'entrer dans la zone est passée en argument à la fonction
+	 * confiée au summon().
+	 */
+	private void runPlantAwakening(Entity plant, Entity trigger) {
+
+		if (!(plant.getAI() instanceof BulbAI ai) || !ai.isValid()) {
+			return;
+		}
+		ai.setEntity(plant);
+		long startTime = System.nanoTime();
+		ai.runTurn(getTurn());
+		long endTime = System.nanoTime();
+		state.statistics.addTimes(plant, endTime - startTime, ai.operations());
+		executionTime += endTime - startTime;
+		plant.addOperations(ai.operations());
+	}
+
 	public int summonEntity(Entity caster, Cell target, Chip template, FunctionLeekValue value) {
 		return summonEntity(caster, target, template, value, null);
 	}
@@ -442,6 +471,12 @@ public class Fight {
 			summon.setFight(this);
 			summon.setBirthTurn(getTurn());
 			summon.setAI(new BulbAI(summon, (EntityAI) caster.getAI(), value));
+
+			// Après setAI, sinon la plante réveillée n'aurait rien à exécuter.
+			// Une invocation qui sort de terre dans la zone d'une plante la réveille ;
+			// et une plante qui vient d'être plantée est réveillée par ce qui l'entoure.
+			state.checkPlantTriggers(summon, null, summon.getCell());
+			state.checkPlantPlanted(summon);
 		}
 
 		return result;

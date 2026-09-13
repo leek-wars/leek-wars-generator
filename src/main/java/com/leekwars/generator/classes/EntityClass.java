@@ -49,7 +49,7 @@ public class EntityClass {
 	 *
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
-	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType,
+	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
 	 * the lobby or fixed at fight init regardless of loadout.
@@ -937,6 +937,16 @@ public class EntityClass {
 				return (long) l.getBirthTurn();
 		}
 		return null;
+	}
+
+	/**
+	 * Éveil des plantes : l'entité qui vient d'entrer dans la zone de la plante en train
+	 * de jouer. -1 partout ailleurs — hors d'un réveil, et pour toute entité qui n'est
+	 * pas une plante à zone.
+	 */
+	public static long getPlantTrigger(EntityAI ai) throws LeekRunException {
+		var trigger = ai.getEntity().getAwakeningTrigger();
+		return trigger == null ? -1l : (long) trigger.getFId();
 	}
 
 	public static long getSummoner(EntityAI ai) throws LeekRunException {

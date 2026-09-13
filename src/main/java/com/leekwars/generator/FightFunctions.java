@@ -389,6 +389,10 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		});
+		// Éveil des plantes : entité qui vient d'entrer dans la zone et qui fait jouer la
+		// plante. Même valeur que le premier argument de la fonction confiée au summon(),
+		// pour les IA qui préfèrent la lire que la déclarer. -1 hors d'un réveil.
+		method("getPlantTrigger", "Entity", 15, true, Type.INT, new Type[0]);
 		method("getMobType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),

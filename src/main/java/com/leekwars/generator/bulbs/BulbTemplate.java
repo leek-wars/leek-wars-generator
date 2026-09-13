@@ -52,14 +52,25 @@ public class BulbTemplate {
 	private final int mMinMp;
 	private final int mMaxMp;
 
+	// Rayon de la zone d'Éveil, en cases (distance de Manhattan). 0 = pas de zone,
+	// l'invocation joue son tour comme un bulbe ordinaire. Une plante à zone, elle, ne
+	// joue plus son tour : elle se réveille quand une entité entre dans sa zone
+	// (release/300/eveil_plantes_puces.md). Le Prototaxite est enraciné SANS zone.
+	private final int mZone;
+
 	public BulbTemplate(int id, String name, ArrayNode chips, ObjectNode characteristics) {
-		this(id, name, chips, characteristics, null);
+		this(id, name, chips, characteristics, null, 0);
 	}
 
 	public BulbTemplate(int id, String name, ArrayNode chips, ObjectNode characteristics, ArrayNode states) {
+		this(id, name, chips, characteristics, states, 0);
+	}
+
+	public BulbTemplate(int id, String name, ArrayNode chips, ObjectNode characteristics, ArrayNode states, int zone) {
 
 		mId = id;
 		mName = name;
+		mZone = zone;
 
 		mMinLife = ((ArrayNode) characteristics.get("life")).get(0).intValue();
 		mMaxLife = ((ArrayNode) characteristics.get("life")).get(1).intValue();
@@ -168,6 +179,16 @@ public class BulbTemplate {
 	// besoin d'IA : pas d'avertissement BULB_WITHOUT_AI pour elle (ex. prototaxites).
 	public boolean canAct() {
 		return !mChips.isEmpty() || mMaxTp > 0;
+	}
+
+	public int getZone() {
+		return mZone;
+	}
+
+	// Une plante à zone se joue à l'Éveil et nulle part ailleurs : elle sort de l'ordre
+	// des tours (son IA n'y est jamais lancée) et ses cooldowns se comptent en réveils.
+	public boolean hasAwakening() {
+		return mZone > 0;
 	}
 
 	public int getMinLife() { return mMinLife; }

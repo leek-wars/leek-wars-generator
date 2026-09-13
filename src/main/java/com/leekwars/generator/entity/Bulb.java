@@ -46,6 +46,18 @@ public class Bulb extends Entity {
 		return mTemplate != null && mTemplate.isPlant() ? Entity.TYPE_PLANT : Entity.TYPE_BULB;
 	}
 
+	// Plante à zone d'Éveil : ne joue pas de tour, agit quand une entité entre dans sa zone.
+	// mTemplate est posé juste après le constructeur (createInvocation) : null = bulbe ordinaire.
+	@Override
+	public boolean hasAwakening() {
+		return mTemplate != null && mTemplate.hasAwakening();
+	}
+
+	@Override
+	public int getAwakeningZone() {
+		return mTemplate == null ? 0 : mTemplate.getZone();
+	}
+
 	public static int base(int base, int bonus, double coeff) {
 		return (int) (base + Math.floor(bonus * coeff));
 	}

@@ -111,6 +111,19 @@ public abstract class Entity {
 
 	private Set<EntityState> states = new HashSet<EntityState>();
 
+	// Éveil des plantes : ids des entités qui ont déjà réveillé cette plante. Une entité
+	// n'y figure qu'une fois — elle ne réveille la plante qu'à sa PREMIÈRE entrée dans la
+	// zone —, et son id est retiré au début de son propre tour, pas au tour de combat :
+	// une entité poussée dans la zone pendant le tour d'en face réveille la plante, et
+	// pourra la réveiller encore en y entrant à son tour.
+	private final Set<Integer> awakenedBy = new HashSet<Integer>();
+
+	// Entité qui a déclenché le réveil en cours, le temps que l'IA de la plante tourne.
+	// Portée par l'entité et non par son IA : la fonction confiée au summon() est une
+	// fermeture exécutée par l'IA de l'invocateur, qui ne sait rien de la plante à part
+	// ce que getEntity() lui en dit.
+	private Entity awakeningTrigger = null;
+
 	protected int team;
 
 	public State state;
@@ -798,7 +811,13 @@ public abstract class Entity {
 	// (poisons, ...)
 	public void startTurn() {
 
-		applyCoolDown();
+		// Une plante à zone compte son temps en réveils, jamais en tours : ses cooldowns
+		// sont décrémentés par State.awakePlant(). Le reste de l'entretien de début de
+		// tour la concerne comme n'importe qui — c'est là que les poisons qu'elle subit
+		// s'appliquent et que les séquelles qu'elle a posées vieillissent.
+		if (!hasAwakening()) {
+			applyCoolDown();
+		}
 
 		state.statistics.entityTurn(this);
 
@@ -1012,6 +1031,44 @@ public abstract class Entity {
 
 	public void applyCoolDown() {
 		decrementOrRemove(mCooldown);
+	}
+
+	/** Plante à zone d'Éveil ? Faux pour toute entité qui n'est pas une invocation à zone. */
+	public boolean hasAwakening() {
+		return false;
+	}
+
+	/** Rayon de la zone d'Éveil, 0 si l'entité n'en a pas. */
+	public int getAwakeningZone() {
+		return 0;
+	}
+
+	/** PT rendus à plein : à chaque réveil pour une plante, comme une fin de tour pour les autres. */
+	public void refillTP() {
+		usedTP = 0;
+	}
+
+	/** L'entité a-t-elle déjà réveillé cette plante depuis le début de son dernier tour ? */
+	public boolean wasAwakenedBy(Entity trigger) {
+		return awakenedBy.contains(trigger.getFId());
+	}
+
+	public void markAwakenedBy(Entity trigger) {
+		awakenedBy.add(trigger.getFId());
+	}
+
+	/** Début du tour de `trigger` : elle peut de nouveau réveiller cette plante. */
+	public void forgetAwakenedBy(Entity trigger) {
+		awakenedBy.remove(trigger.getFId());
+	}
+
+	/** Entité qui a réveillé cette plante, pendant que son IA tourne. Nulle sinon. */
+	public Entity getAwakeningTrigger() {
+		return awakeningTrigger;
+	}
+
+	public void setAwakeningTrigger(Entity trigger) {
+		this.awakeningTrigger = trigger;
 	}
 
 	/** Decrement every cooldown by 1; remove entries that reach 0. Shared with Team. */

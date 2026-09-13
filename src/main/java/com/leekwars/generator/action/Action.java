@@ -22,6 +22,7 @@ public interface Action {
 	public final static int STACK_EFFECT = 14;
 	public final static int CHEST_OPENED = 15;
 	public final static int USE_WEAPON = 16;
+	public final static int PLANT_AWAKE = 17;
 
 	// Buffs
 	public final static int LOST_PT = 100;

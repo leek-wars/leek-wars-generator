@@ -21,6 +21,7 @@ import com.leekwars.generator.action.ActionEntityTurn;
 import com.leekwars.generator.action.ActionInvocation;
 import com.leekwars.generator.action.ActionMove;
 import com.leekwars.generator.action.ActionNewTurn;
+import com.leekwars.generator.action.ActionPlantAwake;
 import com.leekwars.generator.action.ActionResurrect;
 import com.leekwars.generator.action.ActionSetWeapon;
 import com.leekwars.generator.action.ActionStartFight;
@@ -40,6 +41,7 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
+import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.statistics.StatisticsManager;
 import com.leekwars.generator.util.RandomGenerator;
 import com.leekwars.generator.weapons.Weapon;
@@ -397,6 +399,38 @@ public class State {
 		return filtered;
 	}
 
+	/**
+	 * Exécution de l'IA d'une plante qui se réveille. State sait QUAND une plante se
+	 * réveille (il est seul à connaître les positions) mais pas COMMENT lancer une IA :
+	 * Fight branche l'implémentation. Non branché — un State manipulé hors combat — le
+	 * réveil se réduit à son effet mécanique, sans IA.
+	 */
+	public interface PlantAwakening {
+		void run(Entity plant, Entity trigger);
+	}
+
+	private PlantAwakening plantAwakening = null;
+
+	// Plante dont l'IA tourne en ce moment. Elle agit hors de son tour : c'est ce champ,
+	// et non l'ordre de jeu, qui l'autorise à lancer ses puces (cf. canAct). Sert aussi
+	// de garde de non-réentrance : un réveil ne peut pas en déclencher un autre.
+	private Entity awakeningPlant = null;
+
+	public void setPlantAwakening(PlantAwakening awakening) {
+		this.plantAwakening = awakening;
+	}
+
+	/**
+	 * L'entité a-t-elle le droit d'agir ? C'est celle dont c'est le tour, ou la plante en
+	 * train de se réveiller — qui joue précisément hors de son tour. Une plante morte
+	 * pendant son propre réveil (renvoi de dégâts) n'agit plus : l'ordre de jeu l'a
+	 * retirée, mais `awakeningPlant` la désigne encore.
+	 */
+	private boolean canAct(Entity entity) {
+		if (order.current() == entity) return true;
+		return awakeningPlant == entity && !entity.isDead();
+	}
+
 	public List<Entity> getAllEntities(boolean get_deads) {
 		// When no team has anyone dead (or deads are wanted), we still need to
 		// concatenate teams — but skip filtering and over-pre-size the dest list.
@@ -653,6 +687,100 @@ public class State {
 		return true;
 	}
 
+	// ----------------- Éveil des plantes (release/300/eveil_plantes_puces.md) -----------------
+
+	/**
+	 * Une entité vient de changer de case : réveille les plantes dont elle ENTRE dans la
+	 * zone. Entrer, c'est arriver à portée alors qu'on n'y était pas — seule la case
+	 * d'arrivée compte, traverser la zone sans s'y arrêter ne réveille personne.
+	 *
+	 * `from` nul = apparition (invocation), donc une entrée quelle que soit la case.
+	 */
+	public void checkPlantTriggers(Entity entity, Cell from, Cell to) {
+
+		if (entity == null || to == null || entity.isDead()) return;
+		// Non-réentrance : les 4 puces de plante ne déplacent personne, aucun réveil ne
+		// peut donc en déclencher un autre. La garde rend la boucle impossible plutôt
+		// que simplement improbable.
+		if (awakeningPlant != null) return;
+
+		for (Entity plant : getAllEntities(false)) {
+			if (plant == entity || !plant.hasAwakening() || plant.isDead()) continue;
+			Cell plantCell = plant.getCell();
+			if (plantCell == null) continue;
+			int zone = plant.getAwakeningZone();
+			if (Pathfinding.getCaseDistance(to, plantCell) > zone) continue;
+			if (from != null && Pathfinding.getCaseDistance(from, plantCell) <= zone) continue;
+			awakePlant(plant, entity);
+		}
+	}
+
+	/**
+	 * Plante qui vient de sortir de terre : les entités déjà dans sa zone la réveillent,
+	 * chacune une fois. Appelé par Fight une fois l'IA de l'invocation accrochée — avant,
+	 * la plante n'aurait rien à exécuter.
+	 */
+	public void checkPlantPlanted(Entity plant) {
+
+		if (plant == null || !plant.hasAwakening() || plant.isDead()) return;
+		if (awakeningPlant != null) return;
+
+		Cell plantCell = plant.getCell();
+		if (plantCell == null) return;
+		int zone = plant.getAwakeningZone();
+
+		for (Entity entity : getAllEntities(false)) {
+			if (entity == plant || entity.isDead() || entity.getCell() == null) continue;
+			if (Pathfinding.getCaseDistance(entity.getCell(), plantCell) > zone) continue;
+			awakePlant(plant, entity);
+		}
+	}
+
+	/**
+	 * Réveil : la plante retrouve tous ses PT, ses cooldowns baissent d'un cran, puis son
+	 * IA joue avec l'entité entrante en argument. Une entité donnée ne réveille une plante
+	 * donnée qu'une fois par tour (cf. Entity.awakenedBy) : entrer, sortir et rentrer dans
+	 * le même tour ne vaut qu'un réveil.
+	 */
+	private void awakePlant(Entity plant, Entity trigger) {
+
+		if (plant.wasAwakenedBy(trigger)) return;
+		plant.markAwakenedBy(trigger);
+
+		actions.log(new ActionPlantAwake(plant, trigger));
+
+		// Le temps d'une plante se compte en réveils : c'est ici, et nulle part ailleurs,
+		// que ses cooldowns tournent (Entity.startTurn les saute pour elle). Une grosse
+		// puce à cooldown 3 revient donc un réveil sur trois, pas un tour sur trois.
+		plant.applyCoolDown();
+		plant.refillTP();
+
+		if (plantAwakening == null) return;
+
+		awakeningPlant = plant;
+		plant.setAwakeningTrigger(trigger);
+		try {
+			plantAwakening.run(plant, trigger);
+		} finally {
+			awakeningPlant = null;
+			plant.setAwakeningTrigger(null);
+		}
+	}
+
+	/**
+	 * Début du tour de `entity` : elle peut de nouveau réveiller chaque plante. Le compteur
+	 * est celui de l'entité et pas celui du combat, sinon une entité poussée dans une zone
+	 * pendant le tour d'en face perdrait son réveil de son propre tour.
+	 */
+	public void clearPlantTriggers(Entity entity) {
+		if (entity == null) return;
+		for (Entity plant : getAllEntities(true)) {
+			if (plant.hasAwakening()) {
+				plant.forgetAwakenedBy(entity);
+			}
+		}
+	}
+
 	public void endTurn() {
 
 		if (isFinished()) {
@@ -720,7 +848,7 @@ public class State {
 
 	public int useWeapon(Entity launcher, Cell target) {
 
-		if (order.current() != launcher || launcher.getWeapon() == null) {
+		if (!canAct(launcher) || launcher.getWeapon() == null) {
 			return Attack.USE_INVALID_TARGET;
 		}
 
@@ -765,7 +893,7 @@ public class State {
 
 	public int useChip(Entity caster, Cell target, Chip template) {
 
-		if (order.current() != caster) {
+		if (!canAct(caster)) {
 			return Attack.USE_INVALID_TARGET;
 		}
 		if (template.getCost() > 0 && template.getCost() > caster.getTP()) {
@@ -831,11 +959,15 @@ public class State {
 			return 0;
 		}
 
+		Cell start = entity.getCell();
+
 		actions.log(new ActionMove(entity, path));
 		statistics.move(entity, entity, entity.getCell(), path);
 
 		entity.useMP(size);
 		this.map.moveEntity(entity, path.get(path.size() - 1));
+
+		checkPlantTriggers(entity, start, entity.getCell());
 
 		return path.size();
 	}
@@ -845,7 +977,9 @@ public class State {
 		if (entity.hasState(EntityState.STATIC)) return; // Static entity cannot move.
 		if (entity.hasState(EntityState.ROOTED)) return; // Rooted entity cannot move.
 
+		Cell start = entity.getCell();
 		this.map.moveEntity(entity, cell);
+		checkPlantTriggers(entity, start, entity.getCell());
 	}
 
 	public void teleportEntity(Entity entity, Cell cell, Entity caster, int itemId) {
@@ -860,6 +994,8 @@ public class State {
 		}
 
 		statistics.teleportation(entity, caster, start, cell, itemId);
+
+		checkPlantTriggers(entity, start, entity.getCell());
 	}
 
 	public void slideEntity(Entity entity, Cell cell, Entity caster) {
@@ -877,6 +1013,8 @@ public class State {
 			statistics.move(caster, entity, start, map.getAStarPath(start, new Cell[] { cell }, Arrays.asList(cell, start)));
 			statistics.slide(entity, caster, start, cell);
 			entity.onMoved(caster);
+
+			checkPlantTriggers(entity, start, entity.getCell());
 		}
 	}
 
@@ -898,6 +1036,12 @@ public class State {
 		// Passifs
 		target.onMoved(caster);
 		caster.onMoved(caster);
+
+		// Les deux entités ont bougé : chacune peut entrer dans la zone d'une plante. Une
+		// plante rempotée par l'Inversion — le seul déplacement qu'un Enraciné subisse —
+		// peut donc atterrir dans la zone d'une autre et la réveiller.
+		checkPlantTriggers(caster, start, caster.getCell());
+		checkPlantTriggers(target, end, target.getCell());
 	}
 
 	public int summonEntity(Entity caster, Cell target, Chip template) {
@@ -907,7 +1051,7 @@ public class State {
 	public int summonEntity(Entity caster, Cell target, Chip template, String name) {
 
 		EffectParameters params = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);
-		if (order.current() != caster || params == null) {
+		if (!canAct(caster) || params == null) {
 			return -1;
 		}
 		if (template.getCost() > caster.getTP()) {
@@ -977,7 +1121,7 @@ public class State {
 
 	public int resurrectEntity(Entity caster, Cell target, Chip template, Entity target_entity, boolean fullLife) {
 
-		if (order.current() != caster) {
+		if (!canAct(caster)) {
 			return Attack.USE_INVALID_TARGET;
 		}
 		if (template.getCost() > caster.getTP()) {

@@ -3506,5 +3506,126 @@
 		"template": 116,
 		"type": 6,
 		"max_uses": -1
+	},
+	"444": {
+		"id": 444,
+		"name": "piquant",
+		"level": 1,
+		"min_range": 1,
+		"max_range": 3,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 1,
+				"value1": 13,
+				"value2": 4,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 1
+			}
+		],
+		"cost": 3,
+		"area": 1,
+		"cooldown": 0,
+		"los": false,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 118,
+		"type": 1,
+		"max_uses": -1
+	},
+	"445": {
+		"id": 445,
+		"name": "capsaicin",
+		"level": 1,
+		"min_range": 0,
+		"max_range": 0,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 1,
+				"value1": 22,
+				"value2": 6,
+				"turns": 0,
+				"targets": 25,
+				"modifiers": 2,
+				"type": 1
+			},
+			{
+				"id": 13,
+				"value1": 10,
+				"value2": 4,
+				"turns": 2,
+				"targets": 25,
+				"modifiers": 0,
+				"type": 6
+			}
+		],
+		"cost": 6,
+		"area": 5,
+		"cooldown": 3,
+		"los": false,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 119,
+		"type": 1,
+		"max_uses": -1
+	},
+	"446": {
+		"id": 446,
+		"name": "sugar",
+		"level": 1,
+		"min_range": 1,
+		"max_range": 3,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 2,
+				"value1": 20,
+				"value2": 6,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 2
+			}
+		],
+		"cost": 3,
+		"area": 1,
+		"cooldown": 0,
+		"los": false,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 120,
+		"type": 2,
+		"max_uses": -1
+	},
+	"447": {
+		"id": 447,
+		"name": "popcorn",
+		"level": 1,
+		"min_range": 0,
+		"max_range": 0,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 2,
+				"value1": 35,
+				"value2": 10,
+				"turns": 0,
+				"targets": 26,
+				"modifiers": 2,
+				"type": 2
+			}
+		],
+		"cost": 6,
+		"area": 5,
+		"cooldown": 3,
+		"los": false,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 121,
+		"type": 2,
+		"max_uses": -1
 	}
 }

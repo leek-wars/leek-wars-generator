@@ -289,7 +289,8 @@ public class Generator {
 				ObjectNode summon = (ObjectNode) entry.getValue();
 				Bulbs.addInvocationTemplate(new BulbTemplate(Integer.parseInt(id), summon.get("name").asString(),
 						(ArrayNode) summon.get("chips"), (ObjectNode) summon.get("characteristics"),
-						summon.has("states") ? (ArrayNode) summon.get("states") : null));
+						summon.has("states") ? (ArrayNode) summon.get("states") : null,
+						summon.has("zone") ? summon.get("zone").intValue() : 0));
 			}
 			Log.end(summons.size() + " summons loaded.");
 		} catch (Exception e) {
