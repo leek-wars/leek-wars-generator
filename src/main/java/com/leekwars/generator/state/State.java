@@ -603,6 +603,9 @@ public class State {
 		actions.log(new ActionEntityTurn(current));
 		// Log.i(TAG, "Start turn of " + current.getName());
 
+		// Son tour recommence : elle peut de nouveau réveiller chaque plante.
+		clearPlantTriggers(current);
+
 		current.startTurn();
 
 		if (!current.isDead()) {
