@@ -424,7 +424,7 @@ public class Fight {
 		// Invocation mais sans IA
 		var summonParams = template.getAttack().getEffectParametersByType(Effect.TYPE_SUMMON);
 		if (summonParams != null) {
-			// Une invocation qui ne peut rien faire (aucune puce, 0 PT — ex. prototaxites)
+			// Une invocation qui ne peut rien faire (aucune puce, 0 PT — ex. prototaxite)
 			// n'a pas besoin d'IA : pas d'avertissement pour elle.
 			var summonTemplate = Bulbs.getInvocationTemplate((int) summonParams.getValue1());
 			if (summonTemplate == null || summonTemplate.canAct()) {

@@ -176,7 +176,7 @@ public class BulbTemplate {
 	}
 
 	// Une invocation qui ne peut rien faire (aucune puce, 0 PT max) n'a pas
-	// besoin d'IA : pas d'avertissement BULB_WITHOUT_AI pour elle (ex. prototaxites).
+	// besoin d'IA : pas d'avertissement BULB_WITHOUT_AI pour elle (ex. prototaxite).
 	public boolean canAct() {
 		return !mChips.isEmpty() || mMaxTp > 0;
 	}
