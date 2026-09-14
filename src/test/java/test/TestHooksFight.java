@@ -320,6 +320,81 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertEquals("100", leek1.getRegister("a"));
 	}
 
+	// ---------- setLoadout : mémoire du dernier combat (#4726) ----------
+
+	@Test
+	public void setLoadoutSameAsLastFightIsFree() throws Exception {
+		// Le poireau a déjà joué son dernier combat avec CETTE répartition : la rejouer ne
+		// coûte rien, même si elle réduit le capital par rapport à ses caractéristiques
+		// persistantes. C'est ce qui rend un lot de dix combats identiques gratuit après le
+		// premier.
+		fight.getState().setRestatPotionsAvailable(0, 1);
+		setLeek1Capital();
+		var last = new HashMap<Integer, Integer>();
+		last.put(Entity.STAT_LIFE, 400);
+		last.put(Entity.STAT_STRENGTH, 50);
+		last.put(Entity.STAT_AGILITY, 150);
+		leek1.setLastFightCapital(last);
+		leek1.addLoadout(capitalLoadout("reroll", 500, 50, 150, 400, 50, 150, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('reroll'); }"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		// Les caractéristiques sont bien celles du loadout, sans potion.
+		Assert.assertEquals("50", leek1.getRegister("s"));
+		Assert.assertNull(fight.getState().getRestatPotionsConsumed().get(0));
+		Assert.assertEquals(1, fight.getState().getRestatPotionsAvailable(0));
+		Assert.assertFalse(leek1.isRestatCharged());
+		Assert.assertEquals(Integer.valueOf(50), leek1.getAppliedLoadoutCapital().get(Entity.STAT_STRENGTH));
+	}
+
+	@Test
+	public void setLoadoutDifferentFromLastFightConsumesPotion() throws Exception {
+		// Le dernier combat s'est joué sur une autre répartition (quelqu'un nous a attaqués
+		// entre-temps et l'IA a posé un autre ensemble) : y revenir repasse à la caisse.
+		fight.getState().setRestatPotionsAvailable(0, 1);
+		setLeek1Capital();
+		var last = new HashMap<Integer, Integer>();
+		last.put(Entity.STAT_LIFE, 400);
+		last.put(Entity.STAT_STRENGTH, 200);
+		last.put(Entity.STAT_AGILITY, 0);
+		leek1.setLastFightCapital(last);
+		leek1.addLoadout(capitalLoadout("reroll", 500, 50, 150, 400, 50, 150, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('reroll'); }"
+			+ "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("50", leek1.getRegister("s"));
+		Assert.assertEquals(Integer.valueOf(1), fight.getState().getRestatPotionsConsumed().get(0));
+		Assert.assertTrue(leek1.isRestatCharged());
+	}
+
+	@Test
+	public void noLoadoutLeavesNoMemory() throws Exception {
+		// Un combat joué sans setLoadout ne mémorise rien : c'est ainsi que la mémoire
+		// s'efface en base et que l'ensemble d'avant redevient payant.
+		setLeek1Capital();
+		attachAI(leek1, "setRegister('s', '' + getStrength());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertNull(leek1.getAppliedLoadoutCapital());
+		Assert.assertFalse(leek1.isRestatCharged());
+	}
+
+	@Test
+	public void setLoadoutWithoutPotionLeavesNoMemory() throws Exception {
+		// Stats refusées faute de potion : le poireau a joué avec les siennes, il ne faut
+		// surtout pas mémoriser l'ensemble — sinon le combat suivant le croirait payé.
+		fight.getState().setRestatPotionsAvailable(0, 0);
+		setLeek1Capital();
+		leek1.addLoadout(capitalLoadout("reroll", 500, 50, 150, 400, 50, 150, false));
+		attachAI(leek1, "function beforeFight() { setLoadout('reroll'); }");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertNull(leek1.getAppliedLoadoutCapital());
+		Assert.assertFalse(leek1.isRestatCharged());
+	}
+
 	@Test
 	public void setLoadoutOverCapitalDoesNotApplyStats() throws Exception {
 		// Loadout conçu pour un poireau bien plus gros : les caractéristiques ne s'appliquent

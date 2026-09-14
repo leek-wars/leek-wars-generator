@@ -41,7 +41,37 @@ public class Outcome {
 
 	public long executionTime = 0;
 
-	/** Potions de restat consommées via setLoadout() pendant le combat, par farmer id. */
+	/**
+	 * Ce que setLoadout() laisse derrière lui, poireau par poireau : la répartition de
+	 * capital avec laquelle le poireau a joué (null = la sienne, celle d'avant le combat)
+	 * et si une potion de restat a été consommée pour y arriver.
+	 *
+	 * Le débit se fait poireau par poireau et non plus par éleveur : c'est la mémoire de
+	 * CE poireau qui décide, et elle rend un lot de combats identiques gratuit après le
+	 * premier.
+	 */
+	public static class LoadoutOutcome {
+		public final int farmer;
+		public final Map<Integer, Integer> capital;
+		public final boolean restatCharged;
+
+		public LoadoutOutcome(int farmer, Map<Integer, Integer> capital, boolean restatCharged) {
+			this.farmer = farmer;
+			this.capital = capital;
+			this.restatCharged = restatCharged;
+		}
+	}
+
+	/** État d'ensemble de chaque poireau joueur à la fin du combat, par id de poireau. */
+	public Map<Integer, LoadoutOutcome> loadouts = new TreeMap<>();
+
+	/**
+	 * Potions consommées par éleveur — l'ancien débit, que `loadouts` remplace.
+	 * Gardé tant que le worker de prod ne lit pas le nouveau champ : le générateur se
+	 * déploie AVANT le serveur, et une version qui ne compile pas contre l'autre casse la
+	 * chaîne de build du worker.
+	 */
+	@Deprecated
 	public Map<Integer, Integer> restatPotionsConsumed = new TreeMap<>();
 
 	public ObjectNode toJson() {

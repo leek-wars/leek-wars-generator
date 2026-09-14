@@ -137,6 +137,18 @@ public abstract class Entity {
 	/** Part des stats de départ issue du capital investi (hors base de niveau, hors composants),
 	 * par stat. null quand l'information n'est pas fournie (scénarios de test). */
 	private Map<Integer, Integer> mCapitalStats = null;
+	/**
+	 * Répartition de capital avec laquelle le poireau a joué son DERNIER combat, quand elle
+	 * venait d'un ensemble posé par setLoadout(). C'est la référence de facturation d'une
+	 * potion : rejouer le même ensemble ne coûte rien, en changer coûte. null = le poireau
+	 * est dans sa configuration persistante, celle de mCapitalStats.
+	 */
+	private Map<Integer, Integer> mLastFightCapital = null;
+	/** Répartition de capital posée par setLoadout() dans CE combat, à mémoriser après lui.
+	 * null = aucune, le poireau a joué avec ses caractéristiques persistantes. */
+	private Map<Integer, Integer> mAppliedLoadoutCapital = null;
+	/** Vrai si ce combat a bien consommé une potion pour poser l'ensemble. */
+	private boolean mRestatCharged = false;
 
 	private int usedTP;
 	private int usedMP;
@@ -377,6 +389,23 @@ public abstract class Entity {
 		mCapitalStats = capitalStats;
 	}
 
+	public void setLastFightCapital(Map<Integer, Integer> capital) {
+		mLastFightCapital = capital;
+	}
+
+	/** Répartition posée par setLoadout() dans ce combat, null si le poireau a gardé la sienne. */
+	public Map<Integer, Integer> getAppliedLoadoutCapital() {
+		return mAppliedLoadoutCapital;
+	}
+
+	public boolean isRestatCharged() {
+		return mRestatCharged;
+	}
+
+	public void setRestatCharged(boolean charged) {
+		mRestatCharged = charged;
+	}
+
 	/** True si au moins une stat finale du loadout diffère des stats actuelles de l'entity. */
 	public boolean loadoutStatsDiffer(FightLoadout loadout) {
 		for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
@@ -391,15 +420,23 @@ public abstract class Entity {
 	 * n'ajoute que des composants, ou qui ne fait qu'investir du capital libre, s'applique
 	 * gratuitement.
 	 *
+	 * La référence n'est pas le capital persistant du poireau mais celui de son DERNIER
+	 * combat (mLastFightCapital) quand il venait déjà d'un ensemble : un poireau qui
+	 * enchaîne dix combats avec le même ensemble ne paie que le premier, alors qu'une
+	 * répartition posée en combat n'est jamais enregistrée et devrait donc se refacturer
+	 * à chaque fois (demande de Pierre, 14/09/2026 : 50 potions parties en 57 combats).
+	 * Changer d'ensemble entre deux combats, ou en revenir, repasse à la caisse.
+	 *
 	 * Sans information de capital (scénarios de test), on retombe sur l'ancien critère :
 	 * toute différence de stat finale.
 	 */
 	public boolean loadoutRequiresRestat(FightLoadout loadout) {
 		var loadoutCapital = loadout.getCapitalStats();
-		if (mCapitalStats == null || loadoutCapital == null) {
+		var current = mLastFightCapital != null ? mLastFightCapital : mCapitalStats;
+		if (current == null || loadoutCapital == null) {
 			return loadoutStatsDiffer(loadout);
 		}
-		for (Map.Entry<Integer, Integer> e : mCapitalStats.entrySet()) {
+		for (Map.Entry<Integer, Integer> e : current.entrySet()) {
 			if (loadoutCapital.getOrDefault(e.getKey(), 0) < e.getValue()) return true;
 		}
 		return false;
@@ -424,6 +461,10 @@ public abstract class Entity {
 			for (Map.Entry<Integer, Integer> e : loadout.getStats().entrySet()) {
 				mBaseStats.setStat(e.getKey(), e.getValue());
 			}
+			// Répartition à mémoriser après le combat : c'est elle que le combat SUIVANT
+			// comparera pour savoir s'il doit une potion. Sans information de capital
+			// (scénarios de test), rien à mémoriser.
+			mAppliedLoadoutCapital = loadout.getCapitalStats();
 		} else if (mCapitalStats != null && loadout.getCapitalStats() != null) {
 			// Capital inchangé (pas de restat), mais les composants du loadout s'équipent
 			// quand même : stat = base de niveau + composants du loadout + capital actuel.

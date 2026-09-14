@@ -198,6 +198,15 @@ public class Generator {
 			outcome.duration = fight.getState().getDuration();
 			outcome.statistics = statisticsManager;
 			outcome.restatPotionsConsumed.putAll(fight.getState().getRestatPotionsConsumed());
+			// Mémoire d'ensemble de chaque poireau joueur : ce qu'il a joué, et s'il a payé.
+			// Les poireaux qui n'ont rien posé y figurent AUSSI, avec un capital null : c'est
+			// ainsi qu'un combat joué sans setLoadout efface la mémoire, et que revenir à
+			// l'ensemble d'avant coûte de nouveau une potion.
+			for (var entity : fight.getState().getEntities().values()) {
+				if (entity.isSummon() || entity.getFarmer() <= 0 || entity.getType() != com.leekwars.generator.state.Entity.TYPE_LEEK) continue;
+				outcome.loadouts.put(entity.getId(), new Outcome.LoadoutOutcome(
+					entity.getFarmer(), entity.getAppliedLoadoutCapital(), entity.isRestatCharged()));
+			}
 			for (var entity : fight.getState().getEntities().values()) {
 				if (entity.getAI() != null) {
 					outcome.analyzeTime += ((EntityAI) entity.getAI()).getAnalyzeTime();

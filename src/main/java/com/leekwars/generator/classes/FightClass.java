@@ -1361,10 +1361,17 @@ public class FightClass {
 			applyStats = false;
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_ENOUGH_CAPITAL,
 				new String[] { name });
-		} else if (applyStats && entity.loadoutRequiresRestat(loadout) && !ai.getFight().getState().consumeRestatPotion(farmerId)) {
-			applyStats = false;
-			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_NO_RESTAT_POTION,
-				new String[] { name });
+		} else if (applyStats && entity.loadoutRequiresRestat(loadout)) {
+			// Une potion est due : le poireau ne joue pas la même répartition qu'à son
+			// dernier combat. Sans stock, l'équipement s'applique quand même mais les
+			// caractéristiques restent celles du poireau.
+			if (ai.getFight().getState().consumeRestatPotion(farmerId)) {
+				entity.setRestatCharged(true);
+			} else {
+				applyStats = false;
+				ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_NO_RESTAT_POTION,
+					new String[] { name });
+			}
 		}
 		var result = entity.applyLoadout(loadout, reservedForgotten, applyStats);
 		if (result.noForgottenAvailable) {

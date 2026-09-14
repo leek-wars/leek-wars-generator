@@ -61,6 +61,10 @@ public class EntityInfo {
 	/** Entity.STAT_* → bonus apporté par le capital investi (hors base de niveau et hors
 	 * composants). Null quand l'information n'est pas fournie. */
 	public Map<Integer, Integer> capitalStats;
+	/** Répartition de capital du DERNIER combat du poireau, quand elle venait d'un
+	 * setLoadout() : référence de facturation d'une potion de restat (#4726). Null = le
+	 * poireau est dans sa configuration persistante. */
+	public Map<Integer, Integer> lastFightCapital;
 	public Integer cell;
 
 	public static class LoadoutData {
@@ -209,6 +213,13 @@ public class EntityInfo {
 				capitalStats.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
 			}
 		}
+		ObjectNode lastCapital = (ObjectNode) e.get("last_fight_capital");
+		if (lastCapital != null) {
+			lastFightCapital = new HashMap<>();
+			for (var entry : lastCapital.properties()) {
+				lastFightCapital.put(Integer.parseInt(entry.getKey()), entry.getValue().intValue());
+			}
+		}
 	}
 
 	public Entity createEntity(Generator generator, Scenario scenario, Fight fight) {
@@ -273,6 +284,7 @@ public class EntityInfo {
 			entity.addLoadout(new FightLoadout(ld.name, ld.weapons, ld.forgottenWeapons, ld.chips, ld.stats, ld.capitalStats, ld.overCapital));
 		}
 		entity.setCapitalStats(capitalStats);
+		entity.setLastFightCapital(lastFightCapital);
 
 		return entity;
 	}
@@ -351,6 +363,13 @@ public class EntityInfo {
 				capital.put(String.valueOf(entry.getKey()), entry.getValue());
 			}
 			json.set("capital_stats", capital);
+		}
+		if (lastFightCapital != null) {
+			ObjectNode lastCapital = Json.createObject();
+			for (var entry : lastFightCapital.entrySet()) {
+				lastCapital.put(String.valueOf(entry.getKey()), entry.getValue());
+			}
+			json.set("last_fight_capital", lastCapital);
 		}
 		return json;
 	}
