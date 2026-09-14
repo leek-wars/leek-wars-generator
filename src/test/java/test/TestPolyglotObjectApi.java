@@ -119,6 +119,20 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	@Test
+	public void awakeningZoneReadableInBothLanguages() throws Exception {
+		// La zone d'Éveil se lit sur n'importe quelle entité, et pas seulement sur une plante :
+		// 0 pour un poireau, qui joue son tour. Le rayon d'une plante à zone est vérifié en
+		// LeekScript par TestPlantAwakeningFight.
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(0L, ((Number) eval(sb, "me.awakeningZone;")).longValue());
+			Assert.assertEquals(0L, ((Number) eval(sb, "Fight.getNearestEnemy().awakeningZone;")).longValue());
+			Assert.assertEquals(0L, ((Number) evalPy(sb, "me.awakeningZone")).longValue());
+			Assert.assertEquals(0L, ((Number) evalPy(sb, "Fight.getNearestEnemy().awakeningZone")).longValue());
+		}
+	}
+
+	@Test
 	public void fightBatchedReadableInBothLanguages() throws Exception {
 		// #4779 : le drapeau de lot se lit sur Fight.batched, dans les deux langages. Faux par
 		// defaut ; on le pose ensuite pour verifier que la propriete lit bien l'etat du combat
