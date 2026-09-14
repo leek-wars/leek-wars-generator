@@ -694,8 +694,10 @@ public class State {
 
 	/**
 	 * Une entité vient de changer de case : réveille les plantes dont elle ENTRE dans la
-	 * zone. Entrer, c'est arriver à portée alors qu'on n'y était pas — seule la case
-	 * d'arrivée compte, traverser la zone sans s'y arrêter ne réveille personne.
+	 * zone. Entrer, c'est arriver à portée alors qu'on n'y était pas — le test porte sur
+	 * UN PAS, pas sur un déplacement entier : marcher dans la zone suffit à réveiller la
+	 * plante, sans s'y arrêter, donc `moveEntity` appelle cette méthode sur chaque case
+	 * d'entrée du chemin et `checkPlantTriggersAlong` sur chaque case d'une glissade.
 	 *
 	 * `from` nul = apparition (invocation), donc une entrée quelle que soit la case.
 	 */
@@ -716,6 +718,83 @@ public class State {
 			if (from != null && Pathfinding.getCaseDistance(from, plantCell) <= zone) continue;
 			awakePlant(plant, entity);
 		}
+	}
+
+	/**
+	 * Déplacement en ligne droite subi (poussée, attraction, répulsion) : chaque case
+	 * franchie compte, comme pour la marche. Contrairement à la marche on ne découpe pas
+	 * le mouvement — une glissade fait une poignée de cases, l'entité finit presque
+	 * toujours à portée de la zone qu'elle vient de traverser, et la plante répond une
+	 * fois l'entité posée.
+	 */
+	public void checkPlantTriggersAlong(Entity entity, Cell start, Cell end) {
+
+		if (entity == null || start == null || end == null || start == end) return;
+
+		// Même pas que getPushLastAvailableCell : une glissade avance d'une case à la fois
+		// dans la direction du signe des deltas. La ligne est refaite en entier AVANT de
+		// réveiller quoi que ce soit — si elle ne tombe pas pile sur la case d'arrivée,
+		// c'est que ce déplacement n'était pas une glissade et que les cases visitées ne
+		// veulent rien dire : on retombe alors sur la seule case d'arrivée.
+		int dx = (int) Math.signum(end.getX() - start.getX());
+		int dy = (int) Math.signum(end.getY() - start.getY());
+
+		List<Cell> line = new ArrayList<Cell>();
+		Cell current = start;
+		for (int i = Pathfinding.getCaseDistance(start, end); i > 0 && current != end; --i) {
+			current = current.next(map, dx, dy);
+			if (current == null) break;
+			line.add(current);
+		}
+		if (current != end) {
+			checkPlantTriggers(entity, start, end);
+			return;
+		}
+
+		Cell from = start;
+		for (Cell to : line) {
+			checkPlantTriggers(entity, from, to);
+			from = to;
+		}
+	}
+
+	/**
+	 * Les plantes à zone encore vivantes, ou null s'il n'y en a aucune — le cas courant,
+	 * où le découpage du chemin par `moveEntity` ne doit rien coûter.
+	 */
+	private List<Entity> getAwakeningPlants(Entity except) {
+
+		if (awakeningPlant != null) return null;
+
+		List<Entity> plants = null;
+		for (Entity plant : getAllEntities(false)) {
+			if (plant == except || !plant.hasAwakening() || plant.isDead()) continue;
+			if (plant.getCell() == null) continue;
+			if (plants == null) plants = new ArrayList<Entity>(2);
+			plants.add(plant);
+		}
+		return plants;
+	}
+
+	/**
+	 * Ce pas du chemin fait-il entrer dans la zone d'une plante qui va se réveiller ? Sert
+	 * à savoir où couper un déplacement. Une plante déjà réveillée par cette entité dans
+	 * le tour ne rejouera pas : inutile de couper le chemin pour elle.
+	 */
+	private boolean entersAwakeningZone(List<Entity> plants, Entity entity, Cell from, Cell to) {
+
+		if (plants == null || from == null || to == null) return false;
+
+		for (Entity plant : plants) {
+			Cell plantCell = plant.getCell();
+			if (plantCell == null || plant.isDead()) continue;
+			int zone = plant.getAwakeningZone();
+			if (Pathfinding.getCaseDistance(to, plantCell) > zone) continue;
+			if (Pathfinding.getCaseDistance(from, plantCell) <= zone) continue;
+			if (plant.wasAwakenedBy(entity)) continue;
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -964,15 +1043,38 @@ public class State {
 
 		Cell start = entity.getCell();
 
-		actions.log(new ActionMove(entity, path));
-		statistics.move(entity, entity, entity.getCell(), path);
-
+		// Les PM sont payés pour le chemin demandé : le découpage qui suit est une
+		// question de chronologie, pas de distance.
 		entity.useMP(size);
-		this.map.moveEntity(entity, path.get(path.size() - 1));
 
-		checkPlantTriggers(entity, start, entity.getCell());
+		// Marcher dans la zone d'une plante la réveille, même sans s'y arrêter. Le chemin
+		// est donc coupé sur chaque case d'entrée, pour que la plante frappe le passant là
+		// où il passe et non depuis son point d'arrivée, souvent hors de portée. Sans
+		// plante à traverser — le cas courant — la boucle ne s'arrête qu'à la dernière
+		// case et le déplacement reste un seul ActionMove.
+		List<Entity> plants = getAwakeningPlants(entity);
 
-		return path.size();
+		int done = 0;
+		for (int i = 0; i < size; ++i) {
+
+			Cell from = i == 0 ? start : path.get(i - 1);
+			Cell to = path.get(i);
+			if (i < size - 1 && !entersAwakeningZone(plants, entity, from, to)) continue;
+
+			List<Cell> step = new ArrayList<Cell>(path.subList(done, i + 1));
+			actions.log(new ActionMove(entity, step));
+			statistics.move(entity, entity, done == 0 ? start : path.get(done - 1), step);
+			this.map.moveEntity(entity, to);
+			done = i + 1;
+
+			checkPlantTriggers(entity, from, to);
+
+			// Guet-apens : une plante qui tue le passant arrête son déplacement net. Les
+			// PM sont perdus, mais la distance comptée est bien celle parcourue.
+			if (entity.isDead()) return done;
+		}
+
+		return size;
 	}
 
 	public void moveEntity(Entity entity, Cell cell) {
@@ -1017,7 +1119,7 @@ public class State {
 			statistics.slide(entity, caster, start, cell);
 			entity.onMoved(caster);
 
-			checkPlantTriggers(entity, start, entity.getCell());
+			checkPlantTriggersAlong(entity, start, entity.getCell());
 		}
 	}
 

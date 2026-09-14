@@ -6,6 +6,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.action.Action;
+import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.leek.Leek;
@@ -18,9 +20,9 @@ import com.leekwars.generator.state.State;
  * Éveil des plantes (release/300/eveil_plantes_puces.md).
  *
  * Le Maïs et le Piment ne jouent pas de tour : ils se réveillent quand une entité entre
- * dans leur losange de rayon 3. Ces tests portent sur la mécanique elle-même — qui
- * réveille, quand, combien de fois — et sur ce que le réveil rend à la plante (PT pleins,
- * cooldowns d'un cran). L'IA n'est pas lancée : le callback d'exécution est remplacé par
+ * dans leur losange de rayon 3 — y entrer suffit, s'y arrêter n'est pas nécessaire. Ces
+ * tests portent sur la mécanique elle-même — qui réveille, quand, combien de fois — et sur
+ * ce que le réveil rend à la plante (PT pleins, cooldowns d'un cran). L'IA n'est pas lancée : le callback d'exécution est remplacé par
  * un enregistreur, ce qui laisse voir les réveils un par un.
  */
 public class TestPlantAwakening extends FightTestBase {
@@ -40,6 +42,12 @@ public class TestPlantAwakening extends FightTestBase {
 	/** Réveils observés, dans l'ordre : « idPlante:idDéclencheur ». */
 	private final List<String> awakenings = new ArrayList<>();
 
+	/**
+	 * Case du déclencheur au moment où la plante joue. C'est de là qu'elle le vise : un
+	 * passant réveille la plante sur sa case d'entrée, pas depuis son point d'arrivée.
+	 */
+	private final List<Cell> triggerCells = new ArrayList<>();
+
 	@Override
 	protected void createLeeks() {
 		leek1 = defaultLeek(1, "A");
@@ -51,7 +59,10 @@ public class TestPlantAwakening extends FightTestBase {
 	private State start() throws Exception {
 		initFightOnly();
 		State state = fight.getState();
-		state.setPlantAwakening((plant, trigger) -> awakenings.add(plant.getFId() + ":" + trigger.getFId()));
+		state.setPlantAwakening((plant, trigger) -> {
+			awakenings.add(plant.getFId() + ":" + trigger.getFId());
+			triggerCells.add(trigger.getCell());
+		});
 		return state;
 	}
 
@@ -75,10 +86,49 @@ public class TestPlantAwakening extends FightTestBase {
 
 	/** Plante posée sur une case libre, loin des poireaux. */
 	private Entity plant(State state, int template) {
-		Cell cell = freeCell(state);
+		return plant(state, template, freeCell(state));
+	}
+
+	private Entity plant(State state, int template, Cell cell) {
 		Entity plant = state.createSummon(leek1, template, cell, 100, false);
 		Assert.assertNotNull(plant);
 		return plant;
+	}
+
+	/**
+	 * Nombre de déplacements déjà écrits dans le rapport pour cette entité. Un chemin coupé
+	 * par un réveil en vaut deux : c'est ce que le client rejouera.
+	 */
+	private int countMoves(State state, Entity entity) {
+		int moves = 0;
+		for (var action : state.getActions().toJSON().get("actions")) {
+			if (action.get(0).asInt() == Action.MOVE_TO && action.get(1).asInt() == entity.getFId()) {
+				moves++;
+			}
+		}
+		return moves;
+	}
+
+	/**
+	 * Une ligne droite de 9 cases libres, avec une plante posée à 3 cases de son milieu :
+	 * la ligne entre dans la zone en son milieu seulement, ses deux bouts sont à 7 cases.
+	 * C'est le décor d'une poussée qui traverse la zone de part en part.
+	 */
+	private List<Cell> straightLineAcross(State state, int template, Entity[] plantOut) {
+		for (Cell middle : state.getMap().getCells()) {
+			Cell plantCell = state.getMap().getCell(middle.getX(), middle.getY() + 3);
+			if (plantCell == null || !plantCell.available(state.getMap())) continue;
+			List<Cell> line = new ArrayList<>();
+			for (int k = -4; k <= 4; ++k) {
+				Cell cell = state.getMap().getCell(middle.getX() + k, middle.getY());
+				if (cell == null || !cell.available(state.getMap())) { line = null; break; }
+				line.add(cell);
+			}
+			if (line == null) continue;
+			plantOut[0] = plant(state, template, plantCell);
+			return line;
+		}
+		throw new IllegalStateException("aucune ligne droite libre de 9 cases sur cette carte");
 	}
 
 	/** Pose une entité sur une case sans passer par les déclencheurs (mise en place). */
@@ -116,16 +166,96 @@ public class TestPlantAwakening extends FightTestBase {
 	}
 
 	@Test
-	public void traverserLaZoneSansSyArreterNeReveillePas() throws Exception {
+	public void traverserLaZoneReveilleLaPlante() throws Exception {
 		State state = start();
 		Entity plant = plant(state, CHILLI_PEPPER);
-		Cell start = freeCellAt(state, plant.getCell(), 5);
-		Cell end = freeCellAt(state, plant.getCell(), 4);
-		put(state, leek2, start);
+		Cell outside = freeCellAt(state, plant.getCell(), 5);
+		Cell inside = freeCellAt(state, plant.getCell(), 3);
+		Cell away = freeCellAt(state, plant.getCell(), 6);
+		put(state, leek2, outside);
 
-		// Seule la case d'arrivée compte : le moteur ne découpe pas le chemin. Départ et
-		// arrivée hors zone, quel que soit le trajet entre les deux.
-		state.checkPlantTriggers(leek2, start, end);
+		// Marcher dans la zone suffit : le chemin y entre puis en ressort, la plante se
+		// réveille quand même.
+		state.moveEntity(leek2, List.of(inside, away));
+
+		Assert.assertEquals(List.of(plant.getFId() + ":" + leek2.getFId()), awakenings);
+		Assert.assertEquals(away, leek2.getCell());
+	}
+
+	@Test
+	public void laPlanteJoueDepuisLaCaseDEntreeEtNonDArrivee() throws Exception {
+		State state = start();
+		Entity plant = plant(state, CHILLI_PEPPER);
+		Cell inside = freeCellAt(state, plant.getCell(), 3);
+		Cell away = freeCellAt(state, plant.getCell(), 6);
+		put(state, leek2, freeCellAt(state, plant.getCell(), 5));
+
+		state.moveEntity(leek2, List.of(inside, away));
+
+		// Tout l'intérêt du découpage : le passant est encore à portée des puces de la
+		// plante (1 à 3) quand elle riposte. Depuis sa case d'arrivée, à 6, elle tirerait
+		// dans le vide.
+		Assert.assertEquals(List.of(inside), triggerCells);
+	}
+
+	@Test
+	public void leCheminEstCoupeSurLaCaseDEntree() throws Exception {
+		State state = start();
+		Entity plant = plant(state, CHILLI_PEPPER);
+		Cell inside = freeCellAt(state, plant.getCell(), 3);
+		Cell away = freeCellAt(state, plant.getCell(), 6);
+		put(state, leek2, freeCellAt(state, plant.getCell(), 5));
+
+		int before = countMoves(state, leek2);
+		Assert.assertEquals(2, state.moveEntity(leek2, List.of(inside, away)));
+
+		// Deux ActionMove dans le rapport : jusqu'à la zone, puis le reste du chemin.
+		Assert.assertEquals(2, countMoves(state, leek2) - before);
+	}
+
+	@Test
+	public void unCheminQuiNentrePasDansLaZoneResteDUnSeulTenant() throws Exception {
+		State state = start();
+		Entity plant = plant(state, CHILLI_PEPPER);
+		Cell step = freeCellAt(state, plant.getCell(), 5);
+		Cell end = freeCellAt(state, plant.getCell(), 4);
+		put(state, leek2, freeCellAt(state, plant.getCell(), 6));
+
+		int before = countMoves(state, leek2);
+		state.moveEntity(leek2, List.of(step, end));
+
+		Assert.assertEquals(List.of(), awakenings);
+		Assert.assertEquals(1, countMoves(state, leek2) - before);
+	}
+
+	@Test
+	public void laPlanteQuiTueLePassantArreteSonDeplacement() throws Exception {
+		State state = start();
+		Entity plant = plant(state, CHILLI_PEPPER);
+		state.setPlantAwakening((p, trigger) -> {
+			awakenings.add(p.getFId() + ":" + trigger.getFId());
+			trigger.removeLife(trigger.getLife(), 0, p, DamageType.DIRECT, null, null);
+		});
+		Cell inside = freeCellAt(state, plant.getCell(), 3);
+		Cell away = freeCellAt(state, plant.getCell(), 6);
+		put(state, leek2, freeCellAt(state, plant.getCell(), 5));
+
+		int before = countMoves(state, leek2);
+
+		// Guet-apens : le passant ne finit pas son chemin.
+		Assert.assertEquals(1, state.moveEntity(leek2, List.of(inside, away)));
+		Assert.assertTrue(leek2.isDead());
+		Assert.assertEquals(1, countMoves(state, leek2) - before);
+	}
+
+	@Test
+	public void uneEntiteDejaDansLaZoneQuiSyPromeneNeReveillePas() throws Exception {
+		State state = start();
+		Entity plant = plant(state, CHILLI_PEPPER);
+		put(state, leek2, freeCellAt(state, plant.getCell(), 3));
+
+		// Elle n'entre pas : elle y était déjà au début de son tour.
+		state.moveEntity(leek2, List.of(freeCellAt(state, plant.getCell(), 2), freeCellAt(state, plant.getCell(), 1)));
 
 		Assert.assertEquals(List.of(), awakenings);
 	}
@@ -198,6 +328,41 @@ public class TestPlantAwakening extends FightTestBase {
 		state.slideEntity(leek2, freeCellAt(state, plant.getCell(), 3), leek1);
 
 		Assert.assertEquals(1, awakenings.size());
+	}
+
+	@Test
+	public void laPousseeATraversLaZoneReveille() throws Exception {
+		State state = start();
+		Entity[] plantOut = new Entity[1];
+		List<Cell> line = straightLineAcross(state, CHILLI_PEPPER, plantOut);
+		Entity plant = plantOut[0];
+		Cell from = line.get(0);
+		Cell to = line.get(line.size() - 1);
+		put(state, leek2, from);
+
+		// Les deux bouts de la glissade sont à 7 cases de la plante : seule la case du
+		// milieu, franchie au passage, est dans la zone.
+		Assert.assertTrue(Pathfinding.getCaseDistance(from, plant.getCell()) > 3);
+		Assert.assertTrue(Pathfinding.getCaseDistance(to, plant.getCell()) > 3);
+
+		state.slideEntity(leek2, to, leek1);
+
+		Assert.assertEquals(List.of(plant.getFId() + ":" + leek2.getFId()), awakenings);
+		// La glissade, elle, n'est pas découpée : la plante répond l'entité posée.
+		Assert.assertEquals(to, leek2.getCell());
+	}
+
+	@Test
+	public void laTeleportationNeReveilleQueSurLaCaseDArrivee() throws Exception {
+		State state = start();
+		Entity[] plantOut = new Entity[1];
+		List<Cell> line = straightLineAcross(state, CHILLI_PEPPER, plantOut);
+		put(state, leek2, line.get(0));
+
+		// Une téléportation ne traverse rien : elle saute par-dessus la zone.
+		state.teleportEntity(leek2, line.get(line.size() - 1), leek1, 0);
+
+		Assert.assertEquals(List.of(), awakenings);
 	}
 
 	@Test
