@@ -3,6 +3,8 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.action.Action;
+import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.bulbs.Bulbs;
 import com.leekwars.generator.chips.Chips;
@@ -136,6 +138,60 @@ public class TestFightEffects extends FightTestBase {
 		applyEffect(Effect.TYPE_VITALITY, 5, 200, leek1, leek1, false);
 		Assert.assertTrue("Vitality should increase total life: " + before + " → " + leek1.getTotalLife(),
 			leek1.getTotalLife() > before);
+	}
+
+	/**
+	 * « Non soignable » bloque le soin de la Vitalité, pas son agrandissement de la
+	 * jauge. C'était le dernier gain de vie courante à traverser l'état.
+	 */
+	@Test
+	public void vitalityOnUnhealableTargetRaisesTotalLifeWithoutHealing() throws Exception {
+		initFightOnly();
+		leek1.removeLife(200, 0, leek2, DamageType.DIRECT, null, null);
+		int totalBefore = leek1.getTotalLife();
+		int lifeBefore = leek1.getLife();
+		applyState(EntityState.UNHEALABLE, leek1, leek2, false, Effect.MODIFIER_IRREDUCTIBLE);
+		applyEffect(Effect.TYPE_VITALITY, 5, 200, leek1, leek1, false);
+		Assert.assertTrue("La vie max augmente quand même : " + totalBefore + " → " + leek1.getTotalLife(),
+			leek1.getTotalLife() > totalBefore);
+		Assert.assertEquals("Aucun PV rendu à une cible non soignable", lifeBefore, leek1.getLife());
+	}
+
+	/** L'action écrite est celle d'une Nova Vitalité : le client la rejoue sans toucher à la vie. */
+	@Test
+	public void vitalityOnUnhealableTargetLogsNovaVitality() throws Exception {
+		initFightOnly();
+		leek1.removeLife(200, 0, leek2, DamageType.DIRECT, null, null);
+		applyState(EntityState.UNHEALABLE, leek1, leek2, false, Effect.MODIFIER_IRREDUCTIBLE);
+		applyEffect(Effect.TYPE_VITALITY, 5, 200, leek1, leek1, false);
+		Assert.assertEquals("La vie max sans le soin, c'est une Nova Vitalité",
+			1, countActions(Action.NOVA_VITALITY, leek1));
+		Assert.assertEquals("Pas d'action VITALITY, que le client rejouerait en ajoutant de la vie",
+			0, countActions(Action.VITALITY, leek1));
+	}
+
+	/** Sans l'état, la Vitalité soigne toujours autant qu'elle agrandit. */
+	@Test
+	public void vitalityHealsWithoutTheUnhealableState() throws Exception {
+		initFightOnly();
+		leek1.removeLife(200, 0, leek2, DamageType.DIRECT, null, null);
+		int lifeBefore = leek1.getLife();
+		applyEffect(Effect.TYPE_VITALITY, 5, 200, leek1, leek1, false);
+		Assert.assertTrue("La Vitalité rend des PV : " + lifeBefore + " → " + leek1.getLife(),
+			leek1.getLife() > lifeBefore);
+		Assert.assertEquals("Et elle écrit bien une action VITALITY",
+			1, countActions(Action.VITALITY, leek1));
+	}
+
+	/** Nombre d'actions d'un type déjà écrites dans le rapport pour cette entité. */
+	private int countActions(int type, Leek entity) {
+		int count = 0;
+		for (var action : fight.getState().getActions().toJSON().get("actions")) {
+			if (action.get(0).asInt() == type && action.get(1).asInt() == entity.getFId()) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	// ---------- Stacking behavior ----------
