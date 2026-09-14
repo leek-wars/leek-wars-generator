@@ -423,6 +423,10 @@ def _lw_build(G, NAMES):
         def birthTurn(self): return F.getBirthTurn(self.id)
         @property
         def turnOrder(self): return F.getEntityTurnOrder(self.id)
+        # Rayon de la zone d'Eveil, en cases : 0 pour une entite qui joue son tour, 3 pour
+        # une plante a zone (Mais, Piment), qui elle ne joue qu'aux entrees dans sa zone.
+        @property
+        def awakeningZone(self): return F.getAwakeningZone(self.id)
         @property
         def side(self): return F.getSide(self.id)
         @property

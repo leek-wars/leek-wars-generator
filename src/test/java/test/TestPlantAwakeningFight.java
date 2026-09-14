@@ -30,12 +30,15 @@ public class TestPlantAwakeningFight extends FightTestBase {
 		fight.getState().addEntity(1, leek2);
 	}
 
-	@Test
-	public void lInvocateurDansLaZoneReveilleSaPlanteEtLaFonctionRecoitSonId() throws Exception {
+	/**
+	 * IA qui plante un Piment sur une case libre voisine, une fois pour le combat, et lui
+	 * confie `awakening` comme corps de fonction d'Éveil. `globals` est posé au premier
+	 * niveau, avant la plantation.
+	 */
+	private static String summonChilliNextToMe(String globals, String awakening) {
 		// Code au premier niveau, rejoué à chaque tour : c'est ainsi qu'une IA Leek Wars
 		// s'écrit, `global` est ce qui survit d'un tour à l'autre.
-		attachAI(leek1, ""
-			+ "global awakenings = 0;"
+		return globals
 			+ "global planted = false;"
 			+ "if (!planted) {"
 			+ "  var x = getCellX(getCell());"
@@ -45,18 +48,22 @@ public class TestPlantAwakeningFight extends FightTestBase {
 			+ "    var c = candidates[i];"
 			+ "    if (c != null && isEmptyCell(c)) {"
 			+ "      planted = true;"
-			+ "      var r = summon(CHIP_CHILLI_PEPPER, c, function(e) {"
-			+ "        awakenings = awakenings + 1;"
-			+ "        setRegister('trigger', '' + e);"
-			+ "        setRegister('same_as_getter', getPlantTrigger() == e ? 'yes' : 'no');"
-			+ "        setRegister('awakenings', '' + awakenings);"
-			+ "        setRegister('plant_tp', '' + getTP());"
-			+ "      });"
+			+ "      var r = summon(CHIP_CHILLI_PEPPER, c, function(e) {" + awakening + "});"
 			+ "      setRegister('summon_result', '' + r);"
 			+ "      break;"
 			+ "    }"
 			+ "  }"
-			+ "}");
+			+ "}";
+	}
+
+	@Test
+	public void lInvocateurDansLaZoneReveilleSaPlanteEtLaFonctionRecoitSonId() throws Exception {
+		attachAI(leek1, summonChilliNextToMe("global awakenings = 0;", ""
+			+ "awakenings = awakenings + 1;"
+			+ "setRegister('trigger', '' + e);"
+			+ "setRegister('same_as_getter', getPlantTrigger() == e ? 'yes' : 'no');"
+			+ "setRegister('awakenings', '' + awakenings);"
+			+ "setRegister('plant_tp', '' + getTP());"));
 		attachAI(leek2, "");
 		runFight();
 
@@ -70,5 +77,26 @@ public class TestPlantAwakeningFight extends FightTestBase {
 		// Les PT sont rendus à plein au réveil : la plante en a au moins de quoi lancer
 		// sa petite puce.
 		Assert.assertTrue("PT rendus au réveil", Integer.parseInt(leek1.getRegister("plant_tp")) >= 3);
+	}
+
+	/**
+	 * getAwakeningZone() répond à la question « cette entité joue-t-elle un tour ? » :
+	 * 0 pour tout le monde, le rayon de la zone pour une plante qui attend qu'on entre.
+	 */
+	@Test
+	public void laZoneDEveilSeLitSurSoiCommeSurUneAutreEntite() throws Exception {
+		attachAI(leek1, summonChilliNextToMe("", ""
+			// Ici `me` est la plante : sa zone sur elle-même, et celle de l'entité entrante.
+			+ "setRegister('plant_zone', '' + getAwakeningZone());"
+			+ "setRegister('trigger_zone', '' + getAwakeningZone(e));"
+			+ "setRegister('plant_zone_by_id', '' + getAwakeningZone(getEntity()));"));
+		attachAI(leek2, "setRegister('my_zone', '' + getAwakeningZone());");
+		runFight();
+
+		Assert.assertEquals("l'invocation a réussi", "1", leek1.getRegister("summon_result"));
+		Assert.assertEquals("le Piment a une zone de rayon 3", "3", leek1.getRegister("plant_zone"));
+		Assert.assertEquals("la même zone, lue par id", "3", leek1.getRegister("plant_zone_by_id"));
+		Assert.assertEquals("l'entité qui l'a réveillée, elle, joue son tour", "0", leek1.getRegister("trigger_zone"));
+		Assert.assertEquals("un poireau n'a pas de zone", "0", leek2.getRegister("my_zone"));
 	}
 }

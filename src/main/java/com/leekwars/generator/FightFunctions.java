@@ -393,6 +393,13 @@ public class FightFunctions {
 		// plante. Même valeur que le premier argument de la fonction confiée au summon(),
 		// pour les IA qui préfèrent la lire que la déclarer. -1 hors d'un réveil.
 		method("getPlantTrigger", "Entity", 15, true, Type.INT, new Type[0]);
+		// Rayon de la zone d'Éveil, en cases. 0 = l'entité joue son tour comme tout le
+		// monde. C'est un cercle au sens LW (distance de cases), donc l'IA refait le test
+		// du moteur avec getCellDistance(case, getCell(plante)) <= getAwakeningZone(plante).
+		method("getAwakeningZone", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT),
+		});
 		method("getMobType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),

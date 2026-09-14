@@ -328,6 +328,9 @@
 		get isStatic() { return F.isStatic(this.id); }
 		get birthTurn() { return F.getBirthTurn(this.id); }
 		get turnOrder() { return F.getEntityTurnOrder(this.id); }
+		// Rayon de la zone d'Éveil, en cases : 0 pour une entité qui joue son tour, 3 pour
+		// une plante à zone (Maïs, Piment), qui elle ne joue qu'aux entrées dans sa zone.
+		get awakeningZone() { return F.getAwakeningZone(this.id); }
 		get side() { return F.getSide(this.id); }
 		get leekID() { return F.getLeekID(this.id); }
 		get teamID() { return F.getTeamID(this.id); }

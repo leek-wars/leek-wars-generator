@@ -50,6 +50,7 @@ public class EntityClass {
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
 	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
+	 * getAwakeningZone,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
 	 * the lobby or fixed at fight init regardless of loadout.
@@ -947,6 +948,28 @@ public class EntityClass {
 	public static long getPlantTrigger(EntityAI ai) throws LeekRunException {
 		var trigger = ai.getEntity().getAwakeningTrigger();
 		return trigger == null ? -1l : (long) trigger.getFId();
+	}
+
+	/**
+	 * Rayon de la zone d'Éveil, en cases. 0 pour toute entité qui joue son tour
+	 * normalement, y compris une plante enracinée sans zone comme le Prototaxite :
+	 * c'est donc aussi la réponse à « cette entité joue-t-elle un tour ? ».
+	 * La zone est un cercle au sens LW, mesuré à la distance de cases, celle que
+	 * getCellDistance() rend à l'IA.
+	 */
+	public static long getAwakeningZone(EntityAI ai) throws LeekRunException {
+		return (long) ai.getEntity().getAwakeningZone();
+	}
+
+	public static Long getAwakeningZone(EntityAI ai, Object value) throws LeekRunException {
+		if (value == null)
+			return (long) ai.getEntity().getAwakeningZone();
+		if (value instanceof Number n) {
+			var l = ai.getFight().getEntity(n.intValue());
+			if (l != null)
+				return (long) l.getAwakeningZone();
+		}
+		return null;
 	}
 
 	public static long getSummoner(EntityAI ai) throws LeekRunException {
