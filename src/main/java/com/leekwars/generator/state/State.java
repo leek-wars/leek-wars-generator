@@ -21,6 +21,7 @@ import com.leekwars.generator.action.ActionEntityTurn;
 import com.leekwars.generator.action.ActionInvocation;
 import com.leekwars.generator.action.ActionMove;
 import com.leekwars.generator.action.ActionNewTurn;
+import com.leekwars.generator.action.ActionPlantAsleep;
 import com.leekwars.generator.action.ActionPlantAwake;
 import com.leekwars.generator.action.ActionResurrect;
 import com.leekwars.generator.action.ActionSetWeapon;
@@ -829,23 +830,34 @@ public class State {
 		if (plant.wasAwakenedBy(trigger)) return;
 		plant.markAwakenedBy(trigger);
 
-		actions.log(new ActionPlantAwake(plant, trigger));
-
 		// Le temps d'une plante se compte en réveils : c'est ici, et nulle part ailleurs,
 		// que ses cooldowns tournent (Entity.startTurn les saute pour elle). Une grosse
 		// puce à cooldown 3 revient donc un réveil sur trois, pas un tour sur trois.
 		plant.applyCoolDown();
 		plant.refillTP();
 
-		if (plantAwakening == null) return;
+		// Les PT rendus voyagent avec l'action : le client ne peut pas les deviner, et sans
+		// eux la plante afficherait des PT négatifs dès son deuxième réveil du tour.
+		actions.log(new ActionPlantAwake(plant, trigger, plant.getTP()));
 
-		awakeningPlant = plant;
-		plant.setAwakeningTrigger(trigger);
+		// PLANT_ASLEEP ferme la parenthèse quoi qu'il arrive, y compris sans IA à lancer :
+		// entre les deux, c'est la plante qui agit. SAY et USE_CHIP ne portent pas l'entité
+		// qui agit — le client la déduit du dernier LEEK_TURN — donc sans cette borne les
+		// say() et les puces de la plante resteraient au compte de l'entité dont c'est le
+		// tour (#5088).
 		try {
-			plantAwakening.run(plant, trigger);
+			if (plantAwakening == null) return;
+
+			awakeningPlant = plant;
+			plant.setAwakeningTrigger(trigger);
+			try {
+				plantAwakening.run(plant, trigger);
+			} finally {
+				awakeningPlant = null;
+				plant.setAwakeningTrigger(null);
+			}
 		} finally {
-			awakeningPlant = null;
-			plant.setAwakeningTrigger(null);
+			actions.log(new ActionPlantAsleep(plant));
 		}
 	}
 

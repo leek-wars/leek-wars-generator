@@ -3,6 +3,7 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.action.Action;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.leek.Leek;
 
@@ -98,5 +99,71 @@ public class TestPlantAwakeningFight extends FightTestBase {
 		Assert.assertEquals("la même zone, lue par id", "3", leek1.getRegister("plant_zone_by_id"));
 		Assert.assertEquals("l'entité qui l'a réveillée, elle, joue son tour", "0", leek1.getRegister("trigger_zone"));
 		Assert.assertEquals("un poireau n'a pas de zone", "0", leek2.getRegister("my_zone"));
+	}
+
+	/**
+	 * Une plante se réveille dans le tour d'un autre : elle ne doit pas hériter du compteur
+	 * d'opérations laissé par le dernier tour de son invocateur. La fermeture s'exécute sur
+	 * l'IA de l'invocateur (cf. BulbAI) — sans remise à zéro, une IA qui consomme son budget
+	 * tue sa propre plante d'une erreur « trop d'opérations » dès qu'un ennemi entre dans la
+	 * zone.
+	 */
+	@Test
+	public void leReveilNeRepartPasDuCompteurDOperationsDeLInvocateur() throws Exception {
+		attachAI(leek1, summonChilliNextToMe("global awakenings = 0;", ""
+			+ "awakenings = awakenings + 1;"
+			+ "setRegister('ops' + awakenings, '' + getOperations());")
+			// Puis l'invocateur brûle des opérations, à chaque tour : c'est ce compteur-là
+			// que le réveil suivant, dans le tour de l'ennemi qui approche, ne doit pas voir.
+			+ " var s = 0; for (var k = 0; k < 400000; k++) { s = s + k; }"
+			+ " setRegister('burned', '' + getOperations());");
+		attachAI(leek2, "moveToward(getNearestEnemy());");
+		runFight();
+
+		Assert.assertTrue("l'invocateur a bien brûlé des opérations",
+			Integer.parseInt(leek1.getRegister("burned")) > 1000000);
+		// Réveil 1 : à la plantation, dans le tour de l'invocateur. Réveil 2 : l'ennemi entre
+		// dans la zone, dans SON tour, l'invocateur ayant fini le sien à 2 millions d'ops.
+		Assert.assertNotNull("l'ennemi a fini par entrer dans la zone", leek1.getRegister("ops2"));
+		Assert.assertTrue("le réveil compte ses propres opérations",
+			Integer.parseInt(leek1.getRegister("ops2")) < 1000);
+	}
+
+	/**
+	 * Le rapport doit dire qui agit pendant un réveil. SAY et USE_CHIP ne portent pas
+	 * l'entité qui agit — le client la déduit du dernier LEEK_TURN — et un réveil tombe au
+	 * milieu du tour de quelqu'un d'autre : sans la parenthèse PLANT_AWAKE / PLANT_ASLEEP,
+	 * l'invocateur prononce les say() de sa plante et lance ses puces (#5088).
+	 */
+	@Test
+	public void lesActionsDuReveilSontEncadreesParPlantAwakeEtPlantAsleep() throws Exception {
+		attachAI(leek1, summonChilliNextToMe("", "say('plante');") + " say('poireau');");
+		attachAI(leek2, "");
+		runFight();
+
+		var actions = fight.getState().getActions().toJSON().get("actions");
+		int awake = -1, asleep = -1, plantSay = -1, leekSay = -1, plantTP = -1;
+		for (int i = 0; i < actions.size(); ++i) {
+			var action = actions.get(i);
+			int type = action.get(0).asInt();
+			if (type == Action.PLANT_AWAKE && awake == -1) {
+				awake = i;
+				plantTP = action.get(3).asInt();
+			} else if (type == Action.PLANT_ASLEEP && asleep == -1) {
+				asleep = i;
+			} else if (type == Action.SAY) {
+				if (action.get(1).asString().equals("plante") && plantSay == -1) plantSay = i;
+				if (action.get(1).asString().equals("poireau") && leekSay == -1) leekSay = i;
+			}
+		}
+		Assert.assertNotEquals("la plante s'est réveillée", -1, awake);
+		Assert.assertNotEquals("le réveil est refermé", -1, asleep);
+		Assert.assertNotEquals("la plante a parlé", -1, plantSay);
+		Assert.assertNotEquals("le poireau a parlé", -1, leekSay);
+		Assert.assertTrue("le say de la plante est dans la parenthèse", awake < plantSay && plantSay < asleep);
+		Assert.assertTrue("le say du poireau est hors de la parenthèse", leekSay > asleep);
+		// Les PT rendus voyagent avec l'action, sinon le client ferait descendre ceux de la
+		// plante d'un réveil à l'autre sans jamais les remonter.
+		Assert.assertTrue("les PT pleins de la plante sont dans l'action", plantTP >= 4);
 	}
 }

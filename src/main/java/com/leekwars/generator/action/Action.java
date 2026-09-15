@@ -23,6 +23,7 @@ public interface Action {
 	public final static int CHEST_OPENED = 15;
 	public final static int USE_WEAPON = 16;
 	public final static int PLANT_AWAKE = 17;
+	public final static int PLANT_ASLEEP = 18;
 
 	// Buffs
 	public final static int LOST_PT = 100;

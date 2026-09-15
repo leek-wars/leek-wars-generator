@@ -37,7 +37,16 @@ public class BulbAI extends EntityAI {
 		// l'invocateur lui-même, qui vient d'entrer dans la zone de sa propre plante.
 		// Sans cette sauvegarde, il reprendrait la main en croyant être la plante.
 		Entity previous = mOwnerAI.mEntity;
+		// Le compteur d'opérations est lui aussi celui de l'invocateur. Un réveil de plante
+		// tombe dans le tour de quelqu'un d'autre : sans remise à zéro, la fermeture repart
+		// du compteur laissé par le dernier tour de l'invocateur — une IA qui a consommé son
+		// budget tuerait sa propre plante avec une erreur « trop d'opérations ». Le réveil a
+		// donc son propre compteur (ce que runPlantAwakening annonce), et l'invocateur
+		// retrouve ensuite le sien, augmenté de ce que la plante a dépensé : dans son propre
+		// tour, il paye toujours ce que sa fermeture consomme.
+		long previousOperations = mOwnerAI.getOperations();
 		mOwnerAI.mEntity = mEntity;
+		mOwnerAI.resetCounter();
 		try {
 			var argCount = mAIFunction.getArgumentsCount() == -1 ? 0 : mAIFunction.getArgumentsCount();
 			var args = new Object[argCount];
@@ -53,6 +62,9 @@ public class BulbAI extends EntityAI {
 			}
 			return mAIFunction.run(mOwnerAI, null, args);
 		} finally {
+			long spent = mOwnerAI.getOperations();
+			mOwnerAI.resetCounter();
+			mOwnerAI.opsNoCheck((int) Math.min(Integer.MAX_VALUE, previousOperations + spent));
 			mOwnerAI.mEntity = previous;
 		}
 	}
