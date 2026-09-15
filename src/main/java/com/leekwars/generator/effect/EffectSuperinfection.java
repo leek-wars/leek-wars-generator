@@ -6,50 +6,46 @@ import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.state.State;
 
 /**
- * Surinfection : convertit une partie des poisons actifs de la cible en dégâts
- * immédiats. Chaque effet poison inflige tout de suite value1 % (50 % pour la
- * puce Surinfection, 65 % en critique) de ses dégâts totaux restants, et sa
- * valeur par tour est réduite d'autant : c'est une conversion, pas une
- * duplication — le total de poison subi est conservé, seulement avancé.
+ * Surinfection : fait détoner les poisons actifs de la cible. Ils disparaissent tous et
+ * infligent d'un coup value1 % (50 % pour la puce Surinfection, 65 % en critique) de leur
+ * somme à l'instant T — la somme de leurs valeurs par tour.
  *
- * Les dégâts convertis sont des dégâts de poison (érosion de poison, crédités
- * au lanceur de la Surinfection). La conversion ignore le flag irréductible
- * des poisons : ce n'est pas une réduction subie par le poison, c'est son
- * activation anticipée.
+ * Un poison ne compte donc que pour ce qu'il vaut au moment où on le fait détoner, jamais
+ * multiplié par les tours qu'il lui restait à courir : on échange des poisons en cours
+ * contre des dégâts tout de suite, et cet échange est perdant si on le fait trop tôt.
+ * Multiplier par les tours restants faisait rendre à un poison bien plus que sa valeur
+ * affichée — jusqu'à 100 % de son total quand la cible venait de le subir, car `turns` ne
+ * baisse qu'au tour du LANCEUR du poison, pas à celui de la cible qui le subit.
+ *
+ * Les dégâts sont des dégâts de poison (érosion de poison, crédités au lanceur de la
+ * Surinfection). Ils ignorent le flag irréductible des poisons : ce n'est pas une réduction
+ * subie par le poison, c'est son activation anticipée.
  */
 public class EffectSuperinfection extends Effect {
 
 	@Override
 	public void apply(State state) {
 
-		// Ratio de conversion (50 % de base), borné à 100 %.
+		// Part de la somme des poisons qui part en dégâts (50 % de base), bornée à 100 %.
 		double ratio = Math.min(1.0, ((value1 + jet * value2) / 100.0) * criticalPower);
 
-		int converted = 0;
+		int poisons = 0;
 
 		var effects = target.getEffects();
 		for (int i = 0; i < effects.size(); ++i) {
 			var e = effects.get(i);
 			if (!(e instanceof EffectPoison)) continue;
-			// Poison infini (turns == -1) : pas de « total restant » défini, on l'ignore.
-			if (e.getTurns() <= 0) continue;
+			// Aucun item n'en pose aujourd'hui, mais un poison infini ne détone pas : il
+			// n'a pas de fin, le faire disparaître serait un cadeau à la cible.
+			if (e.getTurns() == -1) continue;
 
-			int before = e.value;
-			e.reduce(ratio, caster);
-			// Dégâts convertis = exactement ce qui a été retiré du poison.
-			converted += (before - e.value) * e.getTurns();
-
-			if (e.value <= 0) {
-				e.getCaster().removeLaunchedEffect(e);
-				target.removeEffect(e);
-				i--;
-			} else {
-				target.updateEffect(e);
-			}
+			poisons += e.value;
+			e.getCaster().removeLaunchedEffect(e);
+			target.removeEffect(e);
+			i--;
 		}
-		target.updateBuffStats();
 
-		int damages = converted;
+		int damages = (int) Math.round(poisons * ratio);
 		if (target.getLife() < damages) {
 			damages = target.getLife();
 		}

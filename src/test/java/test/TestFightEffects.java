@@ -377,7 +377,7 @@ public class TestFightEffects extends FightTestBase {
 	// ---------- Surinfection ----------
 
 	@Test
-	public void superinfectionConvertsHalfOfRemainingPoison() throws Exception {
+	public void superinfectionDetonatesHalfOfThePoisonSum() throws Exception {
 		initFightOnly();
 		// Un poison de 5 tours sur leek1
 		applyEffect(Effect.TYPE_POISON, 5, 30, leek1, leek2, false);
@@ -386,16 +386,37 @@ public class TestFightEffects extends FightTestBase {
 		Assert.assertTrue(perTurn > 0);
 		int lifeBefore = leek1.getLife();
 
-		int expectedNewPerTurn = (int) Math.round(perTurn * 0.5);
-		int expectedDamage = (perTurn - expectedNewPerTurn) * 5;
+		int expectedDamage = (int) Math.round(perTurn * 0.5);
 
 		int dealt = applyEffect(Effect.TYPE_SUPERINFECTION, 0, 50, leek1, leek2, false);
 
-		Assert.assertEquals("50 % du poison restant part en dégâts immédiats", expectedDamage, dealt);
+		Assert.assertEquals("50 % de la valeur du poison, pas de son total sur 5 tours", expectedDamage, dealt);
 		Assert.assertEquals(lifeBefore - expectedDamage, leek1.getLife());
-		// Conversion, pas duplication : le poison restant est réduit d'autant
-		Assert.assertEquals(1, leek1.getEffects().size());
-		Assert.assertEquals(expectedNewPerTurn, leek1.getEffects().get(0).getValue());
+		// Le poison a détoné : il ne reste rien, ni sur la cible ni chez le lanceur
+		Assert.assertEquals(0, leek1.getEffects().size());
+		Assert.assertEquals(0, leek2.getLaunchedEffects().size());
+	}
+
+	@Test
+	public void superinfectionSumsEveryPoisonRegardlessOfItsDuration() throws Exception {
+		initFightOnly();
+		// Deux poisons de durées différentes, dont un que leek1 vient de subir : la durée
+		// n'entre pas dans le calcul, seule compte la somme des valeurs à cet instant.
+		applyEffect(Effect.TYPE_POISON, 5, 30, leek1, leek2, true);
+		applyEffect(Effect.TYPE_POISON, 2, 50, leek1, leek1, true);
+		Assert.assertEquals(2, leek1.getEffects().size());
+		int sum = leek1.getEffects().stream().mapToInt(e -> e.getValue()).sum();
+
+		leek1.startTurn();
+		Assert.assertEquals("les deux poisons courent toujours", 2, leek1.getEffects().size());
+		Assert.assertEquals("turns ne baisse qu'au tour du lanceur", 5, leek1.getEffects().get(0).getTurns());
+		int lifeBefore = leek1.getLife();
+
+		int dealt = applyEffect(Effect.TYPE_SUPERINFECTION, 0, 50, leek1, leek2, false);
+
+		Assert.assertEquals((int) Math.round(sum * 0.5), dealt);
+		Assert.assertEquals(lifeBefore - dealt, leek1.getLife());
+		Assert.assertEquals(0, leek1.getEffects().size());
 	}
 
 	@Test
