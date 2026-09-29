@@ -29,12 +29,6 @@ public class TestFightEffects extends FightTestBase {
 		fight.getState().addEntity(1, leek2);
 	}
 
-	private int applyEffect(int type, int turns, double value, Leek target, Leek caster, boolean stackable) {
-		// aoe=1 means full effectiveness; aoe=0 zeros out the effect value.
-		return Effect.createEffect(fight.getState(), type, turns, 1, value, value, false,
-			target, caster, null, 0, stackable, 0, 1, 0, 0);
-	}
-
 	// ---------- createEffect input validation ----------
 
 	@Test
@@ -181,17 +175,6 @@ public class TestFightEffects extends FightTestBase {
 			leek1.getLife() > lifeBefore);
 		Assert.assertEquals("Et elle écrit bien une action VITALITY",
 			1, countActions(Action.VITALITY, leek1));
-	}
-
-	/** Nombre d'actions d'un type déjà écrites dans le rapport pour cette entité. */
-	private int countActions(int type, Leek entity) {
-		int count = 0;
-		for (var action : fight.getState().getActions().toJSON().get("actions")) {
-			if (action.get(0).asInt() == type && action.get(1).asInt() == entity.getFId()) {
-				count++;
-			}
-		}
-		return count;
 	}
 
 	// ---------- Stacking behavior ----------
@@ -494,17 +477,17 @@ public class TestFightEffects extends FightTestBase {
 
 		leek1.startTurn();
 		Assert.assertEquals("les deux poisons courent toujours", 2, leek1.getEffects().size());
-		Assert.assertEquals("turns ne baisse qu'au tour du lanceur", 5, leek1.getEffects().get(0).getTurns());
+		Assert.assertEquals("chaque coup retire un tour, quel que soit le lanceur", 4, leek1.getEffects().get(0).getTurns());
 		int lifeBefore = leek1.getLife();
 
 		int dealt = applyEffect(Effect.TYPE_SUPERINFECTION, 0, 50, leek1, leek2, false);
 
 		Assert.assertEquals((int) Math.round(sum * 0.5), dealt);
 		Assert.assertEquals(lifeBefore - dealt, leek1.getLife());
-		// Chaque poison perd un tour : celui de leek1, déjà décompté à son tour, s'éteint,
+		// Chaque poison perd encore un tour : celui de leek1, à son dernier, s'éteint,
 		// celui de leek2 continue à courir.
 		Assert.assertEquals(1, leek1.getEffects().size());
-		Assert.assertEquals(4, leek1.getEffects().get(0).getTurns());
+		Assert.assertEquals(3, leek1.getEffects().get(0).getTurns());
 	}
 
 	@Test

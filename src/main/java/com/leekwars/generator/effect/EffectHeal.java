@@ -4,7 +4,7 @@ import com.leekwars.generator.action.ActionHeal;
 import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.state.State;
 
-public class EffectHeal extends Effect {
+public class EffectHeal extends PeriodicEffect {
 
 	@Override
 	public void apply(State state) {

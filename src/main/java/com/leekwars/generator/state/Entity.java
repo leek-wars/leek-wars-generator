@@ -26,6 +26,7 @@ import com.leekwars.generator.effect.EffectShackleMagic;
 import com.leekwars.generator.effect.EffectShackleStrength;
 import com.leekwars.generator.effect.EffectShackleTP;
 import com.leekwars.generator.effect.EffectShackleWisdom;
+import com.leekwars.generator.effect.PeriodicEffect;
 import com.leekwars.generator.items.Item;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.Registers;
@@ -891,15 +892,15 @@ public abstract class Entity {
 		this.weapon = weapon;
 	}
 
-	// At the start of his turn, decrease duration of his launched effects
-	// and apply effects that affects the entity at the beginning of his turn
-	// (poisons, ...)
+	// At the start of his turn, apply effects that affects the entity at the
+	// beginning of his turn (poisons, ...) and decrease duration of his launched
+	// effects
 	public void startTurn() {
 
 		// Une plante à zone compte son temps en réveils, jamais en tours : ses cooldowns
 		// sont décrémentés par State.awakePlant(). Le reste de l'entretien de début de
 		// tour la concerne comme n'importe qui — c'est là que les poisons qu'elle subit
-		// s'appliquent et que les séquelles qu'elle a posées vieillissent.
+		// s'appliquent et que les effets non périodiques qu'elle a posés vieillissent.
 		if (!hasAwakening()) {
 			applyCoolDown();
 		}
@@ -908,15 +909,27 @@ public abstract class Entity {
 
 		ArrayList<Effect> effectsCopy = new ArrayList<Effect>(this.effects);
 		for (Effect effect : effectsCopy) {
-			effect.applyStartTurn(state);
+			if (!(effect instanceof PeriodicEffect periodic)) {
+				continue;
+			}
+			periodic.applyStartTurn(state);
 			if (isDead()) {
 				return;
+			}
+			// Un tour de moins par coup, chez sa cible (cf. PeriodicEffect)
+			if (periodic.getTurns() != -1) {
+				loseEffectTurn(periodic);
 			}
 		}
 
 		for (int e = 0; e < launchedEffects.size(); ++e) {
 
 			Effect effect = launchedEffects.get(e);
+
+			// Décompté chez sa cible (plus haut)
+			if (effect instanceof PeriodicEffect) {
+				continue;
+			}
 
 			if (effect.getTurns() != -1) { // Decrease duration
 				effect.setTurns(effect.getTurns() - 1);
@@ -1043,6 +1056,17 @@ public abstract class Entity {
 
 	public void updateEffectTurns(Effect effect) {
 		state.log(new ActionUpdateEffectTurns(effect.getLogID(), effect.getTurns()));
+	}
+
+	/** Retire un tour à un effet de l'entité. Renvoie vrai s'il tombe à 0, et disparaît. */
+	public boolean loseEffectTurn(Effect effect) {
+		effect.setTurns(effect.getTurns() - 1);
+		if (effect.getTurns() > 0) {
+			return false;
+		}
+		effect.getCaster().removeLaunchedEffect(effect);
+		removeEffect(effect);
+		return true;
 	}
 
 	public void clearEffects() {

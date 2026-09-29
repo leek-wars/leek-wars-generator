@@ -5,7 +5,7 @@ import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.state.State;
 
-public class EffectPoison extends Effect {
+public class EffectPoison extends PeriodicEffect {
 
 	@Override
 	public void apply(State state) {

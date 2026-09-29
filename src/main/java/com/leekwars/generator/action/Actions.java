@@ -13,6 +13,14 @@ import com.leekwars.generator.statistics.StatisticsManager;
 
 public class Actions {
 
+	/**
+	 * Version du format des combats, pour que le lecteur du client rejoue chaque combat
+	 * avec les règles de son époque. Absente des combats plus anciens, elle vaut alors 0.
+	 * 1 — les effets périodiques se décomptent à chaque coup, au tour de leur cible
+	 *     (cf. PeriodicEffect), et non plus au tour de leur lanceur.
+	 */
+	public static final int VERSION = 1;
+
 	private final List<Action> actions;
 
 	private final List<Entity> entities = new ArrayList<Entity>();
@@ -56,6 +64,7 @@ public class Actions {
 			json.add(log.getJSON());
 		}
 		ObjectNode retour = Json.createObject();
+		retour.put("version", VERSION);
 		retour.set("leeks", leeks);
 		retour.set("map", map);
 		retour.set("actions", json);

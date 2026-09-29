@@ -8,11 +8,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 
 import com.leekwars.generator.Generator;
+import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.test.LocalTrophyManager;
 import com.leekwars.generator.util.Json;
@@ -124,5 +126,49 @@ public abstract class FightTestBase {
 		return new FightLoadout(name,
 			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
 			new HashMap<>());
+	}
+
+	/** Injects an effect directly from Java, without going through a chip or a weapon. */
+	protected int applyEffect(int type, int turns, double value, Entity target, Entity caster, boolean stackable) {
+		// aoe=1 means full effectiveness; aoe=0 zeros out the effect value.
+		return Effect.createEffect(fight.getState(), type, turns, 1, value, value, false,
+			target, caster, null, 0, stackable, 0, 1, 0, 0);
+	}
+
+	/** Nombre d'actions d'un type déjà écrites dans le rapport pour cette entité. */
+	protected int countActions(int type, Entity entity) {
+		int count = 0;
+		for (var action : fight.getState().getActions().toJSON().get("actions")) {
+			if (action.get(0).asInt() == type && action.get(1).asInt() == entity.getFId()) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * IA qui plante un Piment sur une case libre voisine, une fois pour le combat, et lui
+	 * confie `awakening` comme corps de fonction d'Éveil. `globals` est posé au premier
+	 * niveau, avant la plantation.
+	 */
+	protected static String summonChilliNextToMe(String globals, String awakening) {
+		// Code au premier niveau, rejoué à chaque tour : c'est ainsi qu'une IA Leek Wars
+		// s'écrit, `global` est ce qui survit d'un tour à l'autre.
+		return globals
+			+ "global planted = false;"
+			+ "if (!planted) {"
+			+ "  var x = getCellX(getCell());"
+			+ "  var y = getCellY(getCell());"
+			+ "  var candidates = [getCellFromXY(x + 1, y), getCellFromXY(x - 1, y), getCellFromXY(x, y + 1), getCellFromXY(x, y - 1)];"
+			+ "  for (var i = 0; i < count(candidates); i++) {"
+			+ "    var c = candidates[i];"
+			+ "    if (c != null && isEmptyCell(c)) {"
+			+ "      planted = true;"
+			+ "      var r = summon(CHIP_CHILLI_PEPPER, c, function(e) {" + awakening + "});"
+			+ "      setRegister('summon_result', '' + r);"
+			+ "      break;"
+			+ "    }"
+			+ "  }"
+			+ "}";
 	}
 }

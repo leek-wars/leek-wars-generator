@@ -386,8 +386,8 @@ public class Fight {
 
 			// Une plante à zone ne joue pas de tour : elle n'agit qu'à ses réveils. Son
 			// passage dans l'ordre ne sert plus qu'à l'entretien de début de tour, que
-			// current.startTurn() vient de faire — poisons subis, séquelles posées qui
-			// vieillissent. Sans lui, une Capsaïcine empoisonnerait pour toujours.
+			// current.startTurn() vient de faire — poisons subis, effets non périodiques
+			// posés qui vieillissent. Ses poisons, eux, se décomptent chez leurs cibles.
 			var ai = current.hasAwakening() ? null : (EntityAI) current.getAI();
 			if (ai != null) {
 				if (ai.isValid()) {

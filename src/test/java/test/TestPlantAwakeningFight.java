@@ -31,32 +31,6 @@ public class TestPlantAwakeningFight extends FightTestBase {
 		fight.getState().addEntity(1, leek2);
 	}
 
-	/**
-	 * IA qui plante un Piment sur une case libre voisine, une fois pour le combat, et lui
-	 * confie `awakening` comme corps de fonction d'Éveil. `globals` est posé au premier
-	 * niveau, avant la plantation.
-	 */
-	private static String summonChilliNextToMe(String globals, String awakening) {
-		// Code au premier niveau, rejoué à chaque tour : c'est ainsi qu'une IA Leek Wars
-		// s'écrit, `global` est ce qui survit d'un tour à l'autre.
-		return globals
-			+ "global planted = false;"
-			+ "if (!planted) {"
-			+ "  var x = getCellX(getCell());"
-			+ "  var y = getCellY(getCell());"
-			+ "  var candidates = [getCellFromXY(x + 1, y), getCellFromXY(x - 1, y), getCellFromXY(x, y + 1), getCellFromXY(x, y - 1)];"
-			+ "  for (var i = 0; i < count(candidates); i++) {"
-			+ "    var c = candidates[i];"
-			+ "    if (c != null && isEmptyCell(c)) {"
-			+ "      planted = true;"
-			+ "      var r = summon(CHIP_CHILLI_PEPPER, c, function(e) {" + awakening + "});"
-			+ "      setRegister('summon_result', '' + r);"
-			+ "      break;"
-			+ "    }"
-			+ "  }"
-			+ "}";
-	}
-
 	@Test
 	public void lInvocateurDansLaZoneReveilleSaPlanteEtLaFonctionRecoitSonId() throws Exception {
 		attachAI(leek1, summonChilliNextToMe("global awakenings = 0;", ""

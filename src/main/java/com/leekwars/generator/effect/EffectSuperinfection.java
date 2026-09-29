@@ -13,9 +13,8 @@ import com.leekwars.generator.state.State;
  * Un poison ne compte donc que pour ce qu'il vaut au moment où on le fait détoner, jamais
  * multiplié par les tours qu'il lui restait à courir : on avance un demi-tour de poison
  * contre un tour entier, et l'échange est perdant de la même quantité quel que soit le
- * moment choisi. Multiplier par les tours restants faisait rendre à un poison bien plus que
- * sa valeur affichée — jusqu'à 100 % de son total quand la cible venait de le subir, car
- * `turns` ne baisse qu'au tour du LANCEUR du poison, pas à celui de la cible qui le subit.
+ * moment choisi. `turns` est le nombre de coups qu'il reste au poison (cf. PeriodicEffect) :
+ * le tour brûlé ici en retire toujours un vrai.
  *
  * Un poison qui tombe à 0 tour disparaît, les autres restent en place avec leur valeur
  * intacte : la Surinfection ne nettoie plus la cible, c'est le rôle de l'Antidote.
@@ -44,17 +43,12 @@ public class EffectSuperinfection extends Effect {
 
 			poisons += e.value;
 
-			// Le poison brûle un tour. Il en reste donc un déclenchement de moins sur sa
-			// vie entière, ce que `turns` sait dire même si l'instant où il a été consommé,
-			// lui, n'est pas connu.
-			e.setTurns(e.getTurns() - 1);
-			if (e.getTurns() <= 0) {
-				e.getCaster().removeLaunchedEffect(e);
-				target.removeEffect(e);
+			// Le poison brûle un tour : un coup de moins à venir.
+			if (target.loseEffectTurn(e)) {
 				i--;
 			} else {
-				// Le client tient sa propre horloge (décrément au tour du lanceur) : sans
-				// ça il afficherait un tour de trop jusqu'à la fin du poison.
+				// Le client tient sa propre horloge (décrément à chaque coup) : sans ça il
+				// afficherait un tour de trop jusqu'à la fin du poison.
 				target.updateEffectTurns(e);
 			}
 		}

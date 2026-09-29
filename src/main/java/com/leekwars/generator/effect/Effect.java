@@ -385,8 +385,6 @@ public abstract class Effect implements Cloneable {
 	// Abstract methods
 	public void apply(State state) {}
 
-	public void applyStartTurn(State state) {}
-
 	public static int getEffectStat(int type) {
 		switch (type) {
 			case TYPE_DAMAGE:
