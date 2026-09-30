@@ -57,7 +57,8 @@ import leekscript.runner.Session;
  *   - le comptage d'operations LeekScript reste ACTIF (on n'override pas {@code ops()}) :
  *     les fonctions de combat couteuses chargent {@code ai.ops(...)} avant leur travail hote,
  *     que le statement limit ne compterait pas. Le budget d'ops est remis a zero a chaque tour
- *     par {@code runTurn()} (resetCounter), et le compteur de statements GraalVM est lui aussi
+ *     par {@code runTurn()} (resetCounter), sauf au tour 1 quand {@code beforeFight()} l'a deja
+ *     entame (cf {@link #invokeHook}), et le compteur de statements GraalVM est lui aussi
  *     remis a zero chaque tour ici via {@link Context#resetLimits()}.
  */
 public class PolyglotEntityAI extends EntityAI {
@@ -1225,7 +1226,7 @@ public class PolyglotEntityAI extends EntityAI {
 		try {
 			ensureContext();
 			resetStatementCounter(); // compteur de statements guest remis a zero a chaque tour (terme deterministe)
-			syncRealToGuest(); // remet a 0 le miroir __lw_real (mOperations vient d etre reset par runTurn)
+			syncRealToGuest(); // miroir __lw_real = mOperations : 0 (reset par runTurn), ou ce qu'a consomme beforeFight() au tour 1
 			// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 			// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
 			context.resetLimits();
@@ -1434,6 +1435,10 @@ public class PolyglotEntityAI extends EntityAI {
 			throw outOfMemory(t);
 		} finally {
 			snapshotTurnOperations();
+			// Le tour 1 reprend le compteur de beforeFight() (cf EntityAI.runTurn) mais repart de zero
+			// cote guest (compteur de statements, limites du contexte, bases de temps) : le total du hook
+			// passe donc dans le compteur hote, le seul qui survive d'une execution a l'autre.
+			mOperations = turnOperations;
 			if (!winRace(settled, watchdog)) {
 				throw onWallClockTimeout();
 			}

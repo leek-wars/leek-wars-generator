@@ -93,6 +93,27 @@ public class TestHooks {
 	}
 
 	@Test
+	public void beforeFightCounterIsResumedOnTurnOne() throws Exception {
+		EntityAI ai = compile("function beforeFight() { for (var i = 0; i < 100000; i++) {} }", leek1);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		long hook = ai.operations();
+		Assert.assertTrue(hook >= 100_000);
+		ai.runTurn(1);
+		Assert.assertTrue(ai.operations() >= hook);
+		ai.runTurn(2);
+		Assert.assertTrue(ai.operations() < 1_000);
+	}
+
+	@Test
+	public void beforeFightCounterIsNotResumedAfterTurnOne() throws Exception {
+		// Poireau tué avant d'avoir joué son tour 1, puis ressuscité : il repart d'un compteur neuf.
+		EntityAI ai = compile("function beforeFight() { for (var i = 0; i < 100000; i++) {} }", leek1);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		ai.runTurn(3);
+		Assert.assertTrue(ai.operations() < 1_000);
+	}
+
+	@Test
 	public void runHookNoOpWhenAbsent() throws Exception {
 		EntityAI ai = compile("var x = 1;", leek1);
 		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);

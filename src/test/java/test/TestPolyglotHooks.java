@@ -529,6 +529,24 @@ public class TestPolyglotHooks extends FightTestBase {
 	}
 
 	@Test
+	public void turnOneResumesTheBeforeFightCounter() throws Exception {
+		// beforeFight() entame le budget du tour 1. Son calcul guest est compte par le compteur de
+		// statements, remis a zero a chaque execution : il doit quand meme se retrouver au tour 1.
+		attachJsAI(leek1,
+			"function beforeFight() { let s = 0; for (let i = 0; i < 300000; i++) s += i; Registers.set('hook', '' + System.operations); }\n"
+			+ "function turn() { if (Fight.turn <= 2) Registers.set('turn' + Fight.turn, '' + System.operations); }\n");
+		attachAI(leek2, "");
+		runFight();
+
+		long hook = Long.parseLong(leek1.getRegister("hook"));
+		long turn1 = Long.parseLong(leek1.getRegister("turn1"));
+		long turn2 = Long.parseLong(leek1.getRegister("turn2"));
+		Assert.assertTrue("le calcul du hook est compte : " + hook, hook > 0);
+		Assert.assertTrue("le tour 1 reprend le compteur du hook : " + turn1 + " < " + hook, turn1 >= hook);
+		Assert.assertTrue("le tour 2 repart de zero : " + turn2 + " >= " + hook, turn2 < hook);
+	}
+
+	@Test
 	public void aiWithoutHooksIsUntouchedByRealFight() throws Exception {
 		attachJsAI(leek1, "function turn() { Registers.set('turn', 'ran'); }");
 		attachAI(leek2, "");

@@ -527,13 +527,65 @@ public class TestHooksFight extends FightTestBase {
 
 	@Test
 	public void beforeFightInfiniteLoopHitsOpsLimit() throws Exception {
-		// Beforefight gets turn-1 ops + 1M bonus. An infinite loop should hit the limit
-		// and return without crashing the fight — turn 1 main code should still run.
+		// Une boucle infinie dans beforeFight() épuise les opérations du tour 1, qu'elle consomme :
+		// le combat continue, le tour 1 n'a plus de quoi tourner, le tour 2 repart d'un compteur neuf.
 		attachAI(leek1, "function beforeFight() { while (true) { var x = 1; } }"
-			+ "setRegister('turn1_ran', '1');");
+			+ "if (getTurn() <= 2) setRegister('turn' + getTurn(), 'ran');");
 		attachAI(leek2, "");
 		runFight();
-		Assert.assertEquals("1", leek1.getRegister("turn1_ran"));
+		Assert.assertNull("le tour 1 n'a plus d'opérations", leek1.getRegister("turn1"));
+		Assert.assertEquals("ran", leek1.getRegister("turn2"));
+	}
+
+	// ---------- beforeFight() entame le budget du tour 1 ----------
+
+	@Test
+	public void beforeFightHasTheTurnOneBudget() throws Exception {
+		attachAI(leek1, "function beforeFight() { setRegister('hook_max', '' + getMaxOperations()); }"
+			+ "if (getTurn() == 1) setRegister('turn_max', '' + getMaxOperations());");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("8000000", leek1.getRegister("hook_max"));
+		Assert.assertEquals(leek1.getRegister("turn_max"), leek1.getRegister("hook_max"));
+	}
+
+	@Test
+	public void turnOneResumesTheBeforeFightCounter() throws Exception {
+		attachAI(leek1, "function beforeFight() {"
+			+ "  for (var i = 0; i < 100000; i++) {}"
+			+ "  setRegister('hook', '' + getOperations());"
+			+ "}"
+			+ "if (getTurn() <= 2) setRegister('turn' + getTurn(), '' + getOperations());");
+		attachAI(leek2, "");
+		runFight();
+		long hook = Long.parseLong(leek1.getRegister("hook"));
+		Assert.assertTrue("la boucle du hook est comptée : " + hook, hook >= 100_000);
+		Assert.assertTrue("le tour 1 reprend le compteur du hook", Long.parseLong(leek1.getRegister("turn1")) > hook);
+		Assert.assertTrue("le tour 2 repart de zéro", Long.parseLong(leek1.getRegister("turn2")) < 1_000);
+	}
+
+	@Test
+	public void turnOneOperationsReportedIncludeBeforeFight() throws Exception {
+		attachAI(leek1, "function beforeFight() { for (var i = 0; i < 100000; i++) {} }");
+		attachAI(leek2, "function beforeFight() {}");
+		runFight();
+		// Deux IA inertes sur 64 tours : sans le hook, quelques dizaines d'opérations chacune.
+		var ops = fight.getState().statistics.getOperationsByEntity();
+		Assert.assertTrue("les opérations de beforeFight() sont celles du tour 1 : " + ops, ops.get(leek1.getFId()) >= 100_000);
+		Assert.assertTrue(ops.get(leek2.getFId()) < 100_000);
+	}
+
+	@Test
+	public void setLoadoutInBeforeFightLeavesTurnOneTheNewBudgetMinusTheHook() throws Exception {
+		// Le hook tourne avec les 8 cœurs d'entrée et en consomme plus que les 2 de l'ensemble :
+		// le tour 1, au budget de l'ensemble, n'a plus rien.
+		leek1.addLoadout(enginesLoadout("classic", 2, 30, 10));
+		attachAI(leek1, "function beforeFight() { setLoadout('classic'); for (var i = 0; i < 1000000; i++) {} }"
+			+ "if (getTurn() <= 2) setRegister('turn' + getTurn(), 'ran');");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertNull(leek1.getRegister("turn1"));
+		Assert.assertEquals("ran", leek1.getRegister("turn2"));
 	}
 
 	// ---------- Cross-entity + state integrity ----------

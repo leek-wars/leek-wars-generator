@@ -181,7 +181,14 @@ public class EntityAI extends AI {
 		return true;
 	}
 
+	/** Bonus d'afterFight(), seul hook à avoir son propre budget : aucun tour ne vient après lui. */
 	private static final int HOOK_OPS_BONUS = 1_000_000;
+
+	/**
+	 * beforeFight() n'a pas de budget à lui : il entame celui du tour 1, et {@link #runTurn}
+	 * reprend alors le compteur là où le hook l'a laissé au lieu de le remettre à zéro.
+	 */
+	private boolean turnCounterStarted = false;
 
 	public EntityAI(int instructions, int version) {
 		super(instructions, version);
@@ -384,7 +391,11 @@ public class EntityAI extends AI {
 
 		try {
 
-			resetCounter();
+			// Au tour 1 seulement : un poireau tué avant d'avoir joué puis ressuscité repart à zéro.
+			if (!turnCounterStarted || turn != 1) {
+				resetCounter();
+			}
+			turnCounterStarted = false;
 			mEntity = mInitialEntity;
 			if (!staticInitialized) {
 				staticInit();
@@ -531,6 +542,7 @@ public class EntityAI extends AI {
 	protected void invokeHook(String name) throws Throwable {
 		var method = findHookMethod(this.getClass(), name);
 		if (method == null) return;
+		markHookRun(name);
 		method.invoke(this);
 	}
 
@@ -539,11 +551,14 @@ public class EntityAI extends AI {
 		if (!hasHook(name)) return;
 
 		long startTime = System.nanoTime();
+		// beforeFight() tourne avec le budget du tour 1, qu'il entame ; seul afterFight() a le sien.
 		long savedMaxOps = getMaxOperations();
-		long boosted = savedMaxOps + HOOK_OPS_BONUS;
-		// Guard against overflow when savedMaxOps is large and against negative cast.
-		if (boosted < savedMaxOps || boosted > Integer.MAX_VALUE) boosted = Integer.MAX_VALUE;
-		setMaxOperations((int) boosted);
+		if (phase == HookPhase.AFTER_FIGHT) {
+			long boosted = savedMaxOps + HOOK_OPS_BONUS;
+			// Guard against overflow when savedMaxOps is large and against negative cast.
+			if (boosted < savedMaxOps || boosted > Integer.MAX_VALUE) boosted = Integer.MAX_VALUE;
+			setMaxOperations((int) boosted);
+		}
 
 		try {
 			resetCounter();
@@ -584,6 +599,9 @@ public class EntityAI extends AI {
 		} finally {
 			hookPhase = HookPhase.NONE;
 			setMaxOperations((int) Math.min((long) Integer.MAX_VALUE, savedMaxOps));
+			// Même si le hook a levé : ce qu'il a consommé reste pris sur le tour 1. Un chargement
+			// polyglot jeté, lui, ne compte pas (le hook n'a pas tourné).
+			turnCounterStarted = phase == HookPhase.BEFORE_FIGHT && hooksRun.contains(name);
 			long endTime = System.nanoTime();
 			mIARunTime += (endTime - startTime);
 		}
