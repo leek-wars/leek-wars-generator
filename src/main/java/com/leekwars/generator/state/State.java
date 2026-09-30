@@ -1138,8 +1138,10 @@ public class State {
 
 			List<Cell> step = new ArrayList<Cell>(path.subList(done, i + 1));
 			actions.log(new ActionMove(entity, step));
-			statistics.move(entity, entity, done == 0 ? start : path.get(done - 1), step);
+			// La carte d'abord, comme pour une téléportation, une glissade ou une inversion :
+			// les trophées de placement (Fan club, Impasse) lisent les positions d'arrivée.
 			this.map.moveEntity(entity, to);
+			statistics.move(entity, entity, done == 0 ? start : path.get(done - 1), step);
 			done = i + 1;
 
 			checkPlantTriggers(entity, from, to);
