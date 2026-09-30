@@ -10,6 +10,8 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.test.LocalTrophyManager;
 
 /**
  * Pathfinding edge cases via the Java Map API: A* result for trivial / blocked
@@ -381,5 +383,37 @@ public class TestFightPathfinding extends FightTestBase {
 		Assert.assertEquals("Leek now on target cell", target.getId(), leek1.getCell().getId());
 		Assert.assertNull("Original cell freed", map().getEntity(originalCell));
 		Assert.assertEquals("Target cell occupied", leek1.getFId(), map().getEntity(target).getFId());
+	}
+
+	// Marche, téléportation, glissade et inversion mettent la carte à jour avant de notifier
+	// les statistiques, qui y lisent les positions d'arrivée (cf. StatisticsManager).
+	@Test
+	public void statisticsSeeTheArrivalCellOnEveryMove() throws Exception {
+		initFightOnly();
+		var seen = new ArrayList<Integer>();
+		fight.getState().setStatisticsManager(new LocalTrophyManager() {
+			@Override
+			public void move(Entity mover, Entity entity, Cell start, List<Cell> path) {
+				seen.add(entity.getCell().getId());
+			}
+		});
+		Cell walked = emptyNeighbour(leek1.getCell());
+		fight.getState().moveEntity(leek1, List.of(walked));
+		Cell teleported = findEmptyWalkable(null);
+		fight.getState().teleportEntity(leek1, teleported, leek1, 0);
+		Cell slid = findEmptyWalkable(null);
+		fight.getState().slideEntity(leek1, slid, leek2);
+		Cell leek2Cell = leek2.getCell();
+		fight.getState().invertEntities(leek1, leek2);
+
+		Assert.assertEquals(List.of(walked.getId(), teleported.getId(), slid.getId(), leek2Cell.getId(), slid.getId()), seen);
+	}
+
+	private Cell emptyNeighbour(Cell cell) {
+		for (int[] d : new int[][] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } }) {
+			Cell next = cell.next(map(), d[0], d[1]);
+			if (next != null && next.isWalkable() && next.getPlayer(map()) == null) return next;
+		}
+		throw new AssertionError("No free cell around " + cell);
 	}
 }

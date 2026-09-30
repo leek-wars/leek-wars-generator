@@ -13,6 +13,11 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.weapons.Weapon;
 
+/**
+ * Les rappels de placement (move, teleportation, slide, summon, resurrect) arrivent une fois la
+ * carte à jour : les trophées de placement du serveur (Fan club, Impasse) y lisent les
+ * positions d'arrivée. Verrouillé par TestFightPathfinding.statisticsSeeTheArrivalCellOnEveryMove.
+ */
 public interface StatisticsManager {
 
 	public void init(Entity entity);
