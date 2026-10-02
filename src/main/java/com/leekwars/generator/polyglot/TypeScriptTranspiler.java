@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.zip.GZIPInputStream;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
@@ -53,6 +54,13 @@ public final class TypeScriptTranspiler {
 
 	private static final Object LOCK = new Object();
 	private static volatile Context tsContext;
+	/**
+	 * Engine (= isolate) du compilateur, cree une fois et jamais ferme, comme les ENGINES de
+	 * {@link PolyglotSandbox} : jeter le contexte apres un echec ne recree pas l'isolate, dont la
+	 * memoire native ne serait pas rendue. Plafonne, sinon l'isolate grossit sans borne.
+	 */
+	private static Engine tsEngine;
+	private static final long MAX_ISOLATE_MEMORY = PolyglotSandbox.envMegabytes("POLYGLOT_TS_MAX_ISOLATE_MB", 1000);
 
 	private TypeScriptTranspiler() {}
 
@@ -68,7 +76,15 @@ public final class TypeScriptTranspiler {
 		}
 		synchronized (LOCK) {
 			if (tsContext == null) {
+				if (tsEngine == null) {
+					tsEngine = Engine.newBuilder("js")
+							.option("engine.MaxIsolateMemory", PolyglotSandbox.memoryOption(MAX_ISOLATE_MEMORY))
+							.out(OutputStream.nullOutputStream())
+							.err(OutputStream.nullOutputStream())
+							.build();
+				}
 				Context c = Context.newBuilder("js")
+						.engine(tsEngine)
 						.allowHostAccess(HostAccess.NONE)
 						.allowIO(IOAccess.NONE)
 						.out(OutputStream.nullOutputStream())

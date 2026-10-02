@@ -174,7 +174,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	}
 
 	/** Formate un nombre d'octets en option memoire GraalVM ("&lt;n&gt;MB"). */
-	private static String memoryOption(long bytes) {
+	static String memoryOption(long bytes) {
 		return Math.max(1L, bytes / 1_000_000L) + "MB";
 	}
 
