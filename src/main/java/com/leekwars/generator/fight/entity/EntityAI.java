@@ -212,7 +212,11 @@ public class EntityAI extends AI {
 		try {
 			if (entityInfo.ai_path != null) {
 				file = LeekScript.getFileSystem().getRoot(entityInfo.aiOwner).resolve(entityInfo.ai_path);
-				file.setVersion(entityInfo.ai_version, entityInfo.ai_strict);
+				// Même verrou que build() : l'AIFile est partagé entre les threads, et changer son
+				// mode strict en pleine compilation donne un Java mi-strict que javac refuse.
+				synchronized (file) {
+					file.setVersion(entityInfo.ai_version, entityInfo.ai_strict);
+				}
 			} else {
 				// Accès au dossier ?
 				var folder = LeekScript.getFileSystem().getFolderById(entityInfo.ai_folder, entityInfo.aiOwner);
