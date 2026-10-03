@@ -1769,7 +1769,7 @@ public class State {
 				// Cible obstacle : s'en approcher au plus près, même au milieu d'un bloc ou d'un îlot
 				List<Cell> path = target.isWalkable()
 					? map.getPathBetween(entity.getCell(), target, null)
-					: map.getAStarPath(entity.getCell(), map.getClosestReachableCells(entity.getCell(), target), null);
+					: map.getPathToClosestReachableCell(entity.getCell(), target);
 
 				if (path != null) {
 					used_pm = moveEntity(entity, path.subList(0, Math.min(pm, path.size())));

@@ -1297,33 +1297,37 @@ public class Map {
 	}
 
 	/**
-	 * Cases atteignables depuis `from` (mêmes règles que l'A* : ni obstacle ni entité)
-	 * les plus proches de `target` en distance de cases, si elles en sont strictement plus
-	 * proches que `from` ; vide sinon. Pour un obstacle isolé, ce sont ses voisins libres.
+	 * Plus court chemin depuis `from` vers la case atteignable la plus proche de `target`
+	 * (distance en cases), si elle en est strictement plus proche que `from` ; null sinon.
+	 * Mêmes règles que l'A* : ni obstacle ni entité. Pour un obstacle isolé, le chemin
+	 * mène à l'un de ses voisins libres.
 	 */
-	public List<Cell> getClosestReachableCells(Cell from, Cell target) {
-		List<Cell> closest = new ArrayList<>();
-		int best = Pathfinding.getCaseDistance(from, target);
-		boolean[] seen = new boolean[nb_cells];
+	public List<Cell> getPathToClosestReachableCell(Cell from, Cell target) {
+		// Parcours en largeur : la première case trouvée à une distance est la moins profonde
+		Cell[] parent = new Cell[nb_cells];
+		parent[from.getId()] = from;
 		ArrayDeque<Cell> queue = new ArrayDeque<>();
-		seen[from.getId()] = true;
 		queue.add(from);
-		while (!queue.isEmpty()) {
-			for (Cell c : getCellsAround(queue.poll())) {
-				if (c == null || seen[c.getId()] || !c.isWalkable() || c.getPlayer(this) != null) continue;
-				seen[c.getId()] = true;
+		Cell goal = null;
+		int best = Pathfinding.getCaseDistance(from, target);
+		while (!queue.isEmpty() && best > 1) { // à 1 case d'un obstacle, aucune case libre ne fait mieux
+			Cell u = queue.poll();
+			for (Cell c : getCellsAround(u)) {
+				if (c == null || parent[c.getId()] != null || !c.available(this)) continue;
+				parent[c.getId()] = u;
 				queue.add(c);
 				int d = Pathfinding.getCaseDistance(c, target);
 				if (d < best) {
 					best = d;
-					closest.clear();
-					closest.add(c);
-				} else if (d == best && !closest.isEmpty()) {
-					closest.add(c);
+					goal = c;
 				}
 			}
 		}
-		return closest;
+		if (goal == null) return null;
+		List<Cell> path = new ArrayList<>();
+		for (Cell c = goal; c != from; c = parent[c.getId()]) path.add(c);
+		Collections.reverse(path);
+		return path;
 	}
 
 	public static double getDistance(Cell c1, Cell c2) {
