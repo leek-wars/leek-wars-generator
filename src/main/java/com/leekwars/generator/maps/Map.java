@@ -1303,14 +1303,19 @@ public class Map {
 	 * mène à l'un de ses voisins libres.
 	 */
 	public List<Cell> getPathToClosestReachableCell(Cell from, Cell target) {
+		int best = Pathfinding.getCaseDistance(from, target);
+		// Aucune case atteignable ne fait mieux que `floor` : le parcours s'arrête dès qu'il y
+		// arrive, et ne part pas si `from` y est déjà (une IA qui rappelle moveTowardCell à
+		// chaque tour vers un obstacle au cœur d'un bloc n'explore plus toute la carte).
+		int floor = closestAvailableDistance(from, target, best);
+		if (best <= floor) return null;
 		// Parcours en largeur : la première case trouvée à une distance est la moins profonde
 		Cell[] parent = new Cell[nb_cells];
 		parent[from.getId()] = from;
 		ArrayDeque<Cell> queue = new ArrayDeque<>();
 		queue.add(from);
 		Cell goal = null;
-		int best = Pathfinding.getCaseDistance(from, target);
-		while (!queue.isEmpty() && best > 1) { // à 1 case d'un obstacle, aucune case libre ne fait mieux
+		while (!queue.isEmpty() && best > floor) {
 			Cell u = queue.poll();
 			for (Cell c : getCellsAround(u)) {
 				if (c == null || parent[c.getId()] != null || !c.available(this)) continue;
@@ -1328,6 +1333,28 @@ public class Map {
 		for (Cell c = goal; c != from; c = parent[c.getId()]) path.add(c);
 		Collections.reverse(path);
 		return path;
+	}
+
+	/**
+	 * Distance à `target` de la case libre la plus proche dans la composante de `from`, au plus
+	 * `max`. Toute case atteignable depuis `from` est dans sa composante : c'est un minorant
+	 * de ce que trouve le parcours, obtenu en balayant les anneaux autour de `target`.
+	 */
+	private int closestAvailableDistance(Cell from, Cell target, int max) {
+		for (int r = 1; r < max; r++) {
+			for (int dx = -r; dx <= r; dx++) {
+				int dy = r - Math.abs(dx);
+				if (isAvailableIn(getNextCell(target, dx, dy), from)
+						|| (dy != 0 && isAvailableIn(getNextCell(target, dx, -dy), from))) {
+					return r;
+				}
+			}
+		}
+		return max;
+	}
+
+	private boolean isAvailableIn(Cell c, Cell from) {
+		return c != null && c.getComposante() == from.getComposante() && c.available(this);
 	}
 
 	public static double getDistance(Cell c1, Cell c2) {

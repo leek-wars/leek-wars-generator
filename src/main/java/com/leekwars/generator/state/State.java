@@ -1766,7 +1766,7 @@ public class State {
 		if (pm > 0 && entity.getCell() != null) {
 			Cell target = map.getCell((int) cell_id);
 			if (target != null && target != entity.getCell()) {
-				// Cible obstacle : s'en approcher au plus près, même au milieu d'un bloc ou d'un îlot
+				// Cible obstacle : s'en approcher au plus près
 				List<Cell> path = target.isWalkable()
 					? map.getPathBetween(entity.getCell(), target, null)
 					: map.getPathToClosestReachableCell(entity.getCell(), target);

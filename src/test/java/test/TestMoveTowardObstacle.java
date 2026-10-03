@@ -4,17 +4,21 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.util.Json;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * moveTowardCell vers une case obstacle : le poireau s'en approche au plus près. Le but
- * était une case au bord du BLOC d'obstacles connexes : le poireau s'arrêtait au premier
- * obstacle du bloc, parfois loin de la cible, ou ne bougeait pas sur un îlot fermé.
+ * moveTowardCell vers une case obstacle : le poireau s'en approche au plus près.
  * Cartes reprises de combats de test d'un rapport du forum.
  */
 public class TestMoveTowardObstacle extends FightTestBase {
@@ -61,7 +65,6 @@ public class TestMoveTowardObstacle extends FightTestBase {
 		var path = map().getPathToClosestReachableCell(leek1.getCell(), map().getCell(3));
 		Assert.assertEquals(7, path.size());
 		Assert.assertEquals(20, path.get(path.size() - 1).getId());
-		// Avant : 3 PM, arrêt en 90 au bord du bloc, toujours à 8 cases de la cible
 		Assert.assertEquals(6, fight.getState().moveTowardCell(leek1, 3, -1));
 		Assert.assertTrue(distanceTo(3) < 8);
 	}
@@ -79,7 +82,6 @@ public class TestMoveTowardObstacle extends FightTestBase {
 	public void obstacleInClosedIsland() throws Exception {
 		setup(ISLAND, 351, 577, 30);
 		Assert.assertEquals(13, distanceTo(305));
-		// Avant : aucun voisin du bloc atteignable, le poireau ne bougeait pas
 		Assert.assertTrue(fight.getState().moveTowardCell(leek1, 305, -1) > 0);
 		Assert.assertEquals(3, distanceTo(305));
 	}
@@ -87,7 +89,6 @@ public class TestMoveTowardObstacle extends FightTestBase {
 	@Test
 	public void obstacleAtEndOfWall() throws Exception {
 		setup(WALL, 478, 14, 30);
-		// Avant : arrêt en 90, au pied d'un autre obstacle du mur
 		fight.getState().moveTowardCell(leek1, 1, -1);
 		Assert.assertEquals(2, distanceTo(1));
 	}
@@ -99,5 +100,57 @@ public class TestMoveTowardObstacle extends FightTestBase {
 		// Carte ouverte : chemin le plus court jusqu'à une case collée à l'obstacle
 		Assert.assertEquals(distance - 1, fight.getState().moveTowardCell(leek1, 306, -1));
 		Assert.assertEquals(1, distanceTo(306));
+	}
+
+	// Le minorant ne change rien au résultat : même chemin qu'un parcours complet, pour tout
+	// obstacle visé depuis toute case marchable, sur chaque carte du test
+	@Test
+	public void sameResultAsUnboundedSearch() throws Exception {
+		String[][] maps = { { BLOCKS, "144", "612" }, { ISLAND, "351", "577" }, { WALL, "478", "14" } };
+		for (String[] m : maps) {
+			setup(m[0], Integer.parseInt(m[1]), Integer.parseInt(m[2]), 30);
+			int cases = 0;
+			for (Cell target : map().getCells()) {
+				if (target.isWalkable()) continue;
+				for (Cell from : map().getCells()) {
+					if (!from.isWalkable()) continue;
+					Assert.assertEquals(ids(unboundedPath(map(), from, target)), ids(map().getPathToClosestReachableCell(from, target)));
+					cases++;
+				}
+			}
+			Assert.assertTrue(cases > 1000);
+		}
+	}
+
+	/** Le parcours en largeur sans minorant, s'arrêtant seulement à 1 case de la cible. */
+	private static List<Cell> unboundedPath(Map map, Cell from, Cell target) {
+		Cell[] parent = new Cell[map.getNbCell()];
+		parent[from.getId()] = from;
+		ArrayDeque<Cell> queue = new ArrayDeque<>();
+		queue.add(from);
+		Cell goal = null;
+		int best = Pathfinding.getCaseDistance(from, target);
+		while (!queue.isEmpty() && best > 1) {
+			Cell u = queue.poll();
+			for (Cell c : map.getCellsAround(u)) {
+				if (c == null || parent[c.getId()] != null || !c.available(map)) continue;
+				parent[c.getId()] = u;
+				queue.add(c);
+				int d = Pathfinding.getCaseDistance(c, target);
+				if (d < best) {
+					best = d;
+					goal = c;
+				}
+			}
+		}
+		if (goal == null) return null;
+		List<Cell> path = new ArrayList<>();
+		for (Cell c = goal; c != from; c = parent[c.getId()]) path.add(c);
+		Collections.reverse(path);
+		return path;
+	}
+
+	private static List<Integer> ids(List<Cell> path) {
+		return path == null ? null : path.stream().map(Cell::getId).toList();
 	}
 }
