@@ -1296,47 +1296,34 @@ public class Map {
 		return true;
 	}
 
-	public List<Cell> getValidCellsAroundObstacle(Cell cell) {
-		List<Cell> retour = new ArrayList<Cell>();
-		int size = 1;
-		List<Cell> close = new ArrayList<Cell>();
-		close.add(cell);
-
-		for (int i = 1; i <= size; i++) {
-			boolean stop = true;
-			for (int j = 0; j < i; j++) {
-				stop = addValidCell(retour, close, getCell(cell.getX() + j, cell.getY() + (i - j)), cell) && stop;
-				stop = addValidCell(retour, close, getCell(cell.getX() - j, cell.getY() - (i - j)), cell) && stop;
-				stop = addValidCell(retour, close, getCell(cell.getX() + i - j, cell.getY() - j), cell) && stop;
-				stop = addValidCell(retour, close, getCell(cell.getX() - i + j, cell.getY() + j), cell) && stop;
-			}
-			if (!stop && size < 5)
-				size++;
-		}
-		return retour;
-	}
-
-	private boolean addValidCell(List<Cell> retour, List<Cell> close, Cell c, Cell center) {
-		if (c == null) {
-			return true;
-		}
-		int dx = (int) Math.signum(center.getX() - c.getX());
-		int dy = (int) Math.signum(center.getY() - c.getY());
-
-		Cell c1 = getCell(c.getX() + dx, c.getY());
-		Cell c2 = getCell(c.getX(), c.getY() + dy);
-
-		if (!c.isWalkable()) {
-			if ((c1 != null && !c1.isWalkable() && close.contains(c1)) || (c2 != null && !c2.isWalkable() && close.contains(c2))) {
-				close.add(c);
-				return false;
-			}
-		} else {
-			if ((c1 != null && !c1.isWalkable() && close.contains(c1)) || (c2 != null && !c2.isWalkable() && close.contains(c2))) {
-				retour.add(c);
+	/**
+	 * Cases atteignables depuis `from` (mêmes règles que l'A* : ni obstacle ni entité)
+	 * les plus proches de `target` en distance de cases, si elles en sont strictement plus
+	 * proches que `from` ; vide sinon. Pour un obstacle isolé, ce sont ses voisins libres.
+	 */
+	public List<Cell> getClosestReachableCells(Cell from, Cell target) {
+		List<Cell> closest = new ArrayList<>();
+		int best = Pathfinding.getCaseDistance(from, target);
+		boolean[] seen = new boolean[nb_cells];
+		ArrayDeque<Cell> queue = new ArrayDeque<>();
+		seen[from.getId()] = true;
+		queue.add(from);
+		while (!queue.isEmpty()) {
+			for (Cell c : getCellsAround(queue.poll())) {
+				if (c == null || seen[c.getId()] || !c.isWalkable() || c.getPlayer(this) != null) continue;
+				seen[c.getId()] = true;
+				queue.add(c);
+				int d = Pathfinding.getCaseDistance(c, target);
+				if (d < best) {
+					best = d;
+					closest.clear();
+					closest.add(c);
+				} else if (d == best && !closest.isEmpty()) {
+					closest.add(c);
+				}
 			}
 		}
-		return true;
+		return closest;
 	}
 
 	public static double getDistance(Cell c1, Cell c2) {
