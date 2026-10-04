@@ -3,15 +3,12 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.leekwars.generator.ErrorManager;
-import com.leekwars.generator.Generator;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.util.Json;
 
-import leekscript.compiler.AIFile;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -92,16 +89,7 @@ public class TestFixedMapObstacle extends FightTestBase {
 		((ObjectNode) customMap.get("obstacles")).put("-3", 1);
 		fight.getState().setCustomMap(customMap);
 
-		var reported = new java.util.ArrayList<Throwable>();
-		Generator.setErrorManager(new ErrorManager() {
-			@Override public void exception(Throwable e, int fightID) { reported.add(e); }
-			@Override public void exception(Throwable e, int fightID, int farmer, AIFile file) { reported.add(e); }
-		});
-		try {
-			initFightOnly();
-		} finally {
-			Generator.setErrorManager(null);
-		}
+		var reported = captureReportedErrors(this::initFightOnly);
 		Assert.assertTrue("aucune erreur remontée : " + reported, reported.isEmpty());
 		Assert.assertFalse("l'obstacle valide est posé", fight.getState().getMap().getCell(306).isWalkable());
 	}

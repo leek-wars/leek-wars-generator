@@ -2,11 +2,13 @@ package test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Before;
 import org.junit.Ignore;
 
+import com.leekwars.generator.ErrorManager;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.fight.Fight;
@@ -104,6 +106,29 @@ public abstract class FightTestBase {
 	 */
 	protected void initFightOnly() throws Exception {
 		fight.initFight();
+	}
+
+	@FunctionalInterface
+	protected interface ThrowingRunnable {
+		void run() throws Exception;
+	}
+
+	/**
+	 * Exécute `action` avec un ErrorManager qui enregistre les erreurs serveur remontées,
+	 * puis le retire (même si `action` échoue). Rend les erreurs dans l'ordre de remontée.
+	 */
+	protected static List<Throwable> captureReportedErrors(ThrowingRunnable action) throws Exception {
+		var reported = new ArrayList<Throwable>();
+		Generator.setErrorManager(new ErrorManager() {
+			@Override public void exception(Throwable e, int fightID) { reported.add(e); }
+			@Override public void exception(Throwable e, int fightID, int farmer, AIFile file) { reported.add(e); }
+		});
+		try {
+			action.run();
+		} finally {
+			Generator.setErrorManager(null);
+		}
+		return reported;
 	}
 
 	/**
