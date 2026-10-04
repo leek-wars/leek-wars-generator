@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
@@ -227,11 +228,18 @@ public final class TypeMarshaller {
 	private static MapLeekValue toLeekMap(Value v, AI ai, int depth) throws LeekRunException {
 		checkDepth(depth);
 		MapLeekValue map = new MapLeekValue(ai);
-		if (!v.hasHashEntries() && v.hasMember("__dict__")) {
-			// Objet Python : ses seules donnees d'instance, comme les proprietes propres d'un objet JS. Ses
-			// membres comprennent aussi les @property de sa classe, que getMember EXECUTE : sur un objet de
-			// l'API (Cell, Chip, Entity...) elles menent de proche en proche a toute l'API (STACKOVERFLOW).
-			v = v.getMember("__dict__");
+		if (!v.hasHashEntries() && v.canInvokeMember("__getstate__")) {
+			// Objet Python : ses donnees telles que pickle/copy les voient (__getstate__, par defaut son
+			// __dict__), comme les proprietes propres d'un objet JS. Ses membres comprennent aussi les
+			// @property de sa classe, que getMember EXECUTE : sur un objet de l'API (Cell, Chip, Entity...)
+			// elles menent de proche en proche a toute l'API (STACKOVERFLOW).
+			Value state = v.invokeMember("__getstate__");
+			if (state.isNull()) {
+				return map; // aucune donnee d'instance
+			}
+			if (state.hasHashEntries()) {
+				v = state;
+			}
 		}
 		if (v.hasHashEntries()) {
 			Value it = v.getHashEntriesIterator();
@@ -346,7 +354,7 @@ public final class TypeMarshaller {
 		}
 		if (o instanceof GenericArrayLeekValue array) {
 			// Vue paresseuse : le tableau vivant, lu a la demande.
-			return new LeekSequenceProxy(array.size(), i -> {
+			return new LeekSequenceProxy(array::size, i -> {
 				try {
 					return array.get(i);
 				} catch (LeekRunException e) {
@@ -359,7 +367,7 @@ public final class TypeMarshaller {
 		}
 		if (o instanceof SetLeekValue set) {
 			List<Object> elements = new ArrayList<>(set);
-			return new LeekSequenceProxy(elements.size(), elements::get, python);
+			return new LeekSequenceProxy(elements::size, elements::get, python);
 		}
 		// Type LeekScript non encore gere : on le laisse passer (opaque sous HostAccess.NONE).
 		return o;
@@ -367,11 +375,11 @@ public final class TypeMarshaller {
 
 	/** Vue paresseuse, lecture seule, d'une sequence de combat (tableau ou set LeekScript). */
 	private static final class LeekSequenceProxy implements ProxyArray {
-		private final long size;
+		private final IntSupplier size;
 		private final IntFunction<Object> element;
 		private final boolean python;
 
-		LeekSequenceProxy(long size, IntFunction<Object> element, boolean python) {
+		LeekSequenceProxy(IntSupplier size, IntFunction<Object> element, boolean python) {
 			this.size = size;
 			this.element = element;
 			this.python = python;
@@ -379,7 +387,7 @@ public final class TypeMarshaller {
 
 		@Override
 		public long getSize() {
-			return size;
+			return size.getAsInt();
 		}
 
 		@Override

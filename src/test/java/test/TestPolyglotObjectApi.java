@@ -1239,13 +1239,17 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				+ "    Debug.log([Weapon.pistol, Chip.spark])\n"
 				+ "    Debug.log({'arme': Weapon.pistol})\n"
 				+ "    Debug.log(Noeud())\n"
+				+ "    Debug.log([Fight.me])\n"
 				+ "    return Fight.me.cell.id\n");
 			leek1.setAI(ai); // Debug.log ecrit le journal via l'IA du poireau
 			long cell = ((Number) ai.runIA()).longValue();
 			String logs = farmerLog.toJSON().toString();
 			for (String expected : new String[] { "Cell(" + cell + ")", "Me(" + leek1.getFId() + ")",
 					"[[\\\"id\\\" : 37], [\\\"id\\\" : 18]]", "[\\\"arme\\\" : [\\\"id\\\" : 37]]",
-					"[\\\"case\\\" : [\\\"id\\\" : " + cell + "], \\\"n\\\" : 2]" }) {
+					"[\\\"case\\\" : [\\\"id\\\" : " + cell + "], \\\"n\\\" : 2]",
+					// Fight.me imbrique : son id est une @property (il suit le bulbe pendant son tour), que
+					// Me.__getstate__ remet dans ses donnees.
+					"[[\\\"id\\\" : " + leek1.getFId() + "]]" }) {
 				Assert.assertTrue(expected + " absent du journal : " + logs, logs.contains(expected));
 			}
 

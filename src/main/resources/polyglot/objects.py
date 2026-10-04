@@ -473,6 +473,9 @@ def _lw_build(G, NAMES):
         def id(self): return F.getEntity()
         @id.setter
         def id(self, value): pass
+        # Donnees de `me` hors de Debug.log direct (imbrique, dans un message) : son id, property donc
+        # absente de son __dict__, plus l'etat que le joueur y range (cf TypeMarshaller.toLeekMap).
+        def __getstate__(self): return {**self.__dict__, 'id': self.id}
         def moveToward(self, target, mp=None):
             if isinstance(target, Cell):
                 return F.moveTowardCell(target.id) if mp is None else F.moveTowardCell(target.id, mp)
