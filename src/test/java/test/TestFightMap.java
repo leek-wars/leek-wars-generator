@@ -379,12 +379,21 @@ public class TestFightMap {
 		// Lancer en ligne utilisable sur soi (portée 0 à 6, comme Sérum ou Affranchissement)
 		var attack = new Attack(0, 6, (byte) Attack.LAUNCH_TYPE_LINE, (byte) Area.TYPE_SINGLE_CELL, true,
 			JsonNodeFactory.instance.arrayNode(), Attack.TYPE_CHIP, 0, -1);
-		Cell target = map.getCell(306); // centre de la carte
+		Cell target = map.getCell(map.getNbCell() / 2); // centre de la carte
 
 		List<Cell> cells = map.getPossibleCastCellsForTarget(attack, target, new ArrayList<>());
-		Assert.assertEquals(1, cells.stream().filter(c -> c == target).count());
+		Assert.assertEquals(target, cells.get(0));
 		Assert.assertEquals(new HashSet<>(cells).size(), cells.size());
 		// 6 cases dans chacune des 4 directions, plus la cible
 		Assert.assertEquals(25, cells.size());
+
+		// Un obstacle à 1 case coupe toute sa direction, et seulement elle
+		map.getCell(target.getX() - 1, target.getY()).setObstacle(1, 1);
+		Assert.assertEquals(19, map.getPossibleCastCellsForTarget(attack, target, new ArrayList<>()).size());
+
+		// Portée minimale 1 : la cible n'est plus une case de lancer
+		var fromOne = new Attack(1, 6, (byte) Attack.LAUNCH_TYPE_LINE, (byte) Area.TYPE_SINGLE_CELL, true,
+			JsonNodeFactory.instance.arrayNode(), Attack.TYPE_CHIP, 0, -1);
+		Assert.assertFalse(map.getPossibleCastCellsForTarget(fromOne, target, new ArrayList<>()).contains(target));
 	}
 }

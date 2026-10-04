@@ -1151,17 +1151,17 @@ public class Map {
 				int x = target.getX(), y = target.getY();
 				var dirs = new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
 				Cell c;
-				for (int i = 0; i <= attack.getMaxRange(); i++) {
-					// À la distance 0, les quatre directions désignent la cible elle-même :
-					// une seule suffit, sinon la cellule sort quatre fois.
-					for (int dir = 0; dir < (i == 0 ? 1 : 4); dir++) {
+				if (attack.getMinRange() == 0 && available(target, cells_to_ignore))
+					possible.add(target);
+				for (int i = 1; i <= attack.getMaxRange(); i++) {
+					for (int dir = 0; dir < 4; dir++) {
 						if (!line[dir])
 							continue;
 						c = getCell(x + i * dirs[dir][0], y + i * dirs[dir][1]);
 						if (c == null)
 							line[dir] = false;
 						else {
-							if (attack.needLos() && !available(c, cells_to_ignore) && i > 0)
+							if (attack.needLos() && !available(c, cells_to_ignore))
 								line[dir] = false;
 							else if (attack.needLos() && !c.isWalkable())
 								line[dir] = false;
