@@ -163,6 +163,8 @@ public abstract class Entity {
 	private int life;
 
 	private Registers mRegister = null;
+	/** Le RegisterManager a été consulté : sans registres enregistrés, on ne le redemande pas. */
+	private boolean mRegisterFetched = false;
 
 	private boolean mHasMoved = false;
 	private int fight_id;
@@ -300,39 +302,44 @@ public abstract class Entity {
 	public Registers getRegisters() {
 		return mRegister;
 	}
-	private void loadRegisters() {
-		String v = state.getRegisterManager().getRegisters(getId());
-		if (v == null) {
-			mRegister = new Registers(true);
-		} else {
-			mRegister = Registers.fromJSONString(v);
+	/** Registres enregistrés de l'entité, lus au premier appel ; null si elle n'en a aucun. */
+	private Registers storedRegisters() {
+		if (mRegister == null && !mRegisterFetched) {
+			mRegisterFetched = true;
+			String v = state.getRegisterManager().getRegisters(getId());
+			if (v != null) {
+				mRegister = Registers.fromJSONString(v);
+			}
 		}
+		return mRegister;
+	}
+
+	/** Registres de l'entité ; sans registres enregistrés, des neufs, insérés en fin de combat. */
+	private Registers registers() {
+		if (storedRegisters() == null) {
+			mRegister = new Registers(true);
+		}
+		return mRegister;
 	}
 
 	public String getRegister(String key) {
-		if (mRegister == null) {
-			loadRegisters();
-		}
-		return mRegister.get(key);
+		return registers().get(key);
 	}
 	public Map<String, String> getAllRegisters() {
-		if (mRegister == null) {
-			loadRegisters();
-		}
-		return mRegister.getValues();
+		return registers().getValues();
 	}
 	public boolean setRegister(String key, String value) {
-		if (mRegister == null) {
-			loadRegisters();
-		}
+		Registers registers = registers();
 		state.statistics.registerWrite(this, key, value);
-		return mRegister.set(key, value);
+		return registers.set(key, value);
 	}
 	public void deleteRegister(String key) {
-		if (mRegister == null) {
-			loadRegisters();
+		// Sans registres enregistrés, rien à supprimer : pas de registres neufs, qui seraient
+		// insérés ('{}') en fin de combat alors que rien n'a changé.
+		Registers registers = storedRegisters();
+		if (registers != null) {
+			registers.delete(key);
 		}
-		mRegister.delete(key);
 	}
 
 	public int getHat() {
