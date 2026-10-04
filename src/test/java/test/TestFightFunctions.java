@@ -450,6 +450,29 @@ public class TestFightFunctions {
 		Assert.assertTrue(testAI(mLeek1, codes, values));
 	}
 
+	/**
+	 * 5pilow/leek-wars#3095 : la case d'arrivée occupée par une entité est retirée du chemin,
+	 * sauf si elle figure dans les cases à ignorer.
+	 */
+	@Test
+	public void getPathIgnoredEndCellTest() throws Exception {
+		mFight.getState().getMap().clear();
+		ArrayList<String> codes = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
+
+		String next = "getCellFromXY(getCellX(getCell()) + 1, getCellY(getCell()))";
+		codes.add("getPathLength(getCell(), " + next + ")");
+		values.add(1);
+		codes.add("getPathLength(" + next + ", getCell())");
+		values.add(0);
+		codes.add("getPathLength(" + next + ", getCell(), [getCell()])");
+		values.add(1);
+		codes.add("count(getPath(" + next + ", getCell(), [getCell()]))");
+		values.add(1);
+
+		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
 	@Test
 	public void getCellToUseChipOnCellInvalidTest() throws Exception {
 		ArrayList<String> codes = new ArrayList<String>();
