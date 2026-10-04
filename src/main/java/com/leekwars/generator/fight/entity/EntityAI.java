@@ -285,8 +285,9 @@ public class EntityAI extends AI {
 			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
 			return new EntityAI(entity, (LeekLog) entity.getLogs());
 
-		} catch (Exception e) {
-			// Other error : server error
+		} catch (Exception | StackOverflowError e) {
+			// Other error : server error. Le compilateur récursif peut déborder la pile sur une
+			// expression imbriquée très profondément : seule cette IA est invalide, pas le combat.
 			generator.exception(e, (Fight) entity.getFight(), entity.getFarmer(), file);
 			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
 			return new EntityAI(entity, (LeekLog) entity.getLogs());
