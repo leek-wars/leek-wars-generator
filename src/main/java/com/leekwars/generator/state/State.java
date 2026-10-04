@@ -735,11 +735,16 @@ public class State {
 	public boolean isFinished() {
 
 		if (type == TYPE_CHEST_HUNT) {
-			// Chest hunt: finished when all chests are dead
+			// Chest hunt: finished when all chests are dead, or when no player is left to
+			// open them (their effects and summons die with them: nothing can happen anymore)
+			boolean chestsAlive = false;
+			boolean playersAlive = false;
 			for (Team team : teams) {
-				if (team.containsChest() && team.isAlive()) return false;
+				if (!team.isAlive()) continue;
+				if (team.containsChest()) chestsAlive = true;
+				else playersAlive = true;
 			}
-			return true;
+			return !chestsAlive || !playersAlive;
 		}
 
 		int aliveTeams = 0;
