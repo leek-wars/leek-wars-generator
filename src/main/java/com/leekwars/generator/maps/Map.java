@@ -101,7 +101,8 @@ public class Map {
 				try {
 					int cell_id = Integer.parseInt(c.getKey());
 					Cell cell = map.getCell(cell_id);
-					if (cell.available(map)) {
+					// Une map de test peut garder des obstacles hors de la grille : rien à poser
+					if (cell != null && cell.available(map)) {
 						if (c.getValue().isBoolean()) {
 							cell.setObstacle(1, 1);
 						} else {

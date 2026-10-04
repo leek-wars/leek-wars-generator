@@ -3,12 +3,15 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.ErrorManager;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.util.Json;
 
+import leekscript.compiler.AIFile;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -74,6 +77,33 @@ public class TestFixedMapObstacle extends FightTestBase {
 		// Controle : une case voisine hors empreinte (ouest) reste franchissable.
 		Cell west = map.getCellByDir(a, Pathfinding.WEST);
 		Assert.assertTrue("ouest (hors empreinte) franchissable", west.isWalkable());
+	}
+
+	/**
+	 * 5pilow/leek-wars#4343 : une map de test qui porte un obstacle hors de la grille
+	 * (case inexistante) faisait lever un NullPointerException, remonté en erreur serveur
+	 * à chaque combat. L'obstacle est simplement ignoré, les autres sont posés.
+	 */
+	@Test
+	public void obstacleOutsideGridIsIgnored() throws Exception {
+		ObjectNode customMap = customMapWithObstacle(306, 42);
+		customMap.put("id", 0); // map de test (éditeur), pas une arène fixe
+		((ObjectNode) customMap.get("obstacles")).put("9999", 1);
+		((ObjectNode) customMap.get("obstacles")).put("-3", 1);
+		fight.getState().setCustomMap(customMap);
+
+		var reported = new java.util.ArrayList<Throwable>();
+		Generator.setErrorManager(new ErrorManager() {
+			@Override public void exception(Throwable e, int fightID) { reported.add(e); }
+			@Override public void exception(Throwable e, int fightID, int farmer, AIFile file) { reported.add(e); }
+		});
+		try {
+			initFightOnly();
+		} finally {
+			Generator.setErrorManager(null);
+		}
+		Assert.assertTrue("aucune erreur remontée : " + reported, reported.isEmpty());
+		Assert.assertFalse("l'obstacle valide est posé", fight.getState().getMap().getCell(306).isWalkable());
 	}
 
 	@Test
