@@ -104,6 +104,34 @@ public class TestTypeScriptMultiFile extends FightTestBase {
 		Assert.assertEquals("le module TS importe (.js + .ts) doit s'executer", "70", leek1.getRegister("mod"));
 	}
 
+	/**
+	 * `function turn()` de premier niveau, sans export, dans une entree TS qui importe : appelee a chaque
+	 * tour. Avant, le module (alias .js de l'entree) la gardait pour lui et l'IA ne jouait aucun tour.
+	 */
+	@Test
+	public void tsModuleEntryPlainTurnIsCalledEachTurn() throws Exception {
+		Path dir = Files.createTempDirectory("ts-mf-plain-");
+		Files.writeString(dir.resolve("util.ts"), "export function bonus(): number { return 7; }\n");
+		Files.writeString(dir.resolve("main.ts"), String.join("\n",
+			"import { bonus } from './util.js';",
+			"let tours: number = 0;",
+			"function turn(): void {",
+			"  tours++;",
+			"  Registers.set('plain', bonus() + ':' + tours);",
+			"}"));
+
+		LeekScript.setFileSystem(new TsDiskFileSystem(leek1.getId(), dir.toString()));
+		attachTsEntry(leek1, dir.toString(), "main.ts");
+		attachAI(leek2, "");
+		runFight();
+
+		Assert.assertTrue(leek1.getAI() instanceof PolyglotEntityAI);
+		String value = leek1.getRegister("plain");
+		Assert.assertNotNull("turn() non exportee doit etre appelee", value);
+		Assert.assertTrue("turn() doit etre appelee a chaque tour : " + value,
+			value.startsWith("7:") && Integer.parseInt(value.substring(2)) > 1);
+	}
+
 	/** Import SANS extension ({@code './util'}) : convention TS par defaut, probing .js/.mjs (#3179). */
 	@Test
 	public void tsMultiFileExtensionlessImport() throws Exception {

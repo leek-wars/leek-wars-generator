@@ -204,6 +204,42 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Une entree qui fait `import` devient un module ES, ou un `function turn()` de premier niveau est
+	 * module-scoped. Sans `export`, le moteur ne la voyait pas : le module s'executait une fois et l'IA
+	 * ne faisait plus rien, sans erreur. turn() est maintenant appelee a chaque tour, comme dans un script.
+	 */
+	@Test
+	public void jsModuleEntryPlainTurnIsCalledEachTurn() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("strategie.js", "export function pick() { return 40; }\n");
+		files.put("main.js",
+			"import { pick } from './strategie.js';\n"
+			+ "let n = 0;\n"
+			+ "function turn() { n++; return pick() + n; }\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			PolyglotEntityAI ai = multiFileAI(sb, "js", files, "main.js");
+			Assert.assertEquals(41L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(42L, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	/** Un globalThis.turn pose par le joueur garde la main sur une fonction turn du module. */
+	@Test
+	public void jsModuleEntryExplicitGlobalTurnWins() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("util.js", "export const X = 1;\n");
+		files.put("main.js",
+			"import { X } from './util.js';\n"
+			+ "function turn() { return -1; }\n"
+			+ "globalThis.turn = function() { return X + 1; };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(2L, ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue());
+		}
+	}
+
 	/** Import SANS extension ({@code './strategie'}) : habitude Node/TS, probing .js/.mjs (#3179). */
 	@Test
 	public void jsMultiFileExtensionlessImport() throws Exception {

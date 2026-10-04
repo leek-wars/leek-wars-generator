@@ -164,6 +164,24 @@ public class TestPolyglotHooks extends FightTestBase {
 		}
 	}
 
+	/** Hook et turn() de premier niveau SANS export dans un module ES : vus par le moteur comme dans un script. */
+	@Test
+	public void jsEsModulePlainHookIsResolved() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("strategie.mjs", "export function choix() { return 'plain'; }\n");
+		files.put("main.mjs",
+			"import { choix } from './strategie.mjs';\n"
+			+ "function beforeFight() { Registers.set('hook', choix()); }\n"
+			+ "function turn() {}\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			EntityAI ai = multiFileAI(sb, "js", files, "main.mjs");
+			Assert.assertTrue(ai.hasHook("beforeFight"));
+			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+			Assert.assertEquals("plain", leek1.getRegister("hook"));
+		}
+	}
+
 	@Test
 	public void hookDeclaredInImportedFileIsDetected() throws Exception {
 		initFightOnly();

@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
+import org.graalvm.polyglot.proxy.ProxyHashMap;
+import org.graalvm.polyglot.proxy.ProxyIterator;
 import org.graalvm.polyglot.proxy.ProxyObject;
 
 import leekscript.common.Error;
@@ -25,7 +27,8 @@ import leekscript.runner.values.SetLeekValue;
  * Primitifs : entiers, reels, booleens, chaines.
  * Collections :
  *   Java -&gt; guest : {@link GenericArrayLeekValue}/{@link SetLeekValue} -&gt; {@link ProxyArray},
- *                    {@link MapLeekValue} -&gt; {@link ProxyObject} (vues paresseuses, lecture seule).
+ *                    {@link MapLeekValue} -&gt; {@link ProxyObject} en JS, {@link ProxyHashMap} en Python
+ *                    (vues paresseuses, lecture seule).
  *   guest -&gt; Java : tableau guest -&gt; {@link ArrayLeekValue}, objet guest -&gt; {@link MapLeekValue}.
  */
 public final class TypeMarshaller {
@@ -36,6 +39,9 @@ public final class TypeMarshaller {
 	 * la conversion descend recursivement, donc une structure cyclique boucle a l'infini.
 	 */
 	private static final int MAX_MARSHALLING_DEPTH = 500;
+
+	/** Attribut de classe des objets de l'API Python designes par un id (cf toJava, objects.py). */
+	private static final String PYTHON_API_REF = "_lw_ref";
 
 	private TypeMarshaller() {}
 
@@ -165,6 +171,12 @@ public final class TypeMarshaller {
 			return toLeekArray(v, ai, depth); // set Python et autres iterables non indexes
 		}
 		if (v.hasMembers() && !v.canExecute()) {
+			// Objet de l'API Python designe par son id (Cell, Item, Entity : `_lw_ref` dans objects.py).
+			// Ses proprietes menent de proche en proche a toute l'API : les enumerer finissait en
+			// STACKOVERFLOW. On le montre comme print() : par son repr, `Cell(42)`.
+			if (v.hasMember(PYTHON_API_REF)) {
+				return v.invokeMember("__repr__").asString();
+			}
 			return toLeekMap(v, ai, depth); // objet JS { ... } (les methodes sont ignorees)
 		}
 		// Fonctions / objets opaques (modules Python, etc.) : pas de donnee LeekScript exploitable.
@@ -319,8 +331,19 @@ public final class TypeMarshaller {
 
 	// ----- Java -> guest -----
 
-	/** Conversion Java -&gt; guest pour la valeur de retour d'une fonction de combat. */
+	/** Conversion Java -&gt; guest pour la valeur de retour d'une fonction de combat (JS). */
 	public static Object toGuest(Object o) {
+		return toGuest(o, false);
+	}
+
+	/**
+	 * Conversion Java -&gt; guest pour la valeur de retour d'une fonction de combat.
+	 *
+	 * @param python une map devient un {@link ProxyHashMap} : GraalPy n'indexe un objet etranger que par
+	 *               ses entrees de hash, un {@link ProxyObject} n'y offre que des attributs (ni
+	 *               {@code m[k]}, ni iteration). JS garde le {@link ProxyObject} (objet a cles chaines).
+	 */
+	public static Object toGuest(Object o, boolean python) {
 		if (o == null) {
 			return null;
 		}
@@ -328,13 +351,13 @@ public final class TypeMarshaller {
 			return o; // GraalVM convertit automatiquement les primitifs hote en valeur guest
 		}
 		if (o instanceof GenericArrayLeekValue) {
-			return new LeekArrayProxy((GenericArrayLeekValue) o);
+			return new LeekArrayProxy((GenericArrayLeekValue) o, python);
 		}
 		if (o instanceof MapLeekValue) {
-			return new LeekMapProxy((MapLeekValue) o);
+			return python ? new LeekDictProxy((MapLeekValue) o) : new LeekMapProxy((MapLeekValue) o);
 		}
 		if (o instanceof SetLeekValue) {
-			return new LeekListProxy(new ArrayList<Object>((SetLeekValue) o));
+			return new LeekListProxy(new ArrayList<Object>((SetLeekValue) o), python);
 		}
 		// Type LeekScript non encore gere : on le laisse passer (opaque sous HostAccess.NONE).
 		return o;
@@ -343,9 +366,11 @@ public final class TypeMarshaller {
 	/** Vue paresseuse, lecture seule, d'un tableau de combat ({@link GenericArrayLeekValue}). */
 	private static final class LeekArrayProxy implements ProxyArray {
 		private final GenericArrayLeekValue array;
+		private final boolean python;
 
-		LeekArrayProxy(GenericArrayLeekValue array) {
+		LeekArrayProxy(GenericArrayLeekValue array, boolean python) {
 			this.array = array;
+			this.python = python;
 		}
 
 		@Override
@@ -356,7 +381,7 @@ public final class TypeMarshaller {
 		@Override
 		public Object get(long index) {
 			try {
-				return toGuest(array.get((int) index));
+				return toGuest(array.get((int) index), python);
 			} catch (LeekRunException e) {
 				throw new RuntimeException(e);
 			}
@@ -371,9 +396,11 @@ public final class TypeMarshaller {
 	/** Vue paresseuse, lecture seule, d'une liste Java de valeurs LeekScript (ex: SetLeekValue). */
 	private static final class LeekListProxy implements ProxyArray {
 		private final List<Object> list;
+		private final boolean python;
 
-		LeekListProxy(List<Object> list) {
+		LeekListProxy(List<Object> list, boolean python) {
 			this.list = list;
+			this.python = python;
 		}
 
 		@Override
@@ -383,7 +410,7 @@ public final class TypeMarshaller {
 
 		@Override
 		public Object get(long index) {
-			return toGuest(list.get((int) index));
+			return toGuest(list.get((int) index), python);
 		}
 
 		@Override
@@ -440,6 +467,67 @@ public final class TypeMarshaller {
 			} catch (NumberFormatException e) {
 				return null;
 			}
+		}
+	}
+
+	/**
+	 * Vue paresseuse, lecture seule, d'une map de combat pour Python : un dict etranger ({@code m[k]},
+	 * {@code k in m}, {@code len}, {@code keys/items/get}, {@code dict(m)}). Les cles gardent leur type
+	 * LeekScript (entier ou chaine), sans la conversion en chaine de {@link LeekMapProxy}.
+	 */
+	private static final class LeekDictProxy implements ProxyHashMap {
+		private final MapLeekValue map;
+
+		LeekDictProxy(MapLeekValue map) {
+			this.map = map;
+		}
+
+		@Override
+		public long getHashSize() {
+			return map.size();
+		}
+
+		@Override
+		public boolean hasHashEntry(Value key) {
+			return map.containsKey(toKey(key));
+		}
+
+		@Override
+		public Object getHashValue(Value key) {
+			return toGuest(map.get(toKey(key)), true);
+		}
+
+		@Override
+		public void putHashEntry(Value key, Value value) {
+			throw new UnsupportedOperationException("map de combat en lecture seule");
+		}
+
+		@Override
+		public Object getHashEntriesIterator() {
+			var entries = map.entrySet().iterator();
+			return new ProxyIterator() {
+				@Override
+				public boolean hasNext() {
+					return entries.hasNext();
+				}
+
+				@Override
+				public Object getNext() {
+					var entry = entries.next();
+					return ProxyArray.fromArray(entry.getKey(), toGuest(entry.getValue(), true));
+				}
+			};
+		}
+
+		// Les entiers LeekScript sont des Long : un int Python (Entity.Stat.LIFE) doit retrouver la cle.
+		private static Object toKey(Value key) {
+			if (key.isString()) {
+				return key.asString();
+			}
+			if (key.isNumber() && key.fitsInLong()) {
+				return key.asLong();
+			}
+			return null;
 		}
 	}
 }

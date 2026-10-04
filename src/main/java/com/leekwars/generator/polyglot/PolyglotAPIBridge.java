@@ -64,9 +64,10 @@ public class PolyglotAPIBridge {
 	 */
 	public static void install(Context context, String languageId, EntityAI ai) {
 		Value bindings = context.getBindings(languageId);
+		boolean python = "python".equals(languageId);
 		Map<String, Object> bag = new HashMap<>();
 		for (Map.Entry<String, Map<Integer, Method>> entry : FUNCTIONS.entrySet()) {
-			bag.put(entry.getKey(), makeProxy(ai, entry.getKey(), entry.getValue()));
+			bag.put(entry.getKey(), makeProxy(ai, entry.getKey(), entry.getValue(), python));
 		}
 		for (Map.Entry<String, Object> entry : CONSTANTS.entrySet()) {
 			bag.putIfAbsent(entry.getKey(), entry.getValue());
@@ -177,7 +178,7 @@ public class PolyglotAPIBridge {
 		return score;
 	}
 
-	private static ProxyExecutable makeProxy(EntityAI ai, String name, Map<Integer, Method> byArity) {
+	private static ProxyExecutable makeProxy(EntityAI ai, String name, Map<Integer, Method> byArity, boolean python) {
 		return (Value... args) -> {
 			Method m = byArity.get(args.length);
 			if (m == null) {
@@ -211,7 +212,7 @@ public class PolyglotAPIBridge {
 						throw new RuntimeException(e);
 					}
 				}
-				Object result = TypeMarshaller.toGuest(m.invoke(null, callArgs));
+				Object result = TypeMarshaller.toGuest(m.invoke(null, callArgs), python);
 				// La fonction de combat a pu charger des ops (ai.ops) : rafraichir le miroir __lw_real
 				// pour le getOperations() cote guest (cf PolyglotEntityAI.installGuestGetOperations).
 				if (ai instanceof PolyglotEntityAI) ((PolyglotEntityAI) ai).syncRealToGuest();

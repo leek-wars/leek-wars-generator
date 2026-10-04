@@ -147,6 +147,9 @@ def _lw_build(G, NAMES):
         # `str(cell)` / `Debug.log(cell)` : `Cell(42)` plutôt que le `<_lw_build.<locals>.Cell object
         # at 0x…>` par défaut (forum #12096). Les enveloppes sur tableau brut (Effect, Feature,
         # Message) montrent leur contenu. Le joueur peut toujours définir __str__ dans ses classes.
+        # Debug.log passe par le pont, pas par repr : les classes à id (Cell, Item, Entity) portent
+        # `_lw_ref`, que TypeMarshaller.toJava remplace par ce repr au lieu d'énumérer leurs propriétés
+        # (qui mènent de proche en proche à toute l'API).
         def __repr__(self):
             id = getattr(self, 'id', None)
             if id is not None: return f"{type(self).__name__}({id})"
@@ -154,6 +157,7 @@ def _lw_build(G, NAMES):
             return f"{type(self).__name__}({list(raw) if raw is not None else ''})"
 
     class Cell(_ReadOnly):
+        _lw_ref = True
         def __init__(self, id): object.__setattr__(self, 'id', id)
         # Cellule d'id `id`, ou None s'il est invalide. L'API ACCEPTE des ids partout, il faut donc
         # pouvoir faire le chemin inverse : typiquement relire un id range dans un registre.
@@ -190,6 +194,7 @@ def _lw_build(G, NAMES):
     # Base commune aux armes et puces. Porte les constantes partagees (Item.LaunchType, Item.Area).
     # Les getters restent dans les sous-classes (fonctions plates distinctes getWeapon*/getChip*).
     class Item(_ReadOnly):
+        _lw_ref = True
         def __init__(self, id): object.__setattr__(self, 'id', id)
         # L'item (arme OU puce) d'id `id`, ou None. Weapon.get/Chip.get restreignent a leur type.
         
@@ -343,6 +348,7 @@ def _lw_build(G, NAMES):
     def _feats(arr): return [Feature(e) for e in (arr or [])]
 
     class Entity(_ReadOnly):
+        _lw_ref = True
         def __init__(self, id): object.__setattr__(self, 'id', id)
         # Genre d'entite (Entity.Type.LEEK/BULB/TURRET/CHEST/MOB), cf #4634. Ne pas
         # confondre avec .type des sous-classes (sous-variante : Bulb.Type.*, etc.).

@@ -1183,4 +1183,75 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				"    return '|'.join(parts)\n"));
 		}
 	}
+
+	/**
+	 * Les maps rendues par l'API (bulbStats, bulbCharacteristics, Registers.all()) arrivaient en Python en
+	 * objet étranger à attributs : ni indexable (`stats[Entity.Stat.LIFE]` -> TypeError), ni itérable, alors
+	 * que le .pyi les annonce en dict. Elles se lisent maintenant comme un dict, clés entières comprises.
+	 */
+	@Test
+	public void pythonApiMapsReadLikeDicts() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"list(Chip.punyBulb.bulbStats[Entity.Stat.LIFE]) == list(Chip.punyBulb.bulbStats[0])"
+				+ " and len(Chip.punyBulb.bulbStats[Entity.Stat.LIFE]) == 2"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"Entity.Stat.LIFE in Chip.punyBulb.bulbStats and 'absent' not in Chip.punyBulb.bulbStats"
+				+ " and len(Chip.punyBulb.bulbStats) > 1"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"sorted(Chip.punyBulb.bulbStats.keys()) == sorted(k for k in Chip.punyBulb.bulbStats)"
+				+ " and len(list(Chip.punyBulb.bulbStats.items())) == len(Chip.punyBulb.bulbStats)"));
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
+				"sorted(dict(Chip.punyBulb.bulbCharacteristics)) == sorted(Chip.punyBulb.bulbStats)"));
+			// Pas une puce d'invocation : None, comme getBulbStats en LeekScript.
+			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "Chip.spark.bulbStats is None"));
+			// Registres : clés chaînes, get() avec défaut, copie en vrai dict.
+			Assert.assertEquals(Boolean.TRUE, evalPyBody(sb,
+				"    Registers.set('reg1', '314323')\n"
+				+ "    r = Registers.all()\n"
+				+ "    return r['reg1'] == '314323' and dict(r)['reg1'] == '314323' and r.get('absent', 7) == 7\n"));
+		}
+	}
+
+	/** Le correctif Python ne change rien côté JS : la map reste un objet à clés chaînes, indexable par nombre. */
+	@Test
+	public void jsApiMapsStayPlainObjects() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"var s = Chip.punyBulb.bulbStats;"
+				+ " Object.keys(s).includes('0') && s[Entity.Stat.LIFE][1] === s['0'][1] && !(s instanceof Map);"));
+			Assert.assertEquals(Boolean.TRUE, eval(sb,
+				"Registers.set('reg2', 'x'); Registers.all().reg2 === 'x' && Registers.all()['reg2'] === 'x';"));
+		}
+	}
+
+	/**
+	 * Debug.log d'un objet de l'API en Python (Cell, Chip, Fight.me…) énumérait ses propriétés, qui mènent
+	 * de proche en proche à toute l'API : STACKOVERFLOW, l'IA plantait. Il s'affiche maintenant comme avec
+	 * print(), par son repr, y compris imbriqué dans une liste, un dict ou un objet du joueur.
+	 */
+	@Test
+	public void pythonDebugLogOfApiObjectsShowsRepr() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			PolyglotEntityAI ai = newAI(sb, "python", "def turn():\n"
+				+ "    class Cible:\n"
+				+ "        def __init__(self): self.case = Fight.me.cell; self.n = 2\n"
+				+ "    Debug.log(Fight.me.cell)\n"
+				+ "    Debug.log(Fight.me)\n"
+				+ "    Debug.log([Weapon.pistol, Chip.spark])\n"
+				+ "    Debug.log({'arme': Weapon.pistol})\n"
+				+ "    Debug.log(Cible())\n"
+				+ "    return '|'.join(repr(x) for x in (Fight.me.cell, Fight.me, Weapon.pistol, Chip.spark))\n");
+			leek1.setAI(ai); // Debug.log ecrit le journal via l'IA du poireau
+			String reprs = (String) ai.runIA();
+			String logs = farmerLog.toJSON().toString();
+			for (String repr : reprs.split("\\|")) {
+				Assert.assertTrue(repr + " absent du journal : " + logs, logs.contains(repr));
+			}
+			Assert.assertTrue("l'objet du joueur garde ses autres attributs : " + logs, logs.contains("\\\"n\\\" : 2"));
+		}
+	}
 }

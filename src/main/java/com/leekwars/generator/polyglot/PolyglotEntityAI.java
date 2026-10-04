@@ -67,6 +67,13 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String TURN_FUNCTION = "turn";
 	/** Detecte une IA JS multi-fichiers (modules ES) : import/export en debut de ligne. */
 	private static final Pattern ES_MODULE = Pattern.compile("(?m)^\\s*(import\\s[^(]|export[\\s{*])");
+	/**
+	 * Ajoute au fichier d'entree charge en module ES. Un `function turn()` (ou un hook) de premier niveau
+	 * y est module-scoped : sans `export`, le moteur ne le voyait pas et l'IA ne jouait plus apres le
+	 * chargement, sans erreur. On le publie sur globalThis, sauf si le joueur l'y a mis lui-meme ;
+	 * `typeof` ne leve pas sur un nom absent. En fin de fichier : les lignes du joueur ne bougent pas.
+	 */
+	private static final String MODULE_EPILOGUE = moduleEpilogue();
 
 	/**
 	 * Backstop wall-clock par tour : annule un tour qui depasse cette duree. Genereux (un tour
@@ -237,7 +244,20 @@ public class PolyglotEntityAI extends EntityAI {
 		this.opsFactor = opsFactor(languageId);
 		this.builtinOpsFactor = 1.0;
 		this.jsModule = entryPath != null && usesEsModules(languageId, source);
+		if (jsModule && fileSystem != null) {
+			fileSystem.setEpilogue(entryPath, MODULE_EPILOGUE);
+		}
 		this.valid = true;
+	}
+
+	private static String moduleEpilogue() {
+		Set<String> names = new HashSet<>(HOOK_NAMES);
+		names.add(TURN_FUNCTION);
+		StringBuilder code = new StringBuilder("\n;");
+		for (String name : names) {
+			code.append(String.format("if (typeof %1$s === 'function' && globalThis.%1$s === undefined) globalThis.%1$s = %1$s;", name));
+		}
+		return code.append("\n").toString();
 	}
 
 	/** IA JS multi-fichiers : l'entree utilise des modules ES (import/export en debut de ligne). */

@@ -58,6 +58,8 @@ public class PolyglotFileSystem implements FileSystem {
 	private final Function<String, String> read; // chemin LeekScript -> contenu
 	private final List<String> probeExtensions; // probing des imports sans extension (vide = off)
 	private final String entryDir;     // dossier du fichier d'entree ("" = racine), repli des imports bare
+	private String epiloguePath;       // fichier auquel le module loader voit epilogue ajoute, ou null
+	private String epilogue;
 
 	private final Path passthroughRoot;     // sous-arbre hote delegue en lecture seule (stdlib), ou null
 	private final Path passthroughRootReal; // sa version resolue (symlinks suivis), pour le confinement
@@ -106,6 +108,22 @@ public class PolyglotFileSystem implements FileSystem {
 			}
 		}
 		this.passthroughRootReal = real;
+	}
+
+	/**
+	 * Ajoute {@code code} a la fin du fichier {@code leekPath} tel que le LIT LE MODULE LOADER
+	 * (contenu et taille). {@link #readFile} rend toujours le fichier du joueur tel quel : il sert aux
+	 * pre-filtres textuels, qui ne doivent pas voir le code ajoute.
+	 */
+	public void setEpilogue(String leekPath, String code) {
+		this.epiloguePath = leekPath;
+		this.epilogue = code;
+	}
+
+	/** Contenu servi au module loader : le fichier, plus l'epilogue s'il le concerne. */
+	private String loadedContent(String leekPath) {
+		String content = read.apply(leekPath);
+		return content != null && leekPath.equals(epiloguePath) ? content + epilogue : content;
 	}
 
 	/** Chemins LeekScript des fichiers du joueur montes (lecture seule). */
@@ -299,7 +317,7 @@ public class PolyglotFileSystem implements FileSystem {
 			return hostDelegate.newByteChannel(path, options, attrs);
 		}
 		String leek = toLeekPath(path);
-		String content = leek != null && files.contains(leek) ? read.apply(leek) : null;
+		String content = leek != null && files.contains(leek) ? loadedContent(leek) : null;
 		if (content == null) {
 			throw new NoSuchFileException(String.valueOf(path));
 		}
@@ -355,7 +373,7 @@ public class PolyglotFileSystem implements FileSystem {
 		r.put("isOther", false);
 		long size = 0;
 		if (file) {
-			String content = read.apply(leek);
+			String content = loadedContent(leek);
 			size = content == null ? 0 : content.getBytes(StandardCharsets.UTF_8).length;
 		}
 		r.put("size", size);
