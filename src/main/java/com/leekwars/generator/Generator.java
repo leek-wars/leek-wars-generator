@@ -422,9 +422,15 @@ public class Generator {
 
 	// Report depuis un contexte statique (ex. generation de map) : route vers
 	// l'ErrorManager du worker (table error) au lieu du stub stdout de leekscript.
+	// Ne lève jamais : les appelants signalent depuis un catch ou une sonde qui doit
+	// continuer, même si l'ErrorManager échoue (base indisponible...).
 	public static void reportException(Throwable e) {
 		if (errorManager != null) {
-			errorManager.exception(e, -1);
+			try {
+				errorManager.exception(e, -1);
+			} catch (Exception failure) {
+				Log.e(TAG, "Signalement impossible de " + e + " : " + failure);
+			}
 		}
 	}
 
