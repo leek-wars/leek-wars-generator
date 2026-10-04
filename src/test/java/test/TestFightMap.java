@@ -4,12 +4,16 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import tools.jackson.databind.node.JsonNodeFactory;
+import com.leekwars.generator.area.Area;
+import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
@@ -366,5 +370,21 @@ public class TestFightMap {
 		// La repoussée s'arrête devant l'obstacle au lieu de le traverser
 		Cell destination = map.getRepelLastAvailableCell(entity, caster, 3);
 		Assert.assertEquals(7, destination.getX());
+	}
+
+	@Test
+	public void lineCastCellsListTargetOnceTest() throws Exception {
+		Map map = new Map(18, 18);
+
+		// Lancer en ligne utilisable sur soi (portée 0 à 6, comme Sérum ou Affranchissement)
+		var attack = new Attack(0, 6, (byte) Attack.LAUNCH_TYPE_LINE, (byte) Area.TYPE_SINGLE_CELL, true,
+			JsonNodeFactory.instance.arrayNode(), Attack.TYPE_CHIP, 0, -1);
+		Cell target = map.getCell(306); // centre de la carte
+
+		List<Cell> cells = map.getPossibleCastCellsForTarget(attack, target, new ArrayList<>());
+		Assert.assertEquals(1, cells.stream().filter(c -> c == target).count());
+		Assert.assertEquals(new HashSet<>(cells).size(), cells.size());
+		// 6 cases dans chacune des 4 directions, plus la cible
+		Assert.assertEquals(25, cells.size());
 	}
 }
