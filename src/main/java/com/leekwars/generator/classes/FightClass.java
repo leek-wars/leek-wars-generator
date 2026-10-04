@@ -510,10 +510,10 @@ public class FightClass {
 		int retour = -1;
 		Cell target = ai.getState().getMap().getCell(ai.integer(cell));
 		if (target == null)
-			return ai.integer(cell);
+			return retour;
 		Chip template = Chips.getChip(ai.integer(chip));
 		if (template == null)
-			return ai.integer(cell);
+			return retour;
 
 		ArrayList<Cell> cells_to_ignore = new ArrayList<Cell>();
 		if (value3 instanceof GenericArrayLeekValue) {

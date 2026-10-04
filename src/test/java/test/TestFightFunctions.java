@@ -451,6 +451,24 @@ public class TestFightFunctions {
 	}
 
 	@Test
+	public void getCellToUseChipOnCellInvalidTest() throws Exception {
+		ArrayList<String> codes = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
+
+		// Cellule hors carte : -1, pas la valeur passée
+		codes.add("getCellToUseChipOnCell(CHIP_SPARK, 99999)");
+		values.add(-1);
+		// Puce inconnue : -1, pas la cellule visée
+		codes.add("getCellToUseChipOnCell(99999, getCell(" + mLeek2.getFId() + "))");
+		values.add(-1);
+		// Appel valide : une cellule est trouvée
+		codes.add("getCellToUseChipOnCell(CHIP_SPARK, getCell(" + mLeek2.getFId() + ")) != -1");
+		values.add(true);
+
+		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
+	@Test
 	public void getObstaclesTest() throws Exception {
 		// Test AI
 
