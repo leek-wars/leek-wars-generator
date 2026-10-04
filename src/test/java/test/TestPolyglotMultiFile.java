@@ -240,6 +240,18 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
+	/** turn() reexportee sans nom local : seul le namespace du module la connait. */
+	@Test
+	public void jsModuleEntryReexportedTurnIsResolved() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("ia.js", "export function jouer() { return 7; }\n");
+		files.put("main.js", "export { jouer as turn } from './ia.js';\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(7L, ((Number) multiFileAI(sb, "js", files, "main.js").runIA()).longValue());
+		}
+	}
+
 	/** Import SANS extension ({@code './strategie'}) : habitude Node/TS, probing .js/.mjs (#3179). */
 	@Test
 	public void jsMultiFileExtensionlessImport() throws Exception {

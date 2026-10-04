@@ -145,40 +145,29 @@ public class TestPolyglotHooks extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Hook et turn() de premier niveau d'une entree en module ES, exportes ou non : un `function f()` y est
+	 * module-scoped, l'epilogue du module le publie sur le global (cf PolyglotEntityAI.MODULE_EPILOGUE).
+	 */
 	@Test
-	public void jsEsModuleExportedHookIsResolved() throws Exception {
-		initFightOnly();
-		Map<String, String> files = new HashMap<>();
-		files.put("strategie.mjs", "export function choix() { return 'esm'; }\n");
-		files.put("main.mjs",
-			"import { choix } from './strategie.mjs';\n"
-			+ "export function beforeFight() { Registers.set('hook', choix()); }\n"
-			+ "export function turn() {}\n");
-		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			// Dans un module ES, une fonction top-level est module-scoped : le hook n'est visible
-			// que par les exports du module, comme turn().
-			EntityAI ai = multiFileAI(sb, "js", files, "main.mjs");
-			Assert.assertTrue(ai.hasHook("beforeFight"));
-			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
-			Assert.assertEquals("esm", leek1.getRegister("hook"));
-		}
+	public void jsEsModuleHookIsResolvedExportedOrNot() throws Exception {
+		assertModuleHookRuns("export ", "esm");
+		assertModuleHookRuns("", "plain");
 	}
 
-	/** Hook et turn() de premier niveau SANS export dans un module ES : vus par le moteur comme dans un script. */
-	@Test
-	public void jsEsModulePlainHookIsResolved() throws Exception {
+	private void assertModuleHookRuns(String prefix, String expected) throws Exception {
 		initFightOnly();
 		Map<String, String> files = new HashMap<>();
-		files.put("strategie.mjs", "export function choix() { return 'plain'; }\n");
+		files.put("strategie.mjs", "export function choix() { return '" + expected + "'; }\n");
 		files.put("main.mjs",
 			"import { choix } from './strategie.mjs';\n"
-			+ "function beforeFight() { Registers.set('hook', choix()); }\n"
-			+ "function turn() {}\n");
+			+ prefix + "function beforeFight() { Registers.set('hook', choix()); }\n"
+			+ prefix + "function turn() {}\n");
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
 			EntityAI ai = multiFileAI(sb, "js", files, "main.mjs");
 			Assert.assertTrue(ai.hasHook("beforeFight"));
 			ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
-			Assert.assertEquals("plain", leek1.getRegister("hook"));
+			Assert.assertEquals(expected, leek1.getRegister("hook"));
 		}
 	}
 

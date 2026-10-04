@@ -3,6 +3,7 @@ package com.leekwars.generator.polyglot;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
@@ -39,9 +40,6 @@ public final class TypeMarshaller {
 	 * la conversion descend recursivement, donc une structure cyclique boucle a l'infini.
 	 */
 	private static final int MAX_MARSHALLING_DEPTH = 500;
-
-	/** Attribut de classe des objets de l'API Python designes par un id (cf toJava, objects.py). */
-	private static final String PYTHON_API_REF = "_lw_ref";
 
 	private TypeMarshaller() {}
 
@@ -111,6 +109,7 @@ public final class TypeMarshaller {
 		// Date du contexte qui porte `fn` : le callback survit aux reconstructions de contexte de
 		// l'invocateur, qui le perimeent (cf PolyglotEntityAI#isUnusableCallback).
 		final int generation = (polyglotOwner == null) ? 0 : polyglotOwner.contextGeneration();
+		final boolean python = polyglotOwner != null && polyglotOwner.isPython();
 		// parametersCount = 0 : le callback de summon est appele sans argument (BulbAI borne argCount a
 		// getArgumentsCount()==-1?0 et passe un Object[] de nulls). Cf BulbAI.runIA.
 		return new FunctionLeekValue<Object>(0, "#guestSummonCallback") {
@@ -120,7 +119,7 @@ public final class TypeMarshaller {
 				if (values != null && values.length > 0) {
 					guestArgs = new Object[values.length];
 					for (int i = 0; i < values.length; i++) {
-						guestArgs[i] = toGuest(values[i]); // Java LeekValue -> vue guest
+						guestArgs[i] = toGuest(values[i], python); // Java LeekValue -> vue guest
 					}
 				}
 				if (polyglotOwner != null) {
@@ -171,13 +170,7 @@ public final class TypeMarshaller {
 			return toLeekArray(v, ai, depth); // set Python et autres iterables non indexes
 		}
 		if (v.hasMembers() && !v.canExecute()) {
-			// Objet de l'API Python designe par son id (Cell, Item, Entity : `_lw_ref` dans objects.py).
-			// Ses proprietes menent de proche en proche a toute l'API : les enumerer finissait en
-			// STACKOVERFLOW. On le montre comme print() : par son repr, `Cell(42)`.
-			if (v.hasMember(PYTHON_API_REF)) {
-				return v.invokeMember("__repr__").asString();
-			}
-			return toLeekMap(v, ai, depth); // objet JS { ... } (les methodes sont ignorees)
+			return toLeekMap(v, ai, depth); // objet JS { ... } ou Python (les methodes sont ignorees)
 		}
 		// Fonctions / objets opaques (modules Python, etc.) : pas de donnee LeekScript exploitable.
 		// (La valeur de retour de runIA est de toute facon ignoree par le moteur en combat.)
@@ -234,6 +227,12 @@ public final class TypeMarshaller {
 	private static MapLeekValue toLeekMap(Value v, AI ai, int depth) throws LeekRunException {
 		checkDepth(depth);
 		MapLeekValue map = new MapLeekValue(ai);
+		if (!v.hasHashEntries() && v.hasMember("__dict__")) {
+			// Objet Python : ses seules donnees d'instance, comme les proprietes propres d'un objet JS. Ses
+			// membres comprennent aussi les @property de sa classe, que getMember EXECUTE : sur un objet de
+			// l'API (Cell, Chip, Entity...) elles menent de proche en proche a toute l'API (STACKOVERFLOW).
+			v = v.getMember("__dict__");
+		}
 		if (v.hasHashEntries()) {
 			Value it = v.getHashEntriesIterator();
 			while (it.hasIteratorNextElement()) {
@@ -331,11 +330,6 @@ public final class TypeMarshaller {
 
 	// ----- Java -> guest -----
 
-	/** Conversion Java -&gt; guest pour la valeur de retour d'une fonction de combat (JS). */
-	public static Object toGuest(Object o) {
-		return toGuest(o, false);
-	}
-
 	/**
 	 * Conversion Java -&gt; guest pour la valeur de retour d'une fonction de combat.
 	 *
@@ -350,72 +344,52 @@ public final class TypeMarshaller {
 		if (o instanceof Number || o instanceof Boolean || o instanceof String || o instanceof Character) {
 			return o; // GraalVM convertit automatiquement les primitifs hote en valeur guest
 		}
-		if (o instanceof GenericArrayLeekValue) {
-			return new LeekArrayProxy((GenericArrayLeekValue) o, python);
+		if (o instanceof GenericArrayLeekValue array) {
+			// Vue paresseuse : le tableau vivant, lu a la demande.
+			return new LeekSequenceProxy(array.size(), i -> {
+				try {
+					return array.get(i);
+				} catch (LeekRunException e) {
+					throw new RuntimeException(e);
+				}
+			}, python);
 		}
 		if (o instanceof MapLeekValue) {
 			return python ? new LeekDictProxy((MapLeekValue) o) : new LeekMapProxy((MapLeekValue) o);
 		}
-		if (o instanceof SetLeekValue) {
-			return new LeekListProxy(new ArrayList<Object>((SetLeekValue) o), python);
+		if (o instanceof SetLeekValue set) {
+			List<Object> elements = new ArrayList<>(set);
+			return new LeekSequenceProxy(elements.size(), elements::get, python);
 		}
 		// Type LeekScript non encore gere : on le laisse passer (opaque sous HostAccess.NONE).
 		return o;
 	}
 
-	/** Vue paresseuse, lecture seule, d'un tableau de combat ({@link GenericArrayLeekValue}). */
-	private static final class LeekArrayProxy implements ProxyArray {
-		private final GenericArrayLeekValue array;
+	/** Vue paresseuse, lecture seule, d'une sequence de combat (tableau ou set LeekScript). */
+	private static final class LeekSequenceProxy implements ProxyArray {
+		private final long size;
+		private final IntFunction<Object> element;
 		private final boolean python;
 
-		LeekArrayProxy(GenericArrayLeekValue array, boolean python) {
-			this.array = array;
+		LeekSequenceProxy(long size, IntFunction<Object> element, boolean python) {
+			this.size = size;
+			this.element = element;
 			this.python = python;
 		}
 
 		@Override
 		public long getSize() {
-			return array.size();
+			return size;
 		}
 
 		@Override
 		public Object get(long index) {
-			try {
-				return toGuest(array.get((int) index), python);
-			} catch (LeekRunException e) {
-				throw new RuntimeException(e);
-			}
+			return toGuest(element.apply((int) index), python);
 		}
 
 		@Override
 		public void set(long index, Value value) {
-			throw new UnsupportedOperationException("tableau de combat en lecture seule (etape 2)");
-		}
-	}
-
-	/** Vue paresseuse, lecture seule, d'une liste Java de valeurs LeekScript (ex: SetLeekValue). */
-	private static final class LeekListProxy implements ProxyArray {
-		private final List<Object> list;
-		private final boolean python;
-
-		LeekListProxy(List<Object> list, boolean python) {
-			this.list = list;
-			this.python = python;
-		}
-
-		@Override
-		public long getSize() {
-			return list.size();
-		}
-
-		@Override
-		public Object get(long index) {
-			return toGuest(list.get((int) index), python);
-		}
-
-		@Override
-		public void set(long index, Value value) {
-			throw new UnsupportedOperationException("collection de combat en lecture seule (etape 2)");
+			throw new UnsupportedOperationException("collection de combat en lecture seule");
 		}
 	}
 
@@ -430,7 +404,7 @@ public final class TypeMarshaller {
 		@Override
 		public Object getMember(String key) {
 			Object raw = lookup(key);
-			return raw == null ? null : toGuest(raw);
+			return raw == null ? null : toGuest(raw, false);
 		}
 
 		@Override
@@ -504,30 +478,17 @@ public final class TypeMarshaller {
 
 		@Override
 		public Object getHashEntriesIterator() {
-			var entries = map.entrySet().iterator();
-			return new ProxyIterator() {
-				@Override
-				public boolean hasNext() {
-					return entries.hasNext();
-				}
-
-				@Override
-				public Object getNext() {
-					var entry = entries.next();
-					return ProxyArray.fromArray(entry.getKey(), toGuest(entry.getValue(), true));
-				}
-			};
+			return ProxyIterator.from(map.entrySet().stream()
+				.map(entry -> ProxyArray.fromArray(entry.getKey(), toGuest(entry.getValue(), true))).iterator());
 		}
 
-		// Les entiers LeekScript sont des Long : un int Python (Entity.Stat.LIFE) doit retrouver la cle.
+		// Meme regle que les cles d'un dict converti (toLeekMap) : un int Python (Entity.Stat.LIFE)
+		// retrouve la cle Long de LeekScript.
 		private static Object toKey(Value key) {
 			if (key.isString()) {
 				return key.asString();
 			}
-			if (key.isNumber() && key.fitsInLong()) {
-				return key.asLong();
-			}
-			return null;
+			return key.isNumber() ? numberToJava(key) : null;
 		}
 	}
 }

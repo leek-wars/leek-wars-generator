@@ -58,8 +58,8 @@ public class PolyglotFileSystem implements FileSystem {
 	private final Function<String, String> read; // chemin LeekScript -> contenu
 	private final List<String> probeExtensions; // probing des imports sans extension (vide = off)
 	private final String entryDir;     // dossier du fichier d'entree ("" = racine), repli des imports bare
-	private String epiloguePath;       // fichier auquel le module loader voit epilogue ajoute, ou null
-	private String epilogue;
+	private String epiloguePath;       // fichier servi au module loader avec epilogue a la fin, ou null
+	private String epilogue;           // cf setEpilogue
 
 	private final Path passthroughRoot;     // sous-arbre hote delegue en lecture seule (stdlib), ou null
 	private final Path passthroughRootReal; // sa version resolue (symlinks suivis), pour le confinement

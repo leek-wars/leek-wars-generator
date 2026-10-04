@@ -551,7 +551,13 @@
 	// ---- Debug : marquage, visualisation et journal de combat (aide au développement d'IA) ----
 	var Debug = {
 		// Écrit dans le journal de combat, éventuellement en couleur (cf Color). console.log existe aussi.
-		log: function (value, color) { return (color === undefined) ? F.debug(value) : F.debugC(value, color); },
+		// Un objet de l'API s'affiche comme String(cell) : `Cell(42)`. Imbriqué dans un tableau ou un
+		// objet, il passe en données, comme dans un message : ["id" : 42].
+		log: function (value, color) {
+			if (value instanceof Cell || value instanceof Item || value instanceof Entity
+				|| value instanceof Effect || value instanceof Feature || value instanceof Message) value = describe(value);
+			return (color === undefined) ? F.debug(value) : F.debugC(value, color);
+		},
 		mark: function (cells, color, duration) {
 			if (color === undefined) return F.mark(cidList(cells));
 			if (duration === undefined) return F.mark(cidList(cells), color);

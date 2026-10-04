@@ -251,13 +251,13 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	private static String moduleEpilogue() {
-		Set<String> names = new HashSet<>(HOOK_NAMES);
-		names.add(TURN_FUNCTION);
-		StringBuilder code = new StringBuilder("\n;");
-		for (String name : names) {
-			code.append(String.format("if (typeof %1$s === 'function' && globalThis.%1$s === undefined) globalThis.%1$s = %1$s;", name));
-		}
-		return code.append("\n").toString();
+		return java.util.stream.Stream.concat(java.util.stream.Stream.of(TURN_FUNCTION), HOOK_NAMES.stream().sorted())
+			.map(name -> String.format("if (typeof %1$s === 'function' && globalThis.%1$s === undefined) globalThis.%1$s = %1$s;", name))
+			.collect(java.util.stream.Collectors.joining("", "\n;", "\n"));
+	}
+
+	boolean isPython() {
+		return "python".equals(languageId);
 	}
 
 	/** IA JS multi-fichiers : l'entree utilise des modules ES (import/export en debut de ligne). */
@@ -630,12 +630,12 @@ public class PolyglotEntityAI extends EntityAI {
 	private Value loadEntryFirstTurn() throws LeekRunException {
 		if (jsModule) {
 			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
-			// resolvent contre /ai. L'IA expose sa boucle via `export function turn()` ou globalThis.turn.
+			// resolvent contre /ai. Un `function turn()` de premier niveau y est module-scoped : l'epilogue
+			// que le FS ajoute a l'entree (MODULE_EPILOGUE) le publie sur globalThis.
 			// import() est asynchrone : on capture sa rejection (erreur de syntaxe/exec dans un
 			// fichier importe) dans une variable, sinon elle serait silencieusement avalee. On capture
-			// aussi le namespace resolu (ses exports) pour resoudre une `export function turn()` : dans
-			// un module ES, un `function turn()` top-level est module-scoped (invisible du global), donc
-			// seul un export (ou un globalThis.turn) rend l'IA "avec etat".
+			// aussi le namespace resolu (ses exports) : il reste le seul chemin vers une fonction
+			// reexportee sans nom local (`export { jouer as turn }`, `export { turn } from './x.js'`).
 			evalPrelude("module-load",
 				"globalThis.__lw_loadError = null; globalThis.__lw_module = null;"
 				+ "import('" + PolyglotFileSystem.mountPath(entryPath) + "')"
@@ -658,8 +658,8 @@ public class PolyglotEntityAI extends EntityAI {
 	/**
 	 * Resout une fonction de premier niveau definie par le joueur ({@code turn}, {@code beforeFight},
 	 * {@code afterFight}) : d'abord dans le global, puis dans les exports du module ES. Dans un module ES
-	 * un {@code function f()} top-level est module-scoped (invisible du global) : seul un
-	 * {@code export function f()} ou un {@code globalThis.f} la rend visible d'ici.
+	 * un {@code function f()} top-level est module-scoped, mais MODULE_EPILOGUE le publie sur le global ;
+	 * les exports ne servent plus qu'aux fonctions reexportees sans nom local.
 	 *
 	 * @return la fonction, ou null si absente / non executable / contexte inutilisable.
 	 */
