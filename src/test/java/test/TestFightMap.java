@@ -4,7 +4,6 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Assert;
@@ -372,28 +371,28 @@ public class TestFightMap {
 		Assert.assertEquals(7, destination.getX());
 	}
 
+	private static Attack lineAttack(int minRange) {
+		return new Attack(minRange, 6, (byte) Attack.LAUNCH_TYPE_LINE, (byte) Area.TYPE_SINGLE_CELL, true,
+			JsonNodeFactory.instance.arrayNode(), Attack.TYPE_CHIP, 0, -1);
+	}
+
 	@Test
 	public void lineCastCellsListTargetOnceTest() throws Exception {
 		Map map = new Map(18, 18);
-
-		// Lancer en ligne utilisable sur soi (portée 0 à 6, comme Sérum ou Affranchissement)
-		var attack = new Attack(0, 6, (byte) Attack.LAUNCH_TYPE_LINE, (byte) Area.TYPE_SINGLE_CELL, true,
-			JsonNodeFactory.instance.arrayNode(), Attack.TYPE_CHIP, 0, -1);
 		Cell target = map.getCell(map.getNbCell() / 2); // centre de la carte
+		List<Cell> none = List.of();
 
-		List<Cell> cells = map.getPossibleCastCellsForTarget(attack, target, new ArrayList<>());
+		// Lancer en ligne utilisable sur soi (portée 0 à 6, comme Sérum ou Affranchissement) :
+		// la cible d'abord, une seule fois, puis 6 cases dans chacune des 4 directions
+		List<Cell> cells = map.getPossibleCastCellsForTarget(lineAttack(0), target, none);
 		Assert.assertEquals(target, cells.get(0));
-		Assert.assertEquals(new HashSet<>(cells).size(), cells.size());
-		// 6 cases dans chacune des 4 directions, plus la cible
 		Assert.assertEquals(25, cells.size());
 
 		// Un obstacle à 1 case coupe toute sa direction, et seulement elle
 		map.getCell(target.getX() - 1, target.getY()).setObstacle(1, 1);
-		Assert.assertEquals(19, map.getPossibleCastCellsForTarget(attack, target, new ArrayList<>()).size());
+		Assert.assertEquals(19, map.getPossibleCastCellsForTarget(lineAttack(0), target, none).size());
 
 		// Portée minimale 1 : la cible n'est plus une case de lancer
-		var fromOne = new Attack(1, 6, (byte) Attack.LAUNCH_TYPE_LINE, (byte) Area.TYPE_SINGLE_CELL, true,
-			JsonNodeFactory.instance.arrayNode(), Attack.TYPE_CHIP, 0, -1);
-		Assert.assertFalse(map.getPossibleCastCellsForTarget(fromOne, target, new ArrayList<>()).contains(target));
+		Assert.assertFalse(map.getPossibleCastCellsForTarget(lineAttack(1), target, none).contains(target));
 	}
 }

@@ -1149,25 +1149,22 @@ public class Map {
 			if (attack.getLaunchType() == Attack.LAUNCH_TYPE_LINE) {
 				var line = new boolean[] { true, true, true, true };
 				int x = target.getX(), y = target.getY();
-				var dirs = new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
-				Cell c;
 				if (attack.getMinRange() == 0 && available(target, cells_to_ignore))
 					possible.add(target);
 				for (int i = 1; i <= attack.getMaxRange(); i++) {
 					for (int dir = 0; dir < 4; dir++) {
 						if (!line[dir])
 							continue;
-						c = getCell(x + i * dirs[dir][0], y + i * dirs[dir][1]);
-						if (c == null)
+						var c = getCell(x + i * COMPOSANTE_NEIGHBORS[dir][0], y + i * COMPOSANTE_NEIGHBORS[dir][1]);
+						if (c == null) {
 							line[dir] = false;
-						else {
-							if (attack.needLos() && !available(c, cells_to_ignore))
-								line[dir] = false;
-							else if (attack.needLos() && !c.isWalkable())
-								line[dir] = false;
-							else if (attack.getMinRange() <= i && available(c, cells_to_ignore))
-								possible.add(c);
+							continue;
 						}
+						boolean free = available(c, cells_to_ignore);
+						if (attack.needLos() && (!free || !c.isWalkable()))
+							line[dir] = false;
+						else if (attack.getMinRange() <= i && free)
+							possible.add(c);
 					}
 				}
 			} else {
