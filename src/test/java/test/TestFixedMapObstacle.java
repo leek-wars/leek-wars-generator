@@ -1,5 +1,9 @@
 package test;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,6 +24,13 @@ import tools.jackson.databind.node.ObjectNode;
  * les 3 autres restaient traversables alors qu'un mur y etait affiche.
  */
 public class TestFixedMapObstacle extends FightTestBase {
+
+	/** Obstacles de taille 2 (pebble) à 5. */
+	private static final int PEBBLE = 31, SIZE3 = 51, SIZE4 = 39, SIZE5 = 60;
+	/** Emprise des tailles 3 à 5 autour de l'ancrage (getNextCell), dans l'ordre de marquage. */
+	private static final int[][] SIZE3_OFFSETS = { {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1} };
+	private static final int[][] SIZE4_OFFSETS = { {-3, 0} };
+	private static final int[][] SIZE5_OFFSETS = { {0, -1}, {0, 3}, {2, -1}, {2, 0}, {2, 3} };
 
 	private Leek leek1;
 	private Leek leek2;
@@ -51,7 +62,6 @@ public class TestFixedMapObstacle extends FightTestBase {
 	@Test
 	public void pebble2x2BlocksFourCells() throws Exception {
 		final int anchor = 306; // centre (0, 0)
-		final int PEBBLE = 31;
 		fight.getState().setCustomMap(customMapWithObstacle(anchor, PEBBLE));
 		initFightOnly();
 
@@ -102,24 +112,23 @@ public class TestFixedMapObstacle extends FightTestBase {
 	 */
 	@Test
 	public void obstacleOverflowingGridIsIgnoredWhole() throws Exception {
-		final int PEBBLE = 31, SIZE3 = 51, SIZE4 = 39, SIZE5 = 60;
 		// Emprises calculées sur une grille témoin de même taille que celle du combat
 		Map grid = new Map(18, 18);
-		java.util.Map<Integer, Integer> overflowing = new java.util.LinkedHashMap<>();
-		java.util.Map<Integer, Cell[]> footprints = new java.util.HashMap<>();
+		java.util.Map<Integer, Integer> overflowing = new LinkedHashMap<>();
+		java.util.Map<Integer, Cell[]> footprints = new HashMap<>();
 		overflowing.put(17, PEBBLE); // pas de case à l'est
 		footprints.put(17, footprint2x2(grid, grid.getCell(17)));
 		overflowing.put(70, PEBBLE); // pas de case au sud
 		footprints.put(70, footprint2x2(grid, grid.getCell(70)));
 		overflowing.put(52, SIZE3);
-		footprints.put(52, footprint(grid, grid.getCell(52), new int[][] { {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1} }));
+		footprints.put(52, footprint(grid, grid.getCell(52), SIZE3_OFFSETS));
 		overflowing.put(140, SIZE4);
-		footprints.put(140, footprint(grid, grid.getCell(140), new int[][] { {-3, 0} }));
+		footprints.put(140, footprint(grid, grid.getCell(140), SIZE4_OFFSETS));
 		overflowing.put(105, SIZE5);
-		footprints.put(105, footprint(grid, grid.getCell(105), new int[][] { {0, -1}, {0, 3}, {2, -1}, {2, 0}, {2, 3} }));
+		footprints.put(105, footprint(grid, grid.getCell(105), SIZE5_OFFSETS));
 		for (var e : footprints.entrySet()) {
 			Assert.assertTrue("l'emprise de " + e.getKey() + " déborde bien de la grille",
-				java.util.Arrays.stream(e.getValue()).anyMatch(c -> c == null));
+				Arrays.stream(e.getValue()).anyMatch(c -> c == null));
 		}
 
 		ObjectNode customMap = customMapWithObstacle(306, PEBBLE); // témoin entièrement dans la grille
@@ -145,7 +154,6 @@ public class TestFixedMapObstacle extends FightTestBase {
 	/** Les obstacles de taille 2 à 5 entièrement dans la grille marquent toujours leur emprise, codes compris. */
 	@Test
 	public void fullFootprintObstaclesAreMarked() throws Exception {
-		final int PEBBLE = 31, SIZE3 = 51, SIZE4 = 39, SIZE5 = 60;
 		ObjectNode customMap = customMapWithObstacle(221, PEBBLE);
 		ObjectNode obstacles = (ObjectNode) customMap.get("obstacles");
 		obstacles.put("252", SIZE3);
@@ -162,9 +170,9 @@ public class TestFixedMapObstacle extends FightTestBase {
 			Assert.assertFalse(pebble[i].isWalkable());
 			Assert.assertEquals("code de la case " + i + " du 2x2", -1 - i, pebble[i].getObstacleSize());
 		}
-		assertMarked(map, 252, SIZE3, 3, new int[][] { {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1} });
-		assertMarked(map, 396, SIZE4, 4, new int[][] { {-3, 0} });
-		assertMarked(map, 356, SIZE5, 5, new int[][] { {0, -1}, {0, 3}, {2, -1}, {2, 0}, {2, 3} });
+		assertMarked(map, 252, SIZE3, 3, SIZE3_OFFSETS);
+		assertMarked(map, 396, SIZE4, 4, SIZE4_OFFSETS);
+		assertMarked(map, 356, SIZE5, 5, SIZE5_OFFSETS);
 	}
 
 	/** Est, sud et sud-est d'un 2x2, dans l'ordre de marquage (null hors de la grille). */

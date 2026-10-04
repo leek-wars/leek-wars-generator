@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
@@ -21,6 +22,8 @@ import com.leekwars.generator.test.LocalTrophyManager;
  */
 public class TestTrophyHooks extends FightTestBase {
 
+	private static final int CHIP_VAMPIRIZATION = FightConstants.CHIP_VAMPIRIZATION.getIntValue();
+
 	private Leek leek1, leek2;
 	private int maxTotalMP = 0;
 	private final List<Entity[]> heals = new ArrayList<>();
@@ -29,7 +32,7 @@ public class TestTrophyHooks extends FightTestBase {
 	protected void createLeeks() {
 		leek1 = new Leek(1, "A", 0, 150, 1200, 20, 14, 300, 100, 1000, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
 		leek2 = new Leek(2, "B", 0, 150, 1200, 20, 6, 300, 100, 1, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
-		leek1.addChip(Chips.getChip(121)); // Vampirisation
+		leek1.addChip(Chips.getChip(CHIP_VAMPIRIZATION));
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);
 		fight.setStatisticsManager(new LocalTrophyManager() {
@@ -71,7 +74,7 @@ public class TestTrophyHooks extends FightTestBase {
 		if (next.getPlayer(map) != leek2) map.moveEntity(leek2, next);
 		leek1.removeLife(500, 0, leek2, DamageType.DIRECT, null, null);
 
-		int result = fight.useChip(leek1, leek2.getCell(), Chips.getChip(121));
+		int result = fight.useChip(leek1, leek2.getCell(), Chips.getChip(CHIP_VAMPIRIZATION));
 		Assert.assertTrue("puce lancée : " + result, result > 0);
 
 		Assert.assertFalse("la Vampirisation a soigné", heals.isEmpty());

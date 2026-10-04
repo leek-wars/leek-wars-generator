@@ -1,5 +1,6 @@
 package test;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
@@ -9,7 +10,6 @@ import com.leekwars.generator.Generator;
 import com.leekwars.generator.leek.Leek;
 
 import leekscript.compiler.AIFile;
-import leekscript.compiler.LeekScript;
 
 /**
  * 5pilow/leek-wars#5318 : le compilateur LeekScript est récursif et peut déborder la pile
@@ -59,7 +59,7 @@ public class TestCompileStackOverflow extends FightTestBase {
 		return code.append(";").toString();
 	}
 
-	private static long countOverflows(java.util.List<Throwable> reported) {
+	private static long countOverflows(List<Throwable> reported) {
 		return reported.stream().filter(e -> e instanceof StackOverflowError).count();
 	}
 
@@ -70,7 +70,7 @@ public class TestCompileStackOverflow extends FightTestBase {
 	@Test
 	public void deepExpressionAnalyzeReturnsInternalError() throws Exception {
 		// Chemin unique : l'id de l'IA (dérivé du chemin) sert au dédoublonnage, qui vit tout le processus
-		AIFile file = new AIFile("<deep_analyze_" + System.nanoTime() + ">", deepExpression(), System.currentTimeMillis(), LeekScript.LATEST_VERSION, 1, false);
+		AIFile file = newAIFile(deepExpression(), 1);
 		var reported = captureReportedErrors(() -> runWithSmallStack(() -> {
 			for (int i = 0; i < 2; i++) {
 				var result = generator.analyzeAI(file, 0);
@@ -84,7 +84,7 @@ public class TestCompileStackOverflow extends FightTestBase {
 	/** Téléchargement de l'IA fusionnée (includes) : le débordement rend un message, il ne s'échappe plus. */
 	@Test
 	public void deepExpressionDownloadReturnsMessage() throws Exception {
-		AIFile file = new AIFile("<deep_download_" + System.nanoTime() + ">", deepExpression(), System.currentTimeMillis(), LeekScript.LATEST_VERSION, 1, false);
+		AIFile file = newAIFile(deepExpression(), 1);
 		var merged = new AtomicReference<String>();
 		runWithSmallStack(() -> merged.set(generator.downloadAI(file)));
 		Assert.assertEquals(Generator.compilerStackOverflowMessage(file), merged.get());
@@ -96,8 +96,9 @@ public class TestCompileStackOverflow extends FightTestBase {
 	 */
 	@Test
 	public void deepExpressionInvalidatesOnlyItsAI() throws Exception {
-		attachAI(leek1, deepExpression());
-		attachAI(leek3, (AIFile) leek1.getAIFile());
+		AIFile deep = newAIFile(deepExpression(), leek1.getId());
+		attachAI(leek1, deep);
+		attachAI(leek3, deep);
 		attachAI(leek2, "setRegister('ran', '1');");
 
 		var reported = captureReportedErrors(() -> runWithSmallStack(this::runFight));

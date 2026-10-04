@@ -3,6 +3,7 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.leek.Leek;
 
@@ -13,7 +14,7 @@ import com.leekwars.generator.leek.Leek;
  */
 public class TestSummonFunctions extends FightTestBase {
 
-	private static final int CHIP_PUNY_BULB = 73;
+	private static final int CHIP_PUNY_BULB = FightConstants.CHIP_PUNY_BULB.getIntValue();
 
 	private Leek leek1, leek2;
 
@@ -28,20 +29,7 @@ public class TestSummonFunctions extends FightTestBase {
 
 	/** Invoque un bulbe chétif sur une case libre voisine au tour `turn`, avec `body` pour IA. */
 	private static String summonBulbAtTurn(int turn, String body) {
-		return "global summoned = false;"
-			+ "if (!summoned && getTurn() == " + turn + ") {"
-			+ "  var x = getCellX(getCell());"
-			+ "  var y = getCellY(getCell());"
-			+ "  var candidates = [getCellFromXY(x + 1, y), getCellFromXY(x - 1, y), getCellFromXY(x, y + 1), getCellFromXY(x, y - 1)];"
-			+ "  for (var i = 0; i < count(candidates); i++) {"
-			+ "    var c = candidates[i];"
-			+ "    if (c != null && isEmptyCell(c)) {"
-			+ "      summoned = true;"
-			+ "      setRegister('summon_result', '' + summon(CHIP_PUNY_BULB, c, function() {" + body + "}));"
-			+ "      break;"
-			+ "    }"
-			+ "  }"
-			+ "}";
+		return summonNextToMe("CHIP_PUNY_BULB", "getTurn() == " + turn, "function() {" + body + "}");
 	}
 
 	/**

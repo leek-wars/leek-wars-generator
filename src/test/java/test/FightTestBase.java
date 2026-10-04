@@ -76,10 +76,14 @@ public abstract class FightTestBase {
 	}
 
 	protected void attachAI(Leek leek, String code) {
+		attachAI(leek, newAIFile(code, leek.getId()));
+	}
+
+	/** Fichier d'IA de test, à chemin (donc id) unique dans le processus. */
+	protected static AIFile newAIFile(String code, int owner) {
 		long uid = AI_COUNTER.incrementAndGet();
-		AIFile file = new AIFile("<test_" + uid + ">", code, System.currentTimeMillis(),
-			LeekScript.LATEST_VERSION, leek.getId(), false);
-		attachAI(leek, file);
+		return new AIFile("<test_" + uid + ">", code, System.currentTimeMillis(),
+			LeekScript.LATEST_VERSION, owner, false);
 	}
 
 	/** Attache un fichier d'IA existant (plusieurs entités peuvent partager le même). */
@@ -182,20 +186,28 @@ public abstract class FightTestBase {
 	 * niveau, avant la plantation.
 	 */
 	protected static String summonChilliNextToMe(String globals, String awakening) {
+		return globals + summonNextToMe("CHIP_CHILLI_PEPPER", "true", "function(e) {" + awakening + "}");
+	}
+
+	/**
+	 * IA qui invoque `chip` (constante LeekScript) sur une case libre voisine, une fois pour
+	 * le combat, au premier tour où la condition LeekScript `when` est vraie. `function` est
+	 * le littéral de fonction confié à summon() ; son résultat va dans le registre
+	 * `summon_result`.
+	 */
+	protected static String summonNextToMe(String chip, String when, String function) {
 		// Code au premier niveau, rejoué à chaque tour : c'est ainsi qu'une IA Leek Wars
 		// s'écrit, `global` est ce qui survit d'un tour à l'autre.
-		return globals
-			+ "global planted = false;"
-			+ "if (!planted) {"
+		return "global summoned = false;"
+			+ "if (!summoned && " + when + ") {"
 			+ "  var x = getCellX(getCell());"
 			+ "  var y = getCellY(getCell());"
 			+ "  var candidates = [getCellFromXY(x + 1, y), getCellFromXY(x - 1, y), getCellFromXY(x, y + 1), getCellFromXY(x, y - 1)];"
 			+ "  for (var i = 0; i < count(candidates); i++) {"
 			+ "    var c = candidates[i];"
 			+ "    if (c != null && isEmptyCell(c)) {"
-			+ "      planted = true;"
-			+ "      var r = summon(CHIP_CHILLI_PEPPER, c, function(e) {" + awakening + "});"
-			+ "      setRegister('summon_result', '' + r);"
+			+ "      summoned = true;"
+			+ "      setRegister('summon_result', '' + summon(" + chip + ", c, " + function + "));"
 			+ "      break;"
 			+ "    }"
 			+ "  }"
