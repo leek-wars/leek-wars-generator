@@ -383,7 +383,7 @@
 				get: function () { return F.getEntity(); },
 				set: function () {},
 				configurable: true,
-				enumerable: true,
+				enumerable: true, // propre et enumerable : `me` imbrique dans une donnee garde son id (miroir de Me.__getstate__ en Python)
 			});
 		}
 		moveToward(target, mp) {

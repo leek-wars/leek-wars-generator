@@ -1221,9 +1221,10 @@ public class TestPolyglotObjectApi extends FightTestBase {
 
 	/**
 	 * Debug.log d'un objet de l'API en Python (Cell, Chip, Fight.me…) énumérait ses @property, qui mènent de
-	 * proche en proche à toute l'API : STACKOVERFLOW, l'IA plantait. Un objet Python ne livre plus que ses
-	 * données d'instance, comme un objet JS ses propriétés propres ; passé tel quel à Debug.log, un objet de
-	 * l'API s'affiche comme avec print() / String(), dans les deux langages.
+	 * proche en proche à toute l'API : STACKOVERFLOW, l'IA plantait. Un objet Python est maintenant converti
+	 * par son __getstate__ (son __dict__, l'état d'une classe à __slots__, ou pour Fight.me son id, une
+	 * @property), comme un objet JS par ses propriétés propres. Passé tel quel à Debug.log, un objet de l'API
+	 * s'affiche comme avec print() / String(), dans les deux langages.
 	 */
 	@Test
 	public void debugLogOfApiObjectsNeverOverflows() throws Exception {
@@ -1234,39 +1235,39 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				+ "        def __init__(self): self.case = Fight.me.cell; self.n = 2\n"
 				+ "        @property\n"
 				+ "        def suivant(self): return Noeud()\n"
+				+ "    class Point:\n"
+				+ "        __slots__ = ('case',)\n"
+				+ "        def __init__(self): self.case = Fight.me.cell\n"
 				+ "    Debug.log(Fight.me.cell)\n"
 				+ "    Debug.log(Fight.me)\n"
 				+ "    Debug.log([Weapon.pistol, Chip.spark])\n"
 				+ "    Debug.log({'arme': Weapon.pistol})\n"
 				+ "    Debug.log(Noeud())\n"
 				+ "    Debug.log([Fight.me])\n"
-				+ "    class Point:\n"
-				+ "        __slots__ = ('case',)\n"
-				+ "        def __init__(self): self.case = Fight.me.cell\n"
-				+ "        @property\n"
-				+ "        def suivant(self): return Point()\n"
-				+ "    Debug.log([Point()])\n"
+				+ "    Debug.log(Point())\n"
 				+ "    return Fight.me.cell.id\n");
 			leek1.setAI(ai); // Debug.log ecrit le journal via l'IA du poireau
 			long cell = ((Number) ai.runIA()).longValue();
-			String logs = farmerLog.toJSON().toString();
-			for (String expected : new String[] { "Cell(" + cell + ")", "Me(" + leek1.getFId() + ")",
-					"[[\\\"id\\\" : 37], [\\\"id\\\" : 18]]", "[\\\"arme\\\" : [\\\"id\\\" : 37]]",
-					"[\\\"case\\\" : [\\\"id\\\" : " + cell + "], \\\"n\\\" : 2]",
-					// Fight.me imbrique : son id est une @property (il suit le bulbe pendant son tour), que
-					// Me.__getstate__ remet dans ses donnees.
-					"[[\\\"id\\\" : " + leek1.getFId() + "]]",
-					// Classe a __slots__ : son etat est le tuple (None, {slots}).
-					"[[\\\"case\\\" : [\\\"id\\\" : " + cell + "]]]" }) {
+			long me = leek1.getFId();
+			String logs = logs();
+			for (String expected : new String[] { "Cell(" + cell + ")", "Me(" + me + ")", "[['id' : 37], ['id' : 18]]",
+					"['arme' : ['id' : 37]]", "['case' : ['id' : " + cell + "], 'n' : 2]", "[['id' : " + me + "]]",
+					"['case' : ['id' : " + cell + "]]" }) {
 				Assert.assertTrue(expected + " absent du journal : " + logs, logs.contains(expected));
 			}
 
-			PolyglotEntityAI js = newAI(sb, "js", "Debug.log(Fight.me.cell); Debug.log([Fight.me.cell]); Fight.me.cell.id;");
+			PolyglotEntityAI js = newAI(sb, "js", "Debug.log(Fight.me.cell); Debug.log([Fight.me.cell, Fight.me]); Fight.me.cell.id;");
 			leek1.setAI(js);
 			js.runIA();
-			logs = farmerLog.toJSON().toString();
+			logs = logs();
 			Assert.assertEquals("Cell(...) en Python puis en JS : " + logs, 2, logs.split(java.util.regex.Pattern.quote("Cell(" + cell + ")"), -1).length - 1);
-			Assert.assertTrue(logs, logs.contains("[[\\\"id\\\" : " + cell + "]]"));
+			Assert.assertTrue(logs, logs.contains("[['id' : " + cell + "], ['id' : " + me + "]]"));
 		}
 	}
+
+	/** Journal du combat, guillemets des messages normalises en ' pour des attentes lisibles. */
+	private String logs() {
+		return farmerLog.toJSON().toString().replace("\\\"", "'");
+	}
+
 }

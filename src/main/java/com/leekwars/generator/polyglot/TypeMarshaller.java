@@ -228,33 +228,9 @@ public final class TypeMarshaller {
 	private static MapLeekValue toLeekMap(Value v, AI ai, int depth) throws LeekRunException {
 		checkDepth(depth);
 		MapLeekValue map = new MapLeekValue(ai);
-		if (!v.hasHashEntries() && v.canInvokeMember("__getstate__")) {
-			// Objet Python : ses donnees telles que pickle/copy les voient (__getstate__ : son __dict__, ou
-			// le tuple (__dict__, slots) d'une classe a __slots__), comme les proprietes propres d'un objet
-			// JS. Jamais ses membres : ils comprennent les @property de sa classe, que getMember EXECUTE, et
-			// sur un objet de l'API (Cell, Chip, Entity...) elles menent a toute l'API (STACKOVERFLOW).
-			Value state = v.invokeMember("__getstate__");
-			if (state.hasHashEntries()) {
-				putHashEntries(map, state, ai, depth);
-			} else if (state.hasArrayElements()) {
-				for (long i = 0; i < state.getArraySize(); i++) {
-					Value part = state.getArrayElement(i);
-					if (part.hasHashEntries()) {
-						putHashEntries(map, part, ai, depth);
-					}
-				}
-			}
-		} else if (v.hasHashEntries()) {
+		Value getState;
+		if (v.hasHashEntries()) {
 			putHashEntries(map, v, ai, depth);
-		} else if (v.hasMembers()) {
-			for (String key : v.getMemberKeys()) {
-				Value mv = v.getMember(key);
-				if (mv != null && mv.canExecute()) {
-					continue; // on ignore les methodes (objets/modules Python exposent leurs methodes)
-				}
-				ai.ops(1);
-				map.set(ai, key, toJava(mv, ai, depth + 1));
-			}
 		} else if (v.hasArrayElements()) {
 			// Un tableau guest la ou une map est attendue : indices entiers comme cles.
 			long n = v.getArraySize();
@@ -262,12 +238,38 @@ public final class TypeMarshaller {
 				ai.ops(1);
 				map.set(ai, i, toJava(v.getArrayElement(i), ai, depth + 1));
 			}
+		} else if ((getState = v.getMember("__getstate__")) != null && getState.canExecute()) {
+			// Objet Python : ses donnees telles que pickle/copy les voient (__getstate__ : son __dict__,
+			// None, ou le tuple (__dict__, slots) d'une classe a __slots__), comme les proprietes propres
+			// d'un objet JS. Jamais ses membres : ils comprennent les @property de sa classe, que getMember
+			// EXECUTE, et sur un objet de l'API (Cell, Chip, Entity...) elles menent a toute l'API.
+			Value state = getState.execute();
+			if (state.hasArrayElements()) {
+				long n = state.getArraySize();
+				for (long i = 0; i < n; i++) {
+					putHashEntries(map, state.getArrayElement(i), ai, depth);
+				}
+			} else {
+				putHashEntries(map, state, ai, depth);
+			}
+		} else if (v.hasMembers()) {
+			for (String key : v.getMemberKeys()) {
+				Value mv = v.getMember(key);
+				if (mv != null && mv.canExecute()) {
+					continue; // objet JS : on ignore les methodes
+				}
+				ai.ops(1);
+				map.set(ai, key, toJava(mv, ai, depth + 1));
+			}
 		}
 		return map;
 	}
 
-	/** Entrees d'un dict Python ou d'une Map JS (API hash) ajoutees a {@code map}. */
+	/** Entrees d'un dict Python ou d'une Map JS ajoutees a {@code map} ; rien si {@code hash} n'en a pas (None). */
 	private static void putHashEntries(MapLeekValue map, Value hash, AI ai, int depth) throws LeekRunException {
+		if (!hash.hasHashEntries()) {
+			return;
+		}
 		Value it = hash.getHashEntriesIterator();
 		while (it.hasIteratorNextElement()) {
 			ai.ops(1);
@@ -275,7 +277,6 @@ public final class TypeMarshaller {
 			map.set(ai, toJava(entry.getArrayElement(0), ai, depth + 1), toJava(entry.getArrayElement(1), ai, depth + 1));
 		}
 	}
-
 
 	private static long toLong(Value v) {
 		if (v.fitsInLong()) {
