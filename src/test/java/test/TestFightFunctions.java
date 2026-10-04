@@ -491,6 +491,31 @@ public class TestFightFunctions {
 		Assert.assertTrue(testAI(mLeek1, codes, values));
 	}
 
+	/**
+	 * getCellToUseChipOnCell(chip, cell, ignoredCells) : une cellule ignorée (occupée) peut être
+	 * une case de lancer ; le chemin final doit lui aussi l'ignorer, comme getCellToUseChip.
+	 */
+	@Test
+	public void getCellToUseChipOnCellIgnoredCellsTest() throws Exception {
+		Map map = mFight.getState().getMap();
+		map.clear();
+		Cell me = mLeek1.getCell();
+		Cell next = map.getCell(me.getX() + 1, me.getY());
+		Cell target = map.getCell(me.getX() + 2, me.getY());
+		map.moveEntity(mLeek2, next);
+
+		ArrayList<String> codes = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
+		// Châtiment (portée 1) : la case de l'ennemi, ignorée, est la case de lancer la plus proche
+		codes.add("getCellToUseChipOnCell(CHIP_PUNISHMENT, " + target.getId() + ", [" + next.getId() + "])");
+		values.add(next.getId());
+		// Sans cases ignorées, la case occupée n'est pas une case de lancer
+		codes.add("getCellToUseChipOnCell(CHIP_PUNISHMENT, " + target.getId() + ") != " + next.getId());
+		values.add(true);
+
+		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
 	@Test
 	public void getObstaclesTest() throws Exception {
 		// Test AI
