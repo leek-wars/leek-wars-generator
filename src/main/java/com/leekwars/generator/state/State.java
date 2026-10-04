@@ -729,6 +729,14 @@ public class State {
 		}
 	}
 
+	/** Chest hunt: true while at least one team of chests is still alive. */
+	public boolean hasAliveChestTeam() {
+		for (Team team : teams) {
+			if (team.containsChest() && team.isAlive()) return true;
+		}
+		return false;
+	}
+
 	/*
 	 * Determines if the fight is over : only one team is alive
 	 */
@@ -737,14 +745,11 @@ public class State {
 		if (type == TYPE_CHEST_HUNT) {
 			// Chest hunt: finished when all chests are dead, or when no player is left to
 			// open them (their effects and summons die with them: nothing can happen anymore)
-			boolean chestsAlive = false;
-			boolean playersAlive = false;
+			if (!hasAliveChestTeam()) return true;
 			for (Team team : teams) {
-				if (!team.isAlive()) continue;
-				if (team.containsChest()) chestsAlive = true;
-				else playersAlive = true;
+				if (team.isAlive() && !team.containsChest()) return false;
 			}
-			return !chestsAlive || !playersAlive;
+			return true;
 		}
 
 		int aliveTeams = 0;

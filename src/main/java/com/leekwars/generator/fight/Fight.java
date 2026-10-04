@@ -247,11 +247,7 @@ public class Fight {
 
 		if (state.getType() == State.TYPE_CHEST_HUNT) {
 			// Chest hunt (free-for-all): all alive players win if all chests are dead
-			boolean chestsAlive = false;
-			for (var team : state.getTeams()) {
-				if (team.containsChest() && team.isAlive()) { chestsAlive = true; break; }
-			}
-			if (!chestsAlive) {
+			if (!state.hasAliveChestTeam()) {
 				mWinteam = -2; // Special: all alive players win
 			}
 			return;
