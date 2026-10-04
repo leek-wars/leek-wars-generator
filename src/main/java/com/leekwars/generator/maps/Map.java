@@ -115,7 +115,7 @@ public class Map {
 							} else {
 								// Toute l'emprise est vérifiée avant d'en marquer une case : un obstacle
 								// qui déborde de la grille est ignoré en entier, pas posé à moitié.
-								Cell[] covered = coveredCells(map, cell, info.size);
+								Cell[] covered = map.coveredCells(cell, info.size);
 								if (covered != null) {
 									cell.setObstacle(id, info.size);
 									for (int i = 0; i < covered.length; i++) {
@@ -392,14 +392,14 @@ public class Map {
 	 * l'ordre de marquage. Null si l'une d'elles sort de la grille, ou pour une taille inconnue :
 	 * l'obstacle n'est alors pas posé du tout.
 	 */
-	private static Cell[] coveredCells(Map map, Cell anchor, int size) {
+	private Cell[] coveredCells(Cell anchor, int size) {
 		Cell[] cells;
 		switch (size) {
 			case 1:
 				return new Cell[0];
 			case 2: {
-				Cell south = map.getCellByDir(anchor, Pathfinding.SOUTH);
-				cells = new Cell[] { map.getCellByDir(anchor, Pathfinding.EAST), south, map.getCellByDir(south, Pathfinding.EAST) };
+				Cell south = getCellByDir(anchor, Pathfinding.SOUTH);
+				cells = new Cell[] { getCellByDir(anchor, Pathfinding.EAST), south, getCellByDir(south, Pathfinding.EAST) };
 				break;
 			}
 			case 3: {
@@ -408,19 +408,19 @@ public class Map {
 				for (int x = -1; x <= 1; ++x) {
 					for (int y = -1; y <= 1; ++y) {
 						if (x != 0 || y != 0)
-							cells[i++] = map.getNextCell(anchor, x, y);
+							cells[i++] = getNextCell(anchor, x, y);
 					}
 				}
 				break;
 			}
 			case 4:
-				cells = new Cell[] { map.getNextCell(anchor, -3, 0) };
+				cells = new Cell[] { getNextCell(anchor, -3, 0) };
 				break;
 			case 5:
 				// [[0, -1], [0, 0], [0, 3], [2, -1], [2, 0], [2, 3]]
 				cells = new Cell[] {
-					map.getNextCell(anchor, 0, -1), map.getNextCell(anchor, 0, 3),
-					map.getNextCell(anchor, 2, -1), map.getNextCell(anchor, 2, 0), map.getNextCell(anchor, 2, 3)
+					getNextCell(anchor, 0, -1), getNextCell(anchor, 0, 3),
+					getNextCell(anchor, 2, -1), getNextCell(anchor, 2, 0), getNextCell(anchor, 2, 3)
 				};
 				break;
 			default:
