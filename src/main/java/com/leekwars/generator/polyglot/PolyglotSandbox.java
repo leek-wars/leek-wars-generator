@@ -435,7 +435,12 @@ public class PolyglotSandbox implements AutoCloseable {
 				Log.e("PolyglotSandbox", message);
 				// Etat du processus, pas une erreur joueur : signale une fois en erreur serveur, sinon
 				// la panne ne se voit que dans les journaux (les joueurs n'ont qu'un OUT_OF_MEMORY).
-				Generator.reportException(new IllegalStateException(message));
+				// Garde : la sonde ne leve jamais, meme si l'ErrorManager echoue (base indisponible...).
+				try {
+					Generator.reportException(new IllegalStateException(message));
+				} catch (Exception e) {
+					Log.e("PolyglotSandbox", "Signalement de l'isolate " + languageId + " sature impossible : " + e);
+				}
 			}
 		} else {
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " : sain (le depassement etait bien celui du joueur)");
