@@ -1240,6 +1240,12 @@ public class TestPolyglotObjectApi extends FightTestBase {
 				+ "    Debug.log({'arme': Weapon.pistol})\n"
 				+ "    Debug.log(Noeud())\n"
 				+ "    Debug.log([Fight.me])\n"
+				+ "    class Point:\n"
+				+ "        __slots__ = ('case',)\n"
+				+ "        def __init__(self): self.case = Fight.me.cell\n"
+				+ "        @property\n"
+				+ "        def suivant(self): return Point()\n"
+				+ "    Debug.log([Point()])\n"
 				+ "    return Fight.me.cell.id\n");
 			leek1.setAI(ai); // Debug.log ecrit le journal via l'IA du poireau
 			long cell = ((Number) ai.runIA()).longValue();
@@ -1249,7 +1255,9 @@ public class TestPolyglotObjectApi extends FightTestBase {
 					"[\\\"case\\\" : [\\\"id\\\" : " + cell + "], \\\"n\\\" : 2]",
 					// Fight.me imbrique : son id est une @property (il suit le bulbe pendant son tour), que
 					// Me.__getstate__ remet dans ses donnees.
-					"[[\\\"id\\\" : " + leek1.getFId() + "]]" }) {
+					"[[\\\"id\\\" : " + leek1.getFId() + "]]",
+					// Classe a __slots__ : son etat est le tuple (None, {slots}).
+					"[[\\\"case\\\" : [\\\"id\\\" : " + cell + "]]]" }) {
 				Assert.assertTrue(expected + " absent du journal : " + logs, logs.contains(expected));
 			}
 

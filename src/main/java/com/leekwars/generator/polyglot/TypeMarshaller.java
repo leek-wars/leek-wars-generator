@@ -229,25 +229,23 @@ public final class TypeMarshaller {
 		checkDepth(depth);
 		MapLeekValue map = new MapLeekValue(ai);
 		if (!v.hasHashEntries() && v.canInvokeMember("__getstate__")) {
-			// Objet Python : ses donnees telles que pickle/copy les voient (__getstate__, par defaut son
-			// __dict__), comme les proprietes propres d'un objet JS. Ses membres comprennent aussi les
-			// @property de sa classe, que getMember EXECUTE : sur un objet de l'API (Cell, Chip, Entity...)
-			// elles menent de proche en proche a toute l'API (STACKOVERFLOW).
+			// Objet Python : ses donnees telles que pickle/copy les voient (__getstate__ : son __dict__, ou
+			// le tuple (__dict__, slots) d'une classe a __slots__), comme les proprietes propres d'un objet
+			// JS. Jamais ses membres : ils comprennent les @property de sa classe, que getMember EXECUTE, et
+			// sur un objet de l'API (Cell, Chip, Entity...) elles menent a toute l'API (STACKOVERFLOW).
 			Value state = v.invokeMember("__getstate__");
-			if (state.isNull()) {
-				return map; // aucune donnee d'instance
-			}
 			if (state.hasHashEntries()) {
-				v = state;
+				putHashEntries(map, state, ai, depth);
+			} else if (state.hasArrayElements()) {
+				for (long i = 0; i < state.getArraySize(); i++) {
+					Value part = state.getArrayElement(i);
+					if (part.hasHashEntries()) {
+						putHashEntries(map, part, ai, depth);
+					}
+				}
 			}
-		}
-		if (v.hasHashEntries()) {
-			Value it = v.getHashEntriesIterator();
-			while (it.hasIteratorNextElement()) {
-				ai.ops(1);
-				Value entry = it.getIteratorNextElement(); // [cle, valeur]
-				map.set(ai, toJava(entry.getArrayElement(0), ai, depth + 1), toJava(entry.getArrayElement(1), ai, depth + 1));
-			}
+		} else if (v.hasHashEntries()) {
+			putHashEntries(map, v, ai, depth);
 		} else if (v.hasMembers()) {
 			for (String key : v.getMemberKeys()) {
 				Value mv = v.getMember(key);
@@ -267,6 +265,17 @@ public final class TypeMarshaller {
 		}
 		return map;
 	}
+
+	/** Entrees d'un dict Python ou d'une Map JS (API hash) ajoutees a {@code map}. */
+	private static void putHashEntries(MapLeekValue map, Value hash, AI ai, int depth) throws LeekRunException {
+		Value it = hash.getHashEntriesIterator();
+		while (it.hasIteratorNextElement()) {
+			ai.ops(1);
+			Value entry = it.getIteratorNextElement(); // [cle, valeur]
+			map.set(ai, toJava(entry.getArrayElement(0), ai, depth + 1), toJava(entry.getArrayElement(1), ai, depth + 1));
+		}
+	}
+
 
 	private static long toLong(Value v) {
 		if (v.fitsInLong()) {
