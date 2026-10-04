@@ -6,8 +6,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.leekwars.generator.util.Json;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.IntNode;
 import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 import com.leekwars.generator.bulbs.BulbTemplate;
 import com.leekwars.generator.bulbs.Bulbs;
 import com.leekwars.generator.chips.Chip;
@@ -75,25 +78,16 @@ public class Generator {
 			long time = System.currentTimeMillis() - t;
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			return result;
-		} catch (Exception | StackOverflowError e) {
-			if (e instanceof StackOverflowError overflow) {
-				Log.e(TAG, "AI " + ai + " not analyzed: compiler stack overflow");
-				reportCompilerStackOverflow(overflow, 0, farmer, ai);
-			} else {
-				e.printStackTrace(System.out);
-				Log.e(TAG, "AI " + ai + " not analyzed");
-				errorManager.exception(e, 0, farmer, ai);
-			}
-			var result = new AnalyzeResult();
-			result.success = false;
-			result.informations = Json.createArray();
-			ArrayNode error = Json.createArray();
-			error.add(0); error.add(ai != null ? ai.getPath() : "");
-			error.add(1); error.add(0); error.add(1); error.add(0);
-			error.add(Error.INTERNAL_ERROR.ordinal());
-			result.informations.add(error);
-			return new MultiAnalyzeResult(result, Map.of(ai, result));
+		} catch (StackOverflowError e) {
+			Log.e(TAG, "AI " + ai + " not analyzed: compiler stack overflow");
+			reportCompilerStackOverflow(e, 0, farmer, ai);
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+			Log.e(TAG, "AI " + ai + " not analyzed");
+			errorManager.exception(e, 0, farmer, ai);
 		}
+		var result = internalErrorResult(StringNode.valueOf(ai != null ? ai.getPath() : ""));
+		return new MultiAnalyzeResult(result, Map.of(ai, result));
 	}
 
 	/**
@@ -117,34 +111,35 @@ public class Generator {
 				errorManager.exception(result.tooMuchErrors, -1, farmer, ai);
 			}
 			return result;
-		} catch (Exception | StackOverflowError e) {
-			if (e instanceof StackOverflowError overflow) {
-				Log.e(TAG, "AI " + ai + " not compiled: compiler stack overflow");
-				reportCompilerStackOverflow(overflow, 0, farmer, ai);
-			} else {
-				e.printStackTrace(System.out);
-				Log.e(TAG, "AI " + ai + " not compiled");
-				if (e.getMessage() != null) {
-					Log.e(TAG, e.getMessage());
-				}
-				Log.e(TAG, "Compile failed!");
-				errorManager.exception(e, 0, farmer, ai);
+		} catch (StackOverflowError e) {
+			Log.e(TAG, "AI " + ai + " not compiled: compiler stack overflow");
+			reportCompilerStackOverflow(e, 0, farmer, ai);
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+			Log.e(TAG, "AI " + ai + " not compiled");
+			if (e.getMessage() != null) {
+				Log.e(TAG, e.getMessage());
 			}
-			// Create a result with internal error
-			AnalyzeResult result = new AnalyzeResult();
-			result.success = false;
-			result.informations = Json.createArray();
-			ArrayNode error = Json.createArray();
-			error.add(0);
-			error.add(ai != null ? ai.getId() : 0);
-			error.add(1);
-			error.add(0);
-			error.add(1);
-			error.add(0);
-			error.add(Error.INTERNAL_ERROR.ordinal());
-			result.informations.add(error);
-			return result;
+			Log.e(TAG, "Compile failed!");
+			errorManager.exception(e, 0, farmer, ai);
 		}
+		return internalErrorResult(IntNode.valueOf(ai != null ? ai.getId() : 0));
+	}
+
+	/**
+	 * Résultat d'une analyse qui n'a pas abouti : une seule erreur interne, en tête du fichier
+	 * désigné par `file` (son chemin ou son id, selon ce qu'attend l'appelant).
+	 */
+	private static AnalyzeResult internalErrorResult(JsonNode file) {
+		AnalyzeResult result = new AnalyzeResult();
+		result.success = false;
+		result.informations = Json.createArray();
+		ArrayNode error = Json.createArray();
+		error.add(0); error.add(file);
+		error.add(1); error.add(0); error.add(1); error.add(0);
+		error.add(Error.INTERNAL_ERROR.ordinal());
+		result.informations.add(error);
+		return result;
 	}
 
 	/**
