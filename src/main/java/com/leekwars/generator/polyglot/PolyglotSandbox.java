@@ -23,6 +23,7 @@ import org.graalvm.polyglot.SandboxPolicy;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.IOAccess;
 
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 
 /**
@@ -428,9 +429,14 @@ public class PolyglotSandbox implements AutoCloseable {
 		LAST_PROBE.put(languageId, now);
 		boolean saturated = !probeIsolate(languageId);
 		if (saturated) {
-			SATURATED.add(languageId);
-			Log.e("PolyglotSandbox", "Isolate " + languageId + " SATURE : un contexte neuf ne peut plus allouer "
-					+ (PROBE_BYTES >> 20) + " Mo. Toutes les IA " + languageId + " echoueront jusqu'au redemarrage du processus.");
+			if (SATURATED.add(languageId)) {
+				String message = "Isolate " + languageId + " SATURE : un contexte neuf ne peut plus allouer "
+						+ (PROBE_BYTES >> 20) + " Mo. Toutes les IA " + languageId + " echoueront jusqu'au redemarrage du processus.";
+				Log.e("PolyglotSandbox", message);
+				// Etat du processus, pas une erreur joueur : signale une fois en erreur serveur, sinon
+				// la panne ne se voit que dans les journaux (les joueurs n'ont qu'un OUT_OF_MEMORY).
+				Generator.reportException(new IllegalStateException(message));
+			}
 		} else {
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " : sain (le depassement etait bien celui du joueur)");
 		}
