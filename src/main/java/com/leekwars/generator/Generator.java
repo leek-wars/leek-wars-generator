@@ -73,7 +73,8 @@ public class Generator {
 			long time = System.currentTimeMillis() - t;
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			return result;
-		} catch (Exception e) {
+		} catch (Exception | StackOverflowError e) {
+			// StackOverflowError : compilateur récursif sur une expression très profonde
 			e.printStackTrace(System.out);
 			Log.e(TAG, "AI " + ai + " not analyzed");
 			errorManager.exception(e, 0, farmer, ai);
@@ -110,7 +111,8 @@ public class Generator {
 				errorManager.exception(result.tooMuchErrors, -1, farmer, ai);
 			}
 			return result;
-		} catch (Exception e) {
+		} catch (Exception | StackOverflowError e) {
+			// StackOverflowError : compilateur récursif sur une expression très profonde
 			e.printStackTrace(System.out);
 			Log.e(TAG, "AI " + ai + " not compiled");
 			if (e.getMessage() != null) {
