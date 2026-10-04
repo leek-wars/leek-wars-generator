@@ -329,9 +329,10 @@ public abstract class Entity {
 		return mRegister.set(key, value);
 	}
 	public void deleteRegister(String key) {
-		if (mRegister != null) {
-			mRegister.delete(key);
+		if (mRegister == null) {
+			loadRegisters();
 		}
+		mRegister.delete(key);
 	}
 
 	public int getHat() {
