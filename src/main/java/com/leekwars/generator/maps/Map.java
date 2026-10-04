@@ -112,35 +112,17 @@ public class Map {
 								// Marqueur générique de l'éditeur de map de test (valeur 1)
 								// ou id d'obstacle inconnu : obstacle de taille 1 par défaut.
 								cell.setObstacle(1, 1);
-							} else if (info.size == 1) {
-								cell.setObstacle(id, info.size);
-							} else if (info.size == 2) {
-								cell.setObstacle(id, info.size);
-								Cell c2 = map.getCellByDir(cell, Pathfinding.EAST);
-								Cell c3 = map.getCellByDir(cell, Pathfinding.SOUTH);
-								Cell c4 = map.getCellByDir(c3, Pathfinding.EAST);
-								c2.setObstacle(0, -1);
-								c3.setObstacle(0, -2);
-								c4.setObstacle(0, -3);
-							} else if (info.size == 3) {
-								cell.setObstacle(id, info.size);
-								for (int x = -1; x <= 1; ++x) {
-									for (int y = -1; y <= 1; ++y) {
-										if (x != 0 || y != 0)
-											map.getNextCell(cell, x, y).setObstacle(0, -1);
+							} else {
+								// Toute l'emprise est vérifiée avant d'en marquer une case : un obstacle
+								// qui déborde de la grille est ignoré en entier, pas posé à moitié.
+								Cell[] covered = coveredCells(map, cell, info.size);
+								if (covered != null) {
+									cell.setObstacle(id, info.size);
+									for (int i = 0; i < covered.length; i++) {
+										// Un 2x2 numérote ses trois cases (est -1, sud -2, sud-est -3)
+										covered[i].setObstacle(0, info.size == 2 ? -1 - i : -1);
 									}
 								}
-							} else if (info.size == 4) {
-								cell.setObstacle(id, info.size);
-								map.getNextCell(cell, -3, 0).setObstacle(0, -1);
-							} else if (info.size == 5) {
-								cell.setObstacle(id, info.size);
-								// [[0, -1], [0, 0], [0, 3], [2, -1], [2, 0], [2, 3]]
-								map.getNextCell(cell, 0, -1).setObstacle(0, -1);
-								map.getNextCell(cell, 0, 3).setObstacle(0, -1);
-								map.getNextCell(cell, 2, -1).setObstacle(0, -1);
-								map.getNextCell(cell, 2, 0).setObstacle(0, -1);
-								map.getNextCell(cell, 2, 3).setObstacle(0, -1);
 							}
 						}
 					}
@@ -403,6 +385,51 @@ public class Map {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			return null;
 		}
+	}
+
+	/**
+	 * Cases couvertes par un obstacle de taille `size` ancré en `anchor`, hors ancrage, dans
+	 * l'ordre de marquage. Null si l'une d'elles sort de la grille, ou pour une taille inconnue :
+	 * l'obstacle n'est alors pas posé du tout.
+	 */
+	private static Cell[] coveredCells(Map map, Cell anchor, int size) {
+		Cell[] cells;
+		switch (size) {
+			case 1:
+				return new Cell[0];
+			case 2: {
+				Cell south = map.getCellByDir(anchor, Pathfinding.SOUTH);
+				cells = new Cell[] { map.getCellByDir(anchor, Pathfinding.EAST), south, map.getCellByDir(south, Pathfinding.EAST) };
+				break;
+			}
+			case 3: {
+				cells = new Cell[8];
+				int i = 0;
+				for (int x = -1; x <= 1; ++x) {
+					for (int y = -1; y <= 1; ++y) {
+						if (x != 0 || y != 0)
+							cells[i++] = map.getNextCell(anchor, x, y);
+					}
+				}
+				break;
+			}
+			case 4:
+				cells = new Cell[] { map.getNextCell(anchor, -3, 0) };
+				break;
+			case 5:
+				// [[0, -1], [0, 0], [0, 3], [2, -1], [2, 0], [2, 3]]
+				cells = new Cell[] {
+					map.getNextCell(anchor, 0, -1), map.getNextCell(anchor, 0, 3),
+					map.getNextCell(anchor, 2, -1), map.getNextCell(anchor, 2, 0), map.getNextCell(anchor, 2, 3)
+				};
+				break;
+			default:
+				return null;
+		}
+		for (Cell c : cells) {
+			if (c == null) return null;
+		}
+		return cells;
 	}
 
 	public Cell getNextCell(Cell cell, int dx, int dy) {

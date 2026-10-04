@@ -94,6 +94,102 @@ public class TestFixedMapObstacle extends FightTestBase {
 		Assert.assertFalse("l'obstacle valide est posé", fight.getState().getMap().getCell(306).isWalkable());
 	}
 
+	/**
+	 * Un obstacle dont la case d'ancrage est dans la grille mais dont l'emprise en déborde
+	 * (bord est/sud pour un 2x2, bords quelconques pour les tailles 3 à 5) n'est pas posé du
+	 * tout : avant, l'ancrage était marqué puis setObstacle sur la case manquante levait un
+	 * NullPointerException, remonté en erreur serveur, et l'obstacle restait à moitié posé.
+	 */
+	@Test
+	public void obstacleOverflowingGridIsIgnoredWhole() throws Exception {
+		final int PEBBLE = 31, SIZE3 = 51, SIZE4 = 39, SIZE5 = 60;
+		// Emprises calculées sur une grille témoin de même taille que celle du combat
+		Map grid = new Map(18, 18);
+		java.util.Map<Integer, Integer> overflowing = new java.util.LinkedHashMap<>();
+		java.util.Map<Integer, Cell[]> footprints = new java.util.HashMap<>();
+		overflowing.put(17, PEBBLE); // pas de case à l'est
+		footprints.put(17, footprint2x2(grid, grid.getCell(17)));
+		overflowing.put(70, PEBBLE); // pas de case au sud
+		footprints.put(70, footprint2x2(grid, grid.getCell(70)));
+		overflowing.put(52, SIZE3);
+		footprints.put(52, footprint(grid, grid.getCell(52), new int[][] { {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1} }));
+		overflowing.put(140, SIZE4);
+		footprints.put(140, footprint(grid, grid.getCell(140), new int[][] { {-3, 0} }));
+		overflowing.put(105, SIZE5);
+		footprints.put(105, footprint(grid, grid.getCell(105), new int[][] { {0, -1}, {0, 3}, {2, -1}, {2, 0}, {2, 3} }));
+		for (var e : footprints.entrySet()) {
+			Assert.assertTrue("l'emprise de " + e.getKey() + " déborde bien de la grille",
+				java.util.Arrays.stream(e.getValue()).anyMatch(c -> c == null));
+		}
+
+		ObjectNode customMap = customMapWithObstacle(306, PEBBLE); // témoin entièrement dans la grille
+		for (var e : overflowing.entrySet()) {
+			((ObjectNode) customMap.get("obstacles")).put(String.valueOf(e.getKey()), e.getValue());
+		}
+		fight.getState().setCustomMap(customMap);
+		var reported = captureReportedErrors(this::initFightOnly);
+		Assert.assertTrue("aucune erreur remontée : " + reported, reported.isEmpty());
+
+		Map map = fight.getState().getMap();
+		for (var e : footprints.entrySet()) {
+			Assert.assertTrue("ancrage " + e.getKey() + " libre", map.getCell(e.getKey()).isWalkable());
+			for (Cell c : e.getValue()) {
+				if (c != null) Assert.assertTrue("case " + c.getId() + " de l'emprise de " + e.getKey() + " libre", map.getCell(c.getId()).isWalkable());
+			}
+		}
+		for (Cell c : footprint2x2(map, map.getCell(306))) {
+			Assert.assertFalse("le témoin 2x2 est posé en entier (" + c.getId() + ")", c.isWalkable());
+		}
+	}
+
+	/** Les obstacles de taille 2 à 5 entièrement dans la grille marquent toujours leur emprise, codes compris. */
+	@Test
+	public void fullFootprintObstaclesAreMarked() throws Exception {
+		final int PEBBLE = 31, SIZE3 = 51, SIZE4 = 39, SIZE5 = 60;
+		ObjectNode customMap = customMapWithObstacle(221, PEBBLE);
+		ObjectNode obstacles = (ObjectNode) customMap.get("obstacles");
+		obstacles.put("252", SIZE3);
+		obstacles.put("396", SIZE4);
+		obstacles.put("356", SIZE5);
+		fight.getState().setCustomMap(customMap);
+		initFightOnly();
+
+		Map map = fight.getState().getMap();
+		Cell[] pebble = footprint2x2(map, map.getCell(221));
+		Assert.assertEquals(PEBBLE, map.getCell(221).getObstacle());
+		Assert.assertEquals(2, map.getCell(221).getObstacleSize());
+		for (int i = 0; i < pebble.length; i++) {
+			Assert.assertFalse(pebble[i].isWalkable());
+			Assert.assertEquals("code de la case " + i + " du 2x2", -1 - i, pebble[i].getObstacleSize());
+		}
+		assertMarked(map, 252, SIZE3, 3, new int[][] { {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1} });
+		assertMarked(map, 396, SIZE4, 4, new int[][] { {-3, 0} });
+		assertMarked(map, 356, SIZE5, 5, new int[][] { {0, -1}, {0, 3}, {2, -1}, {2, 0}, {2, 3} });
+	}
+
+	/** Est, sud et sud-est d'un 2x2, dans l'ordre de marquage (null hors de la grille). */
+	private static Cell[] footprint2x2(Map map, Cell anchor) {
+		Cell south = map.getCellByDir(anchor, Pathfinding.SOUTH);
+		return new Cell[] { map.getCellByDir(anchor, Pathfinding.EAST), south, map.getCellByDir(south, Pathfinding.EAST) };
+	}
+
+	private static Cell[] footprint(Map map, Cell anchor, int[][] offsets) {
+		Cell[] cells = new Cell[offsets.length];
+		for (int i = 0; i < offsets.length; i++) cells[i] = map.getNextCell(anchor, offsets[i][0], offsets[i][1]);
+		return cells;
+	}
+
+	private static void assertMarked(Map map, int anchorId, int obstacleId, int size, int[][] offsets) {
+		Cell anchor = map.getCell(anchorId);
+		Assert.assertEquals(obstacleId, anchor.getObstacle());
+		Assert.assertEquals(size, anchor.getObstacleSize());
+		Assert.assertFalse(anchor.isWalkable());
+		for (Cell c : footprint(map, anchor, offsets)) {
+			Assert.assertFalse("case " + c.getId() + " de l'obstacle " + anchorId, c.isWalkable());
+			Assert.assertEquals(-1, c.getObstacleSize());
+		}
+	}
+
 	@Test
 	public void size1ObstacleBlocksSingleCell() throws Exception {
 		final int anchor = 306;
