@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.leek.Leek;
 
 import leekscript.compiler.AIFile;
@@ -17,14 +18,16 @@ import leekscript.compiler.LeekScript;
  */
 public class TestCompileStackOverflow extends FightTestBase {
 
-	private Leek leek1, leek2;
+	private Leek leek1, leek2, leek3;
 
 	@Override
 	protected void createLeeks() {
 		leek1 = defaultLeek(1, "A");
 		leek2 = defaultLeek(2, "B");
+		leek3 = defaultLeek(3, "C");
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);
+		fight.getState().addEntity(0, leek3);
 	}
 
 	/**
@@ -56,28 +59,53 @@ public class TestCompileStackOverflow extends FightTestBase {
 		return code.append(";").toString();
 	}
 
-	/** Même débordement à l'analyse (sauvegarde dans l'éditeur, via le démon) : erreur interne, pas d'exception. */
-	@Test
-	public void deepExpressionAnalyzeReturnsInternalError() throws Exception {
-		var reported = captureReportedErrors(() -> runWithSmallStack(() -> {
-			AIFile file = new AIFile("<deep_analyze>", deepExpression(), System.currentTimeMillis(), LeekScript.LATEST_VERSION, 1, false);
-			var result = generator.analyzeAI(file, 0);
-			Assert.assertFalse(result.success);
-			Assert.assertEquals(leekscript.common.Error.INTERNAL_ERROR.ordinal(), result.informations.get(0).get(6).asInt());
-		}));
-		Assert.assertTrue(reported.stream().anyMatch(e -> e instanceof StackOverflowError));
+	private static long countOverflows(java.util.List<Throwable> reported) {
+		return reported.stream().filter(e -> e instanceof StackOverflowError).count();
 	}
 
+	/**
+	 * Même débordement à l'analyse (sauvegarde dans l'éditeur, via le démon) : erreur interne,
+	 * pas d'exception. Analysée deux fois, l'IA n'est signalée qu'une fois en erreur serveur.
+	 */
+	@Test
+	public void deepExpressionAnalyzeReturnsInternalError() throws Exception {
+		// Chemin unique : l'id de l'IA (dérivé du chemin) sert au dédoublonnage, qui vit tout le processus
+		AIFile file = new AIFile("<deep_analyze_" + System.nanoTime() + ">", deepExpression(), System.currentTimeMillis(), LeekScript.LATEST_VERSION, 1, false);
+		var reported = captureReportedErrors(() -> runWithSmallStack(() -> {
+			for (int i = 0; i < 2; i++) {
+				var result = generator.analyzeAI(file, 0);
+				Assert.assertFalse(result.success);
+				Assert.assertEquals(leekscript.common.Error.INTERNAL_ERROR.ordinal(), result.informations.get(0).get(6).asInt());
+			}
+		}));
+		Assert.assertEquals("signalé une fois par IA : " + reported, 1, countOverflows(reported));
+	}
+
+	/** Téléchargement de l'IA fusionnée (includes) : le débordement rend un message, il ne s'échappe plus. */
+	@Test
+	public void deepExpressionDownloadReturnsMessage() throws Exception {
+		AIFile file = new AIFile("<deep_download_" + System.nanoTime() + ">", deepExpression(), System.currentTimeMillis(), LeekScript.LATEST_VERSION, 1, false);
+		var merged = new AtomicReference<String>();
+		runWithSmallStack(() -> merged.set(generator.downloadAI(file)));
+		Assert.assertEquals(Generator.compilerStackOverflowMessage(file), merged.get());
+	}
+
+	/**
+	 * Deux entités partagent l'IA fautive : elles seules sont invalides, le joueur lit pourquoi,
+	 * et l'erreur serveur n'est signalée qu'une fois (pas une par entité ni par combat).
+	 */
 	@Test
 	public void deepExpressionInvalidatesOnlyItsAI() throws Exception {
 		attachAI(leek1, deepExpression());
+		attachAI(leek3, (AIFile) leek1.getAIFile());
 		attachAI(leek2, "setRegister('ran', '1');");
 
 		var reported = captureReportedErrors(() -> runWithSmallStack(this::runFight));
 
 		Assert.assertNull("l'IA qui ne compile pas n'a pas joué", leek1.getRegister("ran"));
+		Assert.assertNull("l'IA qui ne compile pas n'a pas joué (2e entité)", leek3.getRegister("ran"));
 		Assert.assertEquals("l'autre IA a joué son combat", "1", leek2.getRegister("ran"));
-		Assert.assertTrue("le débordement reste signalé en erreur serveur : " + reported,
-			reported.stream().anyMatch(e -> e instanceof StackOverflowError));
+		Assert.assertEquals("signalé une fois pour l'IA, pas par entité : " + reported, 1, countOverflows(reported));
+		Assert.assertTrue("le joueur lit la cause", farmerLog.toJSON().toString().contains("expression too deeply nested"));
 	}
 }

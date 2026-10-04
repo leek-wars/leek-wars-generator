@@ -79,6 +79,11 @@ public abstract class FightTestBase {
 		long uid = AI_COUNTER.incrementAndGet();
 		AIFile file = new AIFile("<test_" + uid + ">", code, System.currentTimeMillis(),
 			LeekScript.LATEST_VERSION, leek.getId(), false);
+		attachAI(leek, file);
+	}
+
+	/** Attache un fichier d'IA existant (plusieurs entités peuvent partager le même). */
+	protected void attachAI(Leek leek, AIFile file) {
 		leek.setAIFile(file);
 		leek.setLogs(new LeekLog(farmerLog, leek));
 		leek.setFight(fight);

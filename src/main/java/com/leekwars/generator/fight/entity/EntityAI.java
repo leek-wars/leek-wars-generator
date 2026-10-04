@@ -285,9 +285,15 @@ public class EntityAI extends AI {
 			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { e.getMessage() });
 			return new EntityAI(entity, (LeekLog) entity.getLogs());
 
-		} catch (Exception | StackOverflowError e) {
-			// Other error : server error. Le compilateur récursif peut déborder la pile sur une
-			// expression imbriquée très profondément : seule cette IA est invalide, pas le combat.
+		} catch (StackOverflowError e) {
+			// Le compilateur récursif déborde sur une expression imbriquée très profondément : code
+			// du joueur. Seule cette IA est invalide, pas le combat ; signalé une fois par IA.
+			Generator.reportCompilerStackOverflow(e, ((Fight) entity.getFight()).getId(), entity.getFarmer(), file);
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { Generator.compilerStackOverflowMessage(file) });
+			return new EntityAI(entity, (LeekLog) entity.getLogs());
+
+		} catch (Exception e) {
+			// Other error : server error
 			generator.exception(e, (Fight) entity.getFight(), entity.getFarmer(), file);
 			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.COMPILE_JAVA);
 			return new EntityAI(entity, (LeekLog) entity.getLogs());

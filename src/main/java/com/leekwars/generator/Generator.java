@@ -2,6 +2,8 @@ package com.leekwars.generator;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.leekwars.generator.util.Json;
 import tools.jackson.databind.node.ArrayNode;
@@ -74,10 +76,14 @@ public class Generator {
 			Log.s(TAG, "Time: " + ((double) time / 1000) + " seconds");
 			return result;
 		} catch (Exception | StackOverflowError e) {
-			// StackOverflowError : compilateur récursif sur une expression très profonde
-			e.printStackTrace(System.out);
-			Log.e(TAG, "AI " + ai + " not analyzed");
-			errorManager.exception(e, 0, farmer, ai);
+			if (e instanceof StackOverflowError overflow) {
+				Log.e(TAG, "AI " + ai + " not analyzed: compiler stack overflow");
+				reportCompilerStackOverflow(overflow, 0, farmer, ai);
+			} else {
+				e.printStackTrace(System.out);
+				Log.e(TAG, "AI " + ai + " not analyzed");
+				errorManager.exception(e, 0, farmer, ai);
+			}
 			var result = new AnalyzeResult();
 			result.success = false;
 			result.informations = Json.createArray();
@@ -112,14 +118,18 @@ public class Generator {
 			}
 			return result;
 		} catch (Exception | StackOverflowError e) {
-			// StackOverflowError : compilateur récursif sur une expression très profonde
-			e.printStackTrace(System.out);
-			Log.e(TAG, "AI " + ai + " not compiled");
-			if (e.getMessage() != null) {
-				Log.e(TAG, e.getMessage());
+			if (e instanceof StackOverflowError overflow) {
+				Log.e(TAG, "AI " + ai + " not compiled: compiler stack overflow");
+				reportCompilerStackOverflow(overflow, 0, farmer, ai);
+			} else {
+				e.printStackTrace(System.out);
+				Log.e(TAG, "AI " + ai + " not compiled");
+				if (e.getMessage() != null) {
+					Log.e(TAG, e.getMessage());
+				}
+				Log.e(TAG, "Compile failed!");
+				errorManager.exception(e, 0, farmer, ai);
 			}
-			Log.e(TAG, "Compile failed!");
-			errorManager.exception(e, 0, farmer, ai);
 			// Create a result with internal error
 			AnalyzeResult result = new AnalyzeResult();
 			result.success = false;
@@ -371,11 +381,44 @@ public class Generator {
 		Log.i(TAG, "Download AI " + ai + "...");
 		try {
 			return LeekScript.mergeFile(ai);
+		} catch (StackOverflowError e) {
+			Log.e(TAG, "AI " + ai + " not merged: compiler stack overflow");
+			return compilerStackOverflowMessage(ai);
 		} catch (Exception e) {
 			System.out.println("Exception " + e.getMessage());
 			e.printStackTrace(System.out);
 			return e.getMessage();
 		}
+	}
+
+	/**
+	 * IA dont le débordement de pile du compilateur est déjà signalé. Bornée : vidée si elle
+	 * grossit trop (au pire, un nouveau signalement par IA).
+	 */
+	private static final Set<Integer> COMPILER_STACK_OVERFLOW_REPORTED = ConcurrentHashMap.newKeySet();
+	private static final int COMPILER_STACK_OVERFLOW_REPORTED_MAX = 10_000;
+
+	/**
+	 * Le compilateur LeekScript est récursif : une expression imbriquée très profondément déborde
+	 * sa pile. C'est le code du joueur, pas une panne du serveur ; mais tant que le compilateur ne
+	 * le rend pas en erreur joueur, on garde une trace des IA touchées. Signalé une seule fois par
+	 * IA et par processus, sinon une erreur serveur à chaque combat et pour chaque entité.
+	 */
+	public static void reportCompilerStackOverflow(StackOverflowError e, int fightID, int farmer, AIFile file) {
+		if (errorManager == null) {
+			return;
+		}
+		if (COMPILER_STACK_OVERFLOW_REPORTED.size() >= COMPILER_STACK_OVERFLOW_REPORTED_MAX) {
+			COMPILER_STACK_OVERFLOW_REPORTED.clear();
+		}
+		if (COMPILER_STACK_OVERFLOW_REPORTED.add(file != null ? file.getId() : 0)) {
+			errorManager.exception(e, fightID, farmer, file);
+		}
+	}
+
+	/** Message joueur d'une IA qui déborde la pile du compilateur (texte libre : pas de clé de traduction). */
+	public static String compilerStackOverflowMessage(AIFile file) {
+		return (file != null ? file.getPath() + " : " : "") + "expression too deeply nested for the compiler";
 	}
 
 	public static void setErrorManager(ErrorManager manager) {
