@@ -526,7 +526,7 @@ public class FightClass {
 			if (possible.contains(ai.getEntity().getCell())) {
 				retour = ai.getEntity().getCell().getId();
 			} else {
-				var path = ai.getState().getMap().getAStarPath(ai.getEntity().getCell(), possible, cells_to_ignore);
+				var path = ai.getState().getMap().getAStarPath(ai.getEntity().getCell(), possible);
 				if (path != null) {
 					if (path.size() > 0)
 						retour = path.get(path.size() - 1).getId();
