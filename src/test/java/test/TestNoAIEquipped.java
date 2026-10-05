@@ -1,6 +1,10 @@
 package test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.leekwars.generator.Generator;
@@ -9,7 +13,6 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.EntityInfo;
-import com.leekwars.generator.scenario.FarmerInfo;
 import com.leekwars.generator.scenario.Scenario;
 import com.leekwars.generator.scenario.TeamInfo;
 import com.leekwars.generator.state.Entity;
@@ -17,6 +20,7 @@ import com.leekwars.generator.test.LocalTrophyManager;
 
 import leekscript.AILog;
 import leekscript.common.Error;
+import leekscript.compiler.LeekScript;
 
 /**
  * Une entité sans IA équipée (la tourelle d'un camp de bots en combat de test, une tourelle
@@ -29,10 +33,20 @@ public class TestNoAIEquipped {
 	private static final int TEAM = 7;
 	private static final int TURNS = 3;
 
-	private static EntityInfo entity(int id, int type, int team) {
+	private Outcome outcome;
+	private final Map<String, Integer> fids = new HashMap<>();
+
+	@Before
+	public void setUp() {
+		// Une autre classe de test a pu laisser son système de fichiers : l'IA introuvable doit
+		// l'être dans celui par défaut.
+		LeekScript.resetFileSystem();
+	}
+
+	private static EntityInfo entity(String name, int type, int team) {
 		var e = new EntityInfo();
-		e.id = id;
-		e.name = "e" + id;
+		e.id = name.hashCode();
+		e.name = name;
 		e.type = type;
 		e.team = team;
 		e.level = 100;
@@ -45,42 +59,42 @@ public class TestNoAIEquipped {
 		return e;
 	}
 
-	private static Outcome run(EntityInfo first) {
+	/** Camp 0 : `first` ; camp 1 : un poireau sans IA et la tourelle de l'équipe (une tourelle
+	 * seule ne garde pas son camp en vie, le combat finirait au premier tour). */
+	private void run(EntityInfo first) {
 		var scenario = new Scenario();
+		scenario.seed = 1;
 		scenario.maxTurns = TURNS;
-		var farmer = new FarmerInfo();
-		farmer.name = "Éleveur";
-		farmer.country = "fr";
-		scenario.farmers.put(0, farmer);
 		var team = new TeamInfo();
 		team.id = TEAM;
-		team.name = "Équipe";
 		scenario.teams.put(TEAM, team);
-		// Camp 0 : le premier poireau ; camp 1 : un poireau sans IA et la tourelle de l'équipe
-		// (une tourelle seule ne garde pas son camp en vie, le combat finirait au premier tour).
 		scenario.addEntity(0, first);
-		scenario.addEntity(1, entity(2, Entity.TYPE_LEEK, TEAM));
-		scenario.addEntity(1, entity(3, Entity.TYPE_TURRET, TEAM));
+		scenario.addEntity(1, entity("poireau", Entity.TYPE_LEEK, TEAM));
+		scenario.addEntity(1, entity("tourelle", Entity.TYPE_TURRET, TEAM));
 		var registers = new RegisterManager() {
 			@Override public String getRegisters(int leek) { return null; }
 			@Override public void saveRegisters(int leek, String registers, boolean isNew) {}
 		};
-		return new Generator().runScenario(scenario, null, registers, new LocalTrophyManager());
+		outcome = new Generator().runScenario(scenario, null, registers, new LocalTrophyManager());
+		Assert.assertNull("le combat ne doit pas lever d'exception", outcome.exception);
+		for (var leek : outcome.fight.toJSON().get("leeks")) {
+			fids.put(leek.get("name").asString(), leek.get("id").asInt());
+		}
 	}
 
-	private static int countActions(Outcome outcome, int type) {
+	private int countActions(String entity, int type) {
 		int count = 0;
 		for (var action : outcome.fight.toJSON().get("actions")) {
-			if (action.get(0).asInt() == type) count++;
+			if (action.get(0).asInt() == type && action.get(1).asInt() == fids.get(entity)) count++;
 		}
 		return count;
 	}
 
-	private static int countSystemLogs(FarmerLog logs, int level, Error error) {
+	private int countSystemLogs(FarmerLog logs, String entity, int level, Error error) {
 		int count = 0;
 		for (var actionLogs : logs.toJSON()) {
 			for (var log : actionLogs) {
-				if (log.get(1).asInt() == level && log.get(3).asInt() == error.ordinal()) count++;
+				if (log.get(0).asInt() == fids.get(entity) && log.get(1).asInt() == level && log.get(3).asInt() == error.ordinal()) count++;
 			}
 		}
 		return count;
@@ -88,27 +102,27 @@ public class TestNoAIEquipped {
 
 	@Test
 	public void entitiesWithoutAIPassTheirTurnsWithoutCrashing() {
-		var outcome = run(entity(1, Entity.TYPE_LEEK, 0));
+		run(entity("joueur", Entity.TYPE_LEEK, 0));
 
-		Assert.assertEquals("aucun plantage", 0, countActions(outcome, Action.AI_ERROR));
-		Assert.assertEquals("les trois entités jouent leurs tours", 3 * TURNS, countActions(outcome, Action.END_TURN));
-		// Un avertissement par entité : les deux poireaux loguent chez leur éleveur, la tourelle
-		// sous la clé -TEAM (cf. Generator.runScenario).
-		FarmerLog farmerLogs = outcome.logs.get(0), turretLogs = outcome.logs.get(-TEAM);
-		Assert.assertEquals(2, countSystemLogs(farmerLogs, AILog.SWARNING, Error.NO_AI_EQUIPPED));
-		Assert.assertEquals(1, countSystemLogs(turretLogs, AILog.SWARNING, Error.NO_AI_EQUIPPED));
-		Assert.assertEquals(0, countSystemLogs(farmerLogs, AILog.SERROR, Error.NO_AI_EQUIPPED));
-		Assert.assertEquals(0, countSystemLogs(turretLogs, AILog.SERROR, Error.NO_AI_EQUIPPED));
+		// Les poireaux loguent chez leur éleveur, la tourelle sous la clé -TEAM (cf. Generator.runScenario).
+		var logs = Map.of("joueur", outcome.logs.get(0), "poireau", outcome.logs.get(0), "tourelle", outcome.logs.get(-TEAM));
+		for (var entity : logs.keySet()) {
+			Assert.assertEquals(entity + " joue ses tours", TURNS, countActions(entity, Action.END_TURN));
+			Assert.assertEquals(entity + " ne plante pas", 0, countActions(entity, Action.AI_ERROR));
+			Assert.assertEquals(1, countSystemLogs(logs.get(entity), entity, AILog.SWARNING, Error.NO_AI_EQUIPPED));
+			Assert.assertEquals(0, countSystemLogs(logs.get(entity), entity, AILog.SERROR, Error.NO_AI_EQUIPPED));
+		}
 	}
 
 	@Test
 	public void missingAIStillCrashes() {
-		var leek = entity(1, Entity.TYPE_LEEK, 0);
+		var leek = entity("joueur", Entity.TYPE_LEEK, 0);
 		leek.ai = "introuvable.leek";
 		leek.ai_folder = -12345;
-		var outcome = run(leek);
+		run(leek);
 
-		Assert.assertEquals("une IA équipée mais introuvable plante à chaque tour", TURNS, countActions(outcome, Action.AI_ERROR));
-		Assert.assertEquals(1, countSystemLogs(outcome.logs.get(0), AILog.SERROR, Error.AI_NOT_EXISTING));
+		Assert.assertEquals("une IA équipée mais introuvable plante à chaque tour", TURNS, countActions("joueur", Action.AI_ERROR));
+		Assert.assertEquals(1, countSystemLogs(outcome.logs.get(0), "joueur", AILog.SERROR, Error.AI_NOT_EXISTING));
+		Assert.assertEquals("la tourelle sans IA, elle, ne plante pas", 0, countActions("tourelle", Action.AI_ERROR));
 	}
 }

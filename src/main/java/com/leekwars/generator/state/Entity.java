@@ -173,7 +173,8 @@ public abstract class Entity {
 	private Object logs;
 	private Object fight;
 	private Object aiFile;
-	// Faux si aucune IA n'est équipée, à distinguer d'une IA introuvable (cf EntityAI.resolve)
+	// Faux si aucune IA n'est équipée, à distinguer d'une IA introuvable ou invalide, qui plante
+	// (cf EntityAI.resolve)
 	private boolean aiEquipped = true;
 	private Integer initialCell = null;
 	private int orientation = -1;
