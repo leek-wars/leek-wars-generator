@@ -406,9 +406,6 @@ public class Fight {
 					log(new ActionAIError(current));
 					state.statistics.error(current);
 				}
-			} else if (!current.hasAwakening()) {
-				// Pas d'IA équipée : juste un warning
-				((LeekLog) current.getLogs()).addSystemLog(LeekLog.SWARNING, Error.NO_AI_EQUIPPED);
 			}
 			current.endTurn();
 			state.getActions().log(new ActionEndTurn(current));

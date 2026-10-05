@@ -122,7 +122,9 @@ public class EntityInfo {
 			id = e.get("id").intValue();
 		}
 		name = e.get("name").asString();
-		if (e.has("ai")) {
+		// hasNonNull comme pour ai_path : `"ai": null` reste « aucune IA équipée » (cf.
+		// EntityAI.resolve), au lieu d'une IA nommée "" introuvable qui planterait.
+		if (e.hasNonNull("ai")) {
 			ai = e.get("ai").asString();
 		}
 		if (e.has("ai_folder")) {
