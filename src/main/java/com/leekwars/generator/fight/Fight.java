@@ -398,8 +398,7 @@ public class Fight {
 					executionTime += endTime - startTime;
 					current.addOperations(ai.operations());
 				} else if (current.isAIEquipped()) {
-					// Add 'crash' action if AI is invalid. Sans IA équipée, l'entité passe son tour :
-					// EntityAI.resolve a déjà posé l'avertissement NO_AI_EQUIPPED.
+					// IA invalide : plantage (sans IA équipée, resolve a déjà averti et le tour passe)
 					if (getTurn() == 1) {
 						((LeekLog) current.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { "Invalid AI" });
 					}

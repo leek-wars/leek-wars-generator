@@ -93,7 +93,7 @@ public class TestNoAIEquipped {
 		Assert.assertEquals("aucun plantage", 0, countActions(outcome, Action.AI_ERROR));
 		Assert.assertEquals("les trois entités jouent leurs tours", 3 * TURNS, countActions(outcome, Action.END_TURN));
 		// Un avertissement par entité : les deux poireaux loguent chez leur éleveur, la tourelle
-		// sous -équipe (cf. Generator.runScenario).
+		// sous la clé -TEAM (cf. Generator.runScenario).
 		FarmerLog farmerLogs = outcome.logs.get(0), turretLogs = outcome.logs.get(-TEAM);
 		Assert.assertEquals(2, countSystemLogs(farmerLogs, AILog.SWARNING, Error.NO_AI_EQUIPPED));
 		Assert.assertEquals(1, countSystemLogs(turretLogs, AILog.SWARNING, Error.NO_AI_EQUIPPED));
