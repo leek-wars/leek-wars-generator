@@ -173,6 +173,9 @@ public abstract class Entity {
 	private Object logs;
 	private Object fight;
 	private Object aiFile;
+	// Faux quand l'entité n'a aucune IA équipée (cf EntityAI.resolve), à distinguer d'une IA
+	// introuvable ou qui ne compile pas : elle passe alors ses tours sans planter.
+	private boolean aiEquipped = true;
 	private Integer initialCell = null;
 	private int orientation = -1;
 
@@ -1461,6 +1464,14 @@ public abstract class Entity {
 
 	public void setAIFile(Object aiFile) {
 		this.aiFile = aiFile;
+	}
+
+	public boolean isAIEquipped() {
+		return this.aiEquipped;
+	}
+
+	public void setAIEquipped(boolean aiEquipped) {
+		this.aiEquipped = aiEquipped;
 	}
 
 	public void setRelativeShield(int shield) {

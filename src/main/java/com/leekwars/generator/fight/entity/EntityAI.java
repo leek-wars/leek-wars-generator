@@ -201,9 +201,11 @@ public class EntityAI extends AI {
 
 	public static AIFile resolve(Generator generator, EntityInfo entityInfo, Entity entity) {
 
-		// No AI equipped : user error
+		// Aucune IA équipée (une tourelle de bots en test, une tourelle d'équipe ou un poireau
+		// sans IA) : un avertissement, une seule fois, et l'entité passera ses tours sans planter.
 		if (entityInfo.ai == null && entityInfo.ai_path == null) {
-			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.NO_AI_EQUIPPED);
+			((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SWARNING, Error.NO_AI_EQUIPPED);
+			entity.setAIEquipped(false);
 			return null;
 		}
 
