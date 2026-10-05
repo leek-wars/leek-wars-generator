@@ -68,9 +68,15 @@ public class EntityAI extends AI {
 			var m = ai.newArray();
 			m.push(ai, (long) mAuthor);
 			m.push(ai, (long) mType);
-			var message = toReceiverArrays(ai, mMessage, new IdentityHashMap<>());
-			m.pushNoClone(ai, message == mMessage ? LeekOperations.clone(ai, mMessage) : message);
+			m.pushNoClone(ai, isForeignArray(ai, mMessage)
+				? toReceiverArrays(ai, mMessage, new IdentityHashMap<>())
+				: LeekOperations.clone(ai, mMessage));
 			return m;
+		}
+
+		/** Tableau de l'autre famille que celle du destinataire (LS1-3 ou LS4+). */
+		private static boolean isForeignArray(EntityAI ai, Object value) {
+			return ai.getVersion() >= 4 ? value instanceof LegacyArrayLeekValue : value instanceof ArrayLeekValue || value instanceof MapLeekValue;
 		}
 
 		/**
@@ -82,8 +88,7 @@ public class EntityAI extends AI {
 		 * `converted` garde les cycles et les tableaux partagés.
 		 */
 		private static Object toReceiverArrays(EntityAI ai, Object value, IdentityHashMap<Object, Object> converted) throws LeekRunException {
-			boolean v4 = ai.getVersion() >= 4;
-			if (!(v4 ? value instanceof LegacyArrayLeekValue : value instanceof ArrayLeekValue || value instanceof MapLeekValue)) {
+			if (!isForeignArray(ai, value)) {
 				return value;
 			}
 			var done = converted.get(value);
@@ -110,7 +115,8 @@ public class EntityAI extends AI {
 			} else {
 				var map = (MapLeekValue) value;
 				ai.ops(1 + map.size());
-				for (var e : map.entrySet()) legacy.set(ai, e.getKey(), toReceiverArrays(ai, e.getValue(), converted));
+				// getOrCreate normalise la clé comme un tableau LS1-3 : null → 0, réel → entier
+				for (var e : map.entrySet()) legacy.getOrCreate(ai, e.getKey()).set(toReceiverArrays(ai, e.getValue(), converted));
 			}
 			return legacy;
 		}

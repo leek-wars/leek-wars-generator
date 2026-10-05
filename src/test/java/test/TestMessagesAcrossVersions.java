@@ -56,16 +56,19 @@ public class TestMessagesAcrossVersions extends FightTestBase {
 	@Test
 	public void arraysAndMapsBecomeLegacyArraysInV1() throws Exception {
 		attach(sender, 4, "sendTo(getNearestEnemy(), 1, ['CHANSON', [19, 0]]);\n"
-			+ "sendTo(getNearestEnemy(), 2, ['k': [7, 8]]);");
+			+ "sendTo(getNearestEnemy(), 2, ['k': [7, 8]]);\n"
+			// Clés qu'un tableau LS1-3 normalise : null → 0, réel → entier
+			+ "sendTo(getNearestEnemy(), 3, [null: 1, 1.5: 2, 'x': 3]);");
 		attach(receiver, 1, "var r = \"\";\n"
 			+ "for (var m in getMessages()) {\n"
 			+ "  var p = m[2];\n"
 			+ "  if (m[1] == 1) { r = r + count(p) + \",\" + count(p[1]) + \";\"; }\n"
-			+ "  else { r = r + count(p[\"k\"]) + \";\"; }\n"
+			+ "  else if (m[1] == 2) { r = r + count(p[\"k\"]) + \";\"; }\n"
+			+ "  else { r = r + count(p) + \",\" + p[0] + \",\" + p[1] + \",\" + p[\"x\"] + \";\"; }\n"
 			+ "}\n"
 			+ "if (r != \"\") { setRegister(\"r\", r); }");
 		runFight();
 
-		Assert.assertTrue(result(), result().contains("2,2;2;"));
+		Assert.assertTrue(result(), result().contains("2,2;2;3,1,2,3;"));
 	}
 }
