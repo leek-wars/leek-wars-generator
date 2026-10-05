@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 import com.leekwars.generator.action.ActionAIError;
@@ -31,6 +32,7 @@ import leekscript.runner.Session;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
+import leekscript.runner.values.MapLeekValue;
 import leekscript.AILog;
 import leekscript.common.Error;
 
@@ -66,8 +68,51 @@ public class EntityAI extends AI {
 			var m = ai.newArray();
 			m.push(ai, (long) mAuthor);
 			m.push(ai, (long) mType);
-			m.pushNoClone(ai, LeekOperations.clone(ai, mMessage));
+			var message = toReceiverArrays(ai, mMessage, new IdentityHashMap<>());
+			m.pushNoClone(ai, message == mMessage ? LeekOperations.clone(ai, mMessage) : message);
 			return m;
+		}
+
+		/**
+		 * L'expéditeur peut tourner dans une autre version de LeekScript que le destinataire :
+		 * les tableaux du message sont alors convertis vers ceux du destinataire, sans quoi ses
+		 * fonctions les refusent (« Array (V4+) » attendu). Un tableau LS1-3 devient un Array en
+		 * LS4+, ou une Map si ses clés ne sont pas 0, 1, 2… ; un Array ou une Map devient un
+		 * tableau LS1-3. Une valeur déjà dans la bonne famille est rendue telle quelle.
+		 * `converted` garde les cycles et les tableaux partagés.
+		 */
+		private static Object toReceiverArrays(EntityAI ai, Object value, IdentityHashMap<Object, Object> converted) throws LeekRunException {
+			boolean v4 = ai.getVersion() >= 4;
+			if (!(v4 ? value instanceof LegacyArrayLeekValue : value instanceof ArrayLeekValue || value instanceof MapLeekValue)) {
+				return value;
+			}
+			var done = converted.get(value);
+			if (done != null) return done;
+
+			if (value instanceof LegacyArrayLeekValue legacy) {
+				ai.ops(1 + legacy.size());
+				if (legacy.isAssociative()) {
+					var map = new MapLeekValue(ai);
+					converted.put(value, map);
+					for (var e : legacy) map.set(ai, e.getKey(), toReceiverArrays(ai, e.getValue(), converted));
+					return map;
+				}
+				var array = new ArrayLeekValue(ai);
+				converted.put(value, array);
+				for (var e : legacy) array.pushNoClone(ai, toReceiverArrays(ai, e.getValue(), converted));
+				return array;
+			}
+			var legacy = new LegacyArrayLeekValue(ai);
+			converted.put(value, legacy);
+			if (value instanceof ArrayLeekValue array) {
+				ai.ops(1 + array.size());
+				for (var v : array) legacy.pushNoClone(ai, toReceiverArrays(ai, v, converted));
+			} else {
+				var map = (MapLeekValue) value;
+				ai.ops(1 + map.size());
+				for (var e : map.entrySet()) legacy.set(ai, e.getKey(), toReceiverArrays(ai, e.getValue(), converted));
+			}
+			return legacy;
 		}
 	}
 
