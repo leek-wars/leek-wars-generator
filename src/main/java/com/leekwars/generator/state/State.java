@@ -1443,26 +1443,34 @@ public class State {
 
 	public void resurrect(Entity owner, Entity entity, Cell cell, boolean critical, boolean fullLife) {
 
-		Entity next = null;
-		boolean start = false;
-		for (Entity e : initialOrder) {
-			if (e == entity) {
-				start = true;
-				continue;
-			}
-			if (!start) {
-				continue;
-			}
-			if (e.isDead()) {
-				continue;
-			}
-			next = e;
-			break;
-		}
-		if (next == null) {
-			order.addEntity(entity);
+		// Une invocation n'est pas dans l'ordre de départ : elle reprend sa place juste après
+		// son invocateur s'il est en vie, comme à l'invocation, et sinon passe en fin de tour.
+		Entity summoner = entity.isSummon() ? entity.getSummoner() : null;
+		int summonerTurnOrder = summoner != null && !summoner.isDead() ? order.getEntityTurnOrder(summoner) : 0;
+		if (summonerTurnOrder > 0) {
+			order.addEntity(summonerTurnOrder, entity);
 		} else {
-			order.addEntity(order.getEntityTurnOrder(next) - 1, entity);
+			Entity next = null;
+			boolean start = false;
+			for (Entity e : initialOrder) {
+				if (e == entity) {
+					start = true;
+					continue;
+				}
+				if (!start) {
+					continue;
+				}
+				if (e.isDead()) {
+					continue;
+				}
+				next = e;
+				break;
+			}
+			if (next == null) {
+				order.addEntity(entity);
+			} else {
+				order.addEntity(order.getEntityTurnOrder(next) - 1, entity);
+			}
 		}
 		entity.resurrect(owner, critical ? Effect.CRITICAL_FACTOR : 1.0, fullLife);
 
