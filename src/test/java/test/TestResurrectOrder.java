@@ -1,10 +1,11 @@
 package test;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.attack.DamageType;
-import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.Order;
@@ -17,23 +18,25 @@ import com.leekwars.generator.state.State;
  */
 public class TestResurrectOrder extends FightTestBase {
 
-	private static final int PUNY_BULB = 1;
-
-	private Leek a, b, c, d;
+	private State state;
+	private Order order;
 
 	@Override
 	protected void createLeeks() {
-		a = defaultLeek(1, "A");
-		b = defaultLeek(2, "B");
-		c = defaultLeek(3, "C");
-		d = defaultLeek(4, "D");
-		fight.getState().addEntity(0, a);
-		fight.getState().addEntity(1, b);
-		fight.getState().addEntity(0, c);
-		fight.getState().addEntity(1, d);
+		fight.getState().addEntity(0, defaultLeek(1, "A"));
+		fight.getState().addEntity(1, defaultLeek(2, "B"));
+		fight.getState().addEntity(0, defaultLeek(3, "C"));
+		fight.getState().addEntity(1, defaultLeek(4, "D"));
 	}
 
-	private Cell freeCell(State state) {
+	@Before
+	public void initFight() throws Exception {
+		initFightOnly();
+		state = fight.getState();
+		order = state.getOrder();
+	}
+
+	private Cell freeCell() {
 		for (Cell cell : state.getMap().getCells()) {
 			if (cell.available(state.getMap())) {
 				return cell;
@@ -42,59 +45,45 @@ public class TestResurrectOrder extends FightTestBase {
 		throw new IllegalStateException("no free cell");
 	}
 
-	private void kill(Entity entity, Entity killer) {
-		entity.removeLife(entity.getLife(), 0, killer, DamageType.DIRECT, null, null);
+	private Entity enemyOf(Entity entity) {
+		return state.getEnemiesEntities(entity.getTeam()).get(0);
+	}
+
+	private void kill(Entity entity) {
+		entity.removeLife(entity.getLife(), 0, enemyOf(entity), DamageType.DIRECT, null, null);
 		Assert.assertTrue(entity.isDead());
 	}
 
-	private Entity enemyOf(Entity entity) {
-		for (Entity e : fight.getState().getOrder().getEntities()) {
-			if (e.getTeam() != entity.getTeam()) return e;
-		}
-		throw new IllegalStateException("no enemy");
-	}
-
-	/** Bulbe du premier à jouer, tué par un ennemi : sans le correctif, il repartirait en fin de tour. */
+	/** Bulbe du premier à jouer, tué : sans le correctif, ressuscité, il repartirait en fin de tour. */
 	private Entity deadBulbOf(Entity summoner) {
-		State state = fight.getState();
-		Entity bulb = state.createSummon(summoner, PUNY_BULB, freeCell(state), 1, false);
-		kill(bulb, enemyOf(summoner));
-		Assert.assertEquals(0, state.getOrder().getEntityTurnOrder(bulb));
+		Entity bulb = state.createSummon(summoner, FightConstants.BULB_PUNY.getIntValue(), freeCell(), 1, false);
+		kill(bulb);
+		Assert.assertEquals(0, order.getEntityTurnOrder(bulb));
 		return bulb;
 	}
 
 	@Test
-	public void resurrectedSummonPlaysRightAfterItsSummoner() throws Exception {
-		initFightOnly();
-		Order order = fight.getState().getOrder();
+	public void resurrectedSummonPlaysRightAfterItsSummoner() {
 		Entity summoner = order.getEntities().get(0);
 		Entity bulb = deadBulbOf(summoner);
-		fight.getState().resurrect(enemyOf(summoner), bulb, freeCell(fight.getState()), false, false);
+		state.resurrect(enemyOf(summoner), bulb, freeCell(), false, false);
 		Assert.assertEquals(2, order.getEntityTurnOrder(bulb));
-		Assert.assertNotEquals(order.getEntities().size(), order.getEntityTurnOrder(bulb));
 	}
 
 	@Test
-	public void resurrectedSummonOfADeadSummonerPlaysLast() throws Exception {
-		initFightOnly();
-		Order order = fight.getState().getOrder();
+	public void resurrectedSummonOfADeadSummonerPlaysLast() {
 		Entity summoner = order.getEntities().get(0);
 		Entity bulb = deadBulbOf(summoner);
-		kill(summoner, enemyOf(summoner));
-		fight.getState().resurrect(enemyOf(summoner), bulb, freeCell(fight.getState()), false, false);
+		kill(summoner);
+		state.resurrect(enemyOf(summoner), bulb, freeCell(), false, false);
 		Assert.assertEquals(order.getEntities().size(), order.getEntityTurnOrder(bulb));
 	}
 
 	@Test
-	public void resurrectedLeekGetsItsStartingPlaceBack() throws Exception {
-		initFightOnly();
-		State state = fight.getState();
-		Order order = state.getOrder();
+	public void resurrectedLeekGetsItsStartingPlaceBack() {
 		Entity first = order.getEntities().get(0);
-		Entity second = order.getEntities().get(1);
-		Entity killer = first.getTeam() == second.getTeam() ? order.getEntities().get(2) : second;
-		kill(first, killer);
-		state.resurrect(second, first, freeCell(state), false, false);
+		kill(first);
+		state.resurrect(enemyOf(first), first, freeCell(), false, false);
 		Assert.assertEquals(1, order.getEntityTurnOrder(first));
 	}
 }

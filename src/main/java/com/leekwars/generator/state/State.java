@@ -1444,34 +1444,9 @@ public class State {
 	public void resurrect(Entity owner, Entity entity, Cell cell, boolean critical, boolean fullLife) {
 
 		// Une invocation n'est pas dans l'ordre de départ : elle reprend sa place juste après
-		// son invocateur s'il est en vie, comme à l'invocation, et sinon passe en fin de tour.
-		Entity summoner = entity.isSummon() ? entity.getSummoner() : null;
-		int summonerTurnOrder = summoner != null && !summoner.isDead() ? order.getEntityTurnOrder(summoner) : 0;
-		if (summonerTurnOrder > 0) {
-			order.addEntity(summonerTurnOrder, entity);
-		} else {
-			Entity next = null;
-			boolean start = false;
-			for (Entity e : initialOrder) {
-				if (e == entity) {
-					start = true;
-					continue;
-				}
-				if (!start) {
-					continue;
-				}
-				if (e.isDead()) {
-					continue;
-				}
-				next = e;
-				break;
-			}
-			if (next == null) {
-				order.addEntity(entity);
-			} else {
-				order.addEntity(order.getEntityTurnOrder(next) - 1, entity);
-			}
-		}
+		// son invocateur s'il est en vie (un mort n'est plus dans l'ordre), comme à l'invocation.
+		int afterSummoner = order.getEntityTurnOrder(entity.getSummoner());
+		order.addEntity(afterSummoner > 0 ? afterSummoner : startingIndex(entity), entity);
 		entity.resurrect(owner, critical ? Effect.CRITICAL_FACTOR : 1.0, fullLife);
 
 		// On met la cellule
@@ -1483,6 +1458,17 @@ public class State {
 		// La mort a purgé tous les effets, y compris les états permanents du
 		// template (ex. Enraciné) : on les réapplique.
 		applySummonStates(entity);
+	}
+
+	/** Place de départ d'une entité ressuscitée : devant le premier vivant qui la suivait au départ, sinon en fin de tour. */
+	private int startingIndex(Entity entity) {
+		int from = initialOrder.indexOf(entity);
+		if (from >= 0) {
+			for (Entity e : initialOrder.subList(from + 1, initialOrder.size())) {
+				if (!e.isDead()) return order.getEntityTurnOrder(e) - 1;
+			}
+		}
+		return order.getEntities().size();
 	}
 
 	// Applique à une invocation les états permanents de son template (ex. Enraciné
