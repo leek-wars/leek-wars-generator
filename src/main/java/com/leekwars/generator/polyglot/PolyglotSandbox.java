@@ -57,7 +57,8 @@ public class PolyglotSandbox implements AutoCloseable {
 	 *
 	 * <p>Configurable par env POLYGLOT_MAX_ISOLATE_MB (#4631) : l'Engine statique partage vit au
 	 * plafond de son isolate (les contextes fermes ne sont recuperes que sous pression), donc ce
-	 * plafond doit etre dimensionne par PROCESSUS HOTE. Worker (28 Go) : defaut 4000. Daemon (4 Go,
+	 * plafond doit etre dimensionne par PROCESSUS HOTE. Worker (36 Go) : defaut 4000, Python a 5000 par
+	 * son entrypoint (cf MAX_PYTHON_ISOLATE_MEMORY). Daemon (4 Go,
 	 * -Xmx3g) : 512 via son Dockerfile, sinon les isolates le tuent par le cgroup.
 	 */
 	private static final long MAX_ISOLATE_MEMORY = envMegabytes("POLYGLOT_MAX_ISOLATE_MB", 4000);
