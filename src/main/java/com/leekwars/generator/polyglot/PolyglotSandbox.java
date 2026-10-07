@@ -97,9 +97,8 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * "Erreur importante dans l'IA" cote EntityAI, faisait planter le combat et remontait un rapport
 	 * d'erreur SERVEUR pour ce qui est une erreur JOUEUR (constate en prod 2026-07).
 	 *
-	 * <p>Couvre aussi le heap de l'isolate plein ({@link #isIsolateHeapExhausted}) : sans lui, ce
-	 * message passait pour une erreur de syntaxe, une limite d'operations ou une erreur interne, et
-	 * aucun signal ne faisait recycler le worker.
+	 * <p>Le heap de l'isolate plein ({@link #isIsolateHeapExhausted}) n'en fait PAS partie : sous sa
+	 * forme brute, il doit continuer de remonter au worker, qui se recycle aussitot.
 	 */
 	public static boolean isMemoryExhaustion(Throwable t) {
 		return memoryExhaustionMessage(t) != null;
@@ -113,9 +112,12 @@ public class PolyglotSandbox implements AutoCloseable {
 	/**
 	 * Epuisement memoire d'un appel guest, sous l'une de ses formes : cap du contexte, heap de
 	 * l'isolate, ou {@code MemoryError} Python leve par GraalPy (cf {@link #isGuestOutOfMemoryMessage}).
+	 * Le heap de l'isolate plein passait sinon pour une erreur de syntaxe, une limite d'operations ou
+	 * une erreur interne, sans rien signaler au worker.
 	 */
 	public static boolean isOutOfMemory(PolyglotException e) {
-		return isMemoryExhaustion(e) || (e.isGuestException() && isGuestOutOfMemoryMessage(e.getMessage()));
+		return isMemoryExhaustion(e) || isIsolateHeapExhausted(e)
+				|| (e.isGuestException() && isGuestOutOfMemoryMessage(e.getMessage()));
 	}
 
 	/**
@@ -127,23 +129,19 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * (#4999 : la baseline Python a ete posee a l'estime faute de ce chiffre).
 	 */
 	public static String memoryExhaustionMessage(Throwable t) {
-		return causeMessageContaining(t, HEAP_LIMIT_MARKER, ISOLATE_HEAP_MARKER);
+		return causeMessageContaining(t, HEAP_LIMIT_MARKER);
 	}
 
-	/** Premier message de la chaine de causes qui contient l'un des fragments, null sinon. */
-	private static String causeMessageContaining(Throwable t, String... fragments) {
+	/** Premier message de la chaine de causes qui contient ce fragment, null sinon. */
+	private static String causeMessageContaining(Throwable t, String fragment) {
 		// Profondeur bornee : une chaine de causes cyclique (un throwable qui se declare sa propre
 		// cause, ou un cycle a plusieurs maillons) ferait boucler la traversee a l'infini, dans un
 		// chemin de gestion d'erreur ou l'on ne peut se permettre de bloquer le combat.
 		Throwable cause = t;
 		for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
 			String message = cause.getMessage();
-			if (message != null) {
-				for (String fragment : fragments) {
-					if (message.contains(fragment)) {
-						return message;
-					}
-				}
+			if (message != null && message.contains(fragment)) {
+				return message;
 			}
 			cause = cause.getCause();
 		}
@@ -459,8 +457,9 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * alors que les IA plus gourmandes levent des MemoryError, et elle a conclu « sain » pendant une
 	 * heure de panne. Le heap de l'isolate plein ({@code cause}) pour les IA de
 	 * {@value #ISOLATE_HEAP_FARMERS} fermiers differents en {@value #ISOLATE_HEAP_WINDOW_MS} ms vaut
-	 * donc constat. Un seul fermier ne suffit pas : un joueur qui sature seul l'isolate perd son
-	 * contexte, et c'est la sonde qui juge, sinon il pourrait faire recycler le worker a volonte.
+	 * donc constat. Un seul fermier ne suffit pas : son IA trop gourmande perd son contexte et c'est la
+	 * sonde qui juge. Il peut encore, en saturant l'isolate partage, faire echouer l'IA d'un autre
+	 * fermier et declencher le constat : le rapport nomme donc les fermiers.
 	 *
 	 * @param farmer fermier proprietaire de l'IA, &lt;= 0 si inconnu (pas compte)
 	 */
@@ -470,9 +469,9 @@ public class PolyglotSandbox implements AutoCloseable {
 		}
 		String isolateHeap = causeMessageContaining(cause, ISOLATE_HEAP_MARKER);
 		if (isolateHeap != null && farmer > 0) {
-			int farmers = recordIsolateHeapSighting(languageId, farmer);
-			if (farmers >= ISOLATE_HEAP_FARMERS) {
-				markSaturated(languageId, "heap de l'isolate plein pour " + farmers + " fermiers en "
+			Set<Integer> farmers = recordIsolateHeapSighting(languageId, farmer);
+			if (farmers.size() >= ISOLATE_HEAP_FARMERS) {
+				markSaturated(languageId, "heap de l'isolate plein pour les fermiers " + farmers + " en "
 						+ ISOLATE_HEAP_WINDOW_MS / 60_000 + " min (" + isolateHeap + ")");
 				return true;
 			}
@@ -492,13 +491,13 @@ public class PolyglotSandbox implements AutoCloseable {
 		return saturated;
 	}
 
-	/** Note ce fermier et renvoie le nombre de fermiers distincts vus dans la fenetre. */
-	private static int recordIsolateHeapSighting(String languageId, int farmer) {
+	/** Note ce fermier et renvoie les fermiers distincts vus dans la fenetre. */
+	private static Set<Integer> recordIsolateHeapSighting(String languageId, int farmer) {
 		long now = System.currentTimeMillis();
 		Map<Integer, Long> sightings = ISOLATE_HEAP_FARMER_SIGHTINGS.computeIfAbsent(languageId, l -> new ConcurrentHashMap<>());
 		sightings.put(farmer, now);
 		sightings.values().removeIf(seen -> now - seen > ISOLATE_HEAP_WINDOW_MS);
-		return sightings.size();
+		return Set.copyOf(sightings.keySet());
 	}
 
 	private static void markSaturated(String languageId, String evidence) {
@@ -524,7 +523,7 @@ public class PolyglotSandbox implements AutoCloseable {
 		} catch (Throwable t) {
 			// Toute forme d'epuisement (MemoryError guest, cap, isolate mort) = sature. Une erreur
 			// d'une autre nature est journalisee mais ne declenche pas de recyclage.
-			if (isMemoryExhaustion(t) || isGuestOutOfMemoryMessage(t.getMessage())) {
+			if (isMemoryExhaustion(t) || isIsolateHeapExhausted(t) || isGuestOutOfMemoryMessage(t.getMessage())) {
 				return false;
 			}
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " en erreur inattendue : " + t);

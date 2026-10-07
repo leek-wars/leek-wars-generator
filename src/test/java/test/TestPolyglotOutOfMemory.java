@@ -80,9 +80,13 @@ public class TestPolyglotOutOfMemory {
 	private static final String ISOLATE_MESSAGE =
 			"Garbage-collected heap size exceeded. Consider increasing the maximum Java heap size, for example with '-Xmx'.";
 
+	/**
+	 * Le heap de l'isolate plein n'est pas le cap d'un contexte : sous forme brute il remonte au worker
+	 * (recyclage immediat), seule sa forme PolyglotException passe par isOutOfMemory.
+	 */
 	@Test
-	public void isolateHeapIsMemoryButNotContextCap() {
-		Assert.assertTrue(PolyglotSandbox.isMemoryExhaustion(new RuntimeException(ISOLATE_MESSAGE)));
+	public void isolateHeapIsNotContextCap() {
+		Assert.assertFalse(PolyglotSandbox.isMemoryExhaustion(new RuntimeException(ISOLATE_MESSAGE)));
 		Assert.assertTrue(PolyglotSandbox.isIsolateHeapExhausted(new RuntimeException("wrap", new Error(ISOLATE_MESSAGE))));
 		Assert.assertFalse(PolyglotSandbox.isIsolateHeapExhausted(new RuntimeException(PROD_MESSAGE)));
 		Assert.assertFalse(PolyglotSandbox.isIsolateHeapExhausted(null));
