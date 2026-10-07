@@ -61,6 +61,12 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * -Xmx3g) : 512 via son Dockerfile, sinon les isolates le tuent par le cgroup.
 	 */
 	private static final long MAX_ISOLATE_MEMORY = envMegabytes("POLYGLOT_MAX_ISOLATE_MB", 4000);
+	/**
+	 * Isolate Python seul (POLYGLOT_PYTHON_MAX_ISOLATE_MB), par defaut le meme que les autres : le
+	 * daemon et les harnais qui reduisent POLYGLOT_MAX_ISOLATE_MB le reduisent donc aussi. GraalPy
+	 * retient bien plus que GraalJS par contexte, c'est son isolate qui sature aux pics de combats.
+	 */
+	private static final long MAX_PYTHON_ISOLATE_MEMORY = envMegabytes("POLYGLOT_PYTHON_MAX_ISOLATE_MB", MAX_ISOLATE_MEMORY / 1_000_000L);
 
 	/** Lit un budget memoire en Mo depuis l'environnement (recalibrage prod sans rebuild), en OCTETS. */
 	public static long envMegabytes(String variable, long defaultMb) {
@@ -284,7 +290,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	private Engine buildEngine(String languageId, boolean externalIsolate, boolean withCounter) {
 		Engine.Builder builder = Engine.newBuilder(languageId)
 				.sandbox(SandboxPolicy.ISOLATED)
-				.option("engine.MaxIsolateMemory", memoryOption(MAX_ISOLATE_MEMORY))
+				.option("engine.MaxIsolateMemory", memoryOption("python".equals(languageId) ? MAX_PYTHON_ISOLATE_MEMORY : MAX_ISOLATE_MEMORY))
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream());
 		if (externalIsolate) {
