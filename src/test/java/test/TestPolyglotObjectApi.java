@@ -1,5 +1,8 @@
 package test;
 
+import java.lang.reflect.Method;
+import java.util.Map;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
@@ -8,6 +11,7 @@ import org.junit.Test;
 
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.polyglot.PolyglotAPIBridge;
 import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotSandbox;
 import com.leekwars.generator.polyglot.TypeMarshaller;
@@ -115,6 +119,32 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb,
 				"Field.euclideanDistance(me.cell, Fight.getNearestEnemy().cell)"
 				+ " <= Field.distance(me.cell, Fight.getNearestEnemy().cell)"));
+		}
+	}
+
+	@Test
+	public void moveOverloadsTakeNullFromPolyglot() throws Exception {
+		// Le pont choisit la surcharge Object (null ne déplace pas), pas la surcharge long : coerce
+		// y changerait null en 0. Sans contexte GraalVM.
+		var resolve = PolyglotAPIBridge.class.getDeclaredMethod("resolveOverloads", String.class, String.class, String.class);
+		resolve.setAccessible(true);
+		for (String name : new String[] { "moveToward", "moveTowardCell", "moveAwayFrom", "moveAwayFromCell" }) {
+			var byArity = (Map<?, ?>) resolve.invoke(null, "com.leekwars.generator.classes.", "Fight", name);
+			Assert.assertEquals(name, 2, byArity.size());
+			for (var m : byArity.values()) {
+				Assert.assertEquals(name, Object.class, ((Method) m).getParameterTypes()[1]);
+			}
+		}
+	}
+
+	@Test
+	public void moveTowardNullDoesNotMove() throws Exception {
+		// Topic forum 450 : une cible nulle ne déplace pas, comme en LeekScript. moveAwayFrom seulement :
+		// me est l'entité 0, et aller vers soi ne bouge pas, null valant 0 ou non.
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(0L, ((Number) eval(sb, "me.moveAwayFrom(null, 2);")).longValue());
+			Assert.assertEquals(0L, ((Number) evalPy(sb, "me.moveAwayFrom(None, 2)")).longValue());
 		}
 	}
 

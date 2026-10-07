@@ -173,6 +173,10 @@ public class PolyglotAPIBridge {
 				score += 2;
 			} else if (p.getSimpleName().contains("BigInteger")) {
 				score -= 10;
+			} else if (p == Object.class) {
+				// moveToward(Object) / moveToward(long) : la surcharge Object reçoit null tel quel,
+				// coerce le changerait en 0 (entité ou case 0)
+				score += 1;
 			}
 		}
 		return score;

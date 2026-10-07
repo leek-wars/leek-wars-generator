@@ -16,7 +16,11 @@ import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.EntityAI;
 
+import leekscript.AILog;
+import leekscript.common.Error;
+import leekscript.common.Type;
 import leekscript.runner.LeekRunException;
+import leekscript.runner.classes.StandardClass;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.GenericArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
@@ -542,6 +546,22 @@ public class FightClass {
 		return moveToward(ai, leek_id, -1);
 	}
 
+	// Surcharges Object : seule une cible numérique déplace. null (getCell d'un mort, entité absente)
+	// ou autre : pas de déplacement, un warning. Les surcharges long restent : appel direct avec un
+	// entier, IA déjà compilées (cache du worker).
+	private static long notMoved(EntityAI ai, Object target) throws LeekRunException {
+		ai.addSystemLog(AILog.WARNING, Error.WRONG_ARGUMENT_TYPE, new Object[] { "1", target, StandardClass.getType(ai, target).toString(), Type.INT.toString() });
+		return 0;
+	}
+
+	public static long moveToward(EntityAI ai, Object leek_id) throws LeekRunException {
+		return leek_id instanceof Number id ? moveToward(ai, id.longValue()) : notMoved(ai, leek_id);
+	}
+
+	public static long moveToward(EntityAI ai, Object leek_id, long pm_to_use) throws LeekRunException {
+		return leek_id instanceof Number id ? moveToward(ai, id.longValue(), pm_to_use) : notMoved(ai, leek_id);
+	}
+
 	public static long moveToward(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveToward")) return 0;
 
@@ -552,6 +572,14 @@ public class FightClass {
 
 	public static long moveTowardCell(EntityAI ai, long cell_id) throws LeekRunException {
 		return moveTowardCell(ai, cell_id, ai.getEntity().getMP());
+	}
+
+	public static long moveTowardCell(EntityAI ai, Object cell_id) throws LeekRunException {
+		return cell_id instanceof Number id ? moveTowardCell(ai, id.longValue()) : notMoved(ai, cell_id);
+	}
+
+	public static long moveTowardCell(EntityAI ai, Object cell_id, long pm_to_use) throws LeekRunException {
+		return cell_id instanceof Number id ? moveTowardCell(ai, id.longValue(), pm_to_use) : notMoved(ai, cell_id);
 	}
 
 	public static long moveTowardCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {
@@ -627,6 +655,14 @@ public class FightClass {
 		return moveAwayFrom(ai, leek_id, -1);
 	}
 
+	public static long moveAwayFrom(EntityAI ai, Object leek_id) throws LeekRunException {
+		return leek_id instanceof Number id ? moveAwayFrom(ai, id.longValue()) : notMoved(ai, leek_id);
+	}
+
+	public static long moveAwayFrom(EntityAI ai, Object leek_id, long pm_to_use) throws LeekRunException {
+		return leek_id instanceof Number id ? moveAwayFrom(ai, id.longValue(), pm_to_use) : notMoved(ai, leek_id);
+	}
+
 	public static long moveAwayFrom(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveAwayFrom")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
@@ -649,6 +685,14 @@ public class FightClass {
 
 	public static long moveAwayFromCell(EntityAI ai, long cell_id) throws LeekRunException {
 		return moveAwayFromCell(ai, cell_id, -1);
+	}
+
+	public static long moveAwayFromCell(EntityAI ai, Object cell_id) throws LeekRunException {
+		return cell_id instanceof Number id ? moveAwayFromCell(ai, id.longValue()) : notMoved(ai, cell_id);
+	}
+
+	public static long moveAwayFromCell(EntityAI ai, Object cell_id, long pm_to_use) throws LeekRunException {
+		return cell_id instanceof Number id ? moveAwayFromCell(ai, id.longValue(), pm_to_use) : notMoved(ai, cell_id);
 	}
 
 	public static long moveAwayFromCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {

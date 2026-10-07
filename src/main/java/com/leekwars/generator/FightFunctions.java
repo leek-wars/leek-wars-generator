@@ -458,12 +458,12 @@ public class FightFunctions {
 		method("getEnemiesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		method("getAlliesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		method("moveToward", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
 		});
 		method("moveTowardCell", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
 		});
 		method("moveTowardLeeks", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
@@ -478,12 +478,12 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveAwayFrom", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
 		});
 		method("moveAwayFromCell", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
 		});
 		method("moveAwayFromCells", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),

@@ -14,8 +14,16 @@ import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.FarmerLog;
+import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.test.LocalTrophyManager;
 
+import leekscript.AILog;
 import leekscript.LSException;
+import leekscript.common.Error;
+import leekscript.compiler.LeekScript;
+import leekscript.compiler.Options;
 import leekscript.runner.AI;
 import leekscript.runner.LeekConstants;
 import leekscript.runner.values.LegacyArrayLeekValue;
@@ -42,6 +50,7 @@ public class TestFightFunctions {
 		mFight.getState().addEntity(1, mLeek2);
 
 		mFight.initFight();
+		mFight.setStatisticsManager(new LocalTrophyManager()); // Un vrai déplacement en a besoin
 		ai = new DefaultUserAI();
 	}
 
@@ -448,6 +457,61 @@ public class TestFightFunctions {
 
 		// Test AI
 		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
+	/**
+	 * Topic forum 450 : une cible null (getCell d'un mort, entité absente) ne déplace pas. Elle valait
+	 * la case 0 (le poireau partait vers le coin de la carte) ou l'entité 0.
+	 */
+	@Test
+	public void moveWithNullTargetTest() throws Exception {
+		ArrayList<String> codes = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
+		codes.add("moveTowardCell(null)");
+		values.add(0);
+		codes.add("moveTowardCell(null, 3)");
+		values.add(0);
+		codes.add("moveAwayFromCell(null)");
+		values.add(0);
+		codes.add("moveToward(null)");
+		values.add(0);
+		codes.add("moveAwayFrom(null, 2)");
+		values.add(0);
+		codes.add("moveToward('" + mLeek1.getFId() + "')"); // Une chaîne ne déplace pas non plus
+		values.add(0);
+		// Joué par mLeek2 : l'entité 0 est l'autre poireau, pas lui-même (aller vers soi ne bouge pas)
+		Assert.assertTrue(testAI(mLeek2, codes, values));
+	}
+
+	/** Un réel déplace toujours (tronqué), comme pour les autres paramètres integer|null. */
+	@Test
+	public void moveRealTargetTest() throws Exception {
+		long id = mLeek2.getFId();
+		ArrayList<String> codes = new ArrayList<String>();
+		ArrayList<Object> values = new ArrayList<Object>();
+		codes.add("getCell(" + id + ".0) == getCell(" + id + ")");
+		values.add(true);
+		codes.add("moveTowardCell(getCell(" + id + ") / 1) > 0");
+		values.add(true);
+		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
+	/** Une cible null laisse un warning dans les logs : argument de mauvais type. */
+	@Test
+	public void moveWithNullTargetWarnsTest() throws Exception {
+		var ai = (EntityAI) LeekScript.compileSnippet("moveTowardCell(null) moveAwayFrom(null, 2)", "com.leekwars.generator.fight.entity.EntityAI", new Options(true));
+		var logs = new FarmerLog(mFight, 0);
+		ai.setEntity(mLeek2);
+		ai.setLogs(new LeekLog(logs, mLeek2));
+		ai.setFight(mFight);
+		ai.runIA();
+		int warnings = 0;
+		for (var actionLogs : logs.toJSON()) {
+			for (var log : actionLogs) {
+				if (log.get(1).asInt() == AILog.SWARNING && log.get(3).asInt() == Error.WRONG_ARGUMENT_TYPE.ordinal()) warnings++;
+			}
+		}
+		Assert.assertEquals(2, warnings);
 	}
 
 	/**
