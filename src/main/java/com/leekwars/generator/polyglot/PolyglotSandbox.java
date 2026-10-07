@@ -111,13 +111,12 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/**
 	 * Epuisement memoire d'un appel guest, sous l'une de ses formes : cap du contexte, heap de
-	 * l'isolate, ou {@code MemoryError} Python leve par GraalPy (cf {@link #isGuestOutOfMemoryMessage}).
-	 * Le heap de l'isolate plein passait sinon pour une erreur de syntaxe, une limite d'operations ou
-	 * une erreur interne, sans rien signaler au worker.
+	 * l'isolate, ou {@code MemoryError} Python leve par GraalPy (cf {@link #isGuestOutOfMemoryMessage},
+	 * qu'une PolyglotException ne compte que si elle vient du guest).
 	 */
-	public static boolean isOutOfMemory(PolyglotException e) {
-		return isMemoryExhaustion(e) || isIsolateHeapExhausted(e)
-				|| (e.isGuestException() && isGuestOutOfMemoryMessage(e.getMessage()));
+	public static boolean isOutOfMemory(Throwable t) {
+		boolean guest = !(t instanceof PolyglotException p) || p.isGuestException();
+		return isMemoryExhaustion(t) || isIsolateHeapExhausted(t) || (guest && isGuestOutOfMemoryMessage(t.getMessage()));
 	}
 
 	/**
@@ -431,6 +430,11 @@ public class PolyglotSandbox implements AutoCloseable {
 	private static final long PROBE_INTERVAL_MS = 30_000;
 	private static final Map<String, Long> LAST_PROBE = new ConcurrentHashMap<>();
 	private static final Set<String> SATURATED = ConcurrentHashMap.newKeySet();
+	/** Fermiers DISTINCTS dont une IA a vu le heap de l'isolate plein, a partir desquels c'est constate. */
+	private static final int ISOLATE_HEAP_FARMERS = 2;
+	private static final long ISOLATE_HEAP_WINDOW_MS = 10 * 60_000;
+	/** Par langage : fermier -&gt; dernier « heap de l'isolate plein » vu pour une de ses IA. */
+	private static final Map<String, Map<Integer, Long>> ISOLATE_HEAP_FARMER_SIGHTINGS = new ConcurrentHashMap<>();
 
 	/** Vrai si une sonde a constate qu'un isolate ne peut plus servir de contexte neuf. Jamais remis a faux : seul le redemarrage repare. */
 	public static boolean isIsolateSaturated() {
@@ -441,12 +445,6 @@ public class PolyglotSandbox implements AutoCloseable {
 	public static Set<String> saturatedLanguages() {
 		return Set.copyOf(SATURATED);
 	}
-
-	/** Fermiers DISTINCTS dont une IA a vu le heap de l'isolate plein, a partir desquels c'est constate. */
-	private static final int ISOLATE_HEAP_FARMERS = 2;
-	private static final long ISOLATE_HEAP_WINDOW_MS = 10 * 60_000;
-	/** Par langage : fermier -&gt; dernier « heap de l'isolate plein » vu pour une de ses IA. */
-	private static final Map<String, Map<Integer, Long>> ISOLATE_HEAP_FARMER_SIGHTINGS = new ConcurrentHashMap<>();
 
 	/**
 	 * A appeler quand une IA de ce langage vient d'etre annulee pour saturation memoire : sonde l'isolate
@@ -467,8 +465,8 @@ public class PolyglotSandbox implements AutoCloseable {
 		if (SATURATED.contains(languageId)) {
 			return true;
 		}
-		String isolateHeap = causeMessageContaining(cause, ISOLATE_HEAP_MARKER);
-		if (isolateHeap != null && farmer > 0) {
+		String isolateHeap = farmer > 0 ? causeMessageContaining(cause, ISOLATE_HEAP_MARKER) : null;
+		if (isolateHeap != null) {
 			Set<Integer> farmers = recordIsolateHeapSighting(languageId, farmer);
 			if (farmers.size() >= ISOLATE_HEAP_FARMERS) {
 				markSaturated(languageId, "heap de l'isolate plein pour les fermiers " + farmers + " en "
@@ -497,7 +495,7 @@ public class PolyglotSandbox implements AutoCloseable {
 		Map<Integer, Long> sightings = ISOLATE_HEAP_FARMER_SIGHTINGS.computeIfAbsent(languageId, l -> new ConcurrentHashMap<>());
 		sightings.put(farmer, now);
 		sightings.values().removeIf(seen -> now - seen > ISOLATE_HEAP_WINDOW_MS);
-		return Set.copyOf(sightings.keySet());
+		return sightings.keySet();
 	}
 
 	private static void markSaturated(String languageId, String evidence) {
@@ -523,7 +521,7 @@ public class PolyglotSandbox implements AutoCloseable {
 		} catch (Throwable t) {
 			// Toute forme d'epuisement (MemoryError guest, cap, isolate mort) = sature. Une erreur
 			// d'une autre nature est journalisee mais ne declenche pas de recyclage.
-			if (isMemoryExhaustion(t) || isIsolateHeapExhausted(t) || isGuestOutOfMemoryMessage(t.getMessage())) {
+			if (isOutOfMemory(t)) {
 				return false;
 			}
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " en erreur inattendue : " + t);

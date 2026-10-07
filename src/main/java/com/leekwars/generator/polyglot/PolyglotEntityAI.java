@@ -363,17 +363,15 @@ public class PolyglotEntityAI extends EntityAI {
 			probe.parse(languageId, source);
 			return null;
 		} catch (PolyglotException e) {
-			// Isolate a court de memoire : ce n'est pas le code du joueur. Le rapporter en IA invalide
-			// (avec le message GraalVM « ... increasing the maximum Java heap size ... ») coupait son
-			// poireau pour tout le combat et ne declenchait aucun recyclage du worker. Le premier tour
-			// rencontrera la meme panne, s'il la rencontre encore, et la traduira en OUT_OF_MEMORY.
-			if (!PolyglotSandbox.isOutOfMemory(e)) {
-				if (probe == null) {
-					throw e; // contexte impossible a creer pour une autre raison : pas une erreur de syntaxe
-				}
+			// Isolate a court de memoire : pas une erreur du joueur. La sonde juge ; s'il l'est encore au
+			// premier tour, celui-ci le traduira en OUT_OF_MEMORY.
+			if (PolyglotSandbox.isOutOfMemory(e)) {
+				outOfMemory = e;
+			} else if (probe == null) {
+				throw e; // contexte impossible a creer pour une autre raison : pas une erreur de syntaxe
+			} else {
 				return SyntaxProblem.from(e);
 			}
-			outOfMemory = e;
 		} finally {
 			if (probe != null) {
 				try {
