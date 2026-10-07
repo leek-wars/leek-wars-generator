@@ -356,8 +356,10 @@ public class PolyglotEntityAI extends EntityAI {
 		if (usesEsModules(languageId, source)) {
 			return null;
 		}
-		Context probe = sandbox.createContext(languageId);
+		Context probe = null;
+		PolyglotException outOfMemory;
 		try {
+			probe = sandbox.createContext(languageId);
 			probe.parse(languageId, source);
 			return null;
 		} catch (PolyglotException e) {
@@ -365,19 +367,26 @@ public class PolyglotEntityAI extends EntityAI {
 			// (avec le message GraalVM « ... increasing the maximum Java heap size ... ») coupait son
 			// poireau pour tout le combat et ne declenchait aucun recyclage du worker. Le premier tour
 			// rencontrera la meme panne, s'il la rencontre encore, et la traduira en OUT_OF_MEMORY.
-			if (PolyglotSandbox.isOutOfMemory(e)) {
-				PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, e, farmer);
-				return null;
+			if (!PolyglotSandbox.isOutOfMemory(e)) {
+				if (probe == null) {
+					throw e; // contexte impossible a creer pour une autre raison : pas une erreur de syntaxe
+				}
+				return SyntaxProblem.from(e);
 			}
-			return SyntaxProblem.from(e);
+			outOfMemory = e;
 		} finally {
-			try {
-				probe.close();
-			} catch (Exception ignore) {
-				// best effort
+			if (probe != null) {
+				try {
+					probe.close();
+				} catch (Exception ignore) {
+					// best effort
+				}
+				sandbox.forgetContext(probe);
 			}
-			sandbox.forgetContext(probe);
 		}
+		// Apres la fermeture du contexte de parse : encore ouvert, il fausserait la sonde vers « sature ».
+		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, outOfMemory, farmer);
+		return null;
 	}
 
 	/**
