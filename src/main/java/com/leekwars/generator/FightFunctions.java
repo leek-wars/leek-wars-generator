@@ -457,13 +457,14 @@ public class FightFunctions {
 		});
 		method("getEnemiesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		method("getAlliesLife", "Fight", 50, true, Type.INT, new Type[0]);
+		// keepNull : la cible arrive brute à la surcharge Object de FightClass, null ne vaut pas 0
 		method("moveToward", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
 		method("moveTowardCell", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
 		method("moveTowardLeeks", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
@@ -478,12 +479,12 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
 		method("moveAwayFrom", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
 		method("moveAwayFromCell", "Fight", 500, true, new CallableVersion[] {
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL, Type.INT }),
-			new CallableVersion(Type.INT, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
+			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
 		method("moveAwayFromCells", "Fight", 500, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),

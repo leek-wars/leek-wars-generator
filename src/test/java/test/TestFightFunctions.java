@@ -477,13 +477,27 @@ public class TestFightFunctions {
 		values.add(0);
 		codes.add("moveAwayFrom(null, 2)");
 		values.add(0);
-		codes.add("moveToward('" + mLeek1.getFId() + "')"); // Une chaîne ne déplace pas non plus
+		codes.add("moveToward(null, getMP() / 2)"); // pm réel
+		values.add(0);
+		codes.add("[moveTowardCell][0](null)"); // fonction en valeur
 		values.add(0);
 		// Joué par mLeek2 : l'entité 0 est l'autre poireau, pas lui-même (aller vers soi ne bouge pas)
 		Assert.assertTrue(testAI(mLeek2, codes, values));
 	}
 
-	/** Un réel déplace toujours (tronqué), comme pour les autres paramètres integer|null. */
+	/** Une chaîne ou un booléen se convertit en entier comme avant : le poireau se déplace. */
+	@Test
+	public void moveStringTargetTest() throws Exception {
+		Assert.assertTrue(testAI(mLeek1, List.of("moveToward('" + mLeek2.getFId() + "') > 0"), List.<Object>of(true)));
+	}
+
+	@Test
+	public void moveBooleanTargetTest() throws Exception {
+		Assert.assertEquals(1, mLeek2.getFId()); // true vaut l'entité 1
+		Assert.assertTrue(testAI(mLeek1, List.of("moveToward(true) > 0"), List.<Object>of(true)));
+	}
+
+	/** Un réel déplace toujours (tronqué), et getCell l'accepte aussi. */
 	@Test
 	public void moveRealTargetTest() throws Exception {
 		long id = mLeek2.getFId();
