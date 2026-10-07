@@ -444,24 +444,38 @@ public class PolyglotSandbox implements AutoCloseable {
 		return Set.copyOf(SATURATED);
 	}
 
+	/** Fermiers DISTINCTS dont une IA a vu le heap de l'isolate plein, a partir desquels c'est constate. */
+	private static final int ISOLATE_HEAP_FARMERS = 2;
+	private static final long ISOLATE_HEAP_WINDOW_MS = 10 * 60_000;
+	/** Par langage : fermier -&gt; dernier « heap de l'isolate plein » vu pour une de ses IA. */
+	private static final Map<String, Map<Integer, Long>> ISOLATE_HEAP_FARMER_SIGHTINGS = new ConcurrentHashMap<>();
+
 	/**
 	 * A appeler quand une IA de ce langage vient d'etre annulee pour saturation memoire : sonde l'isolate
 	 * (au plus une fois par {@value #PROBE_INTERVAL_MS} ms) et memorise le verdict. Renvoie vrai si
 	 * l'isolate est sature. Ne leve jamais.
 	 *
-	 * <p>Si {@code cause} dit deja que le heap de l'isolate est plein, pas de sonde : c'est le constat.
-	 * La sonde seule ne suffisait pas : sous pression, un contexte neuf obtient encore ses 32 Mo
-	 * alors que les IA qui en demandent davantage echouent, et la sonde concluait « sain » pendant
-	 * des heures de MemoryError.
+	 * <p>La sonde seule ne suffit pas : sous pression, un contexte neuf obtient encore ses 32 Mo
+	 * alors que les IA plus gourmandes levent des MemoryError, et elle a conclu « sain » pendant une
+	 * heure de panne. Le heap de l'isolate plein ({@code cause}) pour les IA de
+	 * {@value #ISOLATE_HEAP_FARMERS} fermiers differents en {@value #ISOLATE_HEAP_WINDOW_MS} ms vaut
+	 * donc constat. Un seul fermier ne suffit pas : un joueur qui sature seul l'isolate perd son
+	 * contexte, et c'est la sonde qui juge, sinon il pourrait faire recycler le worker a volonte.
+	 *
+	 * @param farmer fermier proprietaire de l'IA, &lt;= 0 si inconnu (pas compte)
 	 */
-	public static boolean probeIsolateAfterOutOfMemory(String languageId, Throwable cause) {
+	public static boolean probeIsolateAfterOutOfMemory(String languageId, Throwable cause, int farmer) {
 		if (SATURATED.contains(languageId)) {
 			return true;
 		}
 		String isolateHeap = causeMessageContaining(cause, ISOLATE_HEAP_MARKER);
-		if (isolateHeap != null) {
-			markSaturated(languageId, "le heap de l'isolate est plein (" + isolateHeap + ")");
-			return true;
+		if (isolateHeap != null && farmer > 0) {
+			int farmers = recordIsolateHeapSighting(languageId, farmer);
+			if (farmers >= ISOLATE_HEAP_FARMERS) {
+				markSaturated(languageId, "heap de l'isolate plein pour " + farmers + " fermiers en "
+						+ ISOLATE_HEAP_WINDOW_MS / 60_000 + " min (" + isolateHeap + ")");
+				return true;
+			}
 		}
 		long now = System.currentTimeMillis();
 		Long last = LAST_PROBE.get(languageId);
@@ -476,6 +490,15 @@ public class PolyglotSandbox implements AutoCloseable {
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " : sain (le depassement etait bien celui du joueur)");
 		}
 		return saturated;
+	}
+
+	/** Note ce fermier et renvoie le nombre de fermiers distincts vus dans la fenetre. */
+	private static int recordIsolateHeapSighting(String languageId, int farmer) {
+		long now = System.currentTimeMillis();
+		Map<Integer, Long> sightings = ISOLATE_HEAP_FARMER_SIGHTINGS.computeIfAbsent(languageId, l -> new ConcurrentHashMap<>());
+		sightings.put(farmer, now);
+		sightings.values().removeIf(seen -> now - seen > ISOLATE_HEAP_WINDOW_MS);
+		return sightings.size();
 	}
 
 	private static void markSaturated(String languageId, String evidence) {

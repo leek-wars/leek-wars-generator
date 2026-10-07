@@ -88,11 +88,20 @@ public class TestPolyglotOutOfMemory {
 		Assert.assertFalse(PolyglotSandbox.isIsolateHeapExhausted(null));
 	}
 
-	/** Le heap de l'isolate plein suffit a constater la saturation, sans sonde (donc sans isolate ici). */
+	/**
+	 * Le heap de l'isolate plein pour deux fermiers differents vaut constat, sans sonde. Un seul fermier,
+	 * meme a repetition, laisse juger la sonde (ici sur un langage inconnu : erreur inattendue, « sain »).
+	 */
 	@Test
-	public void isolateHeapMarksSaturationWithoutProbe() {
+	public void isolateHeapForTwoFarmersMarksSaturation() {
 		String language = "test-isolate-heap";
-		Assert.assertTrue(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, new RuntimeException(ISOLATE_MESSAGE)));
+		Throwable cause = new RuntimeException(ISOLATE_MESSAGE);
+		Assert.assertFalse(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, cause, 1));
+		Assert.assertFalse(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, cause, 1));
+		Assert.assertFalse(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, cause, 0));
+		Assert.assertFalse(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, new RuntimeException(PROD_MESSAGE), 2));
+		Assert.assertFalse(PolyglotSandbox.saturatedLanguages().contains(language));
+		Assert.assertTrue(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, cause, 2));
 		Assert.assertTrue(PolyglotSandbox.saturatedLanguages().contains(language));
 	}
 

@@ -348,6 +348,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Le contexte sonde est cree puis ferme ET retire du suivi du sandbox (pas de retention).
 	 */
 	public static SyntaxProblem validateSyntax(String languageId, String source, PolyglotSandbox sandbox) {
+		return validateSyntax(languageId, source, sandbox, 0);
+	}
+
+	/** Idem, pour l'IA d'un fermier connu (compte dans le constat de saturation de l'isolate). */
+	public static SyntaxProblem validateSyntax(String languageId, String source, PolyglotSandbox sandbox, int farmer) {
 		if (usesEsModules(languageId, source)) {
 			return null;
 		}
@@ -361,7 +366,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// poireau pour tout le combat et ne declenchait aucun recyclage du worker. Le premier tour
 			// rencontrera la meme panne, s'il la rencontre encore, et la traduira en OUT_OF_MEMORY.
 			if (PolyglotSandbox.isOutOfMemory(e)) {
-				PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, e);
+				PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, e, farmer);
 				return null;
 			}
 			return SyntaxProblem.from(e);
@@ -418,7 +423,7 @@ public class PolyglotEntityAI extends EntityAI {
 			} else {
 				// Validation syntaxique au build (parite avec LeekScript). Une erreur de parse vient du code
 				// joueur -> IA invalide (erreur utilisateur), jamais le chemin "erreur serveur" du catch externe.
-				SyntaxProblem problem = validateSyntax(languageId, source, sandbox);
+				SyntaxProblem problem = validateSyntax(languageId, source, sandbox, entity.getFarmer());
 				if (problem != null) {
 					((LeekLog) entity.getLogs()).addSystemLog(LeekLog.SERROR, Error.INVALID_AI, new String[] { problem.message });
 					return new EntityAI(entity, (LeekLog) entity.getLogs());
@@ -1828,7 +1833,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Joueur trop gourmand, ou isolate a bout (#4631, #4999) ? La sonde tranche, et son verdict est
 		// lu par le worker pour se recycler : sans elle, un isolate sature ne produit que des erreurs
 		// joueur et le processus reste empoisonne jusqu'au prochain seuil RSS.
-		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, cause);
+		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, cause, mEntity != null ? mEntity.getFarmer() : 0);
 		return new LeekRunException(Error.OUT_OF_MEMORY);
 	}
 
