@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.SandboxPolicy;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.IOAccess;
@@ -72,6 +73,11 @@ public class PolyglotSandbox implements AutoCloseable {
 	/** Fragment stable du message GraalVM de depassement de {@code sandbox.MaxHeapMemory}. */
 	private static final String HEAP_LIMIT_MARKER = "heap memory limit";
 	/**
+	 * Message de l'OutOfMemoryError de l'ISOLATE lui-meme (son heap, {@code engine.MaxIsolateMemory},
+	 * est plein apres un GC complet) : ce n'est plus le cap d'un contexte, c'est tout le langage.
+	 */
+	private static final String ISOLATE_HEAP_MARKER = "Garbage-collected heap size exceeded";
+	/**
 	 * Nom du type d'erreur GUEST leve par GraalPy quand une allocation Python echoue (cap RAM du
 	 * contexte ou memoire de l'isolate epuisee), cf {@link #isGuestOutOfMemoryMessage}.
 	 */
@@ -90,9 +96,26 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * MESSAGE, la seconde forme traversait tout PolyglotEntityAI, ressortait en
 	 * "Erreur importante dans l'IA" cote EntityAI, faisait planter le combat et remontait un rapport
 	 * d'erreur SERVEUR pour ce qui est une erreur JOUEUR (constate en prod 2026-07).
+	 *
+	 * <p>Couvre aussi le heap de l'isolate plein ({@link #isIsolateHeapExhausted}) : sans lui, ce
+	 * message passait pour une erreur de syntaxe, une limite d'operations ou une erreur interne, et
+	 * aucun signal ne faisait recycler le worker.
 	 */
 	public static boolean isMemoryExhaustion(Throwable t) {
 		return memoryExhaustionMessage(t) != null;
+	}
+
+	/** Vrai si ce throwable (ou une de ses causes) dit que le heap de l'isolate est plein. */
+	public static boolean isIsolateHeapExhausted(Throwable t) {
+		return causeMessageContaining(t, ISOLATE_HEAP_MARKER) != null;
+	}
+
+	/**
+	 * Epuisement memoire d'un appel guest, sous l'une de ses formes : cap du contexte, heap de
+	 * l'isolate, ou {@code MemoryError} Python leve par GraalPy (cf {@link #isGuestOutOfMemoryMessage}).
+	 */
+	public static boolean isOutOfMemory(PolyglotException e) {
+		return isMemoryExhaustion(e) || (e.isGuestException() && isGuestOutOfMemoryMessage(e.getMessage()));
 	}
 
 	/**
@@ -104,14 +127,23 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * (#4999 : la baseline Python a ete posee a l'estime faute de ce chiffre).
 	 */
 	public static String memoryExhaustionMessage(Throwable t) {
+		return causeMessageContaining(t, HEAP_LIMIT_MARKER, ISOLATE_HEAP_MARKER);
+	}
+
+	/** Premier message de la chaine de causes qui contient l'un des fragments, null sinon. */
+	private static String causeMessageContaining(Throwable t, String... fragments) {
 		// Profondeur bornee : une chaine de causes cyclique (un throwable qui se declare sa propre
 		// cause, ou un cycle a plusieurs maillons) ferait boucler la traversee a l'infini, dans un
 		// chemin de gestion d'erreur ou l'on ne peut se permettre de bloquer le combat.
 		Throwable cause = t;
 		for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
 			String message = cause.getMessage();
-			if (message != null && message.contains(HEAP_LIMIT_MARKER)) {
-				return message;
+			if (message != null) {
+				for (String fragment : fragments) {
+					if (message.contains(fragment)) {
+						return message;
+					}
+				}
 			}
 			cause = cause.getCause();
 		}
@@ -416,9 +448,19 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * A appeler quand une IA de ce langage vient d'etre annulee pour saturation memoire : sonde l'isolate
 	 * (au plus une fois par {@value #PROBE_INTERVAL_MS} ms) et memorise le verdict. Renvoie vrai si
 	 * l'isolate est sature. Ne leve jamais.
+	 *
+	 * <p>Si {@code cause} dit deja que le heap de l'isolate est plein, pas de sonde : c'est le constat.
+	 * La sonde seule ne suffisait pas : sous pression, un contexte neuf obtient encore ses 32 Mo
+	 * alors que les IA qui en demandent davantage echouent, et la sonde concluait « sain » pendant
+	 * des heures de MemoryError.
 	 */
-	public static boolean probeIsolateAfterOutOfMemory(String languageId) {
+	public static boolean probeIsolateAfterOutOfMemory(String languageId, Throwable cause) {
 		if (SATURATED.contains(languageId)) {
+			return true;
+		}
+		String isolateHeap = causeMessageContaining(cause, ISOLATE_HEAP_MARKER);
+		if (isolateHeap != null) {
+			markSaturated(languageId, "le heap de l'isolate est plein (" + isolateHeap + ")");
 			return true;
 		}
 		long now = System.currentTimeMillis();
@@ -429,19 +471,23 @@ public class PolyglotSandbox implements AutoCloseable {
 		LAST_PROBE.put(languageId, now);
 		boolean saturated = !probeIsolate(languageId);
 		if (saturated) {
-			if (SATURATED.add(languageId)) {
-				String message = "Isolate " + languageId + " SATURE : un contexte neuf ne peut plus allouer "
-						+ (PROBE_BYTES >> 20) + " Mo. Toutes les IA " + languageId + " echoueront jusqu'au redemarrage du processus.";
-				Log.e("PolyglotSandbox", message);
-				// Etat du processus, pas une erreur joueur : signale une fois en erreur serveur, sinon
-				// la panne ne se voit que dans les journaux (les joueurs n'ont qu'un OUT_OF_MEMORY).
-				// reportException ne leve pas : la sonde non plus.
-				Generator.reportException(new IllegalStateException(message));
-			}
+			markSaturated(languageId, "un contexte neuf ne peut plus allouer " + (PROBE_BYTES >> 20) + " Mo");
 		} else {
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " : sain (le depassement etait bien celui du joueur)");
 		}
 		return saturated;
+	}
+
+	private static void markSaturated(String languageId, String evidence) {
+		if (SATURATED.add(languageId)) {
+			String message = "Isolate " + languageId + " SATURE : " + evidence + ". Toutes les IA " + languageId
+					+ " echoueront jusqu'au redemarrage du processus.";
+			Log.e("PolyglotSandbox", message);
+			// Etat du processus, pas une erreur joueur : signale une fois en erreur serveur, sinon
+			// la panne ne se voit que dans les journaux (les joueurs n'ont qu'un OUT_OF_MEMORY).
+			// reportException ne leve pas : la sonde non plus.
+			Generator.reportException(new IllegalStateException(message));
+		}
 	}
 
 	/** Vrai si un contexte NEUF de ce langage peut allouer {@link #PROBE_BYTES} : l'isolate est sain. */
@@ -455,8 +501,7 @@ public class PolyglotSandbox implements AutoCloseable {
 		} catch (Throwable t) {
 			// Toute forme d'epuisement (MemoryError guest, cap, isolate mort) = sature. Une erreur
 			// d'une autre nature est journalisee mais ne declenche pas de recyclage.
-			if (isMemoryExhaustion(t) || isGuestOutOfMemoryMessage(t.getMessage())
-					|| (t.getMessage() != null && t.getMessage().contains("heap size exceeded"))) {
+			if (isMemoryExhaustion(t) || isGuestOutOfMemoryMessage(t.getMessage())) {
 				return false;
 			}
 			Log.w("PolyglotSandbox", "Sonde isolate " + languageId + " en erreur inattendue : " + t);

@@ -6,8 +6,8 @@ import org.junit.Test;
 import com.leekwars.generator.polyglot.PolyglotSandbox;
 
 /**
- * Classification du depassement de cap RAM guest ({@code sandbox.MaxHeapMemory}), sous ses trois
- * formes : cf {@link PolyglotSandbox#isMemoryExhaustion} et
+ * Classification du depassement de cap RAM guest ({@code sandbox.MaxHeapMemory}) sous ses trois
+ * formes, et du heap de l'isolate plein : cf {@link PolyglotSandbox#isMemoryExhaustion} et
  * {@link PolyglotSandbox#isGuestOutOfMemoryMessage} pour les incidents prod qui les ont revelees.
  *
  * <p>Test pur (pas d'isolate requis) : il garde la CLASSIFICATION, pas le declenchement (couvert
@@ -74,6 +74,26 @@ public class TestPolyglotOutOfMemory {
 		Assert.assertFalse(PolyglotSandbox.isGuestOutOfMemoryMessage("ValueError: MemoryError"));
 		Assert.assertFalse(PolyglotSandbox.isGuestOutOfMemoryMessage("TypeError: bad operand"));
 		Assert.assertFalse(PolyglotSandbox.isGuestOutOfMemoryMessage(null));
+	}
+
+	/** Message de l'isolate plein, vu en prod au parse de l'IA (rapporte en « IA invalide »). */
+	private static final String ISOLATE_MESSAGE =
+			"Garbage-collected heap size exceeded. Consider increasing the maximum Java heap size, for example with '-Xmx'.";
+
+	@Test
+	public void isolateHeapIsMemoryButNotContextCap() {
+		Assert.assertTrue(PolyglotSandbox.isMemoryExhaustion(new RuntimeException(ISOLATE_MESSAGE)));
+		Assert.assertTrue(PolyglotSandbox.isIsolateHeapExhausted(new RuntimeException("wrap", new Error(ISOLATE_MESSAGE))));
+		Assert.assertFalse(PolyglotSandbox.isIsolateHeapExhausted(new RuntimeException(PROD_MESSAGE)));
+		Assert.assertFalse(PolyglotSandbox.isIsolateHeapExhausted(null));
+	}
+
+	/** Le heap de l'isolate plein suffit a constater la saturation, sans sonde (donc sans isolate ici). */
+	@Test
+	public void isolateHeapMarksSaturationWithoutProbe() {
+		String language = "test-isolate-heap";
+		Assert.assertTrue(PolyglotSandbox.probeIsolateAfterOutOfMemory(language, new RuntimeException(ISOLATE_MESSAGE)));
+		Assert.assertTrue(PolyglotSandbox.saturatedLanguages().contains(language));
 	}
 
 	/** Chaine de causes cyclique : le parcours doit terminer plutot que boucler. */

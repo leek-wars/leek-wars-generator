@@ -356,6 +356,14 @@ public class PolyglotEntityAI extends EntityAI {
 			probe.parse(languageId, source);
 			return null;
 		} catch (PolyglotException e) {
+			// Isolate a court de memoire : ce n'est pas le code du joueur. Le rapporter en IA invalide
+			// (avec le message GraalVM « ... increasing the maximum Java heap size ... ») coupait son
+			// poireau pour tout le combat et ne declenchait aucun recyclage du worker. Le premier tour
+			// rencontrera la meme panne, s'il la rencontre encore, et la traduira en OUT_OF_MEMORY.
+			if (PolyglotSandbox.isOutOfMemory(e)) {
+				PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, e);
+				return null;
+			}
 			return SyntaxProblem.from(e);
 		} finally {
 			try {
@@ -1820,7 +1828,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Joueur trop gourmand, ou isolate a bout (#4631, #4999) ? La sonde tranche, et son verdict est
 		// lu par le worker pour se recycler : sans elle, un isolate sature ne produit que des erreurs
 		// joueur et le processus reste empoisonne jusqu'au prochain seuil RSS.
-		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId);
+		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, cause);
 		return new LeekRunException(Error.OUT_OF_MEMORY);
 	}
 
@@ -1829,7 +1837,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// affichait "trop d'operations" a un joueur qui avait en fait sature sa RAM : message trompeur,
 		// et l'IA repartait au tour suivant pour re-saturer aussitot. OUT_OF_MEMORY dit la verite et
 		// EntityAI.handleLeekRunException coupe l'IA pour le combat (parite LeekScript).
-		if (PolyglotSandbox.isMemoryExhaustion(e) || (e.isGuestException() && PolyglotSandbox.isGuestOutOfMemoryMessage(e.getMessage()))) {
+		if (PolyglotSandbox.isOutOfMemory(e)) {
 			return outOfMemory(e);
 		}
 		// Limite atteinte : le contexte passe en etat "cancelled", son close() auto relancerait
