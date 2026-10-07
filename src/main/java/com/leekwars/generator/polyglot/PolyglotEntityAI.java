@@ -221,9 +221,9 @@ public class PolyglotEntityAI extends EntityAI {
 	 * l'etat de combat reel allouent bien plus que le harnais. On ne calibre donc pas au plus juste, on
 	 * prend de la marge : 128 Mo, configurable par env pour recalibrer en prod sans rebuild. Cout
 	 * isolate : une equipe de 12 poireaux Python RAM 50 = 12*(128+105) ~ 2,8 Go, sous l'isolate du
-	 * worker (4000 Mo, lui aussi env-tunable). Le filet durable reste le mapping en OUT_OF_MEMORY (cf
-	 * isMemoryExhaustion) : ou que soit le seuil, le depassement est une erreur joueur lisible et non
-	 * un plantage de combat.
+	 * worker (cf PolyglotSandbox.MAX_PYTHON_ISOLATE_MEMORY). Le filet durable reste le mapping en
+	 * OUT_OF_MEMORY (cf isMemoryExhaustion) : ou que soit le seuil, le depassement est une erreur
+	 * joueur lisible et non un plantage de combat.
 	 */
 	private static final long PYTHON_BASE_HEAP_BYTES = PolyglotSandbox.envMegabytes("POLYGLOT_PYTHON_MIN_HEAP_MB", 128);
 
