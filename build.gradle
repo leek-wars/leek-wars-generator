@@ -22,13 +22,8 @@ test {
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }
 
-// Non-regression des fuites d'isolate Python : 200 contextes montes puis fermes, comme des combats
-// successifs, dans un isolate REDUIT a 1000 Mo. trivialSetupSurvivesIsolatePressure (setup complet
-// du generateur) garde #4999, `import uuid` dans la garde de determinisme ;
-// rawContextsSurviveIsolatePressure (contextes bruts + imports PRESSURE_STEPS) garde
-// oracle/graalpython#1083, cache fort des noeuds racine qui debordait vers le 32e contexte.
-// JVM dediee : le plafond d'isolate est statique par processus. Les deux sont sautes sans
-// PRESSURE_CONTEXTS, le second aussi sans PRESSURE_RAW (cf TestPythonSetupPressure).
+// Non-regression des fuites d'isolate Python, cf TestPythonSetupPressure. JVM dediee : le plafond
+// d'isolate est statique par processus.
 tasks.register('pythonLeakTest', Test) {
 	description = "Fuites de contextes Python dans l'isolate partage (#4999, graalpython#1083)"
 	group = 'verification'
@@ -42,6 +37,7 @@ tasks.register('pythonLeakTest', Test) {
 	environment 'PRESSURE_TURNS', '1'
 	environment 'PRESSURE_CHURN_MB', '64'
 	environment 'PRESSURE_RAW', '1'
+	// Vide, le test brut passerait sans rien garder de graalpython#1083.
 	environment 'PRESSURE_STEPS', 'import:collections|import:functools|import:typing|import:dataclasses|import:json|import:statistics|import:copy'
 	outputs.upToDateWhen { false }
 	testLogging {
