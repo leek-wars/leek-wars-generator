@@ -45,7 +45,7 @@ jobs:
       run: gradle jar
     - name: Unit tests
       run: gradle :test
-    - name: Python isolate leak test (#4999)
+    - name: Python isolate leak tests (#4999, graalpython#1083)
       run: gradle :pythonLeakTest
     - name: Integration tests
       run: |

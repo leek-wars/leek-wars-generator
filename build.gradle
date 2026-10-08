@@ -22,15 +22,11 @@ test {
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }
 
-// Non-regression des fuites d'isolate Python : 200 contextes Python montes puis fermes, comme des
-// combats successifs, dans un isolate REDUIT a 1000 Mo ; sain, les 200 passent.
-//  - #4999 : `import uuid` dans la garde de determinisme retenait ~8 Mo par contexte, l'isolate
-//    debordait vers le 100e (trivialSetupSurvivesIsolatePressure, setup complet du generateur) ;
-//  - oracle/graalpython#1083 : sous engine partage, GraalPy retenait le code compile de chaque
-//    fonction appelee ; des contextes bruts qui importent quelques modules de la stdlib debordaient
-//    vers le 32e (rawContextsSurviveIsolatePressure). Corrige dans l'image isolate combined-5.
-// JVM dediee : le plafond d'isolate est statique par processus, on ne peut pas le reduire dans la
-// suite ordinaire. Skippe sans PRESSURE_CONTEXTS (cf TestPythonSetupPressure).
+// Non-regression des fuites d'isolate Python : 200 contextes montes puis fermes, comme des combats
+// successifs, dans un isolate REDUIT a 1000 Mo. #4999 : `import uuid` dans la garde de
+// determinisme ; oracle/graalpython#1083 : cache fort des noeuds racine, que les imports de la
+// stdlib font deborder vers le 32e contexte. JVM dediee : le plafond d'isolate est statique par
+// processus. Skippe sans PRESSURE_CONTEXTS (cf TestPythonSetupPressure).
 tasks.register('pythonLeakTest', Test) {
 	description = "Fuites de contextes Python dans l'isolate partage (#4999, graalpython#1083)"
 	group = 'verification'
