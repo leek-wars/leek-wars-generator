@@ -110,6 +110,25 @@ public class TestPolyglotOutOfMemory {
 		Assert.assertTrue(PolyglotSandbox.saturatedLanguages().contains(language));
 	}
 
+	/**
+	 * Des tours coupes par le chien de garde chez cinq fermiers differents valent constat ; quatre, ou un
+	 * seul fermier a repetition (son IA est peut-etre juste trop lente), non. Langage sans engine : pas
+	 * de delai de grace (celui-ci ne compte que depuis la construction d'un engine).
+	 */
+	@Test
+	public void wallClockTimeoutsForFiveFarmersMarkSaturation() {
+		String language = "test-wall-clock";
+		Assert.assertFalse(PolyglotSandbox.recordWallClockTimeout(language, 1));
+		Assert.assertFalse(PolyglotSandbox.recordWallClockTimeout(language, 1));
+		Assert.assertFalse(PolyglotSandbox.recordWallClockTimeout(language, 2));
+		Assert.assertFalse(PolyglotSandbox.recordWallClockTimeout(language, 0));
+		Assert.assertFalse(PolyglotSandbox.recordWallClockTimeout(language, 3));
+		Assert.assertFalse(PolyglotSandbox.recordWallClockTimeout(language, 4));
+		Assert.assertFalse(PolyglotSandbox.saturatedLanguages().contains(language));
+		Assert.assertTrue(PolyglotSandbox.recordWallClockTimeout(language, 5));
+		Assert.assertTrue(PolyglotSandbox.saturatedLanguages().contains(language));
+	}
+
 	/** Chaine de causes cyclique : le parcours doit terminer plutot que boucler. */
 	@Test
 	public void selfReferencingCauseTerminates() {

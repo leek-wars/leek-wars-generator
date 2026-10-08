@@ -265,7 +265,9 @@ public class PolyglotSandbox implements AutoCloseable {
 			boolean external = false;
 			while (true) {
 				try {
-					return buildEngine(lang, external, withCounter);
+					Engine engine = buildEngine(lang, external, withCounter);
+					ENGINE_BUILT_AT.put(lang, System.currentTimeMillis());
+					return engine;
 				} catch (IllegalArgumentException e) {
 					if (!withCounter) {
 						throw e;
@@ -438,9 +440,22 @@ public class PolyglotSandbox implements AutoCloseable {
 	private static final Set<String> SATURATED = ConcurrentHashMap.newKeySet();
 	/** Fermiers DISTINCTS dont une IA a vu le heap de l'isolate plein, a partir desquels c'est constate. */
 	private static final int ISOLATE_HEAP_FARMERS = 2;
-	private static final long ISOLATE_HEAP_WINDOW_MS = 10 * 60_000;
+	/** Fermiers DISTINCTS dont une IA a ete coupee par le chien de garde, a partir desquels c'est constate. */
+	private static final int WALL_CLOCK_FARMERS = 5;
+	/**
+	 * Age de l'engine en dessous duquel les coupures ne valent pas constat : l'isolate met plus longtemps
+	 * a se remplir (38 min au plus vite en prod), et des tours coupes expres depuis plusieurs comptes ne
+	 * recyclent ainsi le worker qu'une fois par periode au plus.
+	 */
+	private static final long WALL_CLOCK_MIN_ENGINE_AGE_MS = 20 * 60_000;
+	/** Par langage : date de construction de son engine (cf {@link #engineFor}). */
+	private static final Map<String, Long> ENGINE_BUILT_AT = new ConcurrentHashMap<>();
+	/** Fenetre des constats par fermiers. */
+	private static final long SIGHTING_WINDOW_MS = 10 * 60_000;
 	/** Par langage : fermier -&gt; dernier « heap de l'isolate plein » vu pour une de ses IA. */
 	private static final Map<String, Map<Integer, Long>> ISOLATE_HEAP_FARMER_SIGHTINGS = new ConcurrentHashMap<>();
+	/** Par langage : fermier -&gt; derniere coupure d'une de ses IA par le chien de garde. */
+	private static final Map<String, Map<Integer, Long>> WALL_CLOCK_FARMER_SIGHTINGS = new ConcurrentHashMap<>();
 
 	/** Vrai si une sonde a constate qu'un isolate ne peut plus servir de contexte neuf. Jamais remis a faux : seul le redemarrage repare. */
 	public static boolean isIsolateSaturated() {
@@ -460,7 +475,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * <p>La sonde seule ne suffit pas : sous pression, un contexte neuf obtient encore ses 32 Mo
 	 * alors que les IA plus gourmandes levent des MemoryError, et elle a conclu « sain » pendant une
 	 * heure de panne. Le heap de l'isolate plein ({@code cause}) pour les IA de
-	 * {@value #ISOLATE_HEAP_FARMERS} fermiers differents en {@value #ISOLATE_HEAP_WINDOW_MS} ms vaut
+	 * {@value #ISOLATE_HEAP_FARMERS} fermiers differents en {@value #SIGHTING_WINDOW_MS} ms vaut
 	 * donc constat. Un seul fermier ne suffit pas : son IA trop gourmande perd son contexte et c'est la
 	 * sonde qui juge. Il peut encore, en saturant l'isolate partage, faire echouer l'IA d'un autre
 	 * fermier et declencher le constat : le rapport nomme donc les fermiers.
@@ -473,10 +488,10 @@ public class PolyglotSandbox implements AutoCloseable {
 		}
 		String isolateHeap = farmer > 0 ? causeMessageContaining(cause, ISOLATE_HEAP_MARKER) : null;
 		if (isolateHeap != null) {
-			Set<Integer> farmers = recordIsolateHeapSighting(languageId, farmer);
+			Set<Integer> farmers = recordSighting(ISOLATE_HEAP_FARMER_SIGHTINGS, languageId, farmer);
 			if (farmers.size() >= ISOLATE_HEAP_FARMERS) {
 				markSaturated(languageId, "heap de l'isolate plein pour les fermiers " + farmers + " en "
-						+ ISOLATE_HEAP_WINDOW_MS / 60_000 + " min (" + isolateHeap + ")");
+						+ SIGHTING_WINDOW_MS / 60_000 + " min (" + isolateHeap + ")");
 				return true;
 			}
 		}
@@ -495,12 +510,43 @@ public class PolyglotSandbox implements AutoCloseable {
 		return saturated;
 	}
 
-	/** Note ce fermier et renvoie les fermiers distincts vus dans la fenetre. */
-	private static Set<Integer> recordIsolateHeapSighting(String languageId, int farmer) {
+	/**
+	 * A appeler quand le chien de garde wall-clock vient de couper un tour d'une IA de ce langage : les
+	 * IA de {@value #WALL_CLOCK_FARMERS} fermiers differents coupees en {@value #SIGHTING_WINDOW_MS} ms
+	 * valent constat de saturation. Renvoie vrai si l'isolate est sature. Ne leve jamais.
+	 *
+	 * <p>Avant ses MemoryError, un isolate qui se remplit passe par une longue phase ou chaque allocation
+	 * declenche un GC complet : le chien de garde coupe les tours de tous les joueurs du langage a la
+	 * fois. Et une IA qui attrape ses MemoryError ne produit que ces coupures. En prod, au plus 3
+	 * fermiers Python coupes en 10 min hors panne, 5 a 8 a chaque panne (#5424).
+	 *
+	 * @param farmer fermier proprietaire de l'IA, &lt;= 0 si inconnu (pas compte)
+	 */
+	public static boolean recordWallClockTimeout(String languageId, int farmer) {
+		if (SATURATED.contains(languageId)) {
+			return true;
+		}
+		if (farmer <= 0) {
+			return false;
+		}
+		Set<Integer> farmers = recordSighting(WALL_CLOCK_FARMER_SIGHTINGS, languageId, farmer);
+		if (farmers.size() < WALL_CLOCK_FARMERS) {
+			return false;
+		}
+		if (System.currentTimeMillis() - ENGINE_BUILT_AT.getOrDefault(languageId, 0L) < WALL_CLOCK_MIN_ENGINE_AGE_MS) {
+			return false;
+		}
+		markSaturated(languageId, "tours coupes par le chien de garde pour les fermiers " + farmers + " en "
+				+ SIGHTING_WINDOW_MS / 60_000 + " min");
+		return true;
+	}
+
+	/** Note ce fermier dans ces constats et renvoie les fermiers distincts vus dans la fenetre. */
+	private static Set<Integer> recordSighting(Map<String, Map<Integer, Long>> sightingsByLanguage, String languageId, int farmer) {
 		long now = System.currentTimeMillis();
-		Map<Integer, Long> sightings = ISOLATE_HEAP_FARMER_SIGHTINGS.computeIfAbsent(languageId, l -> new ConcurrentHashMap<>());
+		Map<Integer, Long> sightings = sightingsByLanguage.computeIfAbsent(languageId, l -> new ConcurrentHashMap<>());
 		sightings.put(farmer, now);
-		sightings.values().removeIf(seen -> now - seen > ISOLATE_HEAP_WINDOW_MS);
+		sightings.values().removeIf(seen -> now - seen > SIGHTING_WINDOW_MS);
 		return sightings.keySet();
 	}
 

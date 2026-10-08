@@ -1591,6 +1591,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private LeekRunException onWallClockTimeout() {
 		closeContext();
+		// Python seul : GraalPy retient de la memoire dans l'isolate partage a chaque contexte, a
+		// proportion du code execute, jusqu'au redemarrage du processus ; GraalJS non.
+		if (isPython()) {
+			PolyglotSandbox.recordWallClockTimeout(languageId, mEntity != null ? mEntity.getFarmer() : 0);
+		}
 		if (++wallClockTimeouts >= MAX_WALL_CLOCK_TIMEOUTS) {
 			disabled = true;
 			Log.w("PolyglotEntityAI", "IA polyglot (" + languageId + ") neutralisee apres " + wallClockTimeouts
