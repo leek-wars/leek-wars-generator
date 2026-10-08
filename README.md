@@ -71,7 +71,7 @@ docker run --rm -v "$PWD":/ai leek-wars-generator /ai/scenario.json
   ```sh
   mkdir -p libs
   curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-    https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-2/js-isolate-resources-linux-amd64.jar
+    https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-5/js-isolate-resources-linux-amd64.jar
   gradle jar
   java -jar generator.jar mon_scenario.json      # les IA .js / .py sont détectées par extension
   ```

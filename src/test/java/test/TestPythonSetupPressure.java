@@ -34,10 +34,12 @@ import leekscript.runner.LeekRunException;
  * POLYGLOT_MAX_ISOLATE_MB=1200 POLYGLOT_PYTHON_MIN_HEAP_MB=384 PRESSURE_CONTEXTS=40 \
  *   gradle --offline :test --tests test.TestPythonSetupPressure
  * </pre>
- * Le test est SAUTE sans {@code PRESSURE_CONTEXTS} (il est lent et depend de l'environnement). La
- * tache Gradle {@code :pythonLeakTest} (CI) le lance en JVM dediee avec un isolate de 1000 Mo et
- * 200 contextes : c'est le test de non-regression de la fuite de #4999. {@code :cleanTest} est
- * necessaire en manuel : l'environnement n'est pas une entree Gradle, le test serait "up-to-date".
+ * Les tests sont SAUTES sans {@code PRESSURE_CONTEXTS} (ils sont lents et dependent de
+ * l'environnement). La tache Gradle {@code :pythonLeakTest} (CI) les lance en JVM dediee avec un
+ * isolate de 1000 Mo et 200 contextes : ce sont les tests de non-regression des fuites de #4999
+ * (trivialSetupSurvivesIsolatePressure) et d'oracle/graalpython#1083 (rawContextsSurviveIsolatePressure,
+ * avec des imports de la stdlib). {@code :cleanTest} est necessaire en manuel : l'environnement
+ * n'est pas une entree Gradle, le test serait "up-to-date".
  *
  * <p>Ce qui a ete etabli avec cet instrument (07/09/2026) : GraalVM (mode ISOLATED) ne mesure la
  * taille retenue d'un contexte qu'une fois que celui-ci a ALLOUE son cap (d'ou le churn) ; un
@@ -135,13 +137,18 @@ public class TestPythonSetupPressure extends FightTestBase {
 	 * PolyglotEntityAI.ensureContext a rejouer sur le contexte brut, dans l'ordre de la prod :
 	 * bridge (sac __lw), charge (__lw_charge), guard (determinisme), chargeguard, console, objects
 	 * (prelude objects.py), plus import:&lt;module&gt; et exec:&lt;code&gt; (';' = retour a la ligne) pour
-	 * descendre dans la stdlib. Les textes prives sont lus par reflexion : c'est un instrument de
-	 * diagnostic, pas une API.
+	 * descendre dans la stdlib. Les textes prives sont lus par reflexion. La CI s'en sert aussi
+	 * comme garde-fou (cf la tache pythonLeakTest) : ses etapes import: font deborder un isolate
+	 * qui retient le code compile d'un contexte a l'autre.
 	 *
 	 * <p>Verdict du 07/09/2026 (#4999), isolate 600-1200 Mo, 4 contextes par sandbox, churn 64 Mo :
 	 * contextes bruts, bridge, prelude objects.py, garde de facturation, console : 0 fuite ;
 	 * `import uuid` (via platform.system() au chargement) : ~8 Mo retenus par contexte, isolate
 	 * plein au ~70e contexte (600 Mo) / ~120e (1200 Mo). JS : 0 fuite dans les memes conditions.
+	 *
+	 * <p>Verdict du 08/10/2026 (oracle/graalpython#1083), isolate 1000 Mo : sept imports de la
+	 * stdlib par contexte saturaient l'isolate vers le 32e contexte avec l'image combined-4 ; 200
+	 * contextes passent avec combined-5, qui retroporte le correctif amont.
 	 */
 	private static final Set<String> STEPS = new HashSet<>(Arrays.asList(System.getenv().getOrDefault("PRESSURE_STEPS", "").split("\\|")));
 

@@ -23,19 +23,18 @@ test {
 }
 
 // Non-regression des fuites d'isolate Python : 200 contextes montes puis fermes, comme des combats
-// successifs, dans un isolate REDUIT a 1000 Mo. #4999 : `import uuid` dans la garde de
-// determinisme ; oracle/graalpython#1083 : cache fort des noeuds racine, que les imports de la
-// stdlib font deborder vers le 32e contexte. JVM dediee : le plafond d'isolate est statique par
-// processus. Skippe sans PRESSURE_CONTEXTS (cf TestPythonSetupPressure).
+// successifs, dans un isolate REDUIT a 1000 Mo. trivialSetupSurvivesIsolatePressure (setup complet
+// du generateur) garde #4999, `import uuid` dans la garde de determinisme ;
+// rawContextsSurviveIsolatePressure (contextes bruts + imports PRESSURE_STEPS) garde
+// oracle/graalpython#1083, cache fort des noeuds racine qui debordait vers le 32e contexte.
+// JVM dediee : le plafond d'isolate est statique par processus. Les deux sont sautes sans
+// PRESSURE_CONTEXTS, le second aussi sans PRESSURE_RAW (cf TestPythonSetupPressure).
 tasks.register('pythonLeakTest', Test) {
 	description = "Fuites de contextes Python dans l'isolate partage (#4999, graalpython#1083)"
 	group = 'verification'
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
-	filter {
-		includeTestsMatching 'test.TestPythonSetupPressure.trivialSetupSurvivesIsolatePressure'
-		includeTestsMatching 'test.TestPythonSetupPressure.rawContextsSurviveIsolatePressure'
-	}
+	filter { includeTestsMatching 'test.TestPythonSetupPressure' }
 	environment 'POLYGLOT_MAX_ISOLATE_MB', '1000'
 	environment 'POLYGLOT_PYTHON_MIN_HEAP_MB', '32'
 	environment 'PRESSURE_CONTEXTS', '200'
