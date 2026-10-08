@@ -22,23 +22,32 @@ test {
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }
 
-// Non-regression de la fuite d'isolate Python (#4999) : 200 contextes Python montes puis fermes,
-// comme des combats successifs, dans un isolate REDUIT a 1000 Mo. Avec la fuite d'origine (~8 Mo
-// par contexte, `import uuid` dans la garde de determinisme) l'isolate deborde vers le 100e ;
-// sain, les 200 passent. JVM dediee : le plafond d'isolate est statique par processus, on ne peut
-// pas le reduire dans la suite ordinaire. Skippe sans PRESSURE_CONTEXTS (cf TestPythonSetupPressure).
+// Non-regression des fuites d'isolate Python : 200 contextes Python montes puis fermes, comme des
+// combats successifs, dans un isolate REDUIT a 1000 Mo ; sain, les 200 passent.
+//  - #4999 : `import uuid` dans la garde de determinisme retenait ~8 Mo par contexte, l'isolate
+//    debordait vers le 100e (trivialSetupSurvivesIsolatePressure, setup complet du generateur) ;
+//  - oracle/graalpython#1083 : sous engine partage, GraalPy retenait le code compile de chaque
+//    fonction appelee ; des contextes bruts qui importent quelques modules de la stdlib debordaient
+//    vers le 32e (rawContextsSurviveIsolatePressure). Corrige dans l'image isolate combined-5.
+// JVM dediee : le plafond d'isolate est statique par processus, on ne peut pas le reduire dans la
+// suite ordinaire. Skippe sans PRESSURE_CONTEXTS (cf TestPythonSetupPressure).
 tasks.register('pythonLeakTest', Test) {
-	description = "Fuite de contextes Python dans l'isolate partage (#4999)"
+	description = "Fuites de contextes Python dans l'isolate partage (#4999, graalpython#1083)"
 	group = 'verification'
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
-	filter { includeTestsMatching 'test.TestPythonSetupPressure.trivialSetupSurvivesIsolatePressure' }
+	filter {
+		includeTestsMatching 'test.TestPythonSetupPressure.trivialSetupSurvivesIsolatePressure'
+		includeTestsMatching 'test.TestPythonSetupPressure.rawContextsSurviveIsolatePressure'
+	}
 	environment 'POLYGLOT_MAX_ISOLATE_MB', '1000'
 	environment 'POLYGLOT_PYTHON_MIN_HEAP_MB', '32'
 	environment 'PRESSURE_CONTEXTS', '200'
 	environment 'PRESSURE_PER_SANDBOX', '4'
 	environment 'PRESSURE_TURNS', '1'
 	environment 'PRESSURE_CHURN_MB', '64'
+	environment 'PRESSURE_RAW', '1'
+	environment 'PRESSURE_STEPS', 'import:collections|import:functools|import:typing|import:dataclasses|import:json|import:statistics|import:copy'
 	outputs.upToDateWhen { false }
 	testLogging {
 		events "passed", "skipped", "failed"
@@ -96,7 +105,7 @@ dependencies {
 	// Le jar (127 Mo, au-dela de la limite git GitHub) n'est PAS commite : il vient de la RELEASE
 	// PUBLIQUE du repo leek-wars-graal-isolate. En local, le recuperer dans libs/ :
 	//   curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-	//     https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-4/js-isolate-resources-linux-amd64.jar
+	//     https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-5/js-isolate-resources-linux-amd64.jar
 	// (ou copier dist/ du repo graal-isolate si on l'a builde soi-meme).
 	implementation files('libs/js-isolate-resources-linux-amd64.jar')
 	implementation 'org.graalvm.sdk:nativebridge:25.1.3'
