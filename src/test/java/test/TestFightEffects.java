@@ -424,6 +424,26 @@ public class TestFightEffects extends FightTestBase {
 	}
 
 	@Test
+	public void amputationWearsOffAtTheCasterNextTurn() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		var pistol = Weapons.getWeapon("pistol");
+		leek1.addWeapon(pistol);
+		leek1.setWeapon(pistol);
+		// Un tour, comme le sabre : l'état tombe au début du tour suivant de son lanceur
+		Effect.createEffect(state, Effect.TYPE_ADD_STATE, 1, 1, EntityState.AMPUTATED.ordinal(), 0, false,
+			leek1, leek2, null, 0, false, 0, 1, 0, 0);
+		Assert.assertTrue(leek1.hasState(EntityState.AMPUTATED));
+		Assert.assertFalse(state.setWeapon(leek1, pistol));
+
+		leek2.startTurn();
+		Assert.assertFalse("L'état est passé", leek1.hasState(EntityState.AMPUTATED));
+		Assert.assertNull("L'arme ne revient pas seule", leek1.getWeapon());
+		Assert.assertTrue("Elle se rééquipe", state.setWeapon(leek1, pistol));
+		Assert.assertEquals(pistol, leek1.getWeapon());
+	}
+
+	@Test
 	public void glowingSaberAmputatesItsTarget() throws Exception {
 		initFightOnly();
 		var state = fight.getState();
