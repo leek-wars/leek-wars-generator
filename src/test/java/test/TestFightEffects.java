@@ -12,6 +12,7 @@ import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.weapons.Weapons;
 
 /**
@@ -414,6 +415,34 @@ public class TestFightEffects extends FightTestBase {
 		// L'état retiré, seuls les refus habituels (position...) restent possibles
 		caster.reduceEffectsTotal(1.0, target);
 		Assert.assertNotEquals(Attack.USE_INVALID_STATE, state.useWeapon(caster, target.getCell()));
+	}
+
+	@Test
+	public void glowingSaberAmputatesItsTarget() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		var caster = state.getOrder().current();
+		var target = caster == leek1 ? leek2 : leek1;
+		var saber = Weapons.getWeapon("glowing_saber");
+		caster.addWeapon(saber);
+		caster.setWeapon(saber);
+		caster.setTP(saber.getCost());
+		caster.refillTP();
+
+		// Arme de mêlée : le lanceur se colle à sa cible
+		Cell adjacent = null;
+		for (Cell c : state.getMap().getCells()) {
+			if (c.available(state.getMap()) && Pathfinding.getCaseDistance(target.getCell(), c) == 1) {
+				adjacent = c;
+				break;
+			}
+		}
+		Assert.assertNotNull("Une case libre au contact de la cible", adjacent);
+		state.teleportEntity(caster, adjacent, caster, 0);
+
+		int result = state.useWeapon(caster, target.getCell());
+		Assert.assertTrue("Le coup part : " + result, result > 0);
+		Assert.assertTrue("La cible est amputée", target.hasState(EntityState.AMPUTATED));
 	}
 
 	@Test

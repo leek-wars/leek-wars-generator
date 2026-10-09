@@ -1375,5 +1375,41 @@
 		"forgotten": false,
 		"item": 429,
 		"max_uses": 1
+	},
+	"43": {
+		"id": 43,
+		"name": "glowing_saber",
+		"level": 248,
+		"min_range": 1,
+		"max_range": 1,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 1,
+				"value1": 140,
+				"value2": 20,
+				"turns": 0,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 1
+			},
+			{
+				"id": 59,
+				"value1": 13,
+				"value2": 0,
+				"turns": 1,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 0
+			}
+		],
+		"cost": 12,
+		"area": 1,
+		"los": true,
+		"template": 43,
+		"passive_effects": [],
+		"forgotten": false,
+		"item": 609,
+		"max_uses": 1
 	}
 }
