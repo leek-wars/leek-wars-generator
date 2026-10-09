@@ -13,6 +13,11 @@ public class EffectAddState extends Effect {
 		this.value = (int) value1;
 		this.state = EntityState.values()[(int) value1];
 		target.addState(this.state);
+
+		// Amputée, la cible lâche son arme : il faudra la rééquiper une fois l'état passé
+		if (this.state == EntityState.AMPUTATED) {
+			target.setWeapon(null);
+		}
 	}
 
 	/**

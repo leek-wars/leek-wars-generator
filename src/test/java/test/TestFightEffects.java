@@ -396,7 +396,7 @@ public class TestFightEffects extends FightTestBase {
 	// ---------- États qui interdisent une action (USE_INVALID_STATE) ----------
 
 	@Test
-	public void amputatedEntityCannotUseItsWeapon() throws Exception {
+	public void amputationDropsTheWeaponAndForbidsAnother() throws Exception {
 		initFightOnly();
 		var state = fight.getState();
 		// useWeapon exige que le lanceur soit l'entité courante de l'ordre de jeu
@@ -406,14 +406,20 @@ public class TestFightEffects extends FightTestBase {
 		caster.addWeapon(pistol);
 		caster.setWeapon(pistol);
 		applyState(EntityState.AMPUTATED, (Leek) caster, (Leek) target, false, 0);
+		Assert.assertNull("L'entité amputée lâche son arme", caster.getWeapon());
 
 		int tp = caster.getTP();
-		Assert.assertEquals(Attack.USE_INVALID_STATE, state.useWeapon(caster, target.getCell()));
+		Assert.assertEquals("L'état passe avant l'absence d'arme",
+			Attack.USE_INVALID_STATE, state.useWeapon(caster, target.getCell()));
+		Assert.assertFalse("Plus de mains pour reprendre une arme", state.setWeapon(caster, pistol));
+		Assert.assertNull(caster.getWeapon());
 		Assert.assertEquals("Aucun PT dépensé", tp, caster.getTP());
 		Assert.assertEquals("Aucune utilisation comptée", 0, caster.getItemUses(pistol.getId()));
 
-		// L'état retiré, seuls les refus habituels (position...) restent possibles
+		// L'état retiré, l'arme se rééquipe comme d'habitude
 		caster.reduceEffectsTotal(1.0, target);
+		Assert.assertTrue(state.setWeapon(caster, pistol));
+		Assert.assertEquals(pistol, caster.getWeapon());
 		Assert.assertNotEquals(Attack.USE_INVALID_STATE, state.useWeapon(caster, target.getCell()));
 	}
 
@@ -428,6 +434,9 @@ public class TestFightEffects extends FightTestBase {
 		caster.setWeapon(saber);
 		caster.setTP(saber.getCost());
 		caster.refillTP();
+		var pistol = Weapons.getWeapon("pistol");
+		target.addWeapon(pistol);
+		target.setWeapon(pistol);
 
 		// Arme de mêlée : le lanceur se colle à sa cible
 		Cell adjacent = null;
@@ -443,6 +452,7 @@ public class TestFightEffects extends FightTestBase {
 		int result = state.useWeapon(caster, target.getCell());
 		Assert.assertTrue("Le coup part : " + result, result > 0);
 		Assert.assertTrue("La cible est amputée", target.hasState(EntityState.AMPUTATED));
+		Assert.assertNull("Et elle a lâché son arme", target.getWeapon());
 	}
 
 	@Test

@@ -998,6 +998,9 @@ public class State {
 
 	public boolean setWeapon(Entity entity, Weapon weapon) {
 
+		// Une entité amputée n'a plus de mains pour tenir une arme
+		if (entity.hasState(EntityState.AMPUTATED)) return false;
+
 		// 1 TP required
 		if (entity.getTP() <= 0) return false;
 
@@ -1015,13 +1018,17 @@ public class State {
 
 	public int useWeapon(Entity launcher, Cell target) {
 
-		if (!canAct(launcher) || launcher.getWeapon() == null) {
+		if (!canAct(launcher)) {
 			return Attack.USE_INVALID_TARGET;
 		}
 
-		// Entité amputée : ne peut plus utiliser son arme
+		// Entité amputée : elle a lâché son arme, l'état passe avant l'absence d'arme
 		if (launcher.hasState(EntityState.AMPUTATED)) {
 			return Attack.USE_INVALID_STATE;
+		}
+
+		if (launcher.getWeapon() == null) {
+			return Attack.USE_INVALID_TARGET;
 		}
 
 		Weapon weapon = launcher.getWeapon();
