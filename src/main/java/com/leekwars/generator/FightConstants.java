@@ -144,6 +144,7 @@ public enum FightConstants implements ILeekConstant {
 	STATE_ROOTED(EntityState.ROOTED.ordinal(), Type.INT),
 	STATE_STATIC(EntityState.STATIC.ordinal(), Type.INT),
 	STATE_STERILE(EntityState.STERILE.ordinal(), Type.INT),
+	STATE_AMPUTATED(EntityState.AMPUTATED.ordinal(), Type.INT),
 
 	// Résultats attaque
 	USE_CRITICAL(2, Type.INT),
@@ -157,6 +158,7 @@ public enum FightConstants implements ILeekConstant {
 	USE_TOO_MANY_SUMMONS(-5, Type.INT),
 	USE_RESURRECT_INVALID_ENTITY(-6, Type.INT),
 	USE_MAX_USES(-7, Type.INT),
+	USE_INVALID_STATE(-8, Type.INT),
 
 	// Armes
 	WEAPON_PISTOL(37, Type.INT),

@@ -35,6 +35,7 @@ public class Attack {
 	public final static int USE_TOO_MANY_SUMMONS = -5;
 	public final static int USE_RESURRECT_INVALID_ENTIITY = -6;
 	public final static int USE_MAX_USES = -7;
+	public final static int USE_INVALID_STATE = -8; // Un état du lanceur interdit l'action (Amputé, Stérile)
 
 	// Launch types
 	public final static int LAUNCH_TYPE_LINE = 1;

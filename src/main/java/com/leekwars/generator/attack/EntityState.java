@@ -14,4 +14,5 @@ public enum EntityState {
 	PETRIFIED, // 10
 	STATIC, // 11
 	STERILE, // 12 : ne peut plus invoquer
+	AMPUTATED, // 13 : ne peut plus utiliser son arme
 }

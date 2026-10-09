@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.leekwars.generator.action.Action;
+import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.bulbs.Bulbs;
@@ -11,6 +12,7 @@ import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
+import com.leekwars.generator.weapons.Weapons;
 
 /**
  * Effect creation and lifecycle (buffs, poison, shields). Uses Effect.createEffect
@@ -388,6 +390,52 @@ public class TestFightEffects extends FightTestBase {
 		Cell dest = freeCell(before, caster.getCell(), leek1.getCell(), leek2.getCell());
 		state.slideEntity(plant, dest, leek2);
 		Assert.assertEquals(before, plant.getCell());
+	}
+
+	// ---------- États qui interdisent une action (USE_INVALID_STATE) ----------
+
+	@Test
+	public void amputatedEntityCannotUseItsWeapon() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		// useWeapon exige que le lanceur soit l'entité courante de l'ordre de jeu
+		var caster = state.getOrder().current();
+		var target = caster == leek1 ? leek2 : leek1;
+		var pistol = Weapons.getWeapon("pistol");
+		caster.addWeapon(pistol);
+		caster.setWeapon(pistol);
+		applyState(EntityState.AMPUTATED, (Leek) caster, (Leek) target, false, 0);
+
+		int tp = caster.getTP();
+		Assert.assertEquals(Attack.USE_INVALID_STATE, state.useWeapon(caster, target.getCell()));
+		Assert.assertEquals("Aucun PT dépensé", tp, caster.getTP());
+		Assert.assertEquals("Aucune utilisation comptée", 0, caster.getItemUses(pistol.getId()));
+
+		// L'état retiré, seuls les refus habituels (position...) restent possibles
+		caster.reduceEffectsTotal(1.0, target);
+		Assert.assertNotEquals(Attack.USE_INVALID_STATE, state.useWeapon(caster, target.getCell()));
+	}
+
+	@Test
+	public void sterileEntityCannotSummon() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		var corn = Chips.getChip(164);
+		var caster = state.getOrder().current();
+		var target = caster == leek1 ? leek2 : leek1;
+		caster.setTP(corn.getCost() + 2);
+		caster.refillTP();
+		applyState(EntityState.STERILE, (Leek) caster, (Leek) target, false, 0);
+
+		Cell cell = null;
+		var map = state.getMap();
+		for (int i = 0; i < 613 && cell == null; ++i) {
+			Cell c = map.getCell(i);
+			if (c == null || !c.available(map)) continue;
+			if (map.canUseAttack(caster.getCell(), c, corn.getAttack())) cell = c;
+		}
+		Assert.assertNotNull("Une case de plantation valide existe", cell);
+		Assert.assertEquals(Attack.USE_INVALID_STATE, state.summonEntity(caster, cell, corn));
 	}
 
 	// ---------- Surinfection ----------

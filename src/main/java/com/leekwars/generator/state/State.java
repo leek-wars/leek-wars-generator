@@ -1019,6 +1019,11 @@ public class State {
 			return Attack.USE_INVALID_TARGET;
 		}
 
+		// Entité amputée : ne peut plus utiliser son arme
+		if (launcher.hasState(EntityState.AMPUTATED)) {
+			return Attack.USE_INVALID_STATE;
+		}
+
 		Weapon weapon = launcher.getWeapon();
 
 		// Coût
@@ -1261,10 +1266,9 @@ public class State {
 		if (teams.get(caster.getTeam()).getSummonCount() >= SUMMON_LIMIT) {
 			return -5;
 		}
-		// Entité stérile (sabre du désert) : ne peut plus invoquer. USE_FAILED plutôt qu'un
-		// nouveau code de retour, que les IA existantes ne sauraient pas interpréter.
+		// Entité stérile (sabre du désert) : ne peut plus invoquer
 		if (caster.hasState(EntityState.STERILE)) {
-			return Attack.USE_FAILED;
+			return Attack.USE_INVALID_STATE;
 		}
 
 		boolean critical = generateCritical(caster);
