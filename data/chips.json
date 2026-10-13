@@ -3489,7 +3489,7 @@
 		"effects": [
 			{
 				"id": 64,
-				"value1": 50,
+				"value1": 25,
 				"value2": 0,
 				"turns": 0,
 				"targets": 31,

@@ -7,11 +7,11 @@ import com.leekwars.generator.state.State;
 
 /**
  * Surinfection : fait détoner les poisons actifs de la cible. Ils infligent d'un coup
- * value1 % (50 % pour la puce Surinfection, 65 % en critique) de leur somme à l'instant T
+ * value1 % (25 % pour la puce Surinfection, 32,5 % en critique) de leur somme à l'instant T
  * — la somme de leurs valeurs par tour — et perdent chacun UN tour.
  *
  * Un poison ne compte donc que pour ce qu'il vaut au moment où on le fait détoner, jamais
- * multiplié par les tours qu'il lui restait à courir : on avance un demi-tour de poison
+ * multiplié par les tours qu'il lui restait à courir : on avance un quart de tour de poison
  * contre un tour entier, et l'échange est perdant de la même quantité quel que soit le
  * moment choisi. `turns` est le nombre de coups qu'il reste au poison (cf. PeriodicEffect) :
  * le tour brûlé ici en retire toujours un vrai.
@@ -28,7 +28,7 @@ public class EffectSuperinfection extends Effect {
 	@Override
 	public void apply(State state) {
 
-		// Part de la somme des poisons qui part en dégâts (50 % de base), bornée à 100 %.
+		// Part de la somme des poisons qui part en dégâts (25 % de base), bornée à 100 %.
 		double ratio = Math.min(1.0, ((value1 + jet * value2) / 100.0) * criticalPower);
 
 		int poisons = 0;
