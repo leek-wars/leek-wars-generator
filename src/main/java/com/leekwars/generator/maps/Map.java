@@ -97,41 +97,7 @@ public class Map {
 			ArrayNode team2 = (ArrayNode) custom_map.get("team2");
 
 			// Obstacles
-			for (var c : obstacles.properties()) {
-				try {
-					int cell_id = Integer.parseInt(c.getKey());
-					Cell cell = map.getCell(cell_id);
-					// Une map de test peut garder des obstacles hors de la grille : rien à poser
-					if (cell != null && cell.available(map)) {
-						if (c.getValue().isBoolean()) {
-							cell.setObstacle(1, 1);
-						} else {
-							int id = c.getValue().intValue();
-							ObstacleInfo info = ObstacleInfo.get(id);
-							if (info == null) {
-								// Marqueur générique de l'éditeur de map de test (valeur 1)
-								// ou id d'obstacle inconnu : obstacle de taille 1 par défaut.
-								cell.setObstacle(1, 1);
-							} else {
-								// Toute l'emprise est vérifiée avant d'en marquer une case : un obstacle
-								// qui déborde de la grille est ignoré en entier, pas posé à moitié.
-								Cell[] covered = map.coveredCells(cell, info.size);
-								if (covered != null) {
-									cell.setObstacle(id, info.size);
-									for (int i = 0; i < covered.length; i++) {
-										// Un 2x2 numérote ses trois cases (est -1, sud -2, sud-est -3)
-										covered[i].setObstacle(0, info.size == 2 ? -1 - i : -1);
-									}
-								}
-							}
-						}
-					}
-				} catch (Exception e) {
-					// Obstacle de map custom malforme : on saute cet obstacle (resilience)
-					// mais on remonte l'erreur a la table au lieu de la cracher sur stdout.
-					Generator.reportException(e);
-				}
-			}
+			map.placeObstacles(obstacles);
 
 			// Set entities positions
 			for (int t = 0; t < teams.size(); ++t) {
@@ -270,6 +236,48 @@ public class Map {
 		}
 		// map.drawMap();
 		return map;
+	}
+
+	/**
+	 * Pose les obstacles d'une carte fixe ({cellule: id d'obstacle}). Publique pour le worker,
+	 * qui place des entités sur une carte fixe avant le combat.
+	 */
+	public void placeObstacles(ObjectNode obstacles) {
+		for (var c : obstacles.properties()) {
+			try {
+				int cell_id = Integer.parseInt(c.getKey());
+				Cell cell = getCell(cell_id);
+				// Une map de test peut garder des obstacles hors de la grille : rien à poser
+				if (cell != null && cell.available(this)) {
+					if (c.getValue().isBoolean()) {
+						cell.setObstacle(1, 1);
+					} else {
+						int id = c.getValue().intValue();
+						ObstacleInfo info = ObstacleInfo.get(id);
+						if (info == null) {
+							// Marqueur générique de l'éditeur de map de test (valeur 1)
+							// ou id d'obstacle inconnu : obstacle de taille 1 par défaut.
+							cell.setObstacle(1, 1);
+						} else {
+							// Toute l'emprise est vérifiée avant d'en marquer une case : un obstacle
+							// qui déborde de la grille est ignoré en entier, pas posé à moitié.
+							Cell[] covered = coveredCells(cell, info.size);
+							if (covered != null) {
+								cell.setObstacle(id, info.size);
+								for (int i = 0; i < covered.length; i++) {
+									// Un 2x2 numérote ses trois cases (est -1, sud -2, sud-est -3)
+									covered[i].setObstacle(0, info.size == 2 ? -1 - i : -1);
+								}
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				// Obstacle de map custom malforme : on saute cet obstacle (resilience)
+				// mais on remonte l'erreur a la table au lieu de la cracher sur stdout.
+				Generator.reportException(e);
+			}
+		}
 	}
 
 	public Map(int width, int height) {
