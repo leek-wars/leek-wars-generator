@@ -18,8 +18,11 @@ public class AreaAllies extends Area {
 	public List<Cell> getArea(Map map, Cell launchCell, Cell targetCell, Entity caster) {
 		var cells = new ArrayList<Cell>();
 		if (caster != null) {
+			// Le Graal ne protège pas ses cristaux ; les autres mobs, si : un cristal invincible ne
+			// peut pas être tué puis ressuscité ailleurs par un adversaire.
+			boolean skipCrystals = "graal".equals(caster.getName());
 			for (var entity : map.getState().getEntities().values()) {
-				if (entity.getTeam() == caster.getTeam() && entity.getName().contains("crystal")) continue;
+				if (skipCrystals && entity.getName().contains("crystal")) continue;
 				if (entity.getCell() != null && entity.getTeam() == caster.getTeam()) {
 					cells.add(entity.getCell());
 				}
