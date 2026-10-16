@@ -400,7 +400,7 @@ public enum FightConstants implements ILeekConstant {
 	BOSS_NASU_SAMURAI(1, Type.INT),
 	BOSS_FENNEL_KING(2, Type.INT),
 	BOSS_EVIL_PUMPKIN(3, Type.INT),
-	BOSS_FENNEL_PUMPKIN(4, Type.INT),
+	BOSS_FENNEL_PUMPKIN(1023, Type.INT),
 
 	// Mobs
 	MOB_NASU_SAMURAI(1, Type.INT),
