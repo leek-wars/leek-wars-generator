@@ -62,6 +62,7 @@ public class ObstacleInfo {
 		obstacles.put(37, new ObstacleInfo(2));
 
 		obstacles.put(51, new ObstacleInfo(3));
+		obstacles.put(67, new ObstacleInfo(3)); // table ronde aux parchemins (boss double)
 
 		obstacles.put(39, new ObstacleInfo(4));
 
