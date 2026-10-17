@@ -19,7 +19,7 @@ public class Chips {
 	}
 
 	public static Chip getChip(String name) {
-		return chips.values().stream().filter(c -> c.getName().equals(name)).findFirst().get();
+		return chips.values().stream().filter(c -> c.getName().equals(name)).findFirst().orElse(null);
 	}
 
 	public static Map<Integer, Chip> getTemplates() {

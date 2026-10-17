@@ -18,6 +18,10 @@ public class Components {
 		return components.get(id);
 	}
 
+	public static Component getComponent(String name) {
+		return components.values().stream().filter(c -> c.getName().equals(name)).findFirst().orElse(null);
+	}
+
 	public static Map<Integer, Component> getTemplates() {
 		return components;
 	}

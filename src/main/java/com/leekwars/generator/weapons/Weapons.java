@@ -19,7 +19,7 @@ public class Weapons {
 	}
 
 	public static Weapon getWeapon(String name) {
-		return weapons.values().stream().filter(w -> w.getName().equals(name)).findFirst().get();
+		return weapons.values().stream().filter(w -> w.getName().equals(name)).findFirst().orElse(null);
 	}
 
 	public static Map<Integer, Weapon> getTemplates() {

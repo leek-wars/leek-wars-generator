@@ -3,13 +3,13 @@ package com.leekwars.generator.classes;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
+import java.util.regex.Pattern;
 
-import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
-import com.leekwars.generator.component.Component;
 import com.leekwars.generator.component.Components;
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.weapons.Weapons;
 
 import leekscript.AILog;
@@ -30,6 +30,7 @@ import tools.jackson.databind.node.ObjectNode;
 public class LoadoutClass {
 
 	private static final int NAME_MAX_LENGTH = 60;
+	private static final Pattern DIGITS = Pattern.compile("\\d{1,9}");
 	private static final List<String> STATS = List.of("life", "strength", "wisdom", "agility", "resistance", "science", "magic", "frequency", "tp", "mp", "cores", "ram");
 
 	public static Object getLoadout(EntityAI ai, String json) throws LeekRunException {
@@ -88,7 +89,7 @@ public class LoadoutClass {
 				if (!c.isObject()) continue;
 				var raw = c.has("item") ? c.get("item") : c.has("template") ? c.get("template") : c.get("name");
 				var template = component(raw);
-				if (template == null) { unknown.add(String.valueOf(raw)); continue; }
+				if (template == null) { unknown.add(label(raw)); continue; }
 				// Un modèle ne s'équipe qu'une fois.
 				if (!usedTemplates.add(template)) continue;
 				var entry = Json.createObject();
@@ -106,7 +107,7 @@ public class LoadoutClass {
 				if (c.path("stats").isObject()) {
 					for (var stat : c.get("stats").properties()) {
 						var v = stat.getValue();
-						double value = v.isNumber() ? v.asDouble() : v.isString() ? parseDouble(v.asString()) : Double.NaN;
+						double value = toDouble(v);
 						if (Double.isFinite(value) && Math.abs(value) < 1e9 && Math.round(value) != 0) stats.put(stat.getKey(), (int) Math.round(value));
 					}
 				}
@@ -120,77 +121,73 @@ public class LoadoutClass {
 		var sourceStats = source.path("stats");
 		for (var stat : STATS) {
 			var value = sourceStats.path(stat);
-			double capital = value.isNumber() ? value.asDouble() : value.isString() ? parseDouble(value.asString()) : Double.NaN;
+			double capital = toDouble(value);
 			stats.put(stat, Double.isFinite(capital) ? (int) Math.max(0, Math.min(1e9, Math.floor(capital))) : 0);
 		}
 		out.set("stats", stats);
 		return out;
 	}
 
-	private static double parseDouble(String text) {
-		try {
-			return Double.parseDouble(text.trim());
-		} catch (NumberFormatException e) {
-			return Double.NaN;
-		}
-	}
-
-	private interface Resolver {
-		Integer resolve(JsonNode raw);
-	}
-
-	private static ArrayNode items(JsonNode list, Resolver resolver, List<String> unknown) {
+	private static ArrayNode items(JsonNode list, Function<JsonNode, Integer> resolver, List<String> unknown) {
 		var out = Json.createArray();
 		if (list == null || !list.isArray()) return out;
 		var seen = new HashSet<Integer>();
 		for (var raw : list) {
-			var id = resolver.resolve(raw);
-			if (id == null) unknown.add(raw.isString() ? raw.asString() : raw.toString());
+			var id = resolver.apply(raw);
+			if (id == null) unknown.add(label(raw));
 			else if (seen.add(id)) out.add(id);
 		}
 		return out;
 	}
 
-	/** Id numérique (nombre ou chaîne de chiffres), sinon null. */
-	private static Integer numericId(JsonNode raw) {
+	private static String label(JsonNode raw) {
+		return raw == null ? "null" : raw.isString() ? raw.asString() : raw.toString();
+	}
+
+	/** Nombre, ou chaîne qui en écrit un (comme Number() côté client) ; NaN sinon. */
+	private static double toDouble(JsonNode value) {
+		if (value == null) return Double.NaN;
+		if (value.isNumber()) return value.asDouble();
+		if (!value.isString()) return Double.NaN;
+		try {
+			return Double.parseDouble(value.asString().trim());
+		} catch (NumberFormatException e) {
+			return Double.NaN;
+		}
+	}
+
+	/**
+	 * Id d'un item désigné par son id (nombre ou chaîne de chiffres) ou par son nom, avec ou sans
+	 * préfixe (`weapon_m_laser` ou `m_laser`). Null si inconnu.
+	 */
+	private static Integer resolve(JsonNode raw, String prefix, IntPredicate exists, Function<String, Integer> byName) {
 		if (raw == null) return null;
-		if (raw.isIntegralNumber()) return raw.canConvertToInt() ? raw.asInt() : null;
-		if (raw.isString() && raw.asString().trim().matches("\\d{1,9}")) return Integer.parseInt(raw.asString().trim());
-		return null;
+		if (raw.isIntegralNumber()) return raw.canConvertToInt() && exists.test(raw.asInt()) ? raw.asInt() : null;
+		if (!raw.isString()) return null;
+		var name = raw.asString().trim();
+		if (DIGITS.matcher(name).matches()) return exists.test(Integer.parseInt(name)) ? Integer.parseInt(name) : null;
+		if (prefix != null && name.startsWith(prefix)) name = name.substring(prefix.length());
+		return byName.apply(name);
 	}
 
 	private static Integer weapon(JsonNode raw) {
-		var id = numericId(raw);
-		if (id != null) return Weapons.getWeapon(id) != null ? id : null;
-		if (raw == null || !raw.isString()) return null;
-		var name = raw.asString().trim();
-		if (name.startsWith("weapon_")) name = name.substring(7);
-		for (Weapon w : Weapons.getTemplates().values()) {
-			if (w.getName().equals(name)) return w.getId();
-		}
-		return null;
+		return resolve(raw, "weapon_", id -> Weapons.getWeapon(id) != null, name -> {
+			var w = Weapons.getWeapon(name);
+			return w == null ? null : w.getId();
+		});
 	}
 
 	private static Integer chip(JsonNode raw) {
-		var id = numericId(raw);
-		if (id != null) return Chips.getChip(id) != null ? id : null;
-		if (raw == null || !raw.isString()) return null;
-		var name = raw.asString().trim();
-		if (name.startsWith("chip_")) name = name.substring(5);
-		for (Chip c : Chips.getTemplates().values()) {
-			if (c.getName().equals(name)) return c.getId();
-		}
-		return null;
+		return resolve(raw, "chip_", id -> Chips.getChip(id) != null, name -> {
+			var c = Chips.getChip(name);
+			return c == null ? null : c.getId();
+		});
 	}
 
 	private static Integer component(JsonNode raw) {
-		var id = numericId(raw);
-		if (id != null) return Components.getComponent(id) != null ? id : null;
-		if (raw == null || !raw.isString()) return null;
-		var name = raw.asString().trim();
-		for (Component c : Components.getTemplates().values()) {
-			if (c.getName().equals(name)) return c.getTemplate();
-		}
-		return null;
+		return resolve(raw, null, id -> Components.getComponent(id) != null, name -> {
+			var c = Components.getComponent(name);
+			return c == null ? null : c.getTemplate();
+		});
 	}
 }
