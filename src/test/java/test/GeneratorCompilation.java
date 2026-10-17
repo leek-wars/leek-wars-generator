@@ -24,12 +24,7 @@ public class GeneratorCompilation {
 	}
 
 	public static boolean testScriptGenerator(Entity entity, Fight fight, String code, Object expected) throws Exception {
-		var options = new Options(true);
-		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", options);
-		ai.setEntity(entity);
-		var fl = new FarmerLog(fight, 0);
-		ai.setLogs(new LeekLog(fl, entity));
-		ai.setFight(fight);
+		EntityAI ai = compile(entity, fight, code, new Options(true));
 		var result = ai.runIA();
 		var resultStr = ai.export(result);
 		System.out.println(resultStr);
@@ -39,5 +34,19 @@ public class GeneratorCompilation {
 			throw new LSException(0, result, expected);
 		}
 		return true;
+	}
+
+	/** Exécute un extrait comme IA de `entity` et renvoie son résultat exporté. */
+	public static String runSnippet(Entity entity, Fight fight, String code, Options options) throws Exception {
+		EntityAI ai = compile(entity, fight, code, options);
+		return ai.export(ai.runIA());
+	}
+
+	private static EntityAI compile(Entity entity, Fight fight, String code, Options options) throws Exception {
+		EntityAI ai = (EntityAI) LeekScript.compileSnippet(code, "com.leekwars.generator.fight.entity.EntityAI", options);
+		ai.setEntity(entity);
+		ai.setLogs(new LeekLog(new FarmerLog(fight, 0), entity));
+		ai.setFight(fight);
+		return ai;
 	}
 }

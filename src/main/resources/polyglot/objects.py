@@ -612,6 +612,7 @@ def _lw_build(G, NAMES):
         def getAliveEnemiesCount(self): return F.getAliveEnemiesCount()
         def getAliveAlliesCount(self): return F.getAliveAlliesCount()
         def getDeadEnemiesCount(self): return F.getDeadEnemiesCount()
+        def getDeadAlliesCount(self): return F.getDeadAlliesCount()
         def getAlliedTurret(self): return _ent(F.getAlliedTurret())
         def getEnemyTurret(self): return _ent(F.getEnemyTurret())
         # Joueur suivant / precedent dans l'ordre de jeu (defaut : relatif a soi).

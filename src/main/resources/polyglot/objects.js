@@ -489,6 +489,7 @@
 		getAliveEnemiesCount: function () { return F.getAliveEnemiesCount(); },
 		getAliveAlliesCount: function () { return F.getAliveAlliesCount(); },
 		getDeadEnemiesCount: function () { return F.getDeadEnemiesCount(); },
+		getDeadAlliesCount: function () { return F.getDeadAlliesCount(); },
 		getAlliedTurret: function () { return ent(F.getAlliedTurret()); },
 		getEnemyTurret: function () { return ent(F.getEnemyTurret()); },
 		// Entité alliée/ennemie la plus proche d'une CELLULE (complète getNearestEnemyTo qui prend une entité).

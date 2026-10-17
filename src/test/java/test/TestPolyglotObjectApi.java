@@ -163,6 +163,15 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	}
 
 	@Test
+	public void deadAlliesCountReadableInBothLanguages() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(0L, ((Number) eval(sb, "Fight.getDeadAlliesCount();")).longValue());
+			Assert.assertEquals(0L, ((Number) evalPy(sb, "Fight.getDeadAlliesCount()")).longValue());
+		}
+	}
+
+	@Test
 	public void fightBatchedReadableInBothLanguages() throws Exception {
 		// #4779 : le drapeau de lot se lit sur Fight.batched, dans les deux langages. Faux par
 		// defaut ; on le pose ensuite pour verifier que la propriete lit bien l'etat du combat

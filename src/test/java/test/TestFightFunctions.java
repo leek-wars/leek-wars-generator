@@ -412,12 +412,54 @@ public class TestFightFunctions {
 		codes.add("string(getDeadAllies())");
 		values.add("[]");
 
+		// Test getDeadAlliesCount
+		codes.add("getDeadAlliesCount()");
+		values.add(0);
+
 		// Test getAlliesCount
 		codes.add("getAlliesCount()");
 		values.add(1);
 
 		// Test AI
 		Assert.assertTrue(testAI(mLeek1, codes, values));
+	}
+
+	/** getDeadAlliesCount() compte exactement les entités de getDeadAllies(). */
+	@Test
+	public void getDeadAlliesCountTest() throws Exception {
+		Fight fight = new Fight(generator);
+		Leek leek1 = new Leek(1, "Test", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		Leek ally = new Leek(3, "Ally", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		Leek enemy = new Leek(2, "Bob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		fight.getState().addEntity(0, leek1);
+		fight.getState().addEntity(0, ally);
+		fight.getState().addEntity(1, enemy);
+		fight.initFight();
+		fight.setStatisticsManager(new LocalTrophyManager());
+
+		var code = "return [getDeadAlliesCount(), count(getDeadAllies()), getDeadEnemiesCount(), getAliveAlliesCount()];";
+		Assert.assertEquals("[0, 0, 0, 2]", GeneratorCompilation.runSnippet(leek1, fight, code, new Options(true)));
+
+		ally.removeLife(ally.getLife(), 0, enemy, DamageType.DIRECT, null, null);
+		Assert.assertTrue(ally.isDead());
+		Assert.assertEquals("[1, 1, 0, 1]", GeneratorCompilation.runSnippet(leek1, fight, code, new Options(true)));
+		// Vu de l'ennemi, l'allié mort est un ennemi mort
+		Assert.assertEquals("[0, 0, 1, 1]", GeneratorCompilation.runSnippet(enemy, fight, code, new Options(true)));
+	}
+
+	/**
+	 * Une IA qui définit déjà sa propre getDeadAlliesCount() compile toujours, dans toutes les
+	 * versions, et c'est la sienne qui est appelée.
+	 */
+	@Test
+	public void userDefinedGetDeadAlliesCountTest() throws Exception {
+		String code = "var a = getDeadAlliesCount();"
+			+ " function getDeadAlliesCount() { return 42; }"
+			+ " return [a, getDeadAlliesCount(), count(getDeadAllies())];";
+		for (int version = 1; version <= LeekScript.LATEST_VERSION; version++) {
+			Assert.assertEquals("version " + version, "[42, 42, 0]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(version, false, false, true, null, true)));
+		}
+		Assert.assertEquals("strict", "[42, 42, 0]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(LeekScript.LATEST_VERSION, true, false, true, null, true)));
 	}
 
 	@Test
