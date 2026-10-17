@@ -368,6 +368,8 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_CAPSAICIN(445, Type.INT),
 	CHIP_SUGAR(446, Type.INT),
 	CHIP_POPCORN(447, Type.INT),
+	// Puce de boss : le Graal la lance dans Fenouil & Potiron.
+	CHIP_GRAIL_PROTECTION(448, Type.INT),
 
 	MAP_NEXUS(1, Type.INT),
 	MAP_FACTORY(2, Type.INT),
