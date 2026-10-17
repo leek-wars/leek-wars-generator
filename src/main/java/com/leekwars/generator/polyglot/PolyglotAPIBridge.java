@@ -96,6 +96,8 @@ public class PolyglotAPIBridge {
 				continue; // deja fourni par une source prioritaire (combat)
 			}
 			LeekFunctions fn = entry.getValue();
+			// Argument fichier : chemin lu à la compilation LeekScript, rien d'équivalent en JS/Python.
+			if (fn.hasFileArgument()) continue;
 			COSTS.put(entry.getKey(), fn.getOperations());
 			// On cible la derniere version : on ignore les fonctions retirees ou pas encore disponibles.
 			if (LeekScript.LATEST_VERSION < fn.getMinVersion() || LeekScript.LATEST_VERSION > fn.getMaxVersion()) {

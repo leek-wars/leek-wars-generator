@@ -582,6 +582,9 @@ public class FightFunctions {
 		method("getRegister", "Util", 15, true, Type.STRING_OR_NULL, new Type[] { Type.STRING });
 		method("setRegister", "Util", 50, true, Type.BOOL, new Type[] { Type.STRING, Type.ANY });
 		method("deleteRegister", "Util", 16, true, Type.VOID, new Type[] { Type.STRING });
+
+		// Loadout : le chemin, littéral, est remplacé à la compilation par le contenu du fichier.
+		method("getLoadout", "Loadout", 0, true, Type.ANY, new Type[] { Type.STRING }).setFileArgument();
 	}
 
 	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, Type return_type, Type[] arguments) {
