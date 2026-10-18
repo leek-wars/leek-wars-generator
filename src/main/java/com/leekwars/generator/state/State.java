@@ -289,7 +289,7 @@ public class State {
 	public java.util.Map<Integer, Integer> availableCopies(Entity entity) {
 		var items = mFarmerItems.get(entity.getFarmer());
 		if (items == null) return null;
-		var available = new HashMap<Integer, Integer>(items);
+		var available = new java.util.TreeMap<Integer, Integer>(items); // trié : getInventory dans l'ordre des modèles
 		for (var other : getAllEntities(true)) {
 			if (other == entity || other.getFarmer() != entity.getFarmer()) continue;
 			for (var w : other.getWeapons()) available.merge(w.getId(), -1, Integer::sum);

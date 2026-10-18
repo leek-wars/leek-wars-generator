@@ -17,7 +17,7 @@ public class FarmerInfo {
 	public java.util.List<com.leekwars.generator.state.ComponentInstance> componentStock;
 	/**
 	 * Exemplaires possédés par modèle d'objet (armes, puces, composants), portés ou libres. null =
-	 * inconnu (scénarios de test) : setLoadout(objet) ne vérifie alors pas la possession.
+	 * inconnu (scénarios de test) : setLoadout(objet) est alors refusé et getInventory() rend null.
 	 */
 	public java.util.Map<Integer, Integer> items;
 

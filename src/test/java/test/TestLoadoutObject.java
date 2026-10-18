@@ -146,6 +146,17 @@ public class TestLoadoutObject extends FightTestBase {
 	}
 
 	@Test
+	public void anUnownedForgottenWeaponIsRefused() throws Exception {
+		own(Map.of(37, 1));
+		attachAI(a1, "function beforeFight() { setLoadout({weapons: [116, 'pistol'], stats: null}) }");
+		attachAI(a2, "");
+		attachAI(b1, "");
+		runFight();
+		Assert.assertEquals(List.of(37), a1.getWeapons().stream().map(w -> w.getId()).toList());
+		Assert.assertEquals(100, a1.getStrength()); // stats: null = pas de répartition
+	}
+
+	@Test
 	public void withoutStatsOnlyTheGearChanges() throws Exception {
 		own(Map.of(37, 1));
 		attachAI(a1, "function beforeFight() { setLoadout({weapons: ['pistol']}) }");
