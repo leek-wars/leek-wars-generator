@@ -69,15 +69,18 @@ public class LoadoutClass {
 	 * getLoadout en LeekScript et en JS / Python (rendu en JSON à ces derniers).
 	 */
 	public static JsonNode readLoadouts(EntityAI ai, String json) throws LeekRunException {
+		var data = parse(ai, json);
+		return data == null ? null : readLoadouts(ai, data);
+	}
+
+	private static JsonNode parse(EntityAI ai, String json) throws LeekRunException {
 		ai.ops((long) json.length() * 10);
-		JsonNode data;
 		try {
-			data = Json.parse(json);
+			return Json.parse(json);
 		} catch (Exception e) {
 			ai.getLogs().addLog(AILog.ERROR, "getLoadout : JSON invalide");
 			return null;
 		}
-		return readLoadouts(ai, data);
 	}
 
 	private static JsonNode readLoadouts(EntityAI ai, JsonNode data) {
@@ -132,21 +135,17 @@ public class LoadoutClass {
 			this.available = available;
 		}
 
-		private boolean free(int template) {
+		/** Un exemplaire encore libre ; pour une arme oubliée, une candidate qui n'en prend pas (le poireau n'en porte qu'une). */
+		boolean candidate(int template) {
 			if (taken.getOrDefault(template, 0) < available.getOrDefault(template, 0)) return true;
 			missing.add(itemName(template));
 			return false;
 		}
 
 		boolean take(int template) {
-			if (!free(template)) return false;
+			if (!candidate(template)) return false;
 			taken.merge(template, 1, Integer::sum);
 			return true;
-		}
-
-		/** Arme oubliée : une candidate, possédée mais pas prise — le poireau n'en porte qu'une. */
-		boolean candidate(int template) {
-			return free(template);
 		}
 
 		boolean takeComponent(int template) {
@@ -173,10 +172,12 @@ public class LoadoutClass {
 
 	private static String itemName(int template) {
 		var type = Items.getType(template);
-		String name = type == null ? null
-			: type == Items.TYPE_WEAPON ? Weapons.getWeapon(template).getName()
-			: type == Items.TYPE_CHIP ? Chips.getChip(template).getName()
-			: type == Items.TYPE_COMPONENT ? Components.getComponent(template).getName() : null;
+		String name = type == null ? null : switch (type) {
+			case Items.TYPE_WEAPON -> Weapons.getWeapon(template).getName();
+			case Items.TYPE_CHIP -> Chips.getChip(template).getName();
+			case Items.TYPE_COMPONENT -> Components.getComponent(template).getName();
+			default -> null;
+		};
 		return name == null ? String.valueOf(template) : name;
 	}
 
@@ -186,17 +187,16 @@ public class LoadoutClass {
 	 * l'éleveur n'a plus de libre (ses autres entités du combat le portent) est retiré, avec un
 	 * avertissement. null si ce n'est pas un équipement, ou si les règles ou l'inventaire manquent.
 	 */
-	public static ObjectLoadout loadoutFromObject(EntityAI ai, JsonNode source) throws LeekRunException {
+	public static ObjectLoadout loadoutFromObject(EntityAI ai, JsonNode source, Map<Integer, Integer> worn) throws LeekRunException {
 		var rules = Generator.getLoadoutRules();
-		var available = rules == null ? null : ai.getFight().getState().availableCopies(ai.getEntity());
+		var available = rules == null ? null : ai.getFight().getState().availableCopies(ai.getEntity(), worn);
 		if (available == null) {
 			ai.getLogs().addLog(AILog.WARNING, "setLoadout : un équipement en objet n'est pas disponible dans ce combat");
 			return null;
 		}
 		// Relu depuis son texte : le JSON du moteur peut porter ses sous-objets autrement qu'en nœuds objet.
-		String json = source.toString();
-		ai.ops((long) json.length() * 10);
-		var data = Json.parse(json);
+		var data = parse(ai, source.toString());
+		if (data == null) return null;
 		var loadouts = readLoadouts(ai, data);
 		if (loadouts == null) return null;
 		if (!loadouts.isObject()) {
@@ -243,25 +243,26 @@ public class LoadoutClass {
 	 * celles des composants : un composant retiré emporte les siennes. Les armes oubliées restent
 	 * candidates (applyLoadout écarte celles déjà portées). Tel quel si l'inventaire est inconnu.
 	 */
-	public static FightLoadout keepAvailable(EntityAI ai, FightLoadout loadout) {
-		var available = ai.getFight().getState().availableCopies(ai.getEntity());
+	public static FightLoadout keepAvailable(EntityAI ai, FightLoadout loadout, Map<Integer, Integer> worn) {
+		var available = ai.getFight().getState().availableCopies(ai.getEntity(), worn);
 		if (available == null) return loadout;
 		var copies = new Copies(available);
 		var weapons = keep(loadout.getWeapons(), copies::take);
 		var chips = keep(loadout.getChips(), copies::take);
-		var stats = new HashMap<>(loadout.getStats());
+		var stats = loadout.getStats();
 		var components = new ArrayList<FightLoadout.ComponentChoice>();
 		for (var choice : loadout.getComponents()) {
 			if (copies.takeComponent(choice.template)) {
 				components.add(choice);
 				continue;
 			}
+			if (stats == loadout.getStats()) stats = new HashMap<>(stats);
 			var component = Components.getComponent(choice.template);
 			if (component == null) continue;
-			component.getStats().forEach((stat, value) -> {
-				var id = STATS.get(stat);
-				if (id != null) stats.merge(id, -value, Integer::sum);
-			});
+			for (var stat : component.getStats().entrySet()) {
+				var id = STATS.get(stat.getKey());
+				if (id != null) stats.merge(id, -stat.getValue(), Integer::sum);
+			}
 		}
 		if (copies.complete()) return loadout;
 		copies.warn(ai, loadout.getName());
@@ -291,8 +292,9 @@ public class LoadoutClass {
 	/** getInventory en JSON (rendu tel quel aux IA JS / Python). */
 	public static JsonNode readInventory(EntityAI ai) throws LeekRunException {
 		var entity = ai.getEntity();
-		var available = ai.getFight().getState().availableCopies(entity);
-		if (available == null) return null;
+		var copies = ai.getFight().getState().availableCopies(entity);
+		if (copies == null) return null;
+		var available = new java.util.TreeMap<>(copies); // dans l'ordre des modèles
 		ai.ops(10 + available.size());
 		var weapons = Json.createArray();
 		var chips = Json.createArray();
@@ -300,10 +302,12 @@ public class LoadoutClass {
 		for (var entry : available.entrySet()) {
 			int template = entry.getKey();
 			var type = Items.getType(template);
-			ArrayNode list = type == null ? null
-				: type == Items.TYPE_WEAPON ? weapons
-				: type == Items.TYPE_CHIP ? chips
-				: type == Items.TYPE_COMPONENT ? components : null;
+			ArrayNode list = type == null ? null : switch (type) {
+				case Items.TYPE_WEAPON -> weapons;
+				case Items.TYPE_CHIP -> chips;
+				case Items.TYPE_COMPONENT -> components;
+				default -> null;
+			};
 			if (list == null || entry.getValue() <= 0) continue;
 			var item = Json.createObject();
 			item.put("item", template);

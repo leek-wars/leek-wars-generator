@@ -1,6 +1,7 @@
 package com.leekwars.generator.state;
 
 import java.util.Map;
+import java.util.Set;
 
 import tools.jackson.databind.JsonNode;
 
@@ -22,11 +23,11 @@ public interface LoadoutRules {
 	int totalCapital(int level);
 
 	/**
-	 * Exemplaires possédés par un éleveur, par modèle d'arme, de puce et de composant, portés ou
-	 * libres. Demandés au premier setLoadout ou getInventory du combat seulement (cf
-	 * State#availableCopies). null si inconnus.
+	 * Exemplaires possédés par chacun de ces éleveurs, par modèle d'arme, de puce et de composant,
+	 * portés ou libres. Demandés une fois, au premier setLoadout ou getInventory du combat (cf
+	 * State#availableCopies) ; un éleveur absent du résultat a un inventaire inconnu.
 	 */
-	default Map<Integer, Integer> farmerItems(int farmer) {
-		return null;
+	default Map<Integer, Map<Integer, Integer>> farmerItems(Set<Integer> farmers) {
+		return Map.of();
 	}
 }

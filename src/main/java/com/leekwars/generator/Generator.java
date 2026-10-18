@@ -178,8 +178,6 @@ public class Generator {
 			// Pot commun des pièces améliorées libres : les setLoadout() de ses poireaux s'y
 			// servent, premier arrivé premier servi, le temps du combat.
 			fight.getState().setFreeComponents(farmer.id, farmer.componentStock);
-			// Objets possédés (armes, puces, composants) : setLoadout(objet) et getInventory().
-			fight.getState().setFarmerItems(farmer.id, farmer.items);
 		}
 
 		// Create logs and compile AIs

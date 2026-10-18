@@ -50,9 +50,11 @@ public class TestLoadoutObject extends FightTestBase {
 					ids(loadout.get("chips")), stats, stats, false, new ArrayList<>());
 			}
 			@Override public int totalCapital(int level) { return level * 5; }
-			@Override public Map<Integer, Integer> farmerItems(int farmer) {
+			@Override public Map<Integer, Map<Integer, Integer>> farmerItems(java.util.Set<Integer> farmers) {
 				itemRequests++;
-				return farmer == FARMER ? lazyItems : null;
+				var items = new HashMap<Integer, Map<Integer, Integer>>();
+				if (lazyItems != null && farmers.contains(FARMER)) items.put(FARMER, lazyItems);
+				return items;
 			}
 		});
 	}

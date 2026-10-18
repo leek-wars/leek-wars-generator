@@ -1381,8 +1381,10 @@ public class FightClass {
 		String name;
 		// Un tableau, une map ou un objet : un équipement construit en code. Sinon, le nom d'un ensemble.
 		Object json = loadoutObject instanceof String ? null : ai.toJSON(loadoutObject);
+		// Objets que portent les autres entités de l'éleveur dans l'équipe : un exemplaire par poireau.
+		var worn = ai.getFight().getState().wornByOthers(entity);
 		if (json instanceof JsonNode node && node.isContainer()) {
-			var built = LoadoutClass.loadoutFromObject(ai, node);
+			var built = LoadoutClass.loadoutFromObject(ai, node, worn);
 			if (built == null) return false;
 			loadout = built.loadout();
 			name = loadout.getName();
@@ -1395,13 +1397,13 @@ public class FightClass {
 				ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
 				return false;
 			}
-			loadout = LoadoutClass.keepAvailable(ai, loadout);
+			loadout = LoadoutClass.keepAvailable(ai, loadout, worn);
 		}
 		// Forgotten weapons are unique per farmer: those already equipped on other entities
 		// of the same farmer are reserved. applyLoadout will pick the first non-reserved
 		// candidate (with stickiness on the currently-equipped one).
 		var reservedForgotten = new java.util.HashSet<Integer>();
-		for (int id : ai.getFight().getState().wornByOthers(entity).keySet()) {
+		for (int id : worn.keySet()) {
 			Weapon w = Weapons.getWeapon(id);
 			if (w != null && w.isForgotten()) reservedForgotten.add(id);
 		}

@@ -275,13 +275,14 @@ public class State {
 	 */
 	private java.util.Map<Integer, java.util.List<ComponentInstance>> mFreeComponents = new HashMap<>();
 
-	// Exemplaires possédés par modèle, par éleveur : ceux du scénario (FarmerInfo.items), sinon
-	// demandés aux règles au premier besoin (une valeur null = inconnus). Partagé entre les copies
-	// de l'état : c'est l'inventaire de l'éleveur, il ne change pas pendant le combat.
+	// Exemplaires possédés par modèle, par éleveur, demandés aux règles au premier besoin pour tous
+	// les éleveurs du combat (une valeur null = inconnus). Partagé entre les copies de l'état :
+	// c'est l'inventaire des éleveurs, il ne change pas pendant le combat.
 	private java.util.Map<Integer, java.util.Map<Integer, Integer>> mFarmerItems = new HashMap<>();
 
+	/** Inventaire connu d'avance (tests), sans passer par les règles. */
 	public void setFarmerItems(int farmer, java.util.Map<Integer, Integer> items) {
-		if (items != null) mFarmerItems.put(farmer, items);
+		mFarmerItems.put(farmer, items);
 	}
 
 	/**
@@ -303,20 +304,32 @@ public class State {
 
 	/**
 	 * Exemplaires dont {@code entity} dispose, par modèle (arme, puce, composant) : ceux de son
-	 * éleveur moins ceux que portent ses autres entités du combat — un exemplaire par poireau.
-	 * null si la possession est inconnue.
+	 * éleveur moins ceux que portent ses autres entités de l'équipe ({@code worn}, cf
+	 * {@link #wornByOthers}) — un exemplaire par poireau. null si la possession est inconnue.
 	 */
-	public java.util.Map<Integer, Integer> availableCopies(Entity entity) {
+	public java.util.Map<Integer, Integer> availableCopies(Entity entity, java.util.Map<Integer, Integer> worn) {
 		int farmer = entity.getFarmer();
-		if (!mFarmerItems.containsKey(farmer)) {
-			var rules = Generator.getLoadoutRules();
-			mFarmerItems.put(farmer, rules == null || farmer <= 0 ? null : rules.farmerItems(farmer));
-		}
+		if (!mFarmerItems.containsKey(farmer)) loadFarmerItems(farmer);
 		var items = mFarmerItems.get(farmer);
 		if (items == null) return null;
-		var available = new TreeMap<Integer, Integer>(items); // trié : getInventory dans l'ordre des modèles
-		wornByOthers(entity).forEach((template, n) -> available.merge(template, -n, Integer::sum));
+		var available = new HashMap<Integer, Integer>(items);
+		worn.forEach((template, n) -> available.merge(template, -n, Integer::sum));
 		return available;
+	}
+
+	public java.util.Map<Integer, Integer> availableCopies(Entity entity) {
+		return availableCopies(entity, wornByOthers(entity));
+	}
+
+	/** Une seule demande aux règles pour tous les éleveurs du combat encore inconnus. */
+	private void loadFarmerItems(int farmer) {
+		var farmers = new HashSet<Integer>(List.of(farmer));
+		for (var e : getAllEntities(true)) {
+			if (!mFarmerItems.containsKey(e.getFarmer())) farmers.add(e.getFarmer());
+		}
+		var rules = Generator.getLoadoutRules();
+		var loaded = rules == null ? java.util.Map.<Integer, java.util.Map<Integer, Integer>>of() : rules.farmerItems(farmers);
+		for (int f : farmers) mFarmerItems.put(f, f > 0 ? loaded.get(f) : null);
 	}
 
 	public void setFreeComponents(int farmer, java.util.List<ComponentInstance> instances) {

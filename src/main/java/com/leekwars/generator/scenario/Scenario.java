@@ -68,12 +68,6 @@ public class Scenario {
 			if (((ObjectNode) farmerJson).has("restat_potions")) {
 				farmer.restatPotions = ((ObjectNode) farmerJson).get("restat_potions").intValue();
 			}
-			if (((ObjectNode) farmerJson).has("items")) {
-				farmer.items = new java.util.HashMap<>();
-				for (var item : ((ObjectNode) farmerJson).get("items").properties()) {
-					farmer.items.put(Integer.parseInt(item.getKey()), item.getValue().intValue());
-				}
-			}
 			scenario.farmers.put(farmer.id, farmer);
 		}
 		for (var teamJson : (ArrayNode) json.get("teams")) {
