@@ -12,6 +12,7 @@ import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
+import tools.jackson.databind.JsonNode;
 import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
@@ -1378,17 +1379,22 @@ public class FightClass {
 		var entity = ai.getEntity();
 		FightLoadout loadout;
 		String name;
-		if (loadoutObject instanceof String || loadoutObject == null) {
+		// Un tableau, une map ou un objet : un équipement construit en code. Sinon, le nom d'un ensemble.
+		Object json = loadoutObject instanceof String ? null : ai.toJSON(loadoutObject);
+		if (json instanceof JsonNode node && node.isContainer()) {
+			var built = LoadoutClass.loadoutFromObject(ai, node);
+			if (built == null) return false;
+			loadout = built.loadout();
+			name = loadout.getName();
+			// Sans répartition de capital, seul l'équipement change : pas de potion, capital gardé.
+			if (!built.withStats()) changeStats = false;
+		} else {
 			name = ai.string(loadoutObject);
 			loadout = entity.getLoadout(name);
 			if (loadout == null) {
 				ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
 				return false;
 			}
-		} else {
-			loadout = LoadoutClass.loadoutFromObject(ai, loadoutObject);
-			if (loadout == null) return false;
-			name = loadout.getName();
 		}
 		// Forgotten weapons are unique per farmer: collect those already equipped on
 		// other entities of the same farmer so we don't duplicate them on this leek.

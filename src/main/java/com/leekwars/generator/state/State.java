@@ -282,21 +282,21 @@ public class State {
 	}
 
 	/**
-	 * Exemplaires d'un modèle (arme, puce, composant) dont {@code entity} dispose : ceux de son
+	 * Exemplaires dont {@code entity} dispose, par modèle (arme, puce, composant) : ceux de son
 	 * éleveur moins ceux que portent ses autres entités du combat — un exemplaire par poireau.
-	 * -1 si la possession est inconnue (scénarios de test).
+	 * null si la possession est inconnue : un équipement construit en code est alors refusé.
 	 */
-	public int availableCopies(Entity entity, int template) {
+	public java.util.Map<Integer, Integer> availableCopies(Entity entity) {
 		var items = mFarmerItems.get(entity.getFarmer());
-		if (items == null) return -1;
-		int available = items.getOrDefault(template, 0);
+		if (items == null) return null;
+		var available = new HashMap<Integer, Integer>(items);
 		for (var other : getAllEntities(true)) {
 			if (other == entity || other.getFarmer() != entity.getFarmer()) continue;
-			for (var w : other.getWeapons()) if (w.getId() == template) available--;
-			for (var c : other.getChips()) if (c.getId() == template) available--;
-			for (int t : other.getComponentTemplates()) if (t == template) available--;
+			for (var w : other.getWeapons()) available.merge(w.getId(), -1, Integer::sum);
+			for (var c : other.getChips()) available.merge(c.getId(), -1, Integer::sum);
+			for (int t : other.getComponentTemplates()) available.merge(t, -1, Integer::sum);
 		}
-		return Math.max(0, available);
+		return available;
 	}
 
 	public java.util.Map<Integer, Integer> getFarmerItems(int farmer) {

@@ -132,6 +132,55 @@ public class TestLoadoutObject extends FightTestBase {
 	}
 
 	@Test
+	public void forgottenWeaponsStayCandidatesAndCountOnce() throws Exception {
+		// Deux armes oubliées listées comme armes, dont une aussi en candidate : une seule portée.
+		own(Map.of(116, 1, 117, 1, 37, 1));
+		attachAI(a1, "function beforeFight() { setLoadout({weapons: [116, 117, 'pistol'], forgotten_weapons: [116], stats: {strength: 1}}) }");
+		attachAI(a2, "");
+		attachAI(b1, "");
+		runFight();
+		var ids = a1.getWeapons().stream().map(w -> w.getId()).toList();
+		Assert.assertEquals(1, ids.stream().filter(id -> id == 116 || id == 117).count());
+		Assert.assertTrue(ids.contains(37));
+		Assert.assertEquals(ids.size(), ids.stream().distinct().count());
+	}
+
+	@Test
+	public void withoutStatsOnlyTheGearChanges() throws Exception {
+		own(Map.of(37, 1));
+		attachAI(a1, "function beforeFight() { setLoadout({weapons: ['pistol']}) }");
+		attachAI(a2, "");
+		attachAI(b1, "");
+		runFight();
+		Assert.assertEquals(List.of(37), a1.getWeapons().stream().map(w -> w.getId()).toList());
+		Assert.assertEquals(100, a1.getStrength()); // capital gardé, aucune potion
+		Assert.assertEquals(10, fight.getState().getRestatPotionsAvailable(FARMER));
+	}
+
+	@Test
+	public void unknownInventoryRefusesAnObject() throws Exception {
+		attachAI(a1, "function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }");
+		attachAI(a2, "");
+		attachAI(b1, "");
+		runFight();
+		Assert.assertEquals("false", a1.getRegister("ok"));
+	}
+
+	@Test
+	public void aNumberIsStillALoadoutName() throws Exception {
+		var stats = new HashMap<Integer, Integer>();
+		stats.put(Entity.STAT_STRENGTH, 300);
+		a1.addLoadout(new FightLoadout("1", List.of(), List.of(), List.of(), stats));
+		own(Map.of());
+		attachAI(a1, "function beforeFight() { var n = 1\nsetRegister('ok', '' + setLoadout(n)) }");
+		attachAI(a2, "");
+		attachAI(b1, "");
+		runFight();
+		Assert.assertEquals("true", a1.getRegister("ok"));
+		Assert.assertEquals(300, a1.getStrength());
+	}
+
+	@Test
 	public void withoutRulesAnObjectIsRefused() throws Exception {
 		Generator.setLoadoutRules(null);
 		attachAI(a1, "function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }");

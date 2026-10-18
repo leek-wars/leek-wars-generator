@@ -190,6 +190,10 @@ public class EntityInfo {
 		if (e.hasNonNull("cell")) {
 			cell = e.get("cell").intValue();
 		}
+		if (e.hasNonNull("component_templates")) {
+			componentTemplates = new ArrayList<>();
+			for (var t : e.get("component_templates")) componentTemplates.add(t.intValue());
+		}
 		ArrayNode loadouts = (ArrayNode) e.get("loadouts");
 		if (loadouts != null) {
 			for (var l : loadouts) {
@@ -375,6 +379,11 @@ public class EntityInfo {
 				loadoutsJson.add(lj);
 			}
 			json.set("loadouts", loadoutsJson);
+		}
+		if (componentTemplates != null && !componentTemplates.isEmpty()) {
+			var templates = Json.createArray();
+			for (int t : componentTemplates) templates.add(t);
+			json.set("component_templates", templates);
 		}
 		if (capitalStats != null) {
 			ObjectNode capital = Json.createObject();
