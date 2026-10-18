@@ -328,8 +328,44 @@ public class State {
 			if (!mFarmerItems.containsKey(e.getFarmer())) farmers.add(e.getFarmer());
 		}
 		var rules = Generator.getLoadoutRules();
-		var loaded = rules == null ? java.util.Map.<Integer, java.util.Map<Integer, Integer>>of() : rules.farmerItems(farmers);
-		for (int f : farmers) mFarmerItems.put(f, f > 0 ? loaded.get(f) : null);
+		if (rules == null) {
+			for (int f : farmers) mFarmerItems.put(f, null);
+			return;
+		}
+		var loaded = rules.farmerItems(farmers);
+		var free = rules.freeComponents(farmers);
+		for (int f : farmers) {
+			mFarmerItems.put(f, f > 0 ? loaded.get(f) : null);
+			if (f > 0 && free.get(f) != null) addFreeComponents(f, free.get(f));
+		}
+	}
+
+	/**
+	 * Complète le pot d'un éleveur avec ses pièces améliorées libres lues à la demande : le pot
+	 * du début de combat ne couvre que les modèles de ses ensembles enregistrés. Une pièce déjà
+	 * dans le pot, ou qu'une entité tient, n'y entre pas une seconde fois.
+	 */
+	private void addFreeComponents(int farmer, java.util.List<ComponentInstance> pieces) {
+		var pool = mFreeComponents.computeIfAbsent(farmer, k -> new ArrayList<>());
+		var known = new HashSet<Integer>();
+		for (var piece : pool) known.add(piece.getId());
+		for (var e : getAllEntities(true)) {
+			for (var piece : e.getHeldComponents()) known.add(piece.getId());
+		}
+		for (var piece : pieces) {
+			if (known.add(piece.getId())) pool.add(piece);
+		}
+	}
+
+	/**
+	 * Pièces améliorées dont {@code entity} dispose : celles du pot de son éleveur et celles
+	 * qu'elle tient déjà.
+	 */
+	public java.util.List<ComponentInstance> availablePieces(Entity entity) {
+		var pieces = new ArrayList<ComponentInstance>(entity.getHeldComponents());
+		var pool = mFreeComponents.get(entity.getFarmer());
+		if (pool != null) pieces.addAll(pool);
+		return pieces;
 	}
 
 	public void setFreeComponents(int farmer, java.util.List<ComponentInstance> instances) {

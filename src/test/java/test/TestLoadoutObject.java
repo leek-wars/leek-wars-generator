@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.leek.Leek;
+import com.leekwars.generator.state.ComponentInstance;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.state.LoadoutRules;
@@ -29,6 +30,7 @@ public class TestLoadoutObject extends FightTestBase {
 	// Inventaire que les règles rendent à la demande, et nombre de demandes.
 	private Map<Integer, Integer> lazyItems = null;
 	private int itemRequests = 0;
+	private List<ComponentInstance> lazyPieces = List.of();
 
 	private static Leek farmerLeek(int id, String name, int farmer) {
 		return new Leek(id, name, farmer, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
@@ -46,8 +48,14 @@ public class TestLoadoutObject extends FightTestBase {
 			@Override public FightLoadout resolve(JsonNode loadout, int level) {
 				Map<Integer, Integer> stats = new HashMap<>();
 				stats.put(Entity.STAT_STRENGTH, loadout.get("stats").get("strength").asInt());
+				// Composants : le modèle et la force que doit ajouter la pièce améliorée voulue.
+				var components = new ArrayList<FightLoadout.ComponentChoice>();
+				for (var c : loadout.get("components")) {
+					var wanted = c.path("stats").has("strength") ? Map.of(Entity.STAT_STRENGTH, c.get("stats").get("strength").asInt()) : null;
+					components.add(new FightLoadout.ComponentChoice(c.get("item").asInt(), wanted));
+				}
 				return new FightLoadout(loadout.get("name").asString(), ids(loadout.get("weapons")), ids(loadout.get("forgotten_weapons")),
-					ids(loadout.get("chips")), stats, stats, false, new ArrayList<>());
+					ids(loadout.get("chips")), stats, stats, false, components);
 			}
 			@Override public int totalCapital(int level) { return level * 5; }
 			@Override public Map<Integer, Map<Integer, Integer>> farmerItems(java.util.Set<Integer> farmers) {
@@ -55,6 +63,9 @@ public class TestLoadoutObject extends FightTestBase {
 				var items = new HashMap<Integer, Map<Integer, Integer>>();
 				if (lazyItems != null && farmers.contains(FARMER)) items.put(FARMER, lazyItems);
 				return items;
+			}
+			@Override public Map<Integer, List<ComponentInstance>> freeComponents(java.util.Set<Integer> farmers) {
+				return farmers.contains(FARMER) ? Map.of(FARMER, lazyPieces) : Map.of();
 			}
 		});
 	}
@@ -117,7 +128,7 @@ public class TestLoadoutObject extends FightTestBase {
 		run("function beforeFight() { setLoadout({weapons: ['pistol'], chips: [CHIP_FLASH], stats: {strength: 1}}) }", "function beforeFight() { var inv = getInventory()\n"
 			+ "setRegister('inv', jsonEncode([inv.weapons, inv.chips, inv.components, inv.capital])) }");
 		// a1 porte un pistolet et le flash : il reste au second un laser, un pistolet, le core3, pas de flash.
-		Assert.assertEquals("[[{\"item\":37,\"quantity\":1},{\"item\":47,\"quantity\":1}],[],[{\"item\":292,\"quantity\":1}],50]", a2.getRegister("inv"));
+		Assert.assertEquals("[[{\"item\":37,\"quantity\":1},{\"item\":47,\"quantity\":1}],[],[{\"alterations\":[],\"item\":292,\"quantity\":1,\"stats\":{\"cores\":10,\"frequency\":30,\"tp\":1}}],50]", a2.getRegister("inv"));
 	}
 
 	@Test
@@ -248,5 +259,21 @@ public class TestLoadoutObject extends FightTestBase {
 		runFight();
 		Assert.assertEquals(List.of(47), weapons(a1));
 		Assert.assertEquals(List.of(47), weapons(b1));
+	}
+
+	@Test
+	public void improvedPiecesShowInTheInventoryAndCanBeTaken() throws Exception {
+		// Deux core3 dont un amélioré (+7 force), lu à la demande : le premier poireau le prend.
+		lazyItems = Map.of(292, 2);
+		lazyPieces = List.of(new ComponentInstance(900, 292, Map.of(Entity.STAT_STRENGTH, 7)));
+		fight.getState().setRestatPotionsAvailable(FARMER, 10);
+		String take = "setLoadout({components: [{item: 292, stats: {strength: 7}}], stats: {strength: 10}})";
+		run("function beforeFight() { setRegister('inv', jsonEncode(getInventory().components))\n" + take + " }",
+			"function beforeFight() { " + take + "\nsetRegister('inv', jsonEncode(getInventory().components)) }");
+		Assert.assertEquals("[{\"alterations\":[{\"strength\":7}],\"item\":292,\"quantity\":2,\"stats\":{\"cores\":10,\"frequency\":30,\"tp\":1}}]", a1.getRegister("inv"));
+		Assert.assertEquals(17, a1.getStrength());
+		Assert.assertEquals(10, a2.getStrength());
+		// Le second a pris la pièce de base : son inventaire ne compte que la sienne, sans amélioration.
+		Assert.assertEquals("[{\"alterations\":[],\"item\":292,\"quantity\":1,\"stats\":{\"cores\":10,\"frequency\":30,\"tp\":1}}]", a2.getRegister("inv"));
 	}
 }

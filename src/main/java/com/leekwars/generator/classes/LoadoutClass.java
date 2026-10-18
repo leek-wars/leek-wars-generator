@@ -18,6 +18,7 @@ import com.leekwars.generator.component.Components;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.items.Items;
 import com.leekwars.generator.leek.FarmerLog;
+import com.leekwars.generator.state.ComponentInstance;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.weapons.Weapons;
@@ -295,7 +296,12 @@ public class LoadoutClass {
 		var copies = ai.getFight().getState().availableCopies(entity);
 		if (copies == null) return null;
 		var available = new java.util.TreeMap<>(copies); // dans l'ordre des modèles
-		ai.ops(10 + available.size());
+		// Pièces améliorées par modèle, dans l'ordre des ids : celles du pot et celles qu'il tient.
+		var pieces = new HashMap<Integer, List<ComponentInstance>>();
+		for (var piece : ai.getFight().getState().availablePieces(entity)) {
+			pieces.computeIfAbsent(piece.getTemplate(), k -> new ArrayList<>()).add(piece);
+		}
+		ai.ops(10 + available.size() + pieces.size());
 		var weapons = Json.createArray();
 		var chips = Json.createArray();
 		var components = Json.createArray();
@@ -313,6 +319,20 @@ public class LoadoutClass {
 			item.put("item", template);
 			item.put("quantity", entry.getValue());
 			if (list == weapons && Weapons.getWeapon(template).isForgotten()) item.put("forgotten", true);
+			if (list == components) {
+				// Stats du modèle, puis ce qu'ajoute l'altération de chaque pièce améliorée : le
+				// format des stats d'un composant de setLoadout, qui choisit la pièce la plus proche.
+				var stats = Json.createObject();
+				var base = Components.getComponent(template).getStats();
+				for (var stat : STATS.keySet()) {
+					if (base.containsKey(stat)) stats.put(stat, base.get(stat));
+				}
+				item.set("stats", stats);
+				var alterations = Json.createArray();
+				var templatePieces = pieces.getOrDefault(template, List.of()).stream().sorted(java.util.Comparator.comparingInt(ComponentInstance::getId)).toList();
+				for (var piece : templatePieces) alterations.add(statNames(piece.getStats()));
+				item.set("alterations", alterations);
+			}
 			list.add(item);
 		}
 		var out = Json.createObject();
@@ -321,6 +341,16 @@ public class LoadoutClass {
 		out.set("components", components);
 		var rules = Generator.getLoadoutRules();
 		out.put("capital", rules == null ? 0 : rules.totalCapital(entity.getLevel()));
+		return out;
+	}
+
+	/** Stats indexées par STAT_*, en objet par nom, dans l'ordre de l'export. */
+	private static ObjectNode statNames(Map<Integer, Integer> stats) {
+		var out = Json.createObject();
+		for (var stat : STATS.entrySet()) {
+			var value = stats.get(stat.getValue());
+			if (value != null && value != 0) out.put(stat.getKey(), value);
+		}
 		return out;
 	}
 

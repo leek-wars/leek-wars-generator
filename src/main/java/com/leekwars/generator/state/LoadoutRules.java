@@ -1,5 +1,6 @@
 package com.leekwars.generator.state;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +29,14 @@ public interface LoadoutRules {
 	 * State#availableCopies) ; un éleveur absent du résultat a un inventaire inconnu.
 	 */
 	default Map<Integer, Map<Integer, Integer>> farmerItems(Set<Integer> farmers) {
+		return Map.of();
+	}
+
+	/**
+	 * Pièces AMÉLIORÉES libres (non portées) de ces éleveurs, toutes : demandées avec farmerItems,
+	 * elles complètent le pot de setLoadout et nourrissent les altérations de getInventory.
+	 */
+	default Map<Integer, List<ComponentInstance>> freeComponents(Set<Integer> farmers) {
 		return Map.of();
 	}
 }
