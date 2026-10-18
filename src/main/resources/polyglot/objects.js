@@ -605,7 +605,8 @@
 	function callerModule() {
 		var stack = String(new Error().stack || '').split('\n');
 		for (var i = 0; i < stack.length; i++) {
-			var m = /(\/ai\/[^\s():]+)/.exec(stack[i]);
+			// « at f (/ai/Mes IA/x.mjs:3:12) » : le chemin peut contenir des espaces, il va jusqu'à :ligne:colonne.
+			var m = /(\/ai\/.*?):\d+:\d+\)?\s*$/.exec(stack[i]);
 			if (m) return m[1];
 		}
 		return null;

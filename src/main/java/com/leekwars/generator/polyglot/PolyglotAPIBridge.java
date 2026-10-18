@@ -200,7 +200,10 @@ public class PolyglotAPIBridge {
 		});
 		bag.put("__getLoadout", (ProxyExecutable) args -> {
 			String content = ai.readPlayerFile(callerArg(args), pathArg(args));
-			if (content == null) return null;
+			if (content == null) {
+				chargeOps(ai, 1); // comme fileRead : un appel n'est jamais gratuit
+				return null;
+			}
 			try {
 				var loadouts = com.leekwars.generator.classes.LoadoutClass.readLoadouts(ai, content);
 				ai.syncRealToGuest();

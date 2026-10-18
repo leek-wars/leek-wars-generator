@@ -91,6 +91,19 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	}
 
 	@Test
+	public void jsFileReadFromAFolderWithSpaces() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("Mes IA/data.json", "{\"n\": 7}");
+		files.put("Mes IA/lib.mjs", "export function n() { return JSON.parse(System.fileRead('data.json')).n; }\n");
+		files.put("main.mjs", "import { n } from './Mes IA/lib.mjs';\n"
+			+ "globalThis.turn = function() { return n() + (System.fileRead('a\\u0000b') === null ? 10 : 0); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(17, ((Number) multiFileAI(sb, "js", files, "main.mjs").runIA()).longValue());
+		}
+	}
+
+	@Test
 	public void jsGetLoadoutGivesIds() throws Exception {
 		initFightOnly();
 		Map<String, String> files = new HashMap<>();

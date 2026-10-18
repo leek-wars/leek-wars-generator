@@ -105,6 +105,9 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final int MAX_FILE_CONTENTS = 256 * 1024;
 	private final java.util.Map<String, String> readFiles = new java.util.HashMap<>();
 	private int readFilesLength;
+	// Chemins demandés et refusés (introuvable, trop gros) : signalés une fois, comme LeekScript le
+	// fait une fois à la compilation, et jamais relus.
+	private final java.util.Set<String> refusedFiles = new java.util.HashSet<>();
 	private final boolean jsModule;            // entree JS chargee comme module ES
 	private Context context;
 	/** Cap RAM guest (sandbox.MaxHeapMemory, octets) pose sur le contexte courant, pour les journaux de depassement. */
@@ -248,18 +251,19 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	public String readPlayerFile(String callerModule, String path) {
 		String leekPath = resolvePlayerPath(callerModule, entryPath, path);
-		String content = leekPath == null ? null : readFiles.get(leekPath);
-		if (content != null) return content;
+		String key = leekPath != null ? leekPath : String.valueOf(path);
+		String content = readFiles.get(key);
+		if (content != null || refusedFiles.contains(key)) return content;
 		content = leekPath == null || fileSystem == null ? null : fileSystem.readFile(leekPath);
-		if (content == null) {
-			addSystemLog(leekscript.AILog.WARNING, Error.FILE_NOT_FOUND, new String[] { path });
+		Error refusal = content == null ? Error.FILE_NOT_FOUND
+			: content.length() > MAX_FILE_CONTENT || readFilesLength + content.length() > MAX_FILE_CONTENTS ? Error.FILE_TOO_LARGE
+			: null;
+		if (refusal != null) {
+			refusedFiles.add(key);
+			addSystemLog(leekscript.AILog.WARNING, refusal, new String[] { String.valueOf(path) });
 			return null;
 		}
-		if (content.length() > MAX_FILE_CONTENT || readFilesLength + content.length() > MAX_FILE_CONTENTS) {
-			addSystemLog(leekscript.AILog.WARNING, Error.FILE_TOO_LARGE, new String[] { path });
-			return null;
-		}
-		readFiles.put(leekPath, content);
+		readFiles.put(key, content);
 		readFilesLength += content.length();
 		return content;
 	}
@@ -277,7 +281,12 @@ public class PolyglotEntityAI extends EntityAI {
 		} else {
 			base = entryPath != null && entryPath.contains("/") ? entryPath.substring(0, entryPath.lastIndexOf('/')) : "";
 		}
-		String resolved = java.nio.file.Path.of(PolyglotFileSystem.MOUNT, base).resolve(path).normalize().toString();
+		String resolved;
+		try {
+			resolved = java.nio.file.Path.of(PolyglotFileSystem.MOUNT, base).resolve(path).normalize().toString();
+		} catch (java.nio.file.InvalidPathException e) { // caractère nul…
+			return null;
+		}
 		if (!resolved.startsWith(PolyglotFileSystem.MOUNT + "/")) return null;
 		String leekPath = resolved.substring(PolyglotFileSystem.MOUNT.length() + 1);
 		for (String segment : leekPath.split("/")) {
