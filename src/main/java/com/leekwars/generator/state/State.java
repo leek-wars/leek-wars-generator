@@ -328,35 +328,32 @@ public class State {
 			if (!mFarmerItems.containsKey(e.getFarmer())) farmers.add(e.getFarmer());
 		}
 		var rules = Generator.getLoadoutRules();
-		if (rules == null) {
-			for (int f : farmers) mFarmerItems.put(f, null);
-			return;
-		}
-		var loaded = rules.farmerItems(farmers);
+		var loaded = rules == null ? java.util.Map.<Integer, java.util.Map<Integer, Integer>>of() : rules.farmerItems(farmers);
 		var known = new HashSet<Integer>();
 		for (int f : farmers) {
-			mFarmerItems.put(f, f > 0 ? loaded.get(f) : null);
-			if (mFarmerItems.get(f) != null) known.add(f);
+			var items = f > 0 ? loaded.get(f) : null;
+			mFarmerItems.put(f, items);
+			if (items != null) known.add(f);
 		}
-		if (known.isEmpty()) return;
-		rules.freeComponents(known).forEach(this::addFreeComponents);
-	}
-
-	/**
-	 * Complète le pot d'un éleveur avec ses pièces améliorées libres lues à la demande : le pot
-	 * du début de combat ne couvre que les modèles de ses ensembles enregistrés. Une pièce déjà
-	 * dans le pot, ou qu'une entité tient, n'y entre pas une seconde fois.
-	 */
-	private void addFreeComponents(int farmer, java.util.List<ComponentInstance> pieces) {
-		var pool = mFreeComponents.computeIfAbsent(farmer, k -> new ArrayList<>());
-		var known = new HashSet<Integer>();
-		for (var piece : pool) known.add(piece.getId());
+		if (rules == null || known.isEmpty()) return;
+		var free = rules.freeComponents(known);
+		if (free.isEmpty()) return;
+		// Pièces déjà connues : celles du pot du début de combat et celles que tiennent les entités.
+		var knownPieces = new HashSet<Integer>();
+		for (var pool : mFreeComponents.values()) {
+			for (var piece : pool) knownPieces.add(piece.getId());
+		}
 		for (var e : getAllEntities(true)) {
-			for (var piece : e.getHeldComponents()) known.add(piece.getId());
+			for (var piece : e.getHeldComponents()) knownPieces.add(piece.getId());
 		}
-		for (var piece : pieces) {
-			if (known.add(piece.getId())) pool.add(piece);
-		}
+		// Le pot du début de combat ne couvre que les modèles des ensembles enregistrés : on le
+		// complète, sans y mettre deux fois une pièce.
+		free.forEach((f, pieces) -> {
+			var pool = mFreeComponents.computeIfAbsent(f, k -> new ArrayList<>());
+			for (var piece : pieces) {
+				if (knownPieces.add(piece.getId())) pool.add(piece);
+			}
+		});
 	}
 
 	/**
@@ -364,7 +361,7 @@ public class State {
 	 * qu'elle tient déjà.
 	 */
 	public java.util.List<ComponentInstance> availablePieces(Entity entity) {
-		var pieces = new ArrayList<ComponentInstance>(entity.getHeldComponents()); // copie : l'appelant la trie
+		var pieces = new ArrayList<ComponentInstance>(entity.getHeldComponents());
 		var pool = mFreeComponents.get(entity.getFarmer());
 		if (pool != null) pieces.addAll(pool);
 		return pieces;

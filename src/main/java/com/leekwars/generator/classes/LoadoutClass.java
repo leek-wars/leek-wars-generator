@@ -298,11 +298,8 @@ public class LoadoutClass {
 		var available = new java.util.TreeMap<>(copies); // dans l'ordre des modèles
 		// Pièces améliorées par modèle, dans l'ordre des ids : celles du pot et celles qu'il tient.
 		var availablePieces = ai.getFight().getState().availablePieces(entity);
-		availablePieces.sort(java.util.Comparator.comparingInt(ComponentInstance::getId));
-		var pieces = new HashMap<Integer, List<ComponentInstance>>();
-		for (var piece : availablePieces) {
-			pieces.computeIfAbsent(piece.getTemplate(), k -> new ArrayList<>()).add(piece);
-		}
+		var pieces = availablePieces.stream().sorted(java.util.Comparator.comparingInt(ComponentInstance::getId))
+			.collect(java.util.stream.Collectors.groupingBy(ComponentInstance::getTemplate));
 		ai.ops(10 + available.size() + availablePieces.size());
 		var weapons = Json.createArray();
 		var chips = Json.createArray();
@@ -328,13 +325,11 @@ public class LoadoutClass {
 				// (alterations) : ces dernières, dans les stats d'un composant de setLoadout, y
 				// désignent la pièce. Pas « stats » pour la base : renvoyé tel quel à setLoadout, un
 				// composant de l'inventaire demanderait sinon une pièce améliorée.
-				var base = Json.createObject();
-				for (var stat : STATS.keySet()) {
-					if (component.getStats().containsKey(stat)) base.put(stat, component.getStats().get(stat));
-				}
-				item.set("base", base);
+				item.set("base", statNames(stat -> component.getStats().get(stat)));
 				var alterations = Json.createArray();
-				for (var piece : pieces.getOrDefault(template, List.of())) alterations.add(statNames(piece.getStats()));
+				for (var piece : pieces.getOrDefault(template, List.of())) {
+					alterations.add(statNames(stat -> piece.getStats().get(STATS.get(stat))));
+				}
 				item.set("alterations", alterations);
 			}
 			list.add(item);
@@ -348,12 +343,12 @@ public class LoadoutClass {
 		return out;
 	}
 
-	/** Stats indexées par STAT_*, en objet par nom, dans l'ordre de l'export. */
-	private static ObjectNode statNames(Map<Integer, Integer> stats) {
+	/** Stats en objet par nom, dans l'ordre de l'export ; {@code value} lit la valeur d'un nom. */
+	private static ObjectNode statNames(Function<String, Integer> value) {
 		var out = Json.createObject();
-		for (var stat : STATS.entrySet()) {
-			var value = stats.get(stat.getValue());
-			if (value != null && value != 0) out.put(stat.getKey(), value);
+		for (var stat : STATS.keySet()) {
+			var v = value.apply(stat);
+			if (v != null && v != 0) out.put(stat, v);
 		}
 		return out;
 	}
