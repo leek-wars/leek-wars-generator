@@ -72,6 +72,7 @@ public class PolyglotAPIBridge {
 		for (Map.Entry<String, Object> entry : CONSTANTS.entrySet()) {
 			bag.putIfAbsent(entry.getKey(), entry.getValue());
 		}
+		if (ai instanceof PolyglotEntityAI pai) installFileFunctions(bag, pai);
 		List<String> sorted = new ArrayList<>(bag.keySet());
 		Collections.sort(sorted);
 		bindings.putMember("__lw", ProxyObject.fromMap(bag));
@@ -182,6 +183,49 @@ public class PolyglotAPIBridge {
 			}
 		}
 		return score;
+	}
+
+	/**
+	 * fileRead et getLoadout, qui en LeekScript lisent leur fichier à la compilation : ici au premier
+	 * appel (PolyglotEntityAI.readPlayerFile), relatif au module appelant que le prélude passe en 1er
+	 * argument (System.fileRead / System.getLoadout). getLoadout rend du JSON, que le prélude décode
+	 * en objet natif.
+	 */
+	private static void installFileFunctions(Map<String, Object> bag, PolyglotEntityAI ai) {
+		bag.put("__fileRead", (ProxyExecutable) args -> {
+			String content = ai.readPlayerFile(callerArg(args), pathArg(args));
+			// Coût de la lecture, au caractère près : le décodage natif (JSON.parse) n'est pas compté.
+			chargeOps(ai, 1 + (content == null ? 0 : content.length()));
+			return content;
+		});
+		bag.put("__getLoadout", (ProxyExecutable) args -> {
+			String content = ai.readPlayerFile(callerArg(args), pathArg(args));
+			if (content == null) return null;
+			try {
+				var loadouts = com.leekwars.generator.classes.LoadoutClass.readLoadouts(ai, content);
+				ai.syncRealToGuest();
+				return loadouts == null ? null : loadouts.toString();
+			} catch (leekscript.runner.LeekRunException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	private static String callerArg(Value[] args) {
+		return args.length > 0 && args[0] != null && args[0].isString() ? args[0].asString() : null;
+	}
+
+	private static String pathArg(Value[] args) {
+		return args.length > 1 && args[1] != null && args[1].isString() ? args[1].asString() : null;
+	}
+
+	private static void chargeOps(PolyglotEntityAI ai, long ops) {
+		try {
+			ai.ops(ops);
+		} catch (leekscript.runner.LeekRunException e) {
+			throw new RuntimeException(e);
+		}
+		ai.syncRealToGuest();
 	}
 
 	private static ProxyExecutable makeProxy(EntityAI ai, String name, Map<Integer, Method> byArity, boolean python) {

@@ -34,6 +34,16 @@ public class LoadoutClass {
 	private static final List<String> STATS = List.of("life", "strength", "wisdom", "agility", "resistance", "science", "magic", "frequency", "tp", "mp", "cores", "ram");
 
 	public static Object getLoadout(EntityAI ai, String json) throws LeekRunException {
+		var loadouts = readLoadouts(ai, json);
+		return loadouts == null ? null : LeekValueManager.parseJSON(loadouts, ai);
+	}
+
+	/**
+	 * Le ou les équipements d'un JSON, items convertis en ids (un objet, ou un tableau si le JSON en
+	 * décrit plusieurs) ; null, avec une erreur au rapport, s'il n'en décrit aucun. Partagé par
+	 * getLoadout en LeekScript et en JS / Python (rendu en JSON à ces derniers).
+	 */
+	public static JsonNode readLoadouts(EntityAI ai, String json) throws LeekRunException {
 		ai.ops((long) json.length() * 10);
 		JsonNode data;
 		try {
@@ -68,7 +78,7 @@ public class LoadoutClass {
 		if (!unknown.isEmpty()) {
 			ai.getLogs().addLog(AILog.WARNING, "getLoadout : objets inconnus ignorés : " + String.join(", ", unknown));
 		}
-		return LeekValueManager.parseJSON(result, ai);
+		return result;
 	}
 
 	private static ObjectNode normalize(JsonNode source, List<String> unknown) {

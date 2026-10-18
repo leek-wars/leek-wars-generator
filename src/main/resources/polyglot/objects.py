@@ -711,6 +711,28 @@ def _lw_build(G, NAMES):
         def time(self): return F.getTime()
         @property
         def timestamp(self): return F.getTimestamp()
+        # Texte d'un fichier de l'IA (JSON, donnees...), relatif au module qui appelle ; None s'il est
+        # introuvable ou trop gros (64 Ko). Lu une fois par combat. json.loads en fait un dict.
+        # getattr : dans une classe, F.__x serait renomme en F._System__x (name mangling).
+        def fileRead(self, path): return getattr(F, '__fileRead')(_caller_module(), path)
+        # Equipement ecrit en JSON (format d'export de la page du poireau), items en ids
+        # (WEAPON_*, CHIP_*, modele des composants) ; liste s'il y en a plusieurs, None sinon.
+        def getLoadout(self, path):
+            data = getattr(F, '__getLoadout')(_caller_module(), path)
+            if data is None: return None
+            import json as _json
+            return _json.loads(data)
+    # Module du joueur qui appelle (/ai/...), lu dans la pile : les chemins de fileRead / getLoadout
+    # sont relatifs a son dossier. Le prelude et l'entree hors module n'y figurent pas sous /ai/ ->
+    # None, et l'hote part du dossier de l'entree.
+    def _caller_module():
+        import sys as _sys
+        f = _sys._getframe(1)
+        while f is not None:
+            name = f.f_code.co_filename
+            if isinstance(name, str) and name.startswith('/ai/'): return name
+            f = f.f_back
+        return None
     def _set_ops(fn):
         _ops_impl[0] = fn
         try:

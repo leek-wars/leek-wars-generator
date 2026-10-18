@@ -73,6 +73,75 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
+	// ---- System.fileRead / System.getLoadout : fichiers de données du joueur ----
+
+	@Test
+	public void jsFileReadRelativeToTheCallingModule() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("lib/data.json", "{\"n\": 5}");
+		files.put("lib/conf.mjs", "export function conf() { return JSON.parse(System.fileRead('data.json')).n; }\n");
+		files.put("main.mjs",
+			"import { conf } from './lib/conf.mjs';\n"
+			+ "globalThis.turn = function() { return conf() * 100 + JSON.parse(System.fileRead('lib/data.json')).n * 10"
+			+ " + JSON.parse(System.fileRead('/lib/data.json')).n / 5; };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(551, ((Number) multiFileAI(sb, "js", files, "main.mjs").runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void jsGetLoadoutGivesIds() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("tank.json", "{\"weapons\": [\"weapon_m_laser\", \"pistol\"], \"chips\": [\"flash\"], \"stats\": {\"strength\": 300}}");
+		files.put("main.mjs", "globalThis.turn = function() { var l = System.getLoadout('tank.json');"
+			+ " return l.weapons[0] * 1000000 + l.weapons[1] * 1000 + l.chips[0] * 10 + (l.stats.strength === 300 ? 1 : 0); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(47_037_061L, ((Number) multiFileAI(sb, "js", files, "main.mjs").runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void jsFileReadRefusesMissingEscapingAndHugeFiles() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("big.json", "x".repeat(70_000));
+		files.put("main.mjs", "globalThis.turn = function() {"
+			+ " return [System.fileRead('nope.json'), System.fileRead('../../etc/passwd'), System.fileRead('.git/config'),"
+			+ " System.fileRead('big.json'), System.getLoadout('nope.json')].every(function (x) { return x === null; }) ? 1 : 0; };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(1, ((Number) multiFileAI(sb, "js", files, "main.mjs").runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void jsFileReadIsFrozenForTheFight() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("n.txt", "1");
+		files.put("main.mjs", "globalThis.turn = function() { return Number(System.fileRead('n.txt')); };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			PolyglotEntityAI ai = multiFileAI(sb, "js", files, "main.mjs");
+			Assert.assertEquals(1, ((Number) ai.runIA()).longValue());
+			files.put("n.txt", "2"); // sauvé pendant le combat : l'IA garde ce qu'elle a lu
+			Assert.assertEquals(1, ((Number) ai.runIA()).longValue());
+		}
+	}
+
+	@Test
+	public void pythonFileReadAndGetLoadoutFromAPackageModule() throws Exception {
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("lib/data.json", "{\"n\": 5}");
+		files.put("lib/tank.json", "{\"weapons\": [\"m_laser\"], \"chips\": []}");
+		files.put("lib/conf.py", "import json\ndef conf():\n    return json.loads(System.fileRead('data.json'))['n'] + System.getLoadout('tank.json')['weapons'][0]\n");
+		files.put("main.py", "from lib import conf\ndef turn():\n    return conf.conf() * 10 + (1 if System.fileRead('nope.json') is None else 0)\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(521, ((Number) multiFileAI(sb, "python", files, "main.py").runIA()).longValue());
+		}
+	}
+
 	@Test
 	public void pythonMultiFileImport() throws Exception {
 		initFightOnly();
