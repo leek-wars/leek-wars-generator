@@ -297,11 +297,13 @@ public class LoadoutClass {
 		if (copies == null) return null;
 		var available = new java.util.TreeMap<>(copies); // dans l'ordre des modèles
 		// Pièces améliorées par modèle, dans l'ordre des ids : celles du pot et celles qu'il tient.
+		var availablePieces = ai.getFight().getState().availablePieces(entity);
+		availablePieces.sort(java.util.Comparator.comparingInt(ComponentInstance::getId));
 		var pieces = new HashMap<Integer, List<ComponentInstance>>();
-		for (var piece : ai.getFight().getState().availablePieces(entity)) {
+		for (var piece : availablePieces) {
 			pieces.computeIfAbsent(piece.getTemplate(), k -> new ArrayList<>()).add(piece);
 		}
-		ai.ops(10 + available.size() + pieces.size());
+		ai.ops(10 + available.size() + availablePieces.size());
 		var weapons = Json.createArray();
 		var chips = Json.createArray();
 		var components = Json.createArray();
@@ -320,17 +322,19 @@ public class LoadoutClass {
 			item.put("quantity", entry.getValue());
 			if (list == weapons && Weapons.getWeapon(template).isForgotten()) item.put("forgotten", true);
 			if (list == components) {
-				// Stats du modèle, puis ce qu'ajoute l'altération de chaque pièce améliorée : le
-				// format des stats d'un composant de setLoadout, qui choisit la pièce la plus proche.
-				var stats = Json.createObject();
-				var base = Components.getComponent(template).getStats();
+				var component = Components.getComponent(template);
+				if (component == null) continue;
+				// Stats du modèle (base), puis ce qu'ajoute l'altération de chaque pièce améliorée
+				// (alterations) : ces dernières, dans les stats d'un composant de setLoadout, y
+				// désignent la pièce. Pas « stats » pour la base : renvoyé tel quel à setLoadout, un
+				// composant de l'inventaire demanderait sinon une pièce améliorée.
+				var base = Json.createObject();
 				for (var stat : STATS.keySet()) {
-					if (base.containsKey(stat)) stats.put(stat, base.get(stat));
+					if (component.getStats().containsKey(stat)) base.put(stat, component.getStats().get(stat));
 				}
-				item.set("stats", stats);
+				item.set("base", base);
 				var alterations = Json.createArray();
-				var templatePieces = pieces.getOrDefault(template, List.of()).stream().sorted(java.util.Comparator.comparingInt(ComponentInstance::getId)).toList();
-				for (var piece : templatePieces) alterations.add(statNames(piece.getStats()));
+				for (var piece : pieces.getOrDefault(template, List.of())) alterations.add(statNames(piece.getStats()));
 				item.set("alterations", alterations);
 			}
 			list.add(item);

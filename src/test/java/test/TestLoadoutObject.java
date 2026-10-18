@@ -128,7 +128,7 @@ public class TestLoadoutObject extends FightTestBase {
 		run("function beforeFight() { setLoadout({weapons: ['pistol'], chips: [CHIP_FLASH], stats: {strength: 1}}) }", "function beforeFight() { var inv = getInventory()\n"
 			+ "setRegister('inv', jsonEncode([inv.weapons, inv.chips, inv.components, inv.capital])) }");
 		// a1 porte un pistolet et le flash : il reste au second un laser, un pistolet, le core3, pas de flash.
-		Assert.assertEquals("[[{\"item\":37,\"quantity\":1},{\"item\":47,\"quantity\":1}],[],[{\"alterations\":[],\"item\":292,\"quantity\":1,\"stats\":{\"cores\":10,\"frequency\":30,\"tp\":1}}],50]", a2.getRegister("inv"));
+		Assert.assertEquals("[[{\"item\":37,\"quantity\":1},{\"item\":47,\"quantity\":1}],[],[{\"alterations\":[],\"base\":{\"cores\":10,\"frequency\":30,\"tp\":1},\"item\":292,\"quantity\":1}],50]", a2.getRegister("inv"));
 	}
 
 	@Test
@@ -270,10 +270,10 @@ public class TestLoadoutObject extends FightTestBase {
 		String take = "setLoadout({components: [{item: 292, stats: {strength: 7}}], stats: {strength: 10}})";
 		run("function beforeFight() { setRegister('inv', jsonEncode(getInventory().components))\n" + take + " }",
 			"function beforeFight() { " + take + "\nsetRegister('inv', jsonEncode(getInventory().components)) }");
-		Assert.assertEquals("[{\"alterations\":[{\"strength\":7}],\"item\":292,\"quantity\":2,\"stats\":{\"cores\":10,\"frequency\":30,\"tp\":1}}]", a1.getRegister("inv"));
+		Assert.assertEquals("[{\"alterations\":[{\"strength\":7}],\"base\":{\"cores\":10,\"frequency\":30,\"tp\":1},\"item\":292,\"quantity\":2}]", a1.getRegister("inv"));
 		Assert.assertEquals(17, a1.getStrength());
 		Assert.assertEquals(10, a2.getStrength());
 		// Le second a pris la pièce de base : son inventaire ne compte que la sienne, sans amélioration.
-		Assert.assertEquals("[{\"alterations\":[],\"item\":292,\"quantity\":1,\"stats\":{\"cores\":10,\"frequency\":30,\"tp\":1}}]", a2.getRegister("inv"));
+		Assert.assertEquals("[{\"alterations\":[],\"base\":{\"cores\":10,\"frequency\":30,\"tp\":1},\"item\":292,\"quantity\":1}]", a2.getRegister("inv"));
 	}
 }

@@ -333,11 +333,13 @@ public class State {
 			return;
 		}
 		var loaded = rules.farmerItems(farmers);
-		var free = rules.freeComponents(farmers);
+		var known = new HashSet<Integer>();
 		for (int f : farmers) {
 			mFarmerItems.put(f, f > 0 ? loaded.get(f) : null);
-			if (f > 0 && free.get(f) != null) addFreeComponents(f, free.get(f));
+			if (mFarmerItems.get(f) != null) known.add(f);
 		}
+		if (known.isEmpty()) return;
+		rules.freeComponents(known).forEach(this::addFreeComponents);
 	}
 
 	/**
@@ -362,7 +364,7 @@ public class State {
 	 * qu'elle tient déjà.
 	 */
 	public java.util.List<ComponentInstance> availablePieces(Entity entity) {
-		var pieces = new ArrayList<ComponentInstance>(entity.getHeldComponents());
+		var pieces = new ArrayList<ComponentInstance>(entity.getHeldComponents()); // copie : l'appelant la trie
 		var pool = mFreeComponents.get(entity.getFarmer());
 		if (pool != null) pieces.addAll(pool);
 		return pieces;
