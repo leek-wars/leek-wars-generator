@@ -165,6 +165,25 @@ public class PolyglotFileSystem implements FileSystem {
 		}
 	}
 
+	/**
+	 * Fichier de données visé par {@code path} (fileRead, getLoadout) : relatif au dossier du module
+	 * {@code fromModule} (/ai/...), ou de l'entrée si l'appelant n'est pas un module ; en / depuis la
+	 * racine. null s'il sort du dossier du joueur ou vise un .git. Pas de sondage d'extension.
+	 */
+	public String resolveDataPath(String fromModule, String path) {
+		if (path == null || path.isEmpty()) return null;
+		String resolved;
+		try {
+			Path base = fromModule != null && fromModule.startsWith(MOUNT + "/") ? Path.of(fromModule).getParent() : Path.of(MOUNT, entryDir);
+			resolved = abs(path.startsWith("/") ? Path.of(MOUNT, path.substring(1)) : base.resolve(path)).toString();
+		} catch (java.nio.file.InvalidPathException e) { // caractère nul…
+			return null;
+		}
+		if (!resolved.startsWith(MOUNT + "/")) return null;
+		String leekPath = resolved.substring(MOUNT.length() + 1);
+		return java.util.Arrays.asList(leekPath.split("/")).contains(".git") ? null : leekPath;
+	}
+
 	/** Chemin virtuel absolu d'un fichier LeekScript (ex: "strategie.js" -> "/ai/strategie.js"). */
 	public static String mountPath(String leekPath) {
 		return MOUNT + "/" + leekPath;

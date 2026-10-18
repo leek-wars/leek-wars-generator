@@ -589,19 +589,15 @@
 		get date() { return F.getDate(); },
 		get time() { return F.getTime(); },
 		get timestamp() { return F.getTimestamp(); },
-		// Texte d'un fichier de l'IA (JSON, données…), relatif au module qui appelle ; null s'il est
-		// introuvable ou trop gros (64 Ko). Lu une fois par combat. JSON.parse en fait un objet.
+		// Texte d'un fichier de l'IA, relatif au module qui appelle ; null s'il est introuvable ou trop gros.
 		fileRead: function (path) { return F.__fileRead(callerModule(), path); },
-		// Équipement écrit en JSON (format d'export de la page du poireau), items en ids
-		// (WEAPON_*, CHIP_*, modèle des composants) ; tableau s'il y en a plusieurs, null sinon.
+		// Équipement écrit en JSON, items en ids ; tableau s'il y en a plusieurs, null sinon.
 		getLoadout: function (path) {
 			var json = F.__getLoadout(callerModule(), path);
 			return json == null ? null : JSON.parse(json);
 		},
 	};
-	// Module du joueur qui appelle (/ai/...), lu dans la pile : les chemins de fileRead / getLoadout
-	// sont relatifs à son dossier. Le prélude et l'entrée hors module n'y figurent pas sous /ai/ ->
-	// null, et l'hôte part du dossier de l'entrée.
+	// Module du joueur qui appelle (/ai/...), lu dans la pile ; null hors module (l'hôte prend l'entrée).
 	function callerModule() {
 		var stack = String(new Error().stack || '').split('\n');
 		for (var i = 0; i < stack.length; i++) {

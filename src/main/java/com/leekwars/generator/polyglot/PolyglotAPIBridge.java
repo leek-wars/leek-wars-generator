@@ -16,11 +16,13 @@ import org.graalvm.polyglot.proxy.ProxyObject;
 
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.FightFunctions;
+import com.leekwars.generator.classes.LoadoutClass;
 import com.leekwars.generator.fight.entity.EntityAI;
 
 import leekscript.common.Type;
 import leekscript.compiler.LeekScript;
 import leekscript.runner.LeekFunctions;
+import leekscript.runner.LeekRunException;
 
 /**
  * Expose l'API de combat (fonctions + constantes) a un contexte GraalVM, dans un SAC CACHE
@@ -186,49 +188,37 @@ public class PolyglotAPIBridge {
 	}
 
 	/**
-	 * fileRead et getLoadout, qui en LeekScript lisent leur fichier à la compilation : ici au premier
-	 * appel (PolyglotEntityAI.readPlayerFile), relatif au module appelant que le prélude passe en 1er
-	 * argument (System.fileRead / System.getLoadout). getLoadout rend du JSON, que le prélude décode
-	 * en objet natif.
+	 * fileRead et getLoadout, que LeekScript lit à la compilation : ici à l'appel, relatif au module
+	 * que le prélude passe en 1er argument (PolyglotEntityAI.readPlayerFile). getLoadout rend du JSON,
+	 * décodé en objet natif par le prélude.
 	 */
 	private static void installFileFunctions(Map<String, Object> bag, PolyglotEntityAI ai) {
-		bag.put("__fileRead", (ProxyExecutable) args -> {
-			String content = ai.readPlayerFile(callerArg(args), pathArg(args));
-			// Coût de la lecture, au caractère près : le décodage natif (JSON.parse) n'est pas compté.
-			chargeOps(ai, 1 + (content == null ? 0 : content.length()));
-			return content;
-		});
-		bag.put("__getLoadout", (ProxyExecutable) args -> {
-			String content = ai.readPlayerFile(callerArg(args), pathArg(args));
-			if (content == null) {
-				chargeOps(ai, 1); // comme fileRead : un appel n'est jamais gratuit
-				return null;
-			}
-			try {
-				var loadouts = com.leekwars.generator.classes.LoadoutClass.readLoadouts(ai, content);
-				ai.syncRealToGuest();
-				return loadouts == null ? null : loadouts.toString();
-			} catch (leekscript.runner.LeekRunException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		bag.put("__fileRead", (ProxyExecutable) args -> charged(ai, () -> ai.readPlayerFile(stringArg(args, 0), stringArg(args, 1))));
+		bag.put("__getLoadout", (ProxyExecutable) args -> charged(ai, () -> {
+			String content = ai.readPlayerFile(stringArg(args, 0), stringArg(args, 1));
+			var loadouts = content == null ? null : LoadoutClass.readLoadouts(ai, content);
+			return loadouts == null ? null : loadouts.toString();
+		}));
 	}
 
-	private static String callerArg(Value[] args) {
-		return args.length > 0 && args[0] != null && args[0].isString() ? args[0].asString() : null;
+	private interface HostCall {
+		Object call() throws LeekRunException;
 	}
 
-	private static String pathArg(Value[] args) {
-		return args.length > 1 && args[1] != null && args[1].isString() ? args[1].asString() : null;
-	}
-
-	private static void chargeOps(PolyglotEntityAI ai, long ops) {
+	/** Un appel hôte facturé : 1 opération (plus ce que l'appel facture lui-même), puis le miroir guest rafraîchi. */
+	private static Object charged(PolyglotEntityAI ai, HostCall call) {
 		try {
-			ai.ops(ops);
-		} catch (leekscript.runner.LeekRunException e) {
-			throw new RuntimeException(e);
+			ai.ops(1);
+			Object result = call.call();
+			ai.syncRealToGuest();
+			return result;
+		} catch (LeekRunException e) {
+			throw new RuntimeException(e); // TOO_MUCH_OPERATIONS : runIA la déballe
 		}
-		ai.syncRealToGuest();
+	}
+
+	private static String stringArg(Value[] args, int i) {
+		return args.length > i && args[i] != null && args[i].isString() ? args[i].asString() : null;
 	}
 
 	private static ProxyExecutable makeProxy(EntityAI ai, String name, Map<Integer, Method> byArity, boolean python) {

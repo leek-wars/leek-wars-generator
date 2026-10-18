@@ -31,6 +31,7 @@ import com.leekwars.generator.state.Entity;
 
 import leekscript.AILog;
 import leekscript.common.Error;
+import leekscript.compiler.bloc.MainLeekBlock;
 import leekscript.compiler.AIFile;
 import leekscript.compiler.LeekScript;
 import leekscript.runner.LeekFunctions;
@@ -99,15 +100,9 @@ public class PolyglotEntityAI extends EntityAI {
 	private final PolyglotSandbox sandbox;
 	private final String entryPath;            // chemin LeekScript de l'entree (null = mono-fichier)
 	private final PolyglotFileSystem fileSystem; // fichiers du joueur montes (null = mono-fichier)
-	// fileRead / getLoadout : chaque fichier lu une fois par combat (contenu figé, déterminisme),
-	// bornes de LeekScript (MainLeekBlock) par fichier et sur le total.
-	private static final int MAX_FILE_CONTENT = 64 * 1024;
-	private static final int MAX_FILE_CONTENTS = 256 * 1024;
-	private final java.util.Map<String, String> readFiles = new java.util.HashMap<>();
+	// Fichiers lus par fileRead / getLoadout (null = refusé, signalé une fois) : cf readPlayerFile.
+	private final Map<String, String> readFiles = new HashMap<>();
 	private int readFilesLength;
-	// Chemins demandés et refusés (introuvable, trop gros) : signalés une fois, comme LeekScript le
-	// fait une fois à la compilation, et jamais relus.
-	private final java.util.Set<String> refusedFiles = new java.util.HashSet<>();
 	private final boolean jsModule;            // entree JS chargee comme module ES
 	private Context context;
 	/** Cap RAM guest (sandbox.MaxHeapMemory, octets) pose sur le contexte courant, pour les journaux de depassement. */
@@ -244,55 +239,31 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
-	 * Contenu d'un fichier du joueur pour fileRead / getLoadout. Le chemin est relatif au module qui
-	 * appelle ({@code callerModule}, chemin virtuel /ai/... trouvé par le prélude dans la pile), ou au
-	 * dossier de l'entrée ; un chemin en / part de la racine. null, avec un avertissement au rapport,
-	 * si le fichier est introuvable, hors du dossier du joueur ou trop gros.
+	 * Contenu d'un fichier du joueur pour fileRead / getLoadout : chemin relatif au module qui appelle
+	 * (/ai/..., trouvé par le prélude dans la pile) ou à l'entrée. Lu une fois par combat (contenu
+	 * figé), facturé à la première lecture, mêmes bornes qu'en LeekScript. null, avec un avertissement
+	 * au rapport (une fois), si le fichier est introuvable, hors du dossier du joueur ou trop gros.
 	 */
-	public String readPlayerFile(String callerModule, String path) {
-		String leekPath = resolvePlayerPath(callerModule, entryPath, path);
+	public String readPlayerFile(String callerModule, String path) throws LeekRunException {
+		String leekPath = fileSystem == null ? null : fileSystem.resolveDataPath(callerModule, path);
 		String key = leekPath != null ? leekPath : String.valueOf(path);
-		String content = readFiles.get(key);
-		if (content != null || refusedFiles.contains(key)) return content;
-		content = leekPath == null || fileSystem == null ? null : fileSystem.readFile(leekPath);
-		Error refusal = content == null ? Error.FILE_NOT_FOUND
-			: content.length() > MAX_FILE_CONTENT || readFilesLength + content.length() > MAX_FILE_CONTENTS ? Error.FILE_TOO_LARGE
-			: null;
+		if (readFiles.containsKey(key)) return readFiles.get(key);
+		String content = leekPath == null ? null : fileSystem.readFile(leekPath);
+		Error refusal = null;
+		if (content == null) {
+			refusal = Error.FILE_NOT_FOUND;
+		} else if (content.length() > MainLeekBlock.MAX_FILE_CONTENT || readFilesLength + content.length() > MainLeekBlock.MAX_FILE_CONTENTS) {
+			refusal = Error.FILE_TOO_LARGE;
+		}
 		if (refusal != null) {
-			refusedFiles.add(key);
-			addSystemLog(leekscript.AILog.WARNING, refusal, new String[] { String.valueOf(path) });
-			return null;
+			addSystemLog(AILog.WARNING, refusal, new String[] { String.valueOf(path) });
+			content = null;
+		} else {
+			ops(content.length());
+			readFilesLength += content.length();
 		}
 		readFiles.put(key, content);
-		readFilesLength += content.length();
 		return content;
-	}
-
-	/** Chemin LeekScript visé par {@code path}, ou null s'il sort du dossier du joueur ou vise un .git. */
-	static String resolvePlayerPath(String callerModule, String entryPath, String path) {
-		if (path == null || path.isEmpty()) return null;
-		String base;
-		if (path.startsWith("/")) {
-			base = "";
-			path = path.substring(1);
-		} else if (callerModule != null && callerModule.startsWith(PolyglotFileSystem.MOUNT + "/")) {
-			base = callerModule.substring(PolyglotFileSystem.MOUNT.length() + 1);
-			base = base.contains("/") ? base.substring(0, base.lastIndexOf('/')) : "";
-		} else {
-			base = entryPath != null && entryPath.contains("/") ? entryPath.substring(0, entryPath.lastIndexOf('/')) : "";
-		}
-		String resolved;
-		try {
-			resolved = java.nio.file.Path.of(PolyglotFileSystem.MOUNT, base).resolve(path).normalize().toString();
-		} catch (java.nio.file.InvalidPathException e) { // caractère nul…
-			return null;
-		}
-		if (!resolved.startsWith(PolyglotFileSystem.MOUNT + "/")) return null;
-		String leekPath = resolved.substring(PolyglotFileSystem.MOUNT.length() + 1);
-		for (String segment : leekPath.split("/")) {
-			if (segment.equals(".git")) return null;
-		}
-		return leekPath;
 	}
 
 	public PolyglotEntityAI(String languageId, String source, String entryPath, PolyglotFileSystem fileSystem, PolyglotSandbox sandbox) {
