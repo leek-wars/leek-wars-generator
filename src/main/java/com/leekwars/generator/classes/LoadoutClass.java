@@ -7,9 +7,11 @@ import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.component.Components;
 import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.weapons.Weapons;
 
 import leekscript.AILog;
@@ -79,6 +81,100 @@ public class LoadoutClass {
 			ai.getLogs().addLog(AILog.WARNING, "getLoadout : objets inconnus ignorés : " + String.join(", ", unknown));
 		}
 		return result;
+	}
+
+	/**
+	 * setLoadout(objet) : équipement construit en code (au format de getLoadout, ids ou noms),
+	 * résolu par les règles du serveur au niveau du poireau. Un exemplaire par poireau : ce que
+	 * l'éleveur n'a plus de libre (ses autres entités du combat le portent) est retiré, avec un
+	 * avertissement. null si l'objet n'est pas un équipement ou si les règles manquent.
+	 */
+	public static FightLoadout loadoutFromObject(EntityAI ai, Object value) throws LeekRunException {
+		var rules = Generator.getLoadoutRules();
+		if (rules == null) {
+			ai.getLogs().addLog(AILog.WARNING, "setLoadout : un équipement en objet n'est pas disponible dans ce combat");
+			return null;
+		}
+		var loadouts = readLoadouts(ai, Json.toJson(ai.toJSON(value)));
+		if (loadouts == null) return null;
+		if (!loadouts.isObject()) {
+			ai.getLogs().addLog(AILog.ERROR, "setLoadout : un seul équipement à la fois");
+			return null;
+		}
+		var loadout = (ObjectNode) loadouts;
+		var entity = ai.getEntity();
+		var state = ai.getFight().getState();
+		var missing = new ArrayList<String>();
+		var taken = new java.util.HashMap<Integer, Integer>();
+		IntPredicate take = template -> {
+			int available = state.availableCopies(entity, template);
+			if (available >= 0 && taken.getOrDefault(template, 0) >= available) {
+				missing.add(String.valueOf(template));
+				return false;
+			}
+			taken.merge(template, 1, Integer::sum);
+			return true;
+		};
+		for (var list : List.of("weapons", "chips")) {
+			var kept = Json.createArray();
+			for (var id : loadout.get(list)) if (take.test(id.asInt())) kept.add(id);
+			loadout.set(list, kept);
+		}
+		// Armes oubliées : des candidates, une seule sera portée ; chacune doit être disponible.
+		var forgotten = Json.createArray();
+		for (var id : loadout.get("forgotten_weapons")) {
+			int available = state.availableCopies(entity, id.asInt());
+			if (available != 0) forgotten.add(id);
+			else missing.add(id.asString());
+		}
+		loadout.set("forgotten_weapons", forgotten);
+		var components = Json.createArray();
+		for (var c : loadout.get("components")) if (take.test(c.get("item").asInt())) components.add(c);
+		loadout.set("components", components);
+		if (!missing.isEmpty()) {
+			ai.getLogs().addLog(AILog.WARNING, "setLoadout : objets non disponibles pour ce poireau, ignorés : " + String.join(", ", missing));
+		}
+		return rules.resolve(loadout, entity.getLevel());
+	}
+
+	/**
+	 * Objets dont ce poireau dispose pour un équipement construit en code : les exemplaires de son
+	 * éleveur que ses autres entités du combat ne portent pas, et son capital. null si l'inventaire
+	 * n'est pas connu dans ce combat.
+	 */
+	public static Object getInventory(EntityAI ai) throws LeekRunException {
+		var inventory = readInventory(ai);
+		return inventory == null ? null : LeekValueManager.parseJSON(inventory, ai);
+	}
+
+	/** getInventory en JSON (rendu tel quel aux IA JS / Python). */
+	public static JsonNode readInventory(EntityAI ai) throws LeekRunException {
+		var entity = ai.getEntity();
+		var state = ai.getFight().getState();
+		var items = state.getFarmerItems(entity.getFarmer());
+		if (items == null) return null;
+		ai.ops(10 + items.size());
+		var weapons = Json.createArray();
+		var chips = Json.createArray();
+		var components = Json.createArray();
+		for (int template : new java.util.TreeSet<>(items.keySet())) {
+			ArrayNode list = Weapons.getWeapon(template) != null ? weapons
+				: Chips.getChip(template) != null ? chips
+				: Components.getComponent(template) != null ? components : null;
+			int quantity = state.availableCopies(entity, template);
+			if (list == null || quantity <= 0) continue;
+			var entry = Json.createObject();
+			entry.put("item", template);
+			entry.put("quantity", quantity);
+			list.add(entry);
+		}
+		var out = Json.createObject();
+		out.set("weapons", weapons);
+		out.set("chips", chips);
+		out.set("components", components);
+		var rules = Generator.getLoadoutRules();
+		out.put("capital", rules == null ? 0 : rules.totalCapital(entity.getLevel()));
+		return out;
 	}
 
 	private static ObjectNode normalize(JsonNode source, List<String> unknown) {

@@ -157,6 +157,8 @@ public abstract class Entity {
 	 * Tant qu'il n'appelle pas setLoadout(), il ne rend rien — son équipement est à lui.
 	 */
 	private List<ComponentInstance> mHeldComponents = new ArrayList<>();
+	/** Modèles des composants portés (de base ou améliorés) : un exemplaire par poireau, cf State#availableCopies. */
+	private List<Integer> mComponentTemplates = new ArrayList<>();
 
 	private int usedTP;
 	private int usedMP;
@@ -285,6 +287,7 @@ public abstract class Entity {
 		this.passiveEffects = new ArrayList<>(entity.passiveEffects);
 		this.passiveEffectsView = Collections.unmodifiableList(this.passiveEffects);
 		this.mHeldComponents = new ArrayList<>(entity.mHeldComponents);
+		this.mComponentTemplates = new ArrayList<>(entity.mComponentTemplates);
 		// effects and launchedEffects are final fields, each Entity gets a fresh empty list.
 	}
 
@@ -423,6 +426,14 @@ public abstract class Entity {
 		return mHeldComponents;
 	}
 
+	public List<Integer> getComponentTemplates() {
+		return mComponentTemplates;
+	}
+
+	public void setComponentTemplates(List<Integer> templates) {
+		mComponentTemplates = templates == null ? new ArrayList<>() : new ArrayList<>(templates);
+	}
+
 	/** Pièces améliorées portées à l'entrée dans le combat : il les tient d'emblée. */
 	public void setHeldComponents(List<ComponentInstance> instances) {
 		mHeldComponents = instances == null ? new ArrayList<>() : new ArrayList<>(instances);
@@ -516,6 +527,10 @@ public abstract class Entity {
 		// l'amélioration se dispute, et elle s'ajoute par-dessus. Si les stats n'ont PAS été
 		// recalculées, elles portent encore les améliorations que le poireau avait à l'entrée :
 		// il ne rend rien et ne prend rien, sinon les siennes compteraient deux fois.
+		if (statsRecomputed) {
+			mComponentTemplates = new ArrayList<>();
+			for (FightLoadout.ComponentChoice choice : loadout.getComponents()) mComponentTemplates.add(choice.template);
+		}
 		if (statsRecomputed && !loadout.getComponents().isEmpty() && state != null) {
 			List<ComponentInstance> previous = mHeldComponents;
 			mHeldComponents = new ArrayList<>();

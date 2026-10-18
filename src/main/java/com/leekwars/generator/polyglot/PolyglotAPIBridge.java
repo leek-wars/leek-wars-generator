@@ -189,11 +189,15 @@ public class PolyglotAPIBridge {
 
 	/**
 	 * fileRead et getLoadout, que LeekScript lit à la compilation : ici à l'appel, relatif au module
-	 * que le prélude passe en 1er argument (PolyglotEntityAI.readPlayerFile). getLoadout rend du JSON,
-	 * décodé en objet natif par le prélude.
+	 * que le prélude passe en 1er argument (PolyglotEntityAI.readPlayerFile). getLoadout et
+	 * getInventory rendent du JSON, décodé en objet natif par le prélude.
 	 */
 	private static void installFileFunctions(Map<String, Object> bag, PolyglotEntityAI ai) {
 		bag.put("__fileRead", (ProxyExecutable) args -> charged(ai, () -> ai.readPlayerFile(stringArg(args, 0), stringArg(args, 1))));
+		bag.put("__getInventory", (ProxyExecutable) args -> charged(ai, () -> {
+			var inventory = LoadoutClass.readInventory(ai);
+			return inventory == null ? null : inventory.toString();
+		}));
 		bag.put("__getLoadout", (ProxyExecutable) args -> charged(ai, () -> {
 			String content = ai.readPlayerFile(stringArg(args, 0), stringArg(args, 1));
 			var loadouts = content == null ? null : LoadoutClass.readLoadouts(ai, content);

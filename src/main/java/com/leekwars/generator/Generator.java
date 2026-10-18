@@ -48,6 +48,16 @@ public class Generator {
 	private static final String TAG = Generator.class.getSimpleName();
 
 	private static ErrorManager errorManager = null;
+	// Règles d'un équipement construit en code, fournies par le serveur (null = setLoadout(objet) indisponible).
+	private static com.leekwars.generator.state.LoadoutRules loadoutRules = null;
+
+	public static void setLoadoutRules(com.leekwars.generator.state.LoadoutRules rules) {
+		loadoutRules = rules;
+	}
+
+	public static com.leekwars.generator.state.LoadoutRules getLoadoutRules() {
+		return loadoutRules;
+	}
 
 	public boolean use_leekscript_cache = true;
 
@@ -168,6 +178,8 @@ public class Generator {
 			// Pot commun des pièces améliorées libres : les setLoadout() de ses poireaux s'y
 			// servent, premier arrivé premier servi, le temps du combat.
 			fight.getState().setFreeComponents(farmer.id, farmer.componentStock);
+			// Objets possédés (armes, puces, composants) : setLoadout(objet) et getInventory().
+			fight.getState().setFarmerItems(farmer.id, farmer.items);
 		}
 
 		// Create logs and compile AIs

@@ -536,9 +536,10 @@ public class FightFunctions {
 		method("getNearestAllyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 
 		// Hooks beforeFight() / afterFight()
+		// Nom d'un ensemble enregistré, ou équipement construit en code (format de getLoadout).
 		method("setLoadout", "Fight", 100, true, new CallableVersion[] {
-			new CallableVersion(Type.BOOL, new Type[] { Type.STRING }),
-			new CallableVersion(Type.BOOL, new Type[] { Type.STRING, Type.BOOL }),
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY }),
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.BOOL }),
 		});
 		method("getWinner", "Fight", 5, true, Type.INT, new Type[0]);
 
@@ -585,6 +586,7 @@ public class FightFunctions {
 
 		// Loadout : le chemin, littéral, est remplacé à la compilation par le contenu du fichier.
 		method("getLoadout", "Loadout", 0, true, Type.ANY, new Type[] { Type.STRING }).setFileArgument();
+		method("getInventory", "Loadout", 0, true, Type.ANY, new Type[0]);
 	}
 
 	private static LeekFunctions method(String name, String clazz, int operations, boolean isStatic, Type return_type, Type[] arguments) {

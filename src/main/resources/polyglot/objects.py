@@ -527,6 +527,12 @@ def _lw_build(G, NAMES):
         # répartition de capital du loadout (defaut True).
         def setLoadout(self, name, changeStats=None):
             return F.setLoadout(name) if changeStats is None else F.setLoadout(name, changeStats)
+        # Objets dont l'entite dispose pour un equipement construit en code ; None si inconnu.
+        def getInventory(self):
+            data = getattr(F, '__getInventory')()
+            if data is None: return None
+            import json as _json
+            return _json.loads(data)
         # Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (me/getEntity() = bulbe).
         def summon(self, chip, cell, callback, name=None):
             return F.summon(_cpid(chip), _cid(cell), callback) if name is None else F.summon(_cpid(chip), _cid(cell), callback, name)

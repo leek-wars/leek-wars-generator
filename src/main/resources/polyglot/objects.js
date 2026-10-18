@@ -427,6 +427,8 @@
 		// Change l'équipement courant (nom du loadout). changeStats = appliquer aussi la
 		// répartition de capital du loadout (defaut true).
 		setLoadout(name, changeStats) { return (changeStats === undefined) ? F.setLoadout(name) : F.setLoadout(name, changeStats); }
+		// Objets dont l'entité dispose pour un équipement construit en code (setLoadout(objet)) ; null si inconnu.
+		getInventory() { var json = F.__getInventory(); return json == null ? null : JSON.parse(json); }
 		// Invoque un bulbe : callback = fonction guest rejouee a chaque tour du bulbe (pendant laquelle
 		// me/getEntity() designent le bulbe). cf TypeMarshaller.wrapGuestFunction + BulbAI.
 		summon(chip, cell, callback, name) {

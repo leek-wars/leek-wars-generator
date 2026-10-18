@@ -234,6 +234,7 @@ public class State {
 		for (var entry : state.mFreeComponents.entrySet()) {
 			this.mFreeComponents.put(entry.getKey(), new ArrayList<>(entry.getValue()));
 		}
+		this.mFarmerItems = state.mFarmerItems; // lecture seule pendant le combat
 	}
 
 	// Potions de restat disponibles / consommées par farmer pendant le combat.
@@ -272,6 +273,35 @@ public class State {
 	 * n'est écrit en base, le combat suivant repart de l'équipement réel.
 	 */
 	private java.util.Map<Integer, java.util.List<ComponentInstance>> mFreeComponents = new HashMap<>();
+
+	// Exemplaires possédés par modèle, par éleveur (cf FarmerInfo.items) ; absent = inconnu.
+	private java.util.Map<Integer, java.util.Map<Integer, Integer>> mFarmerItems = new HashMap<>();
+
+	public void setFarmerItems(int farmer, java.util.Map<Integer, Integer> items) {
+		if (items != null) mFarmerItems.put(farmer, items);
+	}
+
+	/**
+	 * Exemplaires d'un modèle (arme, puce, composant) dont {@code entity} dispose : ceux de son
+	 * éleveur moins ceux que portent ses autres entités du combat — un exemplaire par poireau.
+	 * -1 si la possession est inconnue (scénarios de test).
+	 */
+	public int availableCopies(Entity entity, int template) {
+		var items = mFarmerItems.get(entity.getFarmer());
+		if (items == null) return -1;
+		int available = items.getOrDefault(template, 0);
+		for (var other : getAllEntities(true)) {
+			if (other == entity || other.getFarmer() != entity.getFarmer()) continue;
+			for (var w : other.getWeapons()) if (w.getId() == template) available--;
+			for (var c : other.getChips()) if (c.getId() == template) available--;
+			for (int t : other.getComponentTemplates()) if (t == template) available--;
+		}
+		return Math.max(0, available);
+	}
+
+	public java.util.Map<Integer, Integer> getFarmerItems(int farmer) {
+		return mFarmerItems.get(farmer);
+	}
 
 	public void setFreeComponents(int farmer, java.util.List<ComponentInstance> instances) {
 		mFreeComponents.put(farmer, instances == null ? new ArrayList<>() : new ArrayList<>(instances));

@@ -15,6 +15,11 @@ public class FarmerInfo {
 	 * poireaux PORTENT n'y est pas — ils le tiennent (EntityInfo.heldComponents).
 	 */
 	public java.util.List<com.leekwars.generator.state.ComponentInstance> componentStock;
+	/**
+	 * Exemplaires possédés par modèle d'objet (armes, puces, composants), portés ou libres. null =
+	 * inconnu (scénarios de test) : setLoadout(objet) ne vérifie alors pas la possession.
+	 */
+	public java.util.Map<Integer, Integer> items;
 
 	public ObjectNode toJson() {
 		ObjectNode json = Json.createObject();
@@ -22,6 +27,11 @@ public class FarmerInfo {
 		json.put("name", name);
 		json.put("country", country);
 		json.put("restat_potions", restatPotions);
+		if (items != null) {
+			ObjectNode itemsJson = Json.createObject();
+			for (var entry : items.entrySet()) itemsJson.put(String.valueOf(entry.getKey()), entry.getValue());
+			json.set("items", itemsJson);
+		}
 		return json;
 	}
 }

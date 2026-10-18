@@ -71,6 +71,8 @@ public class EntityInfo {
 	 * lui prendre tant qu'il ne se rééquipe pas lui-même.
 	 */
 	public List<com.leekwars.generator.state.ComponentInstance> heldComponents;
+	/** Modèles des composants portés à l'entrée dans le combat (un exemplaire par poireau). */
+	public List<Integer> componentTemplates;
 	public Integer cell;
 
 	public static class LoadoutData {
@@ -301,6 +303,7 @@ public class EntityInfo {
 		entity.setCapitalStats(capitalStats);
 		entity.setLastFightCapital(lastFightCapital);
 		entity.setHeldComponents(heldComponents);
+		entity.setComponentTemplates(componentTemplates);
 
 		return entity;
 	}

@@ -11,6 +11,7 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.state.Entity;
+import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.fight.Fight;
@@ -1364,22 +1365,30 @@ public class FightClass {
 		return ai.getFight().getWinner();
 	}
 
-	public static boolean setLoadout(EntityAI ai, Object nameObject) throws LeekRunException {
-		return setLoadout(ai, nameObject, true);
+	public static boolean setLoadout(EntityAI ai, Object loadoutObject) throws LeekRunException {
+		return setLoadout(ai, loadoutObject, true);
 	}
 
-	public static boolean setLoadout(EntityAI ai, Object nameObject, Object changeStatsObject) throws LeekRunException {
+	public static boolean setLoadout(EntityAI ai, Object loadoutObject, Object changeStatsObject) throws LeekRunException {
 		if (!ai.isInBeforeFightHook()) {
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_OUT_OF_HOOK, new String[0]);
 			return false;
 		}
-		String name = ai.string(nameObject);
 		boolean changeStats = ai.bool(changeStatsObject);
 		var entity = ai.getEntity();
-		var loadout = entity.getLoadout(name);
-		if (loadout == null) {
-			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
-			return false;
+		FightLoadout loadout;
+		String name;
+		if (loadoutObject instanceof String || loadoutObject == null) {
+			name = ai.string(loadoutObject);
+			loadout = entity.getLoadout(name);
+			if (loadout == null) {
+				ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
+				return false;
+			}
+		} else {
+			loadout = LoadoutClass.loadoutFromObject(ai, loadoutObject);
+			if (loadout == null) return false;
+			name = loadout.getName();
 		}
 		// Forgotten weapons are unique per farmer: collect those already equipped on
 		// other entities of the same farmer so we don't duplicate them on this leek.
