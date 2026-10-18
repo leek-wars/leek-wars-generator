@@ -46,6 +46,7 @@ public class FarmerLog {
 	public static final int LOADOUT_NOT_ENOUGH_CAPITAL = 1011;
 	public static final int HOOK_REQUIRES_TURN = 1012;
 	public static final int HOOK_TOP_LEVEL_ACTS = 1013;
+	public static final int LOADOUT_ITEMS_UNAVAILABLE = 1014;
 
 	private boolean tooMuchDebug = false;
 

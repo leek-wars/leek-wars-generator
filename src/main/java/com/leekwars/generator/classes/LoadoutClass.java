@@ -17,6 +17,7 @@ import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.component.Components;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.items.Items;
+import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.weapons.Weapons;
@@ -133,7 +134,7 @@ public class LoadoutClass {
 
 		private boolean free(int template) {
 			if (taken.getOrDefault(template, 0) < available.getOrDefault(template, 0)) return true;
-			missing.add(String.valueOf(template));
+			missing.add(itemName(template));
 			return false;
 		}
 
@@ -151,7 +152,7 @@ public class LoadoutClass {
 		boolean takeComponent(int template) {
 			int size = TRIPLE_SLOT_COMPONENTS.contains(template) ? 3 : 1;
 			if (slots + size > MAX_COMPONENTS) {
-				missing.add(String.valueOf(template));
+				missing.add(itemName(template));
 				return false;
 			}
 			if (!take(template)) return false;
@@ -163,11 +164,20 @@ public class LoadoutClass {
 			return missing.isEmpty();
 		}
 
-		void warn(EntityAI ai) {
+		void warn(EntityAI ai, String loadout) {
 			if (!missing.isEmpty()) {
-				ai.getLogs().addLog(AILog.WARNING, "setLoadout : objets non disponibles pour ce poireau, ignorés : " + String.join(", ", missing));
+				ai.addSystemLog(AILog.WARNING, FarmerLog.LOADOUT_ITEMS_UNAVAILABLE, new String[] { loadout, String.join(", ", missing) });
 			}
 		}
+	}
+
+	private static String itemName(int template) {
+		var type = Items.getType(template);
+		String name = type == null ? null
+			: type == Items.TYPE_WEAPON ? Weapons.getWeapon(template).getName()
+			: type == Items.TYPE_CHIP ? Chips.getChip(template).getName()
+			: type == Items.TYPE_COMPONENT ? Components.getComponent(template).getName() : null;
+		return name == null ? String.valueOf(template) : name;
 	}
 
 	/**
@@ -222,7 +232,7 @@ public class LoadoutClass {
 		loadout.set("forgotten_weapons", forgotten);
 		loadout.set("chips", chips);
 		loadout.set("components", components);
-		copies.warn(ai);
+		copies.warn(ai, loadout.get("name").asString());
 		var resolved = rules.resolve(loadout, ai.getEntity().getLevel());
 		return resolved == null ? null : new ObjectLoadout(resolved, data.path("stats").isObject());
 	}
@@ -254,7 +264,7 @@ public class LoadoutClass {
 			});
 		}
 		if (copies.complete()) return loadout;
-		copies.warn(ai);
+		copies.warn(ai, loadout.getName());
 		return new FightLoadout(loadout.getName(), weapons, loadout.getForgottenWeapons(), chips, stats,
 			loadout.getCapitalStats(), loadout.isOverCapital(), components);
 	}

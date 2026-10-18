@@ -284,13 +284,16 @@ public class State {
 		if (items != null) mFarmerItems.put(farmer, items);
 	}
 
-	/** Objets que portent les autres entités de l'éleveur de {@code entity}, par modèle. */
+	/**
+	 * Objets que portent les autres entités de l'éleveur de {@code entity} dans son équipe, par
+	 * modèle (un combat de test peut opposer deux poireaux du même éleveur).
+	 */
 	public java.util.Map<Integer, Integer> wornByOthers(Entity entity) {
 		var worn = new HashMap<Integer, Integer>();
 		int farmer = entity.getFarmer();
 		if (farmer <= 0) return worn;
 		for (var other : getAllEntities(true)) {
-			if (other == entity || other.getFarmer() != farmer) continue;
+			if (other == entity || other.getFarmer() != farmer || other.getTeam() != entity.getTeam()) continue;
 			for (var w : other.getWeapons()) worn.merge(w.getId(), 1, Integer::sum);
 			for (var c : other.getChips()) worn.merge(c.getId(), 1, Integer::sum);
 			for (int t : other.getComponentTemplates()) worn.merge(t, 1, Integer::sum);

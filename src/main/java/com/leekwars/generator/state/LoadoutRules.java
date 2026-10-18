@@ -26,5 +26,7 @@ public interface LoadoutRules {
 	 * libres. Demandés au premier setLoadout ou getInventory du combat seulement (cf
 	 * State#availableCopies). null si inconnus.
 	 */
-	Map<Integer, Integer> farmerItems(int farmer);
+	default Map<Integer, Integer> farmerItems(int farmer) {
+		return null;
+	}
 }

@@ -234,4 +234,17 @@ public class TestLoadoutObject extends FightTestBase {
 		Assert.assertEquals(List.of(47), weapons(a1));
 		Assert.assertEquals(List.of(47), weapons(a2));
 	}
+
+	@Test
+	public void anEnemyLeekOfTheSameFarmerTakesNothing() throws Exception {
+		// Combat de test entre deux poireaux du même éleveur : chaque équipe a ses exemplaires.
+		b1.setFarmer(FARMER);
+		own(Map.of(47, 1));
+		attachAI(a1, "function beforeFight() { setLoadout({weapons: [WEAPON_M_LASER]}) }");
+		attachAI(a2, "");
+		attachAI(b1, "function beforeFight() { setLoadout({weapons: [WEAPON_M_LASER]}) }");
+		runFight();
+		Assert.assertEquals(List.of(47), weapons(a1));
+		Assert.assertEquals(List.of(47), weapons(b1));
+	}
 }
