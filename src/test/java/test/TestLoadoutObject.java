@@ -26,6 +26,9 @@ public class TestLoadoutObject extends FightTestBase {
 
 	private static final int FARMER = 7;
 	private Leek a1, a2, b1;
+	// Inventaire que les règles rendent à la demande, et nombre de demandes.
+	private Map<Integer, Integer> lazyItems = null;
+	private int itemRequests = 0;
 
 	private static Leek farmerLeek(int id, String name, int farmer) {
 		return new Leek(id, name, farmer, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
@@ -47,6 +50,10 @@ public class TestLoadoutObject extends FightTestBase {
 					ids(loadout.get("chips")), stats, stats, false, new ArrayList<>());
 			}
 			@Override public int totalCapital(int level) { return level * 5; }
+			@Override public Map<Integer, Integer> farmerItems(int farmer) {
+				itemRequests++;
+				return farmer == FARMER ? lazyItems : null;
+			}
 		});
 	}
 
@@ -66,17 +73,26 @@ public class TestLoadoutObject extends FightTestBase {
 		fight.getState().setRestatPotionsAvailable(FARMER, 10);
 	}
 
+	/** Combat où seuls les deux poireaux de l'éleveur ont une IA. */
+	private void run(String codeA1, String codeA2) throws Exception {
+		attachAI(a1, codeA1);
+		attachAI(a2, codeA2);
+		attachAI(b1, "");
+		runFight();
+	}
+
+	private static List<Integer> weapons(Leek leek) {
+		return leek.getWeapons().stream().map(w -> w.getId()).toList();
+	}
+
 	private static final String TANK = "{weapons: [WEAPON_M_LASER, 'pistol'], chips: [CHIP_FLASH], stats: {strength: 50}}";
 
 	@Test
 	public void appliesAnObjectBuiltInCode() throws Exception {
 		own(Map.of(47, 1, 37, 1, 6, 1));
-		attachAI(a1, "function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
+		run("function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }", "");
 		Assert.assertEquals("true", a1.getRegister("ok"));
-		Assert.assertEquals(List.of(47, 37), a1.getWeapons().stream().map(w -> w.getId()).toList());
+		Assert.assertEquals(List.of(47, 37), weapons(a1));
 		Assert.assertEquals(List.of(6), a1.getChips().stream().map(c -> c.getId()).toList());
 		Assert.assertEquals(50, a1.getStrength());
 	}
@@ -86,10 +102,7 @@ public class TestLoadoutObject extends FightTestBase {
 		// Un seul laser : le second poireau de l'éleveur qui le demande ne l'a pas.
 		own(Map.of(47, 1, 37, 2, 6, 2));
 		String code = "function beforeFight() { setLoadout(" + TANK + ") }";
-		attachAI(a1, code);
-		attachAI(a2, code);
-		attachAI(b1, "");
-		runFight();
+		run(code, code);
 		long lasers = List.of(a1, a2).stream().filter(l -> l.getWeapons().stream().anyMatch(w -> w.getId() == 47)).count();
 		Assert.assertEquals(1, lasers);
 		Assert.assertTrue(a1.getWeapons().stream().anyMatch(w -> w.getId() == 37));
@@ -99,11 +112,8 @@ public class TestLoadoutObject extends FightTestBase {
 	@Test
 	public void inventoryCountsWhatTheOtherLeeksDoNotWear() throws Exception {
 		own(Map.of(47, 1, 37, 2, 6, 1, 292, 1));
-		attachAI(a1, "function beforeFight() { setLoadout({weapons: ['pistol'], chips: [CHIP_FLASH], stats: {strength: 1}}) }");
-		attachAI(a2, "function beforeFight() { var inv = getInventory()\n"
+		run("function beforeFight() { setLoadout({weapons: ['pistol'], chips: [CHIP_FLASH], stats: {strength: 1}}) }", "function beforeFight() { var inv = getInventory()\n"
 			+ "setRegister('inv', jsonEncode([inv.weapons, inv.chips, inv.components, inv.capital])) }");
-		attachAI(b1, "");
-		runFight();
 		// a1 porte un pistolet et le flash : il reste au second un laser, un pistolet, le core3, pas de flash.
 		Assert.assertEquals("[[{\"item\":37,\"quantity\":1},{\"item\":47,\"quantity\":1}],[],[{\"item\":292,\"quantity\":1}],50]", a2.getRegister("inv"));
 	}
@@ -118,28 +128,21 @@ public class TestLoadoutObject extends FightTestBase {
 		attachAI(b1, "");
 		runFight();
 		Assert.assertEquals("true 50", a1.getRegister("ok"));
-		Assert.assertEquals(List.of(47), a1.getWeapons().stream().map(w -> w.getId()).toList());
+		Assert.assertEquals(List.of(47), weapons(a1));
 		Assert.assertEquals(70, a1.getStrength());
 	}
 
 	private void attachJsAI(Leek leek, String code) {
-		var file = new leekscript.compiler.AIFile("loadout_object_" + System.nanoTime() + ".js", code,
-			System.currentTimeMillis(), leekscript.compiler.LeekScript.LATEST_VERSION, leek.getId(), false);
-		leek.setAIFile(file);
-		leek.setLogs(new com.leekwars.generator.leek.LeekLog(farmerLog, leek));
-		leek.setFight(fight);
-		leek.setBirthTurn(1);
+		attachAI(leek, new leekscript.compiler.AIFile("loadout_object_" + System.nanoTime() + ".js", code,
+			System.currentTimeMillis(), leekscript.compiler.LeekScript.LATEST_VERSION, leek.getId(), false));
 	}
 
 	@Test
 	public void forgottenWeaponsStayCandidatesAndCountOnce() throws Exception {
 		// Deux armes oubliées listées comme armes, dont une aussi en candidate : une seule portée.
 		own(Map.of(116, 1, 117, 1, 37, 1));
-		attachAI(a1, "function beforeFight() { setLoadout({weapons: [116, 117, 'pistol'], forgotten_weapons: [116], stats: {strength: 1}}) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
-		var ids = a1.getWeapons().stream().map(w -> w.getId()).toList();
+		run("function beforeFight() { setLoadout({weapons: [116, 117, 'pistol'], forgotten_weapons: [116], stats: {strength: 1}}) }", "");
+		var ids = weapons(a1);
 		Assert.assertEquals(1, ids.stream().filter(id -> id == 116 || id == 117).count());
 		Assert.assertTrue(ids.contains(37));
 		Assert.assertEquals(ids.size(), ids.stream().distinct().count());
@@ -148,32 +151,23 @@ public class TestLoadoutObject extends FightTestBase {
 	@Test
 	public void anUnownedForgottenWeaponIsRefused() throws Exception {
 		own(Map.of(37, 1));
-		attachAI(a1, "function beforeFight() { setLoadout({weapons: [116, 'pistol'], stats: null}) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
-		Assert.assertEquals(List.of(37), a1.getWeapons().stream().map(w -> w.getId()).toList());
+		run("function beforeFight() { setLoadout({weapons: [116, 'pistol'], stats: null}) }", "");
+		Assert.assertEquals(List.of(37), weapons(a1));
 		Assert.assertEquals(100, a1.getStrength()); // stats: null = pas de répartition
 	}
 
 	@Test
 	public void withoutStatsOnlyTheGearChanges() throws Exception {
 		own(Map.of(37, 1));
-		attachAI(a1, "function beforeFight() { setLoadout({weapons: ['pistol']}) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
-		Assert.assertEquals(List.of(37), a1.getWeapons().stream().map(w -> w.getId()).toList());
+		run("function beforeFight() { setLoadout({weapons: ['pistol']}) }", "");
+		Assert.assertEquals(List.of(37), weapons(a1));
 		Assert.assertEquals(100, a1.getStrength()); // capital gardé, aucune potion
 		Assert.assertEquals(10, fight.getState().getRestatPotionsAvailable(FARMER));
 	}
 
 	@Test
 	public void unknownInventoryRefusesAnObject() throws Exception {
-		attachAI(a1, "function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
+		run("function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }", "");
 		Assert.assertEquals("false", a1.getRegister("ok"));
 	}
 
@@ -183,10 +177,7 @@ public class TestLoadoutObject extends FightTestBase {
 		stats.put(Entity.STAT_STRENGTH, 300);
 		a1.addLoadout(new FightLoadout("1", List.of(), List.of(), List.of(), stats));
 		own(Map.of());
-		attachAI(a1, "function beforeFight() { var n = 1\nsetRegister('ok', '' + setLoadout(n)) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
+		run("function beforeFight() { var n = 1\nsetRegister('ok', '' + setLoadout(n)) }", "");
 		Assert.assertEquals("true", a1.getRegister("ok"));
 		Assert.assertEquals(300, a1.getStrength());
 	}
@@ -194,10 +185,53 @@ public class TestLoadoutObject extends FightTestBase {
 	@Test
 	public void withoutRulesAnObjectIsRefused() throws Exception {
 		Generator.setLoadoutRules(null);
-		attachAI(a1, "function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }");
-		attachAI(a2, "");
-		attachAI(b1, "");
-		runFight();
+		run("function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }", "");
 		Assert.assertEquals("false", a1.getRegister("ok"));
+	}
+
+	@Test
+	public void theInventoryIsAskedOnlyWhenNeeded() throws Exception {
+		lazyItems = Map.of(37, 1);
+		run("function beforeFight() { setRegister('ok', '' + setLoadout({weapons: ['pistol']})) }", "");
+		Assert.assertEquals("true", a1.getRegister("ok"));
+		Assert.assertEquals(List.of(37), weapons(a1));
+		Assert.assertEquals(1, itemRequests);
+	}
+
+	@Test
+	public void noInventoryRequestWithoutLoadout() throws Exception {
+		run("", "");
+		Assert.assertEquals(0, itemRequests);
+	}
+
+	@Test
+	public void aSavedLoadoutAlsoTakesOneCopyPerLeek() throws Exception {
+		// Un laser et une plaque de fer (vie 50, résistance 40) pour deux poireaux qui prennent le même ensemble.
+		var stats = new HashMap<Integer, Integer>();
+		stats.put(Entity.STAT_STRENGTH, 50);
+		stats.put(Entity.STAT_RESISTANCE, 40);
+		for (var leek : List.of(a1, a2)) {
+			leek.addLoadout(new FightLoadout("tank", List.of(47, 37), List.of(), List.of(), stats, Map.of(Entity.STAT_STRENGTH, 50), false,
+				List.of(new FightLoadout.ComponentChoice(294, null))));
+		}
+		own(Map.of(47, 1, 37, 2, 294, 1));
+		run("function beforeFight() { setLoadout('tank') }", "function beforeFight() { setLoadout('tank') }");
+		var first = weapons(a1).contains(47) ? a1 : a2;
+		var second = first == a1 ? a2 : a1;
+		Assert.assertEquals(List.of(47, 37), weapons(first));
+		Assert.assertEquals(List.of(37), weapons(second));
+		Assert.assertEquals(40, first.getStat(Entity.STAT_RESISTANCE));
+		Assert.assertEquals(0, second.getStat(Entity.STAT_RESISTANCE));
+		Assert.assertEquals(50, second.getStrength());
+	}
+
+	@Test
+	public void aSavedLoadoutIsKeptWhenTheInventoryIsUnknown() throws Exception {
+		var stats = new HashMap<Integer, Integer>();
+		stats.put(Entity.STAT_STRENGTH, 50);
+		for (var leek : List.of(a1, a2)) leek.addLoadout(new FightLoadout("tank", List.of(47), List.of(), List.of(), stats));
+		run("function beforeFight() { setLoadout('tank') }", "function beforeFight() { setLoadout('tank') }");
+		Assert.assertEquals(List.of(47), weapons(a1));
+		Assert.assertEquals(List.of(47), weapons(a2));
 	}
 }

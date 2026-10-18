@@ -1395,21 +1395,15 @@ public class FightClass {
 				ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.LOADOUT_NOT_FOUND, new String[] { name });
 				return false;
 			}
+			loadout = LoadoutClass.keepAvailable(ai, loadout);
 		}
-		// Forgotten weapons are unique per farmer: collect those already equipped on
-		// other entities of the same farmer so we don't duplicate them on this leek.
-		// applyLoadout will pick the first non-reserved candidate from the loadout's
-		// forgotten alternatives (with stickiness on the currently-equipped one).
+		// Forgotten weapons are unique per farmer: those already equipped on other entities
+		// of the same farmer are reserved. applyLoadout will pick the first non-reserved
+		// candidate (with stickiness on the currently-equipped one).
 		var reservedForgotten = new java.util.HashSet<Integer>();
-		int farmerId = entity.getFarmer();
-		if (farmerId > 0) {
-			for (var other : ai.getFight().getState().getAllEntities(true)) {
-				if (other == entity) continue;
-				if (other.getFarmer() != farmerId) continue;
-				for (Weapon w : other.getWeapons()) {
-					if (w.isForgotten()) reservedForgotten.add(w.getId());
-				}
-			}
+		for (int id : ai.getFight().getState().wornByOthers(entity).keySet()) {
+			Weapon w = Weapons.getWeapon(id);
+			if (w != null && w.isForgotten()) reservedForgotten.add(id);
 		}
 		// Pré-check statsDiffer pour ne pas gaspiller une potion sur un loadout identique, puis
 		// requiresRestat : seule une *baisse* du capital investi coûte une potion. Ajouter des
@@ -1423,7 +1417,7 @@ public class FightClass {
 			// Une potion est due : le poireau ne joue pas la même répartition qu'à son
 			// dernier combat. Sans stock, l'équipement s'applique quand même mais les
 			// caractéristiques restent celles du poireau.
-			if (ai.getFight().getState().consumeRestatPotion(farmerId)) {
+			if (ai.getFight().getState().consumeRestatPotion(entity.getFarmer())) {
 				entity.setRestatCharged(true);
 			} else {
 				applyStats = false;

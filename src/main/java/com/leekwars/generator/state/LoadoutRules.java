@@ -1,5 +1,7 @@
 package com.leekwars.generator.state;
 
+import java.util.Map;
+
 import tools.jackson.databind.JsonNode;
 
 /**
@@ -18,4 +20,11 @@ public interface LoadoutRules {
 
 	/** Capital total d'un poireau à ce niveau. */
 	int totalCapital(int level);
+
+	/**
+	 * Exemplaires possédés par un éleveur, par modèle d'arme, de puce et de composant, portés ou
+	 * libres. Demandés au premier setLoadout ou getInventory du combat seulement (cf
+	 * State#availableCopies). null si inconnus.
+	 */
+	Map<Integer, Integer> farmerItems(int farmer);
 }

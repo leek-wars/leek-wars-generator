@@ -1,8 +1,13 @@
 package com.leekwars.generator.classes;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
@@ -11,6 +16,8 @@ import com.leekwars.generator.Generator;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.component.Components;
 import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.items.Items;
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.FightLoadout;
 import com.leekwars.generator.weapons.Weapons;
 
@@ -33,7 +40,22 @@ public class LoadoutClass {
 
 	private static final int NAME_MAX_LENGTH = 60;
 	private static final Pattern DIGITS = Pattern.compile("\\d{1,9}");
-	private static final List<String> STATS = List.of("life", "strength", "wisdom", "agility", "resistance", "science", "magic", "frequency", "tp", "mp", "cores", "ram");
+	// Caractéristiques d'un équipement, dans l'ordre de l'export, et leur id STAT_*.
+	private static final Map<String, Integer> STATS = new LinkedHashMap<>();
+	static {
+		STATS.put("life", Entity.STAT_LIFE);
+		STATS.put("strength", Entity.STAT_STRENGTH);
+		STATS.put("wisdom", Entity.STAT_WISDOM);
+		STATS.put("agility", Entity.STAT_AGILITY);
+		STATS.put("resistance", Entity.STAT_RESISTANCE);
+		STATS.put("science", Entity.STAT_SCIENCE);
+		STATS.put("magic", Entity.STAT_MAGIC);
+		STATS.put("frequency", Entity.STAT_FREQUENCY);
+		STATS.put("tp", Entity.STAT_TP);
+		STATS.put("mp", Entity.STAT_MP);
+		STATS.put("cores", Entity.STAT_CORES);
+		STATS.put("ram", Entity.STAT_RAM);
+	}
 
 	public static Object getLoadout(EntityAI ai, String json) throws LeekRunException {
 		var loadouts = readLoadouts(ai, json);
@@ -54,6 +76,10 @@ public class LoadoutClass {
 			ai.getLogs().addLog(AILog.ERROR, "getLoadout : JSON invalide");
 			return null;
 		}
+		return readLoadouts(ai, data);
+	}
+
+	private static JsonNode readLoadouts(EntityAI ai, JsonNode data) {
 		if (data != null && data.isObject() && data.has("loadouts") && data.get("loadouts").isArray()) {
 			data = data.get("loadouts");
 		}
@@ -89,7 +115,60 @@ public class LoadoutClass {
 	// Emplacements de composants, comme au début du combat (Leek.create côté serveur) : les modèles
 	// 406 et 407 en prennent trois.
 	private static final int MAX_COMPONENTS = 8;
-	private static final java.util.Set<Integer> TRIPLE_SLOT_COMPONENTS = java.util.Set.of(406, 407);
+	private static final Set<Integer> TRIPLE_SLOT_COMPONENTS = Set.of(406, 407);
+
+	/**
+	 * Exemplaires libres pour un poireau (State#availableCopies), pris un à un par son équipement ;
+	 * ce qui manque est noté pour l'avertissement.
+	 */
+	private static final class Copies {
+		private final Map<Integer, Integer> available;
+		private final Map<Integer, Integer> taken = new HashMap<>();
+		private final List<String> missing = new ArrayList<>();
+		private int slots = 0;
+
+		Copies(Map<Integer, Integer> available) {
+			this.available = available;
+		}
+
+		private boolean free(int template) {
+			if (taken.getOrDefault(template, 0) < available.getOrDefault(template, 0)) return true;
+			missing.add(String.valueOf(template));
+			return false;
+		}
+
+		boolean take(int template) {
+			if (!free(template)) return false;
+			taken.merge(template, 1, Integer::sum);
+			return true;
+		}
+
+		/** Arme oubliée : une candidate, possédée mais pas prise — le poireau n'en porte qu'une. */
+		boolean candidate(int template) {
+			return free(template);
+		}
+
+		boolean takeComponent(int template) {
+			int size = TRIPLE_SLOT_COMPONENTS.contains(template) ? 3 : 1;
+			if (slots + size > MAX_COMPONENTS) {
+				missing.add(String.valueOf(template));
+				return false;
+			}
+			if (!take(template)) return false;
+			slots += size;
+			return true;
+		}
+
+		boolean complete() {
+			return missing.isEmpty();
+		}
+
+		void warn(EntityAI ai) {
+			if (!missing.isEmpty()) {
+				ai.getLogs().addLog(AILog.WARNING, "setLoadout : objets non disponibles pour ce poireau, ignorés : " + String.join(", ", missing));
+			}
+		}
+	}
 
 	/**
 	 * setLoadout(objet) : équipement construit en code (au format de getLoadout, ids ou noms),
@@ -104,63 +183,89 @@ public class LoadoutClass {
 			ai.getLogs().addLog(AILog.WARNING, "setLoadout : un équipement en objet n'est pas disponible dans ce combat");
 			return null;
 		}
+		// Relu depuis son texte : le JSON du moteur peut porter ses sous-objets autrement qu'en nœuds objet.
 		String json = source.toString();
-		var loadouts = readLoadouts(ai, json);
+		ai.ops((long) json.length() * 10);
+		var data = Json.parse(json);
+		var loadouts = readLoadouts(ai, data);
 		if (loadouts == null) return null;
 		if (!loadouts.isObject()) {
 			ai.getLogs().addLog(AILog.ERROR, "setLoadout : un seul équipement à la fois");
 			return null;
 		}
-		// Le JSON relu : celui du moteur peut porter ses sous-objets autrement qu'en nœuds objet.
-		boolean withStats = Json.parse(json).path("stats").isObject();
 		var loadout = (ObjectNode) loadouts;
-		var missing = new ArrayList<String>();
-		var taken = new java.util.HashMap<Integer, Integer>();
-		IntPredicate take = template -> {
-			if (taken.getOrDefault(template, 0) >= available.getOrDefault(template, 0)) {
-				missing.add(String.valueOf(template));
-				return false;
-			}
-			taken.merge(template, 1, Integer::sum);
-			return true;
-		};
+		var copies = new Copies(available);
 		// Une arme oubliée n'est qu'une candidate (une seule portée par poireau, unique pour l'éleveur) :
 		// placée parmi les armes, elle rejoint les candidates, comme à l'enregistrement d'un ensemble.
 		var weapons = Json.createArray();
 		var forgotten = Json.createArray();
-		java.util.function.Consumer<JsonNode> candidate = id -> {
-			if (taken.getOrDefault(id.asInt(), 0) < available.getOrDefault(id.asInt(), 0)) forgotten.add(id);
-			else missing.add(id.asString());
-		};
 		for (var id : loadout.get("weapons")) {
-			if (Weapons.getWeapon(id.asInt()).isForgotten()) candidate.accept(id);
-			else if (take.test(id.asInt())) weapons.add(id);
+			int weapon = id.asInt();
+			if (Weapons.getWeapon(weapon).isForgotten()) {
+				if (copies.candidate(weapon)) forgotten.add(id);
+			} else if (copies.take(weapon)) {
+				weapons.add(id);
+			}
 		}
-		for (var id : loadout.get("forgotten_weapons")) candidate.accept(id);
+		for (var id : loadout.get("forgotten_weapons")) {
+			if (copies.candidate(id.asInt())) forgotten.add(id);
+		}
+		var chips = Json.createArray();
+		for (var id : loadout.get("chips")) {
+			if (copies.take(id.asInt())) chips.add(id);
+		}
+		var components = Json.createArray();
+		for (var c : loadout.get("components")) {
+			if (copies.takeComponent(c.get("item").asInt())) components.add(c);
+		}
 		loadout.set("weapons", weapons);
 		loadout.set("forgotten_weapons", forgotten);
-		var chips = Json.createArray();
-		for (var id : loadout.get("chips")) if (take.test(id.asInt())) chips.add(id);
 		loadout.set("chips", chips);
-		var components = Json.createArray();
-		int slots = MAX_COMPONENTS;
-		for (var c : loadout.get("components")) {
-			int template = c.get("item").asInt();
-			int cost = TRIPLE_SLOT_COMPONENTS.contains(template) ? 2 : 0;
-			if (components.size() >= slots - cost) {
-				missing.add(String.valueOf(template));
+		loadout.set("components", components);
+		copies.warn(ai);
+		var resolved = rules.resolve(loadout, ai.getEntity().getLevel());
+		return resolved == null ? null : new ObjectLoadout(resolved, data.path("stats").isObject());
+	}
+
+	/**
+	 * setLoadout(nom) : l'ensemble enregistré, moins ce que l'éleveur n'a plus de libre — un
+	 * exemplaire par poireau, comme pour un équipement en objet. Les stats d'un ensemble comptent
+	 * celles des composants : un composant retiré emporte les siennes. Les armes oubliées restent
+	 * candidates (applyLoadout écarte celles déjà portées). Tel quel si l'inventaire est inconnu.
+	 */
+	public static FightLoadout keepAvailable(EntityAI ai, FightLoadout loadout) {
+		var available = ai.getFight().getState().availableCopies(ai.getEntity());
+		if (available == null) return loadout;
+		var copies = new Copies(available);
+		var weapons = keep(loadout.getWeapons(), copies::take);
+		var chips = keep(loadout.getChips(), copies::take);
+		var stats = new HashMap<>(loadout.getStats());
+		var components = new ArrayList<FightLoadout.ComponentChoice>();
+		for (var choice : loadout.getComponents()) {
+			if (copies.takeComponent(choice.template)) {
+				components.add(choice);
 				continue;
 			}
-			if (!take.test(template)) continue;
-			slots -= cost;
-			components.add(c);
+			var component = Components.getComponent(choice.template);
+			if (component == null) continue;
+			component.getStats().forEach((stat, value) -> {
+				var id = STATS.get(stat);
+				if (id != null) stats.merge(id, -value, Integer::sum);
+			});
 		}
-		loadout.set("components", components);
-		if (!missing.isEmpty()) {
-			ai.getLogs().addLog(AILog.WARNING, "setLoadout : objets non disponibles pour ce poireau, ignorés : " + String.join(", ", missing));
+		if (copies.complete()) return loadout;
+		copies.warn(ai);
+		return new FightLoadout(loadout.getName(), weapons, loadout.getForgottenWeapons(), chips, stats,
+			loadout.getCapitalStats(), loadout.isOverCapital(), components);
+	}
+
+	private static List<Integer> keep(List<Integer> ids, IntPredicate take) {
+		if (ids == null) return Collections.emptyList();
+		var out = new ArrayList<Integer>();
+		for (int id : ids) {
+			if (take.test(id)) out.add(id);
 		}
-		var resolved = rules.resolve(loadout, ai.getEntity().getLevel());
-		return resolved == null ? null : new ObjectLoadout(resolved, withStats);
+		return out;
 	}
 
 	/**
@@ -184,9 +289,11 @@ public class LoadoutClass {
 		var components = Json.createArray();
 		for (var entry : available.entrySet()) {
 			int template = entry.getKey();
-			ArrayNode list = Weapons.getWeapon(template) != null ? weapons
-				: Chips.getChip(template) != null ? chips
-				: Components.getComponent(template) != null ? components : null;
+			var type = Items.getType(template);
+			ArrayNode list = type == null ? null
+				: type == Items.TYPE_WEAPON ? weapons
+				: type == Items.TYPE_CHIP ? chips
+				: type == Items.TYPE_COMPONENT ? components : null;
 			if (list == null || entry.getValue() <= 0) continue;
 			var item = Json.createObject();
 			item.put("item", template);
@@ -251,7 +358,7 @@ public class LoadoutClass {
 
 		var stats = Json.createObject();
 		var sourceStats = source.path("stats");
-		for (var stat : STATS) {
+		for (var stat : STATS.keySet()) {
 			var value = sourceStats.path(stat);
 			double capital = toDouble(value);
 			stats.put(stat, Double.isFinite(capital) ? (int) Math.max(0, Math.min(1e9, Math.floor(capital))) : 0);

@@ -530,17 +530,17 @@ public abstract class Entity {
 		if (statsRecomputed) {
 			mComponentTemplates = new ArrayList<>();
 			for (FightLoadout.ComponentChoice choice : loadout.getComponents()) mComponentTemplates.add(choice.template);
-		}
-		if (statsRecomputed && !loadout.getComponents().isEmpty() && state != null) {
-			List<ComponentInstance> previous = mHeldComponents;
-			mHeldComponents = new ArrayList<>();
-			state.releaseComponents(mFarmer, previous);
-			for (FightLoadout.ComponentChoice choice : loadout.getComponents()) {
-				ComponentInstance taken = state.takeComponent(mFarmer, choice.template, choice.stats, previous);
-				if (taken == null) continue;
-				mHeldComponents.add(taken);
-				for (Map.Entry<Integer, Integer> e : taken.getStats().entrySet()) {
-					mBaseStats.setStat(e.getKey(), mBaseStats.getStat(e.getKey()) + e.getValue());
+			if (!loadout.getComponents().isEmpty() && state != null) {
+				List<ComponentInstance> previous = mHeldComponents;
+				mHeldComponents = new ArrayList<>();
+				state.releaseComponents(mFarmer, previous);
+				for (FightLoadout.ComponentChoice choice : loadout.getComponents()) {
+					ComponentInstance taken = state.takeComponent(mFarmer, choice.template, choice.stats, previous);
+					if (taken == null) continue;
+					mHeldComponents.add(taken);
+					for (Map.Entry<Integer, Integer> e : taken.getStats().entrySet()) {
+						mBaseStats.setStat(e.getKey(), mBaseStats.getStat(e.getKey()) + e.getValue());
+					}
 				}
 			}
 		}

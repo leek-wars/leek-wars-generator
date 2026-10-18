@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.util.Json;
+import com.leekwars.generator.Generator;
 import com.leekwars.generator.action.Action;
 import com.leekwars.generator.action.ActionChestOpened;
 import com.leekwars.generator.action.ActionEndTurn;
@@ -234,7 +235,7 @@ public class State {
 		for (var entry : state.mFreeComponents.entrySet()) {
 			this.mFreeComponents.put(entry.getKey(), new ArrayList<>(entry.getValue()));
 		}
-		this.mFarmerItems = state.mFarmerItems; // lecture seule pendant le combat
+		this.mFarmerItems = state.mFarmerItems;
 	}
 
 	// Potions de restat disponibles / consommées par farmer pendant le combat.
@@ -274,33 +275,45 @@ public class State {
 	 */
 	private java.util.Map<Integer, java.util.List<ComponentInstance>> mFreeComponents = new HashMap<>();
 
-	// Exemplaires possédés par modèle, par éleveur (cf FarmerInfo.items) ; absent = inconnu.
+	// Exemplaires possédés par modèle, par éleveur : ceux du scénario (FarmerInfo.items), sinon
+	// demandés aux règles au premier besoin (une valeur null = inconnus). Partagé entre les copies
+	// de l'état : c'est l'inventaire de l'éleveur, il ne change pas pendant le combat.
 	private java.util.Map<Integer, java.util.Map<Integer, Integer>> mFarmerItems = new HashMap<>();
 
 	public void setFarmerItems(int farmer, java.util.Map<Integer, Integer> items) {
 		if (items != null) mFarmerItems.put(farmer, items);
 	}
 
+	/** Objets que portent les autres entités de l'éleveur de {@code entity}, par modèle. */
+	public java.util.Map<Integer, Integer> wornByOthers(Entity entity) {
+		var worn = new HashMap<Integer, Integer>();
+		int farmer = entity.getFarmer();
+		if (farmer <= 0) return worn;
+		for (var other : getAllEntities(true)) {
+			if (other == entity || other.getFarmer() != farmer) continue;
+			for (var w : other.getWeapons()) worn.merge(w.getId(), 1, Integer::sum);
+			for (var c : other.getChips()) worn.merge(c.getId(), 1, Integer::sum);
+			for (int t : other.getComponentTemplates()) worn.merge(t, 1, Integer::sum);
+		}
+		return worn;
+	}
+
 	/**
 	 * Exemplaires dont {@code entity} dispose, par modèle (arme, puce, composant) : ceux de son
 	 * éleveur moins ceux que portent ses autres entités du combat — un exemplaire par poireau.
-	 * null si la possession est inconnue : un équipement construit en code est alors refusé.
+	 * null si la possession est inconnue.
 	 */
 	public java.util.Map<Integer, Integer> availableCopies(Entity entity) {
-		var items = mFarmerItems.get(entity.getFarmer());
-		if (items == null) return null;
-		var available = new java.util.TreeMap<Integer, Integer>(items); // trié : getInventory dans l'ordre des modèles
-		for (var other : getAllEntities(true)) {
-			if (other == entity || other.getFarmer() != entity.getFarmer()) continue;
-			for (var w : other.getWeapons()) available.merge(w.getId(), -1, Integer::sum);
-			for (var c : other.getChips()) available.merge(c.getId(), -1, Integer::sum);
-			for (int t : other.getComponentTemplates()) available.merge(t, -1, Integer::sum);
+		int farmer = entity.getFarmer();
+		if (!mFarmerItems.containsKey(farmer)) {
+			var rules = Generator.getLoadoutRules();
+			mFarmerItems.put(farmer, rules == null || farmer <= 0 ? null : rules.farmerItems(farmer));
 		}
+		var items = mFarmerItems.get(farmer);
+		if (items == null) return null;
+		var available = new TreeMap<Integer, Integer>(items); // trié : getInventory dans l'ordre des modèles
+		wornByOthers(entity).forEach((template, n) -> available.merge(template, -n, Integer::sum));
 		return available;
-	}
-
-	public java.util.Map<Integer, Integer> getFarmerItems(int farmer) {
-		return mFarmerItems.get(farmer);
 	}
 
 	public void setFreeComponents(int farmer, java.util.List<ComponentInstance> instances) {
