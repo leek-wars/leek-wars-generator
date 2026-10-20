@@ -2,8 +2,6 @@ package com.leekwars.generator.state;
 
 import java.util.Map;
 
-import com.leekwars.generator.util.Json;
-
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -56,14 +54,9 @@ public class ComponentInstance {
 		return stats;
 	}
 
-	/** L'altération en objet par nom de caractéristique (Entity.STAT_NAMES), sans les zéros. */
+	/** L'altération en objet par nom de caractéristique, sans les zéros. */
 	public ObjectNode statsJSON() {
-		var out = Json.createObject();
-		for (var stat : Entity.STAT_NAMES.entrySet()) {
-			var value = stats.get(stat.getValue());
-			if (value != null && value != 0) out.put(stat.getKey(), value);
-		}
-		return out;
+		return Entity.statsJSON(name -> stats.get(Entity.STAT_NAMES.get(name)));
 	}
 
 	/** Distance pondérée entre deux deltas d'altération (null ou vide = pièce de base). */

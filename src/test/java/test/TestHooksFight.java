@@ -139,11 +139,7 @@ public class TestHooksFight extends FightTestBase {
 		attachAI(leek1, "function beforeFight() { setLoadout('pvp'); }");
 		attachAI(leek2, "");
 		runFight();
-		var leeksJson = fight.getState().getActions().toJSON().get("leeks");
-		tools.jackson.databind.JsonNode leek1Json = null;
-		for (var node : leeksJson) {
-			if (node.get("name").asString().equals("L1")) { leek1Json = node; break; }
-		}
+		var leek1Json = snapshot(leek1);
 		Assert.assertNotNull(leek1Json);
 		Assert.assertEquals(800, leek1Json.get("life").intValue());
 		Assert.assertEquals(250, leek1Json.get("strength").intValue());

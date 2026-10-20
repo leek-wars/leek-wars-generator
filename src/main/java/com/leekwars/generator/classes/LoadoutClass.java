@@ -41,8 +41,6 @@ public class LoadoutClass {
 
 	private static final int NAME_MAX_LENGTH = 60;
 	private static final Pattern DIGITS = Pattern.compile("\\d{1,9}");
-	// Caractéristiques d'un équipement, dans l'ordre de l'export, et leur id STAT_*.
-	private static final Map<String, Integer> STATS = Entity.STAT_NAMES;
 
 	public static Object getLoadout(EntityAI ai, String json) throws LeekRunException {
 		var loadouts = readLoadouts(ai, json);
@@ -259,7 +257,7 @@ public class LoadoutClass {
 			var component = Components.getComponent(choice.template);
 			if (component == null) continue;
 			for (var stat : component.getStats().entrySet()) {
-				var id = STATS.get(stat.getKey());
+				var id = Entity.STAT_NAMES.get(stat.getKey());
 				if (id != null) stats.merge(id, -stat.getValue(), Integer::sum);
 			}
 		}
@@ -323,7 +321,7 @@ public class LoadoutClass {
 				// (alterations) : ces dernières, dans les stats d'un composant de setLoadout, y
 				// désignent la pièce. Pas « stats » pour la base : renvoyé tel quel à setLoadout, un
 				// composant de l'inventaire demanderait sinon une pièce améliorée.
-				item.set("base", statNames(stat -> component.getStats().get(stat)));
+				item.set("base", Entity.statsJSON(stat -> component.getStats().get(stat)));
 				var alterations = Json.createArray();
 				for (var piece : pieces.getOrDefault(template, List.of())) {
 					alterations.add(piece.statsJSON());
@@ -338,16 +336,6 @@ public class LoadoutClass {
 		out.set("components", components);
 		var rules = Generator.getLoadoutRules();
 		out.put("capital", rules == null ? 0 : rules.totalCapital(entity.getLevel()));
-		return out;
-	}
-
-	/** Stats en objet par nom, dans l'ordre de l'export ; {@code value} lit la valeur d'un nom. */
-	private static ObjectNode statNames(Function<String, Integer> value) {
-		var out = Json.createObject();
-		for (var stat : STATS.keySet()) {
-			var v = value.apply(stat);
-			if (v != null && v != 0) out.put(stat, v);
-		}
 		return out;
 	}
 
@@ -399,7 +387,7 @@ public class LoadoutClass {
 
 		var stats = Json.createObject();
 		var sourceStats = source.path("stats");
-		for (var stat : STATS.keySet()) {
+		for (var stat : Entity.STAT_NAMES.keySet()) {
 			var value = sourceStats.path(stat);
 			double capital = toDouble(value);
 			stats.put(stat, Double.isFinite(capital) ? (int) Math.max(0, Math.min(1e9, Math.floor(capital))) : 0);

@@ -169,6 +169,14 @@ public abstract class FightTestBase {
 			target, caster, null, 0, stackable, 0, 1, 0, 0);
 	}
 
+	/** Entrée de l'entité dans l'instantané `leeks` envoyé au client. */
+	protected tools.jackson.databind.JsonNode snapshot(Entity entity) {
+		for (var node : fight.getState().getActions().toJSON().get("leeks")) {
+			if (node.get("name").asString().equals(entity.getName())) return node;
+		}
+		return null;
+	}
+
 	/** Nombre d'actions d'un type déjà écrites dans le rapport pour cette entité. */
 	protected int countActions(int type, Entity entity) {
 		int count = 0;

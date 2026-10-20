@@ -290,14 +290,6 @@ public class TestLoadoutObject extends FightTestBase {
 		Assert.assertEquals("[{\"alterations\":[],\"base\":{\"cores\":10,\"frequency\":30,\"tp\":1},\"item\":292,\"quantity\":1}]", a2.getRegister("inv"));
 	}
 
-	/** Entrée du poireau dans l'instantané `leeks` envoyé au client. */
-	private JsonNode snapshot(Leek leek) {
-		for (var node : fight.getState().getActions().toJSON().get("leeks")) {
-			if (node.get("name").asString().equals(leek.getName())) return node;
-		}
-		return null;
-	}
-
 	@Test
 	public void theFightRecordsTheEquipmentPlayed() throws Exception {
 		// Le rapport montre l'équipement joué, pas celui d'avant combat : armes, puces, composants

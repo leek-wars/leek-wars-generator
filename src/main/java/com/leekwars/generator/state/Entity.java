@@ -3,13 +3,17 @@ package com.leekwars.generator.state;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.function.Function;
 
+import com.leekwars.generator.util.Json;
+import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.action.ActionRemoveEffect;
 import com.leekwars.generator.action.ActionUpdateEffect;
 import com.leekwars.generator.action.ActionUpdateEffectTurns;
@@ -71,7 +75,7 @@ public abstract class Entity {
 	/** Nom JSON des caractéristiques d'un équipement (celui du client), dans l'ordre d'affichage. */
 	public static final Map<String, Integer> STAT_NAMES;
 	static {
-		var names = new java.util.LinkedHashMap<String, Integer>();
+		var names = new LinkedHashMap<String, Integer>();
 		names.put("life", STAT_LIFE);
 		names.put("strength", STAT_STRENGTH);
 		names.put("wisdom", STAT_WISDOM);
@@ -85,6 +89,16 @@ public abstract class Entity {
 		names.put("cores", STAT_CORES);
 		names.put("ram", STAT_RAM);
 		STAT_NAMES = Collections.unmodifiableMap(names);
+	}
+
+	/** Caractéristiques en objet par nom, dans l'ordre de STAT_NAMES et sans les zéros ; {@code value} lit la valeur d'un nom. */
+	public static ObjectNode statsJSON(Function<String, Integer> value) {
+		var out = Json.createObject();
+		for (var stat : STAT_NAMES.keySet()) {
+			var v = value.apply(stat);
+			if (v != null && v != 0) out.put(stat, v);
+		}
+		return out;
 	}
 
 	// Characteristics
