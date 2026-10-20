@@ -151,6 +151,9 @@ public abstract class Entity {
 	private Map<Integer, Integer> mAppliedLoadoutCapital = null;
 	/** Vrai si ce combat a bien consommé une potion pour poser l'ensemble. */
 	private boolean mRestatCharged = false;
+	/** Nom de l'ensemble posé par le dernier setLoadout() (vide pour un équipement construit
+	 * en code sans nom), null si le poireau joue avec son équipement d'avant combat. */
+	private String mLoadoutName = null;
 	/**
 	 * Pièces AMÉLIORÉES que ce poireau tient, le temps du combat : au départ celles qu'il
 	 * porte, puis celles que son dernier setLoadout() a prises dans le pot de l'éleveur.
@@ -421,6 +424,10 @@ public abstract class Entity {
 		return mAppliedLoadoutCapital;
 	}
 
+	public String getLoadoutName() {
+		return mLoadoutName;
+	}
+
 	/** Pièces améliorées que ce poireau tient en ce moment. */
 	public List<ComponentInstance> getHeldComponents() {
 		return mHeldComponents;
@@ -584,6 +591,7 @@ public abstract class Entity {
 		mTotalLife = mBaseStats.getStat(STAT_LIFE);
 		mInitialLife = mTotalLife;
 		life = mTotalLife;
+		mLoadoutName = loadout.getName() == null ? "" : loadout.getName();
 		return new LoadoutApplyResult(chosenForgotten, noForgottenAvailable);
 	}
 

@@ -289,4 +289,37 @@ public class TestLoadoutObject extends FightTestBase {
 		// Le second a pris la pièce de base : son inventaire ne compte que la sienne, sans amélioration.
 		Assert.assertEquals("[{\"alterations\":[],\"base\":{\"cores\":10,\"frequency\":30,\"tp\":1},\"item\":292,\"quantity\":1}]", a2.getRegister("inv"));
 	}
+
+	/** Entrée du poireau dans l'instantané `leeks` envoyé au client. */
+	private JsonNode snapshot(Leek leek) {
+		for (var node : fight.getState().getActions().toJSON().get("leeks")) {
+			if (node.get("name").asString().equals(leek.getName())) return node;
+		}
+		return null;
+	}
+
+	@Test
+	public void theFightRecordsTheEquipmentPlayed() throws Exception {
+		// Le rapport montre l'équipement joué, pas celui d'avant combat : armes, puces, composants
+		// (la pièce améliorée avec son altération), et le nom de l'ensemble.
+		lazyItems = Map.of(292, 2, 47, 1, 6, 1);
+		lazyPieces = List.of(new ComponentInstance(900, 292, Map.of(Entity.STAT_STRENGTH, 7)));
+		fight.getState().setRestatPotionsAvailable(FARMER, 10);
+		run("function beforeFight() { setLoadout({name: 'Tank', weapons: [WEAPON_M_LASER], chips: [CHIP_FLASH], components: [{item: 292, stats: {strength: 7}}], stats: {strength: 10}}) }",
+			"function beforeFight() { setLoadout({components: [{item: 292}], stats: {strength: 10}}) }");
+		var tank = snapshot(a1);
+		Assert.assertEquals("[47]", tank.get("weapons").toString());
+		Assert.assertEquals("[6]", tank.get("chips").toString());
+		Assert.assertEquals("[{\"template\":292,\"stats\":{\"strength\":7}}]", tank.get("components").toString());
+		Assert.assertEquals("Tank", tank.get("loadout").asString());
+		Assert.assertEquals(17, tank.get("strength").intValue());
+		// Équipement construit sans nom : marqué quand même, la pièce de base sans altération.
+		var other = snapshot(a2);
+		Assert.assertEquals("", other.get("loadout").asString());
+		Assert.assertEquals("[{\"template\":292}]", other.get("components").toString());
+		// Sans setLoadout(), le poireau joue son équipement d'avant combat : pas de nom d'ensemble.
+		var enemy = snapshot(b1);
+		Assert.assertFalse(enemy.has("loadout"));
+		Assert.assertEquals("[]", enemy.get("weapons").toString());
+	}
 }

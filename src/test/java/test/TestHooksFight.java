@@ -147,6 +147,7 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertNotNull(leek1Json);
 		Assert.assertEquals(800, leek1Json.get("life").intValue());
 		Assert.assertEquals(250, leek1Json.get("strength").intValue());
+		Assert.assertEquals("pvp", leek1Json.get("loadout").asString());
 	}
 
 	@Test

@@ -341,7 +341,7 @@ public class LoadoutClass {
 				item.set("base", statNames(stat -> component.getStats().get(stat)));
 				var alterations = Json.createArray();
 				for (var piece : pieces.getOrDefault(template, List.of())) {
-					alterations.add(statNames(stat -> piece.getStats().get(STATS.get(stat))));
+					alterations.add(statsByName(piece.getStats()));
 				}
 				item.set("alterations", alterations);
 			}
@@ -364,6 +364,11 @@ public class LoadoutClass {
 			if (v != null && v != 0) out.put(stat, v);
 		}
 		return out;
+	}
+
+	/** Stats indexées par STAT_* (un delta d'altération), en objet par nom. */
+	public static ObjectNode statsByName(Map<Integer, Integer> stats) {
+		return statNames(stat -> stats.get(STATS.get(stat)));
 	}
 
 	private static ObjectNode normalize(JsonNode source, List<String> unknown) {
