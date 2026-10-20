@@ -68,6 +68,25 @@ public abstract class Entity {
 	public final static int STAT_CORES = 16;
 	public final static int STAT_RAM = 17;
 
+	/** Nom JSON des caractéristiques d'un équipement (celui du client), dans l'ordre d'affichage. */
+	public static final Map<String, Integer> STAT_NAMES;
+	static {
+		var names = new java.util.LinkedHashMap<String, Integer>();
+		names.put("life", STAT_LIFE);
+		names.put("strength", STAT_STRENGTH);
+		names.put("wisdom", STAT_WISDOM);
+		names.put("agility", STAT_AGILITY);
+		names.put("resistance", STAT_RESISTANCE);
+		names.put("science", STAT_SCIENCE);
+		names.put("magic", STAT_MAGIC);
+		names.put("frequency", STAT_FREQUENCY);
+		names.put("tp", STAT_TP);
+		names.put("mp", STAT_MP);
+		names.put("cores", STAT_CORES);
+		names.put("ram", STAT_RAM);
+		STAT_NAMES = Collections.unmodifiableMap(names);
+	}
+
 	// Characteristics
 	protected Cell cell;
 	protected final Stats mBaseStats;
@@ -435,6 +454,14 @@ public abstract class Entity {
 
 	public List<Integer> getComponentTemplates() {
 		return mComponentTemplates;
+	}
+
+	/** Pièce tenue pour ce modèle de composant, null s'il n'en tient pas (un exemplaire par poireau). */
+	public ComponentInstance getHeldComponent(int template) {
+		for (var piece : mHeldComponents) {
+			if (piece.getTemplate() == template) return piece;
+		}
+		return null;
 	}
 
 	public void setComponentTemplates(List<Integer> templates) {

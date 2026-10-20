@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,21 +42,7 @@ public class LoadoutClass {
 	private static final int NAME_MAX_LENGTH = 60;
 	private static final Pattern DIGITS = Pattern.compile("\\d{1,9}");
 	// Caractéristiques d'un équipement, dans l'ordre de l'export, et leur id STAT_*.
-	private static final Map<String, Integer> STATS = new LinkedHashMap<>();
-	static {
-		STATS.put("life", Entity.STAT_LIFE);
-		STATS.put("strength", Entity.STAT_STRENGTH);
-		STATS.put("wisdom", Entity.STAT_WISDOM);
-		STATS.put("agility", Entity.STAT_AGILITY);
-		STATS.put("resistance", Entity.STAT_RESISTANCE);
-		STATS.put("science", Entity.STAT_SCIENCE);
-		STATS.put("magic", Entity.STAT_MAGIC);
-		STATS.put("frequency", Entity.STAT_FREQUENCY);
-		STATS.put("tp", Entity.STAT_TP);
-		STATS.put("mp", Entity.STAT_MP);
-		STATS.put("cores", Entity.STAT_CORES);
-		STATS.put("ram", Entity.STAT_RAM);
-	}
+	private static final Map<String, Integer> STATS = Entity.STAT_NAMES;
 
 	public static Object getLoadout(EntityAI ai, String json) throws LeekRunException {
 		var loadouts = readLoadouts(ai, json);
@@ -341,7 +326,7 @@ public class LoadoutClass {
 				item.set("base", statNames(stat -> component.getStats().get(stat)));
 				var alterations = Json.createArray();
 				for (var piece : pieces.getOrDefault(template, List.of())) {
-					alterations.add(statsByName(piece.getStats()));
+					alterations.add(piece.statsJSON());
 				}
 				item.set("alterations", alterations);
 			}
@@ -364,11 +349,6 @@ public class LoadoutClass {
 			if (v != null && v != 0) out.put(stat, v);
 		}
 		return out;
-	}
-
-	/** Stats indexées par STAT_* (un delta d'altération), en objet par nom. */
-	public static ObjectNode statsByName(Map<Integer, Integer> stats) {
-		return statNames(stat -> stats.get(STATS.get(stat)));
 	}
 
 	private static ObjectNode normalize(JsonNode source, List<String> unknown) {

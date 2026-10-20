@@ -2,6 +2,10 @@ package com.leekwars.generator.state;
 
 import java.util.Map;
 
+import com.leekwars.generator.util.Json;
+
+import tools.jackson.databind.node.ObjectNode;
+
 /**
  * Un exemplaire AMÉLIORÉ d'un composant, avec le delta d'altération qu'il porte.
  *
@@ -50,6 +54,16 @@ public class ComponentInstance {
 	/** Entity.STAT_* → delta apporté par l'altération, par rapport aux stats du modèle. */
 	public Map<Integer, Integer> getStats() {
 		return stats;
+	}
+
+	/** L'altération en objet par nom de caractéristique (Entity.STAT_NAMES), sans les zéros. */
+	public ObjectNode statsJSON() {
+		var out = Json.createObject();
+		for (var stat : Entity.STAT_NAMES.entrySet()) {
+			var value = stats.get(stat.getValue());
+			if (value != null && value != 0) out.put(stat.getKey(), value);
+		}
+		return out;
 	}
 
 	/** Distance pondérée entre deux deltas d'altération (null ou vide = pièce de base). */

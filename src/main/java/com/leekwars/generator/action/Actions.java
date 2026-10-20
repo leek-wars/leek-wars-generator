@@ -7,10 +7,8 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.util.Json;
 import com.leekwars.generator.chips.Chip;
-import com.leekwars.generator.classes.LoadoutClass;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
-import com.leekwars.generator.state.ComponentInstance;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.statistics.StatisticsManager;
 import com.leekwars.generator.weapons.Weapon;
@@ -105,6 +103,8 @@ public class Actions {
 		object.put("frequency", entity.getStat(Entity.STAT_FREQUENCY));
 		object.put("science", entity.getStat(Entity.STAT_SCIENCE));
 		object.put("magic", entity.getStat(Entity.STAT_MAGIC));
+		object.put("cores", entity.getCores());
+		object.put("ram", entity.getRAM());
 		object.put("tp", entity.getTP());
 		object.put("mp", entity.getMP());
 
@@ -120,8 +120,8 @@ public class Actions {
 			object.put("owner", entity.getSummoner().getFId());
 			object.put("critical", critical);
 		}
-		if (entity.getType() == Entity.TYPE_LEEK && !entity.isSummon()) {
-			addEquipment(object, entity);
+		if (entity.getType() == Entity.TYPE_LEEK) {
+			object.set("equipment", equipment(entity));
 		}
 
 		leeks.add(object);
@@ -132,32 +132,26 @@ public class Actions {
 	 * rapport et le lecteur l'affichent, puisqu'il peut changer d'un combat à l'autre.
 	 * Objets désignés par leur id d'item, comme dans l'inventaire.
 	 */
-	private static void addEquipment(ObjectNode object, Entity entity) {
+	private static ObjectNode equipment(Entity entity) {
+		ObjectNode equipment = Json.createObject();
 		ArrayNode weapons = Json.createArray();
 		for (Weapon w : entity.getWeapons()) weapons.add(w.getId());
-		object.set("weapons", weapons);
+		equipment.set("weapons", weapons);
 		ArrayNode chips = Json.createArray();
 		for (Chip c : entity.getChips()) chips.add(c.getId());
-		object.set("chips", chips);
+		equipment.set("chips", chips);
 		ArrayNode components = Json.createArray();
 		for (int template : entity.getComponentTemplates()) {
 			ObjectNode component = Json.createObject();
 			component.put("template", template);
-			// Un exemplaire par poireau : la pièce améliorée tenue, s'il y en a une, est la sienne.
-			for (ComponentInstance piece : entity.getHeldComponents()) {
-				if (piece.getTemplate() == template && !piece.getStats().isEmpty()) {
-					component.set("stats", LoadoutClass.statsByName(piece.getStats()));
-					break;
-				}
-			}
+			var piece = entity.getHeldComponent(template);
+			if (piece != null && !piece.getStats().isEmpty()) component.set("stats", piece.statsJSON());
 			components.add(component);
 		}
-		object.set("components", components);
-		object.put("cores", entity.getCores());
-		object.put("ram", entity.getRAM());
-		if (entity.getLoadoutName() != null) {
-			object.put("loadout", entity.getLoadoutName());
-		}
+		equipment.set("components", components);
+		// Nom de l'ensemble posé par setLoadout(), vide pour un équipement construit sans nom.
+		if (entity.getLoadoutName() != null) equipment.put("loadout", entity.getLoadoutName());
+		return equipment;
 	}
 
 	public void addMap(Map map) {

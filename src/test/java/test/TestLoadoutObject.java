@@ -308,17 +308,18 @@ public class TestLoadoutObject extends FightTestBase {
 		run("function beforeFight() { setLoadout({name: 'Tank', weapons: [WEAPON_M_LASER], chips: [CHIP_FLASH], components: [{item: 292, stats: {strength: 7}}], stats: {strength: 10}}) }",
 			"function beforeFight() { setLoadout({components: [{item: 292}], stats: {strength: 10}}) }");
 		var tank = snapshot(a1);
-		Assert.assertEquals("[47]", tank.get("weapons").toString());
-		Assert.assertEquals("[6]", tank.get("chips").toString());
-		Assert.assertEquals("[{\"template\":292,\"stats\":{\"strength\":7}}]", tank.get("components").toString());
-		Assert.assertEquals("Tank", tank.get("loadout").asString());
+		var equipment = tank.get("equipment");
+		Assert.assertEquals("[47]", equipment.get("weapons").toString());
+		Assert.assertEquals("[6]", equipment.get("chips").toString());
+		Assert.assertEquals("[{\"template\":292,\"stats\":{\"strength\":7}}]", equipment.get("components").toString());
+		Assert.assertEquals("Tank", equipment.get("loadout").asString());
 		Assert.assertEquals(17, tank.get("strength").intValue());
 		// Équipement construit sans nom : marqué quand même, la pièce de base sans altération.
-		var other = snapshot(a2);
+		var other = snapshot(a2).get("equipment");
 		Assert.assertEquals("", other.get("loadout").asString());
 		Assert.assertEquals("[{\"template\":292}]", other.get("components").toString());
 		// Sans setLoadout(), le poireau joue son équipement d'avant combat : pas de nom d'ensemble.
-		var enemy = snapshot(b1);
+		var enemy = snapshot(b1).get("equipment");
 		Assert.assertFalse(enemy.has("loadout"));
 		Assert.assertEquals("[]", enemy.get("weapons").toString());
 	}
