@@ -179,6 +179,19 @@ public class TestLoadoutObject extends FightTestBase {
 	}
 
 	@Test
+	public void statsWithoutCapitalKeepTheCapital() throws Exception {
+		// Ce que rend getLoadout d'un fichier sans stats : toutes à zéro. Pas une répartition, pas plus
+		// qu'une clé inconnue (lue à zéro par la normalisation).
+		own(Map.of(37, 2));
+		run("function beforeFight() { setLoadout({weapons: ['pistol'], stats: {strength: 0, life: 0}}) }",
+			"function beforeFight() { setLoadout({weapons: ['pistol'], stats: {strenght: 100}}) }");
+		Assert.assertEquals(List.of(37), weapons(a1));
+		Assert.assertEquals(100, a1.getStrength());
+		Assert.assertEquals(100, a2.getStrength());
+		Assert.assertEquals(10, fight.getState().getRestatPotionsAvailable(FARMER));
+	}
+
+	@Test
 	public void unknownInventoryRefusesAnObject() throws Exception {
 		run("function beforeFight() { setRegister('ok', '' + setLoadout(" + TANK + ")) }", "");
 		Assert.assertEquals("false", a1.getRegister("ok"));

@@ -235,7 +235,20 @@ public class LoadoutClass {
 		loadout.set("components", components);
 		copies.warn(ai, loadout.get("name").asString());
 		var resolved = rules.resolve(loadout, ai.getEntity().getLevel());
-		return resolved == null ? null : new ObjectLoadout(resolved, data.path("stats").isObject());
+		return resolved == null ? null : new ObjectLoadout(resolved, investsCapital(loadout.get("stats")));
+	}
+
+	/**
+	 * Une répartition, c'est du capital investi quelque part, lu sur les stats normalisées (clés
+	 * connues, valeurs nettoyées). getLoadout rend toujours une clé stats, à zéro quand le fichier
+	 * n'en a pas : setLoadout(getLoadout(…)) doit alors garder le capital du poireau, comme un objet
+	 * sans stats, au lieu de jouer un capital vide.
+	 */
+	private static boolean investsCapital(JsonNode stats) {
+		for (var stat : stats.properties()) {
+			if (stat.getValue().asInt() > 0) return true;
+		}
+		return false;
 	}
 
 	/**
