@@ -598,6 +598,8 @@
 			var json = F.__getLoadout(callerModule(), path);
 			return json == null ? null : JSON.parse(json);
 		},
+		// Notification pour votre éleveur, remise après le combat (50 par jour au plus) ; false si refusée.
+		sendNotification: function (title, message) { return F.sendNotification(title, message); },
 	};
 	// Module du joueur qui appelle (/ai/...), lu dans la pile ; null hors module (l'hôte prend l'entrée).
 	function callerModule() {

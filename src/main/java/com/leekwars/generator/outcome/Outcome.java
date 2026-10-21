@@ -1,5 +1,7 @@
 package com.leekwars.generator.outcome;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -64,6 +66,27 @@ public class Outcome {
 
 	/** État d'ensemble de chaque poireau joueur à la fin du combat, par id de poireau. */
 	public Map<Integer, LoadoutOutcome> loadouts = new TreeMap<>();
+
+	/**
+	 * Une notification envoyée par une IA avec sendNotification(), pour l'éleveur du poireau
+	 * qui la porte (celui d'un bulbe est son invocateur).
+	 */
+	public static class AINotification {
+		public final int farmer;
+		public final int leek;
+		public final String title;
+		public final String message;
+
+		public AINotification(int farmer, int leek, String title, String message) {
+			this.farmer = farmer;
+			this.leek = leek;
+			this.title = title;
+			this.message = message;
+		}
+	}
+
+	/** Les notifications des IA, dans l'ordre des appels. Le worker les remet dans la limite du quota du jour. */
+	public List<AINotification> notifications = new ArrayList<>();
 
 	/**
 	 * Potions consommées par éleveur — l'ancien débit, que `loadouts` remplace.

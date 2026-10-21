@@ -726,6 +726,8 @@ def _lw_build(G, NAMES):
             if data is None: return None
             import json as _json
             return _json.loads(data)
+        # Notification pour votre eleveur, remise apres le combat (50 par jour au plus) ; False si refusee.
+        def sendNotification(self, title, message=None): return F.sendNotification(title, message)
     # Module du joueur qui appelle (/ai/...), lu dans la pile ; None hors module (l'hote prend l'entree).
     def _caller_module():
         import sys as _sys

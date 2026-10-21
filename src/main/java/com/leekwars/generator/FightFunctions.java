@@ -583,6 +583,10 @@ public class FightFunctions {
 		method("getRegister", "Util", 15, true, Type.STRING_OR_NULL, new Type[] { Type.STRING });
 		method("setRegister", "Util", 50, true, Type.BOOL, new Type[] { Type.STRING, Type.ANY });
 		method("deleteRegister", "Util", 16, true, Type.VOID, new Type[] { Type.STRING });
+		method("sendNotification", "Util", 50, true, new CallableVersion[] {
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY, Type.ANY }),
+			new CallableVersion(Type.BOOL, new Type[] { Type.ANY }),
+		});
 
 		// Loadout : le chemin, littéral, est remplacé à la compilation par le contenu du fichier.
 		method("getLoadout", "Loadout", 0, true, Type.ANY, new Type[] { Type.STRING }).setFileArgument();

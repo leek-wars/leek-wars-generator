@@ -218,6 +218,7 @@ public class Generator {
 			outcome.duration = fight.getState().getDuration();
 			outcome.statistics = statisticsManager;
 			outcome.restatPotionsConsumed.putAll(fight.getState().getRestatPotionsConsumed());
+			outcome.notifications.addAll(fight.getNotifications());
 			// Mémoire d'ensemble de chaque poireau joueur : ce qu'il a joué, et s'il a payé.
 			// Les poireaux qui n'ont rien posé y figurent AUSSI, avec un capital null : c'est
 			// ainsi qu'un combat joué sans setLoadout efface la mémoire, et que revenir à

@@ -21,6 +21,7 @@ import com.leekwars.generator.fight.entity.BulbAI;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.outcome.Outcome;
 
 import leekscript.common.Error;
 import leekscript.compiler.AIFile;
@@ -65,6 +66,8 @@ public class Fight {
 	public final static int FLAG_STATIC = 1;
 	public final static int FLAG_PERFECT = 2;
 	public final static int MAX_LOG_COUNT = 5000;
+	// Le quota du jour d'un éleveur : au-delà, le worker n'en remettrait aucune.
+	public final static int MAX_NOTIFICATIONS = 50;
 
 	private int mWinteam = -1;
 	public Generator generator;
@@ -77,6 +80,8 @@ public class Fight {
 	private State state = new State();
 	/** Sandbox GraalVM partage par le combat (IA JS/Python), cree paresseusement. */
 	private com.leekwars.generator.polyglot.PolyglotSandbox polyglotSandbox;
+	private final List<Outcome.AINotification> notifications = new ArrayList<>();
+	private final java.util.Map<Integer, Integer> notificationsByFarmer = new java.util.HashMap<>();
 
 
 	public Fight(Generator generator) {
@@ -489,6 +494,17 @@ public class Fight {
 
 	public void setId(int f) {
 		mId = f;
+	}
+
+	/** Garde une notification de sendNotification() ; false au-delà de MAX_NOTIFICATIONS pour cet éleveur. */
+	public boolean addNotification(int farmer, int leek, String title, String message) {
+		if (notificationsByFarmer.merge(farmer, 1, Integer::sum) > MAX_NOTIFICATIONS) return false;
+		notifications.add(new Outcome.AINotification(farmer, leek, title, message));
+		return true;
+	}
+
+	public List<Outcome.AINotification> getNotifications() {
+		return notifications;
 	}
 
 	public void setBoss(int b) {

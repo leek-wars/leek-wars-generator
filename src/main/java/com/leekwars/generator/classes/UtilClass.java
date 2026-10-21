@@ -1,8 +1,10 @@
 package com.leekwars.generator.classes;
 
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.leekwars.generator.action.ActionShowCell;
 import com.leekwars.generator.state.Entity;
@@ -77,6 +79,44 @@ public class UtilClass {
 			ai.getEntity().deleteRegister(keyString);
 		}
 		return null;
+	}
+
+	// En points de code, comme les compte le serveur (mb_substr)
+	private static final int NOTIFICATION_TITLE_LIMIT = 50;
+	private static final int NOTIFICATION_MESSAGE_LIMIT = 200;
+
+	public static boolean sendNotification(EntityAI ai, Object title) throws LeekRunException {
+		return sendNotification(ai, title, null);
+	}
+
+	/**
+	 * Notification pour l'éleveur du poireau qui porte l'IA (celui d'un bulbe est son invocateur),
+	 * remise après le combat dans la limite de son quota du jour. Une tourelle ou un mob n'a pas
+	 * d'éleveur à prévenir.
+	 */
+	public static boolean sendNotification(EntityAI ai, Object title, Object message) throws LeekRunException {
+		var entity = ai.getEntity().isSummon() ? ai.getEntity().getSummoner() : ai.getEntity();
+		if (entity == null || entity.getType() != Entity.TYPE_LEEK || entity.getFarmer() <= 0) return false;
+		if (title == null) return false;
+		String titleText = notificationText(ai.string(title), NOTIFICATION_TITLE_LIMIT);
+		if (titleText.isEmpty()) return false;
+		String messageText = message == null ? "" : notificationText(ai.string(message), NOTIFICATION_MESSAGE_LIMIT);
+		return ai.getFight().addNotification(entity.getFarmer(), entity.getId(), titleText, messageText);
+	}
+
+	private static final Pattern NOTIFICATION_BREAKS = Pattern.compile("[\\p{Cc}\\u2028\\u2029]");
+
+	/**
+	 * Le texte sur une ligne, comme une notification l'affiche, coupé à `limit` points de code.
+	 * Couper d'abord à 2 × limit unités UTF-16 borne le travail, quelle que soit la longueur reçue.
+	 * Les caractères de contrôle et les séparateurs de ligne deviennent des espaces, un demi-emoji
+	 * laissé par un substring devient « ? » : le texte part en JSON, il doit rester de l'UTF-8 valide.
+	 */
+	private static String notificationText(String text, int limit) {
+		if (text.length() > 2 * limit) text = text.substring(0, 2 * limit);
+		text = NOTIFICATION_BREAKS.matcher(new String(text.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8)).replaceAll(" ").strip();
+		if (text.codePointCount(0, text.length()) > limit) text = text.substring(0, text.offsetByCodePoints(0, limit)).strip();
+		return text;
 	}
 
 	public static Object pause(EntityAI ai) {

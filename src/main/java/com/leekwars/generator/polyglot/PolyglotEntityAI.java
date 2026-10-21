@@ -1535,8 +1535,8 @@ public class PolyglotEntityAI extends EntityAI {
 	 * demanderait d'evaluer ce top-level avant le combat. Les hooks supposent une IA avec {@code turn()}.
 	 *
 	 * <p>Limite connue : seuls le contexte guest et les ACTIONS de combat sont annules par le rejet. Un
-	 * top-level qui ecrit un registre ou un log de debug avant d'etre jete l'a fait pour de bon (et le
-	 * refera au tour 1). Il faut pour cela une IA plate qui cite {@code turn} sans en definir : le
+	 * top-level qui ecrit un registre, un log de debug ou une notification avant d'etre jete l'a fait
+	 * pour de bon (et le refera au tour 1). Il faut pour cela une IA plate qui cite {@code turn} sans en definir : le
 	 * pre-filtre de {@link #hasHook} ecarte deja tout le reste.
 	 *
 	 * <p>Le rejet n'est pas muet pour autant : la raison est retenue ({@link #hookSkip}) et devient un
