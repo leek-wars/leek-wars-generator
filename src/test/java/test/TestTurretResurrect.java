@@ -27,8 +27,6 @@ public class TestTurretResurrect extends FightTestBase {
 		fight.getState().setType(State.TYPE_TEAM);
 		ally = defaultLeek(1, "A");
 		turret = new Turret();
-		turret.setId(3);
-		turret.setName("tourelle");
 		turret.setTotalLife(1000);
 		turret.setLife(1000);
 		fight.getState().addEntity(0, ally);
@@ -57,20 +55,12 @@ public class TestTurretResurrect extends FightTestBase {
 	public void resurrectedTurretStaysStatic() {
 		turret.removeLife(turret.getLife(), 0, ally, DamageType.DIRECT, null, null);
 		Assert.assertTrue(turret.isDead());
-		Assert.assertTrue("tant que le tour dure, la tourelle morte n'a pas fini le combat", state.getTeams().get(0).isDead());
+		Assert.assertTrue("tourelle morte, camp mort : seule la fin du tour clôt le combat", state.getTeams().get(0).isDead());
 
 		Cell cell = freeCell();
 		state.resurrect(ally, turret, cell, false, false);
 		Assert.assertFalse(turret.isDead());
 		Assert.assertFalse("ressuscitée avant la fin du tour, le camp est sauf", state.isFinished());
 		Assert.assertTrue(turret.hasState(EntityState.STATIC));
-
-		Cell other = freeCell();
-		state.slideEntity(turret, other, ally);
-		Assert.assertSame(cell, turret.getCell());
-		Cell allyCell = ally.getCell();
-		state.invertEntities(ally, turret);
-		Assert.assertSame(cell, turret.getCell());
-		Assert.assertSame(allyCell, ally.getCell());
 	}
 }

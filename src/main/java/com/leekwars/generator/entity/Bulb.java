@@ -1,5 +1,6 @@
 package com.leekwars.generator.entity;
 
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.bulbs.BulbTemplate;
 import com.leekwars.generator.bulbs.Bulbs;
 import com.leekwars.generator.state.Entity;
@@ -31,6 +32,15 @@ public class Bulb extends Entity {
 	@Override
 	public boolean isSummon() {
 		return true;
+	}
+
+	// États permanents du template (ex. Enraciné pour les plantes).
+	@Override
+	public void applyPermanentStates() {
+		if (mTemplate == null) return;
+		for (EntityState s : mTemplate.getStates()) {
+			addPermanentState(s);
+		}
 	}
 
 	@Override

@@ -1603,4 +1603,15 @@ public abstract class Entity {
 	public void startFight() {
 
 	}
+
+	// États permanents de l'entité (ex. Statique d'une tourelle), posés au début du combat ou
+	// à l'invocation. La mort purge tous les effets : State les repose à la résurrection.
+	public void applyPermanentStates() {
+
+	}
+
+	// Effet ADD_STATE infini, irréductible, auto-appliqué.
+	protected void addPermanentState(EntityState s) {
+		Effect.createEffect(state, Effect.TYPE_ADD_STATE, -1, 1, s.ordinal(), 0, false, this, this, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+	}
 }
