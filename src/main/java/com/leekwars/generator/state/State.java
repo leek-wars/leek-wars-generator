@@ -45,6 +45,7 @@ import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
 import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.statistics.StatisticsManager;
+import com.leekwars.generator.turret.Turret;
 import com.leekwars.generator.util.RandomGenerator;
 import com.leekwars.generator.weapons.Weapon;
 import com.leekwars.generator.weapons.Weapons;
@@ -1561,8 +1562,11 @@ public class State {
 		actions.log(new ActionResurrect(owner, entity));
 
 		// La mort a purgé tous les effets, y compris les états permanents du
-		// template (ex. Enraciné) : on les réapplique.
+		// template (ex. Enraciné) et le Statique d'une tourelle : on les réapplique.
 		applySummonStates(entity);
+		if (entity instanceof Turret turret) {
+			turret.addStaticState();
+		}
 	}
 
 	/** Place de départ d'une entité ressuscitée : devant le premier vivant qui la suivait au départ, sinon en fin de tour. */
