@@ -502,6 +502,7 @@ public class Fight {
 	}
 
 	public void addNotification(int farmer, int leek, String title, String message) {
+		if (!canNotify(farmer)) return;
 		notificationsByFarmer.merge(farmer, 1, Integer::sum);
 		notifications.add(new Outcome.AINotification(farmer, leek, title, message));
 	}

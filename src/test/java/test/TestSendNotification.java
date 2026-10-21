@@ -157,6 +157,68 @@ public class TestSendNotification extends FightTestBase {
 		Assert.assertEquals("", fight.getNotifications().get(1).message);
 	}
 
+	// Exemple de la page sendNotification de l'encyclopédie, dans les trois langages
+	private static final String DOC_LEEKSCRIPT = ""
+		+ "// Appelée automatiquement à la fin du combat\n"
+		+ "function afterFight() {\n"
+		+ "\t// Pas en combat de test : on garde le quota du jour pour les vrais combats\n"
+		+ "\tif (getFightContext() != FIGHT_CONTEXT_TEST && isDead(getEntity())) {\n"
+		+ "\t\tsendNotification('Défaite', 'Mort au tour ' + getTurn() + ', ' + getAliveEnemiesCount() + ' ennemi(s) encore debout')\n"
+		+ "\t}\n"
+		+ "}\n";
+	private static final String DOC_JAVASCRIPT = ""
+		+ "// Appelée automatiquement à la fin du combat\n"
+		+ "function afterFight() {\n"
+		+ "\t// Pas en combat de test : on garde le quota du jour pour les vrais combats\n"
+		+ "\tif (Fight.context !== Fight.Context.TEST && Fight.me.dead) {\n"
+		+ "\t\tSystem.sendNotification('Défaite', 'Mort au tour ' + Fight.turn + ', ' + Fight.getAliveEnemiesCount() + ' ennemi(s) encore debout')\n"
+		+ "\t}\n"
+		+ "}\n"
+		+ "\n"
+		+ "// En TypeScript comme en JavaScript, les hooks ne sont appelés que si l'IA définit turn()\n"
+		+ "function turn() {\n"
+		+ "\t// ...\n"
+		+ "}\n";
+	private static final String DOC_PYTHON = ""
+		+ "# Appelée automatiquement à la fin du combat\n"
+		+ "def afterFight():\n"
+		+ "\t# Pas en combat de test : on garde le quota du jour pour les vrais combats\n"
+		+ "\tif Fight.context != Fight.Context.TEST and Fight.me.dead:\n"
+		+ "\t\tSystem.sendNotification('Défaite', 'Mort au tour ' + str(Fight.turn) + ', ' + str(Fight.getAliveEnemiesCount()) + ' ennemi(s) encore debout')\n"
+		+ "\n"
+		+ "# En Python, les hooks ne sont appelés que si l'IA définit turn()\n"
+		+ "def turn():\n"
+		+ "\tpass\n";
+
+	/** leek1 tombe sous le pistolet de leek2, dans le contexte donné. */
+	private void runDocExample(String extension, String code, int context) throws Exception {
+		setUp();
+		fight.getState().setContext(context);
+		leek1.setLife(1);
+		leek2.addWeapon(com.leekwars.generator.weapons.Weapons.getWeapon(FightConstants.WEAPON_PISTOL.getIntValue()));
+		if (extension == null) attachAI(leek1, code);
+		else attachPolyglotAI(leek1, extension, code);
+		attachAI(leek2, "var e = getNearestEnemy(); setWeapon(WEAPON_PISTOL); moveToward(e); useWeapon(e); useWeapon(e);");
+		runFight();
+	}
+
+	@Test
+	public void encyclopediaExampleNotifiesADefeatOutsideTestFights() throws Exception {
+		for (var example : new String[][] { { null, DOC_LEEKSCRIPT }, { "js", DOC_JAVASCRIPT }, { "py", DOC_PYTHON } }) {
+			String language = example[0] == null ? "LeekScript" : example[0];
+			runDocExample(example[0], example[1], Fight.CONTEXT_GARDEN);
+			Assert.assertTrue(language + " : leek1 est mort", leek1.isDead());
+			Assert.assertEquals(language, 1, fight.getNotifications().size());
+			Assert.assertEquals(language, "Défaite", fight.getNotifications().get(0).title);
+			Assert.assertTrue(language + " : " + fight.getNotifications().get(0).message,
+				fight.getNotifications().get(0).message.matches("Mort au tour \\d+, 1 ennemi\\(s\\) encore debout"));
+
+			runDocExample(example[0], example[1], Fight.CONTEXT_TEST);
+			Assert.assertTrue(language + " : leek1 est mort", leek1.isDead());
+			Assert.assertTrue(language + " : rien en combat de test", fight.getNotifications().isEmpty());
+		}
+	}
+
 	private void attachPolyglotAI(Leek leek, String extension, String code) {
 		attachAI(leek, new AIFile("notif_" + System.nanoTime() + "." + extension, code,
 			System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false));
