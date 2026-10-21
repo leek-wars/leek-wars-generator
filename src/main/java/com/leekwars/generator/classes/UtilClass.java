@@ -97,11 +97,13 @@ public class UtilClass {
 	public static boolean sendNotification(EntityAI ai, Object title, Object message) throws LeekRunException {
 		var entity = ai.getEntity().isSummon() ? ai.getEntity().getSummoner() : ai.getEntity();
 		if (entity == null || entity.getType() != Entity.TYPE_LEEK || entity.getFarmer() <= 0) return false;
-		if (title == null) return false;
+		// Plafond vérifié avant de convertir : un appel refusé ne coûte rien de plus
+		if (title == null || !ai.getFight().canNotify(entity.getFarmer())) return false;
 		String titleText = notificationText(ai.string(title), NOTIFICATION_TITLE_LIMIT);
 		if (titleText.isEmpty()) return false;
 		String messageText = message == null ? "" : notificationText(ai.string(message), NOTIFICATION_MESSAGE_LIMIT);
-		return ai.getFight().addNotification(entity.getFarmer(), entity.getId(), titleText, messageText);
+		ai.getFight().addNotification(entity.getFarmer(), entity.getId(), titleText, messageText);
+		return true;
 	}
 
 	private static final Pattern NOTIFICATION_BREAKS = Pattern.compile("[\\p{Cc}\\u2028\\u2029]");

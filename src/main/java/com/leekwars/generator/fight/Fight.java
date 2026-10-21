@@ -496,11 +496,14 @@ public class Fight {
 		mId = f;
 	}
 
-	/** Garde une notification de sendNotification() ; false au-delà de MAX_NOTIFICATIONS pour cet éleveur. */
-	public boolean addNotification(int farmer, int leek, String title, String message) {
-		if (notificationsByFarmer.merge(farmer, 1, Integer::sum) > MAX_NOTIFICATIONS) return false;
+	/** sendNotification() : l'éleveur n'a pas encore MAX_NOTIFICATIONS notifications dans ce combat. */
+	public boolean canNotify(int farmer) {
+		return notificationsByFarmer.getOrDefault(farmer, 0) < MAX_NOTIFICATIONS;
+	}
+
+	public void addNotification(int farmer, int leek, String title, String message) {
+		notificationsByFarmer.merge(farmer, 1, Integer::sum);
 		notifications.add(new Outcome.AINotification(farmer, leek, title, message));
-		return true;
 	}
 
 	public List<Outcome.AINotification> getNotifications() {
