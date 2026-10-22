@@ -97,6 +97,36 @@ public class LoadoutClass {
 		return result;
 	}
 
+	/**
+	 * Le premier équipement d'un JSON, au format de normalize, sans IA à qui rapporter les erreurs :
+	 * null si le JSON est invalide ou n'en décrit aucun. Sert au worker pour l'équipement d'un
+	 * fichier posé sur un poireau de scénario de test.
+	 */
+	public static ObjectNode firstLoadout(String json) {
+		JsonNode data;
+		try {
+			data = Json.parse(json);
+		} catch (Exception e) {
+			return null;
+		}
+		if (data != null && data.isObject() && data.path("loadouts").isArray()) {
+			data = data.get("loadouts");
+		}
+		if (data != null && data.isArray()) {
+			JsonNode first = null;
+			for (var entry : data) {
+				if (entry.isObject()) { first = entry; break; }
+			}
+			data = first;
+		}
+		if (data == null || !data.isObject()) return null;
+		try {
+			return normalize(data, new ArrayList<>());
+		} catch (RuntimeException e) {
+			return null;
+		}
+	}
+
 	/** Équipement construit en code, et s'il porte une répartition de capital (clé stats). */
 	public record ObjectLoadout(FightLoadout loadout, boolean withStats) {}
 

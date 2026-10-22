@@ -461,6 +461,10 @@ public abstract class Entity {
 		return mLoadoutName;
 	}
 
+	public void setLoadoutName(String name) {
+		mLoadoutName = name;
+	}
+
 	/** Pièces améliorées que ce poireau tient en ce moment. */
 	public List<ComponentInstance> getHeldComponents() {
 		return mHeldComponents;

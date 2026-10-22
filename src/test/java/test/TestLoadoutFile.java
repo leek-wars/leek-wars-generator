@@ -5,9 +5,12 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.leekwars.generator.classes.LoadoutClass;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.scenario.EntityInfo;
+import com.leekwars.generator.scenario.Scenario;
 
 import leekscript.common.Error;
 import leekscript.compiler.AIFile;
@@ -206,5 +209,47 @@ public class TestLoadoutFile extends FightTestBase {
 			"t6/main.leek", "var p = 'a.json'\nreturn getLoadout(p)",
 			"t6/a.json", TANK
 		), "t6/main.leek"));
+	}
+
+	@Test
+	public void firstLoadoutWithoutAI() {
+		// Lecture du worker pour un poireau de scénario de test : mêmes ids que getLoadout.
+		var l = LoadoutClass.firstLoadout(TANK);
+		Assert.assertEquals("Tank \"lourd\"", l.get("name").asString());
+		Assert.assertEquals("[47,37]", l.get("weapons").toString());
+		Assert.assertEquals("[159,6,7]", l.get("chips").toString());
+		Assert.assertEquals(292, l.get("components").get(0).get("item").asInt());
+		Assert.assertEquals(12, l.get("components").get(0).get("stats").get("strength").asInt());
+		Assert.assertEquals(5000, l.get("stats").get("strength").asInt());
+		Assert.assertEquals(0, l.get("stats").get("life").asInt());
+	}
+
+	@Test
+	public void firstLoadoutOfSeveral() {
+		Assert.assertEquals("A", LoadoutClass.firstLoadout("{\"loadouts\": [1, {\"name\": \"A\"}, {\"name\": \"B\"}]}").get("name").asString());
+		Assert.assertEquals("B", LoadoutClass.firstLoadout("[\"x\", {\"name\": \"B\"}]").get("name").asString());
+	}
+
+	@Test
+	public void firstLoadoutOfNothing() {
+		Assert.assertNull(LoadoutClass.firstLoadout("{ pas du json"));
+		Assert.assertNull(LoadoutClass.firstLoadout("[]"));
+		Assert.assertNull(LoadoutClass.firstLoadout("\"tank\""));
+		Assert.assertNull(LoadoutClass.firstLoadout("{\"loadouts\": [1, 2]}"));
+	}
+
+	@Test
+	public void entryLoadoutNameReachesTheEntity() {
+		// Nom de l'ensemble porté à l'entrée (scénario de test) : lu du JSON, rendu par toJson, et
+		// posé sur l'entité pour le rapport.
+		var json = (tools.jackson.databind.node.ObjectNode) leekscript.util.Json.parse(
+			"{\"name\": \"T\", \"level\": 10, \"life\": 100, \"tp\": 10, \"mp\": 3, \"strength\": 0, \"farmer\": -1, \"loadout\": \"tank.json\"}");
+		var info = new EntityInfo(json);
+		Assert.assertEquals("tank.json", info.loadoutName);
+		Assert.assertEquals("tank.json", info.toJson().get("loadout").asString());
+		Assert.assertEquals("tank.json", info.createEntity(null, new Scenario(), null).getLoadoutName());
+		info.loadoutName = null;
+		Assert.assertNull(info.createEntity(null, new Scenario(), null).getLoadoutName());
+		Assert.assertFalse(info.toJson().has("loadout"));
 	}
 }

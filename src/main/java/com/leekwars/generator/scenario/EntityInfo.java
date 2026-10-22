@@ -73,6 +73,9 @@ public class EntityInfo {
 	public List<com.leekwars.generator.state.ComponentInstance> heldComponents;
 	/** Modèles des composants portés à l'entrée dans le combat (un exemplaire par poireau). */
 	public List<Integer> componentTemplates;
+	/** Nom de l'ensemble que porte le poireau à l'entrée dans le combat (scénario de test), pour le
+	 * rapport ; null sans ensemble. */
+	public String loadoutName;
 	public Integer cell;
 
 	public static class LoadoutData {
@@ -189,6 +192,9 @@ public class EntityInfo {
 		}
 		if (e.hasNonNull("cell")) {
 			cell = e.get("cell").intValue();
+		}
+		if (e.hasNonNull("loadout")) {
+			loadoutName = e.get("loadout").asString();
 		}
 		if (e.hasNonNull("component_templates")) {
 			componentTemplates = new ArrayList<>();
@@ -308,6 +314,7 @@ public class EntityInfo {
 		entity.setLastFightCapital(lastFightCapital);
 		entity.setHeldComponents(heldComponents);
 		entity.setComponentTemplates(componentTemplates);
+		if (loadoutName != null) entity.setLoadoutName(loadoutName);
 
 		return entity;
 	}
@@ -384,6 +391,9 @@ public class EntityInfo {
 			var templates = Json.createArray();
 			for (int t : componentTemplates) templates.add(t);
 			json.set("component_templates", templates);
+		}
+		if (loadoutName != null) {
+			json.put("loadout", loadoutName);
 		}
 		if (capitalStats != null) {
 			ObjectNode capital = Json.createObject();
