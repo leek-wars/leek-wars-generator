@@ -180,6 +180,9 @@ public class PolyglotSandbox implements AutoCloseable {
 	private static final String MAX_AST_DEPTH = "5000";
 	private static final String MAX_STREAM_SIZE = "1MB";
 
+	/** Tentatives de {@code build()} quand le nettoyage GraalVM d'un contexte collecte echoue (cf createContext). */
+	private static final int CONTEXT_BUILD_ATTEMPTS = 3;
+
 	private final long statementLimit;
 	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
 	/**
@@ -391,17 +394,18 @@ public class PolyglotSandbox implements AutoCloseable {
 			builder.allowIO(IOAccess.NONE);
 		}
 
-		Context context;
-		try {
-			context = builder.build();
-		} catch (NullPointerException e) {
-			if (!isCollectedContextCleanupFailure(e)) throw e;
-			// build() nettoie d'abord les contextes deja collectes par le GC ; sous isolate, ce nettoyage
-			// leve parfois un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate) sans
-			// rapport avec le contexte demande. Le contexte fautif est deja sorti de la file : un second
-			// build() repart de la suite. Sans lui, l'IA du poireau etait invalide pour tout le combat.
-			Log.w("PolyglotSandbox", "Nettoyage GraalVM d'un contexte collecte en echec, contexte " + languageId + " reconstruit : " + e);
-			context = builder.build();
+		Context context = null;
+		for (int attempt = 1; context == null; attempt++) {
+			try {
+				context = builder.build();
+			} catch (NullPointerException e) {
+				if (attempt >= CONTEXT_BUILD_ATTEMPTS || !isCollectedContextCleanupFailure(e)) throw e;
+				// build() nettoie d'abord les contextes deja collectes par le GC ; sous isolate, ce nettoyage
+				// leve parfois un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate) sans
+				// rapport avec le contexte demande. Le contexte fautif est deja sorti de la file : le build()
+				// suivant repart de la suite. Sans lui, l'IA du poireau etait invalide pour tout le combat.
+				Log.w("PolyglotSandbox", "Nettoyage GraalVM d'un contexte collecte en echec, contexte " + languageId + " reconstruit : " + e);
+			}
 		}
 		contexts.add(context);
 		return context;
