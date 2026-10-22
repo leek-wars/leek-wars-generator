@@ -67,11 +67,17 @@ public class LoadoutClass {
 		}
 	}
 
-	private static JsonNode readLoadouts(EntityAI ai, JsonNode data) {
-		if (data != null && data.isObject() && data.has("loadouts") && data.get("loadouts").isArray()) {
+	/** Le ou les équipements d'un JSON, l'enveloppe `{loadouts: [...]}` dépliée ; null s'il n'est ni objet ni tableau. */
+	private static JsonNode entries(JsonNode data) {
+		if (data != null && data.isObject() && data.path("loadouts").isArray()) {
 			data = data.get("loadouts");
 		}
-		if (data == null || !(data.isObject() || data.isArray())) {
+		return data != null && (data.isObject() || data.isArray()) ? data : null;
+	}
+
+	private static JsonNode readLoadouts(EntityAI ai, JsonNode data) {
+		data = entries(data);
+		if (data == null) {
 			ai.getLogs().addLog(AILog.ERROR, "getLoadout : aucun équipement dans ce JSON");
 			return null;
 		}
@@ -109,9 +115,7 @@ public class LoadoutClass {
 		} catch (Exception e) {
 			return null;
 		}
-		if (data != null && data.isObject() && data.path("loadouts").isArray()) {
-			data = data.get("loadouts");
-		}
+		data = entries(data);
 		if (data != null && data.isArray()) {
 			JsonNode first = null;
 			for (var entry : data) {
@@ -119,7 +123,7 @@ public class LoadoutClass {
 			}
 			data = first;
 		}
-		if (data == null || !data.isObject()) return null;
+		if (data == null) return null;
 		try {
 			return normalize(data, new ArrayList<>());
 		} catch (RuntimeException e) {
