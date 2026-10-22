@@ -391,9 +391,30 @@ public class PolyglotSandbox implements AutoCloseable {
 			builder.allowIO(IOAccess.NONE);
 		}
 
-		Context context = builder.build();
+		Context context;
+		try {
+			context = builder.build();
+		} catch (NullPointerException e) {
+			if (!isCollectedContextCleanupFailure(e)) throw e;
+			// build() nettoie d'abord les contextes deja collectes par le GC ; sous isolate, ce nettoyage
+			// leve parfois un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate) sans
+			// rapport avec le contexte demande. Le contexte fautif est deja sorti de la file : un second
+			// build() repart de la suite. Sans lui, l'IA du poireau etait invalide pour tout le combat.
+			Log.w("PolyglotSandbox", "Nettoyage GraalVM d'un contexte collecte en echec, contexte " + languageId + " reconstruit : " + e);
+			context = builder.build();
+		}
 		contexts.add(context);
 		return context;
+	}
+
+	/** Le NPE vient du nettoyage des contextes collectes que GraalVM fait en tete de {@code build()}. */
+	public static boolean isCollectedContextCleanupFailure(NullPointerException e) {
+		for (StackTraceElement frame : e.getStackTrace()) {
+			if (frame.getMethodName().equals("processReferenceQueue") && frame.getClassName().startsWith("org.graalvm.polyglot.Engine")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
