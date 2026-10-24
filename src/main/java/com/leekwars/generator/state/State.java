@@ -742,6 +742,13 @@ public class State {
 				applyColossusMultiplier(e);
 			}
 		}
+
+		// Effets d'entrée dans le combat, posés par l'hôte (un malus de caractéristique à durée)
+		for (Entity e : initialOrder) {
+			for (int[] effect : e.getStartEffects()) {
+				Effect.createEffect(this, effect[0], -1, 1, effect[1], 0, false, e, e, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+			}
+		}
 	}
 
 	// Applique le multiplicateur de stats courant du Colosse à une entité (effet

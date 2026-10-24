@@ -73,6 +73,9 @@ public class EntityInfo {
 	public List<com.leekwars.generator.state.ComponentInstance> heldComponents;
 	/** Modèles des composants portés à l'entrée dans le combat (un exemplaire par poireau). */
 	public List<Integer> componentTemplates;
+	// Effets à poser au début du combat, irréductibles et sans fin : {type, valeur}. Fixés par
+	// l'hôte du combat, jamais lus du JSON d'un scénario.
+	public List<int[]> startEffects;
 	/** Nom de l'ensemble que porte le poireau à l'entrée dans le combat (scénario de test), pour le
 	 * rapport ; null sans ensemble. */
 	public String loadoutName;
@@ -314,6 +317,7 @@ public class EntityInfo {
 		entity.setLastFightCapital(lastFightCapital);
 		entity.setHeldComponents(heldComponents);
 		entity.setComponentTemplates(componentTemplates);
+		entity.setStartEffects(startEffects);
 		if (loadoutName != null) entity.setLoadoutName(loadoutName);
 
 		return entity;

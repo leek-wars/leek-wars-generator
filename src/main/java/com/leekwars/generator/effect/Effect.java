@@ -78,6 +78,7 @@ public abstract class Effect implements Cloneable {
 	public final static int TYPE_MULTIPLY_STATS = 62;
 	public final static int TYPE_DAMAGE_TO_RESISTANCE = 63;
 	public final static int TYPE_SUPERINFECTION = 64;
+	public final static int TYPE_RAW_SHACKLE_STRENGTH = 65;
 
 	// Target filters constants
 	public final static int TARGET_ENEMIES = 1; // Enemies
@@ -173,6 +174,7 @@ public abstract class Effect implements Cloneable {
 		(Supplier<Effect>) EffectMultiplyStats::new, // 62
 		null, // 63
 		(Supplier<Effect>) EffectSuperinfection::new, // 64
+		(Supplier<Effect>) EffectRawShackleStrength::new, // 65
 	};
 
 	// Effect characteristics

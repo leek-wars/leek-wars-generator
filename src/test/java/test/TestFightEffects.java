@@ -81,6 +81,43 @@ public class TestFightEffects extends FightTestBase {
 			maxId, Effect.effects.length);
 	}
 
+	// ---------- Entrave de force brute et effets d'entrée dans le combat ----------
+
+	@Test
+	public void rawShackleStrengthRemovesExactValueWhateverTheCasterMagic() throws Exception {
+		initFightOnly();
+		applyEffect(Effect.TYPE_RAW_BUFF_MAGIC, -1, 200, leek2, leek2, false);
+		int before = leek1.getStrength();
+		applyEffect(Effect.TYPE_RAW_SHACKLE_STRENGTH, 3, 100, leek1, leek2, false);
+		Assert.assertEquals(before - 100, leek1.getStrength());
+	}
+
+	@Test
+	public void startEffectIsAppliedInfiniteAndIrreductible() throws Exception {
+		leek1.setStartEffects(java.util.List.of(new int[] { Effect.TYPE_RAW_SHACKLE_STRENGTH, 100 }));
+		initFightOnly();
+		int before = leek1.getStrength();
+		fight.getState().recordInitialState();
+		Assert.assertEquals(before - 100, leek1.getStrength());
+		Assert.assertEquals(1, leek1.getEffects().size());
+		var effect = leek1.getEffects().get(0);
+		Assert.assertEquals(-1, effect.getTurns());
+		Assert.assertEquals(Effect.MODIFIER_IRREDUCTIBLE, effect.getModifiers() & Effect.MODIFIER_IRREDUCTIBLE);
+		Assert.assertTrue("L'autre poireau n'a rien", leek2.getEffects().isEmpty());
+	}
+
+	@Test
+	public void startEffectResistsDebuffAndLiberation() throws Exception {
+		leek1.setStartEffects(java.util.List.of(new int[] { Effect.TYPE_RAW_SHACKLE_STRENGTH, 100 }));
+		initFightOnly();
+		int before = leek1.getStrength();
+		fight.getState().recordInitialState();
+		leek1.reduceEffects(1.0, leek2);
+		leek1.removeShackles();
+		Assert.assertEquals("Ni la réduction d'effets ni la Libération ne l'enlèvent", before - 100, leek1.getStrength());
+		Assert.assertEquals(1, leek1.getEffects().size());
+	}
+
 	// ---------- Buff strength ----------
 
 	@Test

@@ -195,6 +195,8 @@ public abstract class Entity {
 	private List<ComponentInstance> mHeldComponents = new ArrayList<>();
 	/** Modèles des composants portés (de base ou améliorés) : un exemplaire par poireau, cf State#availableCopies. */
 	private List<Integer> mComponentTemplates = new ArrayList<>();
+	// Effets posés à l'entrée dans le combat, irréductibles et sans fin : {type, valeur}
+	private List<int[]> mStartEffects = new ArrayList<>();
 
 	private int usedTP;
 	private int usedMP;
@@ -324,6 +326,7 @@ public abstract class Entity {
 		this.passiveEffectsView = Collections.unmodifiableList(this.passiveEffects);
 		this.mHeldComponents = new ArrayList<>(entity.mHeldComponents);
 		this.mComponentTemplates = new ArrayList<>(entity.mComponentTemplates);
+		this.mStartEffects = new ArrayList<>(entity.mStartEffects);
 		// effects and launchedEffects are final fields, each Entity gets a fresh empty list.
 	}
 
@@ -484,6 +487,14 @@ public abstract class Entity {
 
 	public void setComponentTemplates(List<Integer> templates) {
 		mComponentTemplates = templates == null ? new ArrayList<>() : new ArrayList<>(templates);
+	}
+
+	public List<int[]> getStartEffects() {
+		return mStartEffects;
+	}
+
+	public void setStartEffects(List<int[]> effects) {
+		mStartEffects = effects == null ? new ArrayList<>() : new ArrayList<>(effects);
 	}
 
 	/** Pièces améliorées portées à l'entrée dans le combat : il les tient d'emblée. */
