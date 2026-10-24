@@ -1112,7 +1112,7 @@ public class EntityClass {
 		Entity l = ai.getEntity();
 		var retour = new SetLeekValue(ai);
 		for (var state : l.getStates()) {
-			retour.add((long) state.ordinal());
+			retour.setPut(ai, (long) state.ordinal());
 		}
 		return retour;
 	}
@@ -1124,7 +1124,7 @@ public class EntityClass {
 		}
 		var retour = new SetLeekValue(ai);
 		for (var state : l.getStates()) {
-			retour.add((long) state.ordinal());
+			retour.setPut(ai, (long) state.ordinal());
 		}
 		return retour;
 	}
