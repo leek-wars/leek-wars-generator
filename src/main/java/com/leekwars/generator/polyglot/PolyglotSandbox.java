@@ -243,9 +243,18 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * temps CPU (non deterministe).
 	 */
 	public static Value statementCounterBinding(Context context) {
+		return executableBinding(context, StatementCounter.BINDING_NAME);
+	}
+
+	/** Memoire retenue par le contexte (cf StatementCounter.HeapSizeObject), ou null avant v25.1.3-combined-6. */
+	public static Value heapSizeBinding(Context context) {
+		return executableBinding(context, StatementCounter.HEAP_BINDING_NAME);
+	}
+
+	private static Value executableBinding(Context context, String name) {
 		try {
-			Value counter = context.getPolyglotBindings().getMember(StatementCounter.BINDING_NAME);
-			return counter != null && counter.canExecute() ? counter : null;
+			Value binding = context.getPolyglotBindings().getMember(name);
+			return binding != null && binding.canExecute() ? binding : null;
 		} catch (Exception e) {
 			return null;
 		}

@@ -75,6 +75,71 @@ public class TestPolyglotRamBudget extends FightTestBase {
 		Assert.assertEquals(Math.min(50 * 8_000_000L * 8, share), maxRAM(50, ".js"));
 	}
 
+	/**
+	 * System.usedRAM suit le tas que retient le guest : l'IA remplit un tableau au premier tour, le lache
+	 * des qu'elle voit usedRAM monter, et usedRAM redescend. Elle calcule un peu a chaque tour : le repos
+	 * entre deux mesures se compte en temps de calcul de l'IA.
+	 */
+	@Test
+	public void usedRamFollowsTheGuestHeap() throws Exception {
+		Assume.assumeTrue("image isolate sans mesure du tas guest (avant v25.1.3-combined-6)", imageMeasuresHeap());
+		initFightOnly();
+		leek.setCores(100);
+		assertUsedRamFollows(".ts", 2_000_000, """
+			let a: number[] = [];
+			let empty = -1, released = false, s = 0;
+			function turn(): number {
+			  for (let i = 0; i < 3_000_000; i++) s += i;
+			  const used = System.usedRAM;
+			  if (empty < 0) { empty = used; for (let i = 0; i < 2_000_000; i++) a.push(i); }
+			  else if (!released && used - empty > 8_000_000) { released = true; a = []; }
+			  return used;
+			}
+			""");
+		assertUsedRamFollows(".py", 1_000_000, """
+			a = []
+			empty, released, s = -1, False, 0
+			def turn():
+			    global a, empty, released, s
+			    for i in range(300_000):
+			        s += i
+			    used = System.usedRAM
+			    if empty < 0:
+			        empty = used
+			        for i in range(1_000_000):
+			            a.append(i)
+			    elif not released and used - empty > 4_000_000:
+			        released = True
+			        a = []
+			    return used
+			""");
+	}
+
+	/** Les deux langages viennent de la meme image : sonder le JS suffit. */
+	private static boolean imageMeasuresHeap() {
+		try (PolyglotSandbox sandbox = new PolyglotSandbox("js")) {
+			return PolyglotSandbox.heapSizeBinding(sandbox.createContext("js")) != null;
+		}
+	}
+
+	private void assertUsedRamFollows(String extension, int numbers, String code) throws Exception {
+		EntityAI ai = ai(6, extension, code);
+		long empty = turn(ai), peak = empty, last = empty;
+		for (int t = 0; t < 300 && !(peak - empty > numbers * 4L && last < peak - numbers * 2L); t++) {
+			last = turn(ai);
+			peak = Math.max(peak, last);
+		}
+		String ram = extension + " : usedRAM " + empty + " -> " + peak + " -> " + last;
+		Assert.assertTrue(ram + ", " + numbers + " entiers retenus", peak - empty > numbers * 4L);
+		Assert.assertTrue(ram + ", tableau lache", last < peak - numbers * 2L);
+		Assert.assertTrue(ram + ", sous maxRAM", peak < ai.getMaxRAM() * 8);
+	}
+
+	private static long turn(EntityAI ai) throws Exception {
+		ai.resetCounter();
+		return ((Number) ai.runIA()).longValue();
+	}
+
 	/** RAM 6 : LeekScript y tient 48 M entiers, une IA TypeScript doit en tenir au moins 10 M. */
 	@Test
 	public void lowRamTypeScriptHoldsTenMillionNumbers() throws Exception {

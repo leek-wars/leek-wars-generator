@@ -146,6 +146,16 @@ public class PolyglotEntityAI extends EntityAI {
 	// execute(x) = reset). Refetche a chaque (re)construction de contexte par ensureContext ; null si
 	// l'image ne l'embarque pas (ex Python officiel) -> fallback temps CPU (non reproductible).
 	private Value statementCounter;
+	// Memoire retenue par le contexte (System.usedRAM), publiee par le meme instrument ; null sans
+	// l'image qui la publie. Refetchee avec le contexte, derniere mesure gardee (cf getUsedRAM).
+	private Value heapSize;
+	private boolean heapMeasured;              // une mesure existe pour ce contexte
+	private long usedHeapBytes;
+	private long heapMeasureNanos;             // duree de la derniere mesure
+	private long heapMeasuredAtOwnNanos;       // temps de calcul de l'IA a la fin de cette mesure
+	private long ownNanos;                     // temps de calcul de l'IA dans ses tours et hooks finis
+	/** Image isolate sans la mesure du tas, signalee une fois par processus (cf ensureContext). */
+	private static final AtomicBoolean HEAP_BINDING_MISSING_LOGGED = new AtomicBoolean();
 	// Bindings globaux du guest (cache) : sert a rafraichir le miroir __lw_real pour le getOperations
 	// cote guest (cf installGuestGetOperations). null si l'override guest n'est pas actif.
 	private Value guestBindings;
@@ -618,6 +628,43 @@ public class PolyglotEntityAI extends EntityAI {
 		setMaxRAM((int) (guestRamCap / BYTES_PER_RAM_UNIT));
 	}
 
+	/**
+	 * System.usedRAM : les octets que retient le contexte guest (runtime, bibliotheques et donnees du
+	 * joueur, le calcul meme de sandbox.MaxHeapMemory), en unites comme maxRAM et jamais au-dela. Le
+	 * calcul parcourt le tas du contexte, ~2 ms par Mo et arrete au cap : apres une mesure, la suivante
+	 * attend que l'IA ait calcule quatre fois sa duree, tours precedents compris, et la derniere est
+	 * rendue en attendant. Mesurer coute ainsi au plus un cinquieme du temps de l'IA, quel que soit le
+	 * rythme de ses lectures ; une IA qui travaille a une valeur fraiche a chaque tour, une IA presque
+	 * inactive au tas enorme moins souvent. Ce temps suit l'horloge : comme le getUsedRAM de LeekScript,
+	 * qui depend du GC, la valeur n'est pas reproductible d'une execution a l'autre. Sans la mesure
+	 * (image isolate anterieure), les valeurs LeekScript cote hote.
+	 */
+	@Override
+	public long getUsedRAM() {
+		if (heapSize == null) {
+			return super.getUsedRAM();
+		}
+		long start = System.nanoTime();
+		long own = ownNanos + (start - turnStartNanos);
+		if (!heapMeasured || own - heapMeasuredAtOwnNanos >= 4 * heapMeasureNanos) {
+			try {
+				usedHeapBytes = Math.min(heapSize.execute(guestRamCap).asLong(), guestRamCap);
+			} catch (RuntimeException e) {
+				// Annulation ou limite atteinte : c'est au tour de s'arreter, pas a la mesure de l'avaler.
+				if (e instanceof PolyglotException p && (p.isCancelled() || p.isInterrupted() || p.isResourceExhausted())) {
+					throw e;
+				}
+				Log.w("PolyglotEntityAI", "Mesure du tas guest indisponible (" + languageId + "), System.usedRAM retombe sur l'hote : " + e);
+				heapSize = null;
+				return super.getUsedRAM();
+			}
+			heapMeasureNanos = System.nanoTime() - start;
+			heapMeasuredAtOwnNanos = own + heapMeasureNanos;
+			heapMeasured = true;
+		}
+		return usedHeapBytes / BYTES_PER_RAM_UNIT;
+	}
+
 	private void ensureContext() {
 		if (context != null) {
 			return;
@@ -646,6 +693,12 @@ public class PolyglotEntityAI extends EntityAI {
 			// Compteur de statements deterministe de l'image custom, lie a CE contexte (refetche
 			// apres chaque reconstruction). null si l'image ne l'embarque pas -> temps CPU.
 			statementCounter = PolyglotSandbox.statementCounterBinding(context);
+			heapSize = PolyglotSandbox.heapSizeBinding(context);
+			heapMeasured = false;
+			if (heapSize == null && statementCounter != null && HEAP_BINDING_MISSING_LOGGED.compareAndSet(false, true)) {
+				// Meme instrument, compteur present mais pas la mesure : image anterieure a combined-6.
+				Log.w("PolyglotEntityAI", "Image isolate sans mesure du tas guest : System.usedRAM ne voit que l'hote");
+			}
 			externalIsolate = sandbox.isExternalIsolate(languageId);
 			// Redirige getOperations() cote guest (perf : evite ~100k+ aller-retours hote/tour sur une
 			// IA de recherche). Seulement avec l'instrument deterministe ; sinon le getOperations HOTE
@@ -1849,8 +1902,9 @@ public class PolyglotEntityAI extends EntityAI {
 		turnOperations = 0;
 	}
 
-	/** Fige le total d'operations du tour (guest + hote), lu par le moteur apres le tour. */
+	/** Fige le total d'operations du tour (guest + hote), lu par le moteur apres le tour, et cumule son temps (cf getUsedRAM). */
 	private void snapshotTurnOperations() {
+		ownNanos += System.nanoTime() - turnStartNanos;
 		try {
 			turnOperations = getOperations();
 		} catch (Exception e) {
@@ -1936,6 +1990,7 @@ public class PolyglotEntityAI extends EntityAI {
 			context = null;
 			contextGeneration++; // toute Value capturee sur ce contexte (callback de bulbe) est desormais perimee
 			statementCounter = null; // binding lie au contexte ferme ; refetche par ensureContext
+			heapSize = null;
 			guestBindings = null;
 		}
 		// Le prochain ensureContext reconstruira un contexte neuf : on re-evaluera le source

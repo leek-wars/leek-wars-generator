@@ -1,5 +1,8 @@
 package com.leekwars.generator.polyglot;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ContextsListener;
 import com.oracle.truffle.api.instrumentation.EventContext;
@@ -9,6 +12,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.TruffleInstrument;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.LanguageInfo;
@@ -36,12 +40,16 @@ import org.graalvm.polyglot.SandboxPolicy;
  *
  * Compteur = simple champ long : PAS de ThreadLocal (blocklist en compilation runtime
  * native-image, et un engine = un combat = un thread chez LeekWars).
+ *
+ * <p>Publie aussi {@link #HEAP_BINDING_NAME} : la memoire retenue par le contexte (System.usedRAM
+ * des IA polyglot), meme calcul que celui de sandbox.MaxHeapMemory.
  */
 @TruffleInstrument.Registration(id = StatementCounter.ID, name = "LeekWars Statement Counter", services = StatementCounter.Counter.class, sandbox = SandboxPolicy.ISOLATED)
 public final class StatementCounter extends TruffleInstrument {
 
 	public static final String ID = "lw-statement-counter";
 	public static final String BINDING_NAME = "lwStatementCounter";
+	public static final String HEAP_BINDING_NAME = "lwHeapSize";
 
 	/**
 	 * Option d'activation : sous isolate le lookup de service hote (qui activait l'instrument
@@ -76,6 +84,23 @@ public final class StatementCounter extends TruffleInstrument {
 				return 0L;
 			}
 			return counter.get();
+		}
+	}
+
+	/**
+	 * Facade interop : execute(stopAtBytes) = octets retenus par le contexte qui l'a publiee. Le calcul
+	 * parcourt le tas du contexte, son cout croit avec lui : il s'arrete des que stopAtBytes est depasse
+	 * (et renvoie alors une valeur superieure a stopAtBytes). Sans argument, pas d'arret.
+	 */
+	@ExportLibrary(InteropLibrary.class)
+	static final class HeapSizeObject implements TruffleObject {
+		final Env env;
+		final TruffleContext context;
+		HeapSizeObject(Env env, TruffleContext context) { this.env = env; this.context = context; }
+		@ExportMessage boolean isExecutable() { return true; }
+		@ExportMessage @TruffleBoundary Object execute(Object[] args) throws UnsupportedMessageException {
+			long stopAtBytes = args.length > 0 ? InteropLibrary.getUncached().asLong(args[0]) : Long.MAX_VALUE;
+			return env.calculateContextHeapSize(context, stopAtBytes, new AtomicBoolean());
 		}
 	}
 
@@ -124,7 +149,9 @@ public final class StatementCounter extends TruffleInstrument {
 						// peut etre deja entre : on tente l'ecriture directe
 					}
 					try {
-						InteropLibrary.getUncached().writeMember(env.getPolyglotBindings(), BINDING_NAME, facade);
+						InteropLibrary bindings = InteropLibrary.getUncached();
+						bindings.writeMember(env.getPolyglotBindings(), BINDING_NAME, facade);
+						bindings.writeMember(env.getPolyglotBindings(), HEAP_BINDING_NAME, new HeapSizeObject(env, context));
 					} finally {
 						if (entered) {
 							context.leave(null, prev);
