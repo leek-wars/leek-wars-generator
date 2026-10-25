@@ -136,7 +136,7 @@ public class TestFightEffects extends FightTestBase {
 		var state = fight.getState();
 		int before = leek1.getStrength();
 		state.recordInitialState();
-		leek1.removeLife(leek1.getLife(), 0, leek2, com.leekwars.generator.attack.DamageType.DIRECT, null, null);
+		leek1.removeLife(leek1.getLife(), 0, leek2, DamageType.DIRECT, null, null);
 		Assert.assertTrue(leek1.isDead());
 		var cell = state.getMap().getCells().stream().filter(c -> c.available(state.getMap())).findFirst().orElseThrow();
 		state.resurrect(leek2, leek1, cell, false, true);
