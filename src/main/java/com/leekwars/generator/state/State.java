@@ -745,9 +745,15 @@ public class State {
 
 		// Effets d'entrée dans le combat, posés par l'hôte (un malus de caractéristique à durée)
 		for (Entity e : initialOrder) {
-			for (int[] effect : e.getStartEffects()) {
-				Effect.createEffect(this, effect[0], -1, 1, effect[1], 0, false, e, e, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
-			}
+			applyStartEffects(e);
+		}
+	}
+
+	// Effets d'entrée dans le combat d'une entité : irréductibles et sans fin, donc rendus aussi
+	// à la résurrection, la mort les ayant purgés
+	private void applyStartEffects(Entity e) {
+		for (int[] effect : e.getStartEffects()) {
+			Effect.createEffect(this, effect[0], -1, 1, effect[1], 0, false, e, e, null, 0, true, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
 		}
 	}
 
@@ -1568,8 +1574,9 @@ public class State {
 		actions.log(new ActionResurrect(owner, entity));
 
 		// La mort a purgé tous les effets, y compris les états permanents (ex. Enraciné
-		// d'une plante, Statique d'une tourelle) : on les réapplique.
+		// d'une plante, Statique d'une tourelle) et ceux d'entrée dans le combat : on les réapplique.
 		entity.applyPermanentStates();
+		applyStartEffects(entity);
 	}
 
 	/** Place de départ d'une entité ressuscitée : devant le premier vivant qui la suivait au départ, sinon en fin de tour. */

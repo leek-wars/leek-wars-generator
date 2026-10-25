@@ -24,6 +24,7 @@ import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.effect.EffectParameters;
 import com.leekwars.generator.effect.EffectPoison;
+import com.leekwars.generator.effect.EffectRawShackleStrength;
 import com.leekwars.generator.effect.EffectShackleAgility;
 import com.leekwars.generator.effect.EffectShackleMP;
 import com.leekwars.generator.effect.EffectShackleMagic;
@@ -326,7 +327,7 @@ public abstract class Entity {
 		this.passiveEffectsView = Collections.unmodifiableList(this.passiveEffects);
 		this.mHeldComponents = new ArrayList<>(entity.mHeldComponents);
 		this.mComponentTemplates = new ArrayList<>(entity.mComponentTemplates);
-		this.mStartEffects = new ArrayList<>(entity.mStartEffects);
+		this.mStartEffects = entity.mStartEffects;
 		// effects and launchedEffects are final fields, each Entity gets a fresh empty list.
 	}
 
@@ -1224,7 +1225,9 @@ public abstract class Entity {
 	public void removeShackles() {
 		for (int i = 0; i < effects.size(); ++i) {
 			Effect effect = effects.get(i);
-			if (effect instanceof EffectShackleTP || effect instanceof EffectShackleMP || effect instanceof EffectShackleAgility || effect instanceof EffectShackleMagic || effect instanceof EffectShackleStrength || effect instanceof EffectShackleWisdom) {
+			// Une entrave irréductible reste, comme pour la réduction d'effets
+			if ((effect.getModifiers() & Effect.MODIFIER_IRREDUCTIBLE) != 0) continue;
+			if (effect instanceof EffectShackleTP || effect instanceof EffectShackleMP || effect instanceof EffectShackleAgility || effect instanceof EffectShackleMagic || effect instanceof EffectShackleStrength || effect instanceof EffectRawShackleStrength || effect instanceof EffectShackleWisdom) {
 				effect.getCaster().removeLaunchedEffect(effect);
 				removeEffect(effect);
 				i--;

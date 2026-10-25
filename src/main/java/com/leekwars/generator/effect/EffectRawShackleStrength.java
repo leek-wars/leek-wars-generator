@@ -5,7 +5,7 @@ import com.leekwars.generator.state.State;
 
 /**
  * Entrave de force brute : retire une valeur fixe, sans la magie du lanceur (pendant négatif des
- * buffs RAW). Elle n'hérite pas d'EffectShackleStrength : la Libération ne l'enlève pas.
+ * buffs RAW). La Manumission l'enlève comme les autres entraves, sauf posée irréductible.
  */
 public class EffectRawShackleStrength extends Effect {
 

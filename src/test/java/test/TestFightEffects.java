@@ -114,7 +114,33 @@ public class TestFightEffects extends FightTestBase {
 		fight.getState().recordInitialState();
 		leek1.reduceEffects(1.0, leek2);
 		leek1.removeShackles();
-		Assert.assertEquals("Ni la réduction d'effets ni la Libération ne l'enlèvent", before - 100, leek1.getStrength());
+		Assert.assertEquals("Ni la réduction d'effets ni la Manumission ne l'enlèvent", before - 100, leek1.getStrength());
+		Assert.assertEquals(1, leek1.getEffects().size());
+	}
+
+	@Test
+	public void manumissionRemovesARawShackleThatIsNotIrreductible() throws Exception {
+		initFightOnly();
+		int before = leek1.getStrength();
+		applyEffect(Effect.TYPE_RAW_SHACKLE_STRENGTH, 3, 100, leek1, leek2, false);
+		Assert.assertEquals(before - 100, leek1.getStrength());
+		leek1.removeShackles();
+		Assert.assertEquals(before, leek1.getStrength());
+		Assert.assertTrue(leek1.getEffects().isEmpty());
+	}
+
+	@Test
+	public void startEffectComesBackAfterResurrection() throws Exception {
+		leek1.setStartEffects(java.util.List.of(new int[] { Effect.TYPE_RAW_SHACKLE_STRENGTH, 100 }));
+		initFightOnly();
+		var state = fight.getState();
+		int before = leek1.getStrength();
+		state.recordInitialState();
+		leek1.removeLife(leek1.getLife(), 0, leek2, com.leekwars.generator.attack.DamageType.DIRECT, null, null);
+		Assert.assertTrue(leek1.isDead());
+		var cell = state.getMap().getCells().stream().filter(c -> c.available(state.getMap())).findFirst().orElseThrow();
+		state.resurrect(leek2, leek1, cell, false, true);
+		Assert.assertEquals("La mort ne lève pas la malédiction", before - 100, leek1.getStrength());
 		Assert.assertEquals(1, leek1.getEffects().size());
 	}
 
