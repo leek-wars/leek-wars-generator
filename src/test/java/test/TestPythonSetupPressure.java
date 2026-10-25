@@ -20,7 +20,7 @@ import leekscript.runner.LeekRunException;
 
 /**
  * Harnais de MESURE (#4999, #5000) : que retient vraiment un contexte Python monte (runtime GraalPy
- * + prelude objects.py), et le cap {@code POLYGLOT_PYTHON_MIN_HEAP_MB} le couvre-t-il ?
+ * + prelude objects.py), et le cap RAM du poireau le couvre-t-il ?
  *
  * <p>GraalVM ne verifie {@code sandbox.MaxHeapMemory} que sous PRESSION de l'isolate (tas de
  * l'isolate au-dela de {@code sandbox.RetainedBytesCheckFactor} = 70 % de {@code engine.MaxIsolateMemory}).
@@ -31,7 +31,7 @@ import leekscript.runner.LeekRunException;
  *
  * <p>Lancer avec un isolate REDUIT pour arriver vite a la pression, ex :
  * <pre>
- * POLYGLOT_MAX_ISOLATE_MB=1200 POLYGLOT_PYTHON_MIN_HEAP_MB=384 PRESSURE_CONTEXTS=40 \
+ * POLYGLOT_MAX_ISOLATE_MB=1200 PRESSURE_CONTEXTS=40 \
  *   gradle --offline :test --tests test.TestPythonSetupPressure
  * </pre>
  * Les tests sont SAUTES sans {@code PRESSURE_CONTEXTS} (ils sont lents et dependent de
@@ -67,6 +67,8 @@ public class TestPythonSetupPressure extends FightTestBase {
 	@Override
 	protected void createLeeks() {
 		leek1 = defaultLeek(1, "Py1");
+		// RAM 1 = cap de 64 Mo, le plus petit d'une entite qui a de la RAM : un setup qui le depasse se voit ici.
+		leek1.setRAM(1);
 		leek2 = defaultLeek(2, "Py2");
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);

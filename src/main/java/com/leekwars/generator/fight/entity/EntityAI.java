@@ -382,8 +382,13 @@ public class EntityAI extends AI {
 	 * opérations des cœurs qu'il ne porte plus.
 	 */
 	public void applyEntityBudgets() {
-		setMaxRAM(Math.min(50, mInitialEntity.getRAM()) * 8_000_000);
+		setMaxRAM(ramUnits());
 		setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mInitialEntity.getCores() * 1_000_000));
+	}
+
+	/** RAM de l'entité en unités LeekScript (une par valeur). */
+	protected int ramUnits() {
+		return Math.min(50, mInitialEntity.getRAM()) * 8_000_000;
 	}
 
 	public void addSystemLog(int type, Error error, String[] parameters) {

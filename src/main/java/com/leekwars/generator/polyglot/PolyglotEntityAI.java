@@ -105,7 +105,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private int readFilesLength;
 	private final boolean jsModule;            // entree JS chargee comme module ES
 	private Context context;
-	/** Cap RAM guest (sandbox.MaxHeapMemory, octets) pose sur le contexte courant, pour les journaux de depassement. */
+	/** Cap RAM guest (sandbox.MaxHeapMemory, octets) du contexte courant : donne aussi maxRAM (System.maxRAM), et sert aux journaux de depassement. */
 	private long guestRamCap;
 	private int contextGeneration;             // incremente a chaque fermeture : date les Value guest capturees
 	private boolean initialized;
@@ -190,49 +190,41 @@ public class PolyglotEntityAI extends EntityAI {
 	private final double builtinOpsFactor;
 
 	/**
-	 * CALIBRATION FAIRNESS INTER-LANGAGES (RAM). Le cap {@code min(50,RAM)*8Mo} est passe tel quel a
-	 * {@code sandbox.MaxHeapMemory} (OCTETS) alors que LeekScript l'interprete en unites mRAM
-	 * LOGIQUES. Consequence mesuree (TestRamCalibration) : a cap identique, JS et Python retiennent
-	 * ~3.8x PLUS de donnees (tableau d'entiers) que LeekScript. On divise le cap guest par ce facteur
-	 * pour rapprocher la parite. AJUSTABLE. NB : approximatif (un objet JS/Py pese plus qu'un entier
-	 * packe -> le ratio varie selon la structure), donc a affiner selon les IA reelles.
-	 */
-	private static final double RAM_FACTOR = 3.8;
-
-	/**
-	 * BASELINE de cap RAM guest pour Python, en octets (cf ensureContext) : le cout FIXE du runtime
-	 * avant la moindre ligne du joueur. GraalPy (runtime + importlib + FileFinder sur le FS custom),
-	 * le prelude de determinisme, l'API objet (objects.py instancie deja 37 armes + 110 puces + les
-	 * classes) ET la COMPILATION des modules du joueur (chaque {@code import} d'un fichier voisin fait
-	 * charger+compiler+executer son top-level) allouent plusieurs dizaines de Mo AVANT la premiere
-	 * action. Ce cout n'est PAS de la donnee joueur : le facturer sur le petit budget d'un poireau bas
-	 * niveau l'annule au setup, sur du code parfaitement legitime.
+	 * Octets de cap guest par unite de RAM LeekScript. LeekScript compte une unite par valeur (2 par
+	 * entree de map ou champ d'objet, 10 par caractere du Java compile) et l'affiche en octets, x 8 :
+	 * c'est le System.maxRAM de tous les langages. Le cap guest est ce meme nombre d'octets RETENUS
+	 * par le contexte, runtime, modules de la stdlib importes et code du joueur compris : la RAM
+	 * annoncee est la RAM disponible, et les bibliotheques du langage se paient dessus comme le code
+	 * compile se paie en LeekScript.
 	 *
-	 * <p>MODELE : le cap guest Python = cette baseline PLUS le budget derive de la RAM (cf
-	 * ensureContext), et non {@code max(baseline, derive)}. L'additif garde deux proprietes :
-	 * <ul>
-	 * <li>le setup ne mange jamais le budget de DONNEES du joueur (meme un poireau RAM 6 a la baseline
-	 *     entiere pour le runtime, plus ses ~12 Mo de donnees) ;</li>
-	 * <li>la RAM reste utile en Python (un poireau qui a investi la stat obtient un cap plus haut),
-	 *     la ou un simple plancher aplatissait tous les poireaux a la meme valeur.</li>
-	 * </ul>
+	 * <p>CALIBRATION (25/10/2026, retenu mesure par sandbox.TraceLimits, cf TestRamCalibration), en
+	 * octets retenus par unite LeekScript selon la forme des donnees :
+	 * <pre>
+	 *   forme                JS/TS   Python
+	 *   entiers                5,0      5,5
+	 *   grille [][100]         6,8      8,1
+	 *   reels                  8,9     11,0
+	 *   instances (3 champs)  16,2     17,7
+	 *   objets / dicts {x,y}  22,6     53,7
+	 *   map int -&gt; int        71       40
+	 *   chaines courtes       97      101
+	 *   ensemble d'entiers   136       65
+	 * </pre>
+	 * LeekScript ne facture pas les chaines et peu les maps et ensembles : aucun facteur ne fait la
+	 * parite sur toutes les formes. A 8, un tableau de nombres tient autant ou plus qu'en LeekScript,
+	 * une map ou des chaines nettement moins. Sur une IA reelle, c'est le code qui domine : Quantum
+	 * coute 26 M unites en LeekScript, son code compile presque entier, et retient 49 Mo en JS.
 	 *
-	 * <p>HISTORIQUE : 32 Mo (2026-07, plancher), puis 64 Mo. Le terrain a re-demente (prod 2026-08,
-	 * #4747 : poireau RAM 6, IA multi-fichiers modeste — entree qui {@code import main} d'un module de
-	 * 16 Ko a top-level charge — annulee des le setup a 64 Mo, 0 operation, poireau inerte tout le
-	 * combat). ATTENTION : la marche exacte n'est PAS reproduite par les tests (localement ce meme cas
-	 * passe des ~16 Mo, cf TestPolyglotMultiFile) : le vrai code joueur, l'image isolate de prod et
-	 * l'etat de combat reel allouent bien plus que le harnais. On ne calibre donc pas au plus juste, on
-	 * prend de la marge : 128 Mo, configurable par env pour recalibrer en prod sans rebuild. Cout
-	 * isolate : une equipe de 12 poireaux Python RAM 50 = 12*(128+105) ~ 2,8 Go, sous l'isolate du
-	 * worker (cf PolyglotSandbox.MAX_PYTHON_ISOLATE_MEMORY). Le filet durable reste le mapping en
-	 * OUT_OF_MEMORY (cf isMemoryExhaustion) : ou que soit le seuil, le depassement est une erreur
-	 * joueur lisible et non un plantage de combat.
+	 * <p>HISTORIQUE : jusqu'au 25/10/2026, le cap valait RAM / 3,8 octets, d'apres une calibration ou
+	 * LeekScript butait sur sa limite d'operations et non sur sa RAM : 30x moins que System.maxRAM,
+	 * ~20x moins de donnees qu'en LeekScript. Python y ajoutait une base de 128 Mo (384 en prod) pour
+	 * son runtime, sans objet a ce niveau de cap : un contexte Python monte retient 13 Mo, 19 avec
+	 * quatorze modules de la stdlib.
 	 */
-	private static final long PYTHON_BASE_HEAP_BYTES = PolyglotSandbox.envMegabytes("POLYGLOT_PYTHON_MIN_HEAP_MB", 128);
+	private static final long BYTES_PER_RAM_UNIT = 8;
 
-	/** Plancher de cap RAM guest pour les autres langages (JS/TS), en octets : runtime bien plus leger. */
-	private static final long DEFAULT_MIN_HEAP_BYTES = 8_000_000L;
+	/** Plancher du cap guest dans la limite de PolyglotSandbox.maxContextHeap, pour une entite sans RAM (scenario local, test) : de quoi monter le runtime. */
+	private static final long MIN_HEAP_BYTES = 64_000_000L;
 
 	public PolyglotEntityAI(String languageId, String source, PolyglotSandbox sandbox) {
 		this(languageId, source, null, null, sandbox);
@@ -611,6 +603,21 @@ public class PolyglotEntityAI extends EntityAI {
 		return null;
 	}
 
+	/**
+	 * Un seul budget RAM, celui du guest : le cap du contexte courant, fige a sa creation meme si un
+	 * setLoadout de beforeFight change ensuite la RAM, sinon celui que la RAM de l'entite donnera au
+	 * prochain (cf BYTES_PER_RAM_UNIT). Remis en unites dans maxRAM, que lisent System.maxRAM et le
+	 * controle des valeurs LeekScript construites cote hote.
+	 */
+	@Override
+	public void applyEntityBudgets() {
+		super.applyEntityBudgets();
+		if (context == null) {
+			guestRamCap = Math.min(Math.max(MIN_HEAP_BYTES, ramUnits() * BYTES_PER_RAM_UNIT), PolyglotSandbox.maxContextHeap(languageId));
+		}
+		setMaxRAM((int) (guestRamCap / BYTES_PER_RAM_UNIT));
+	}
+
 	private void ensureContext() {
 		if (context != null) {
 			return;
@@ -624,17 +631,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Multi-fichiers : le FS sert les fichiers du joueur (et, pour Python, delegue la stdlib
 		// GraalPy en lecture seule). fileSystem peut etre null (mono-fichier, ou Python sans
 		// stdlib localisable) -> contexte sans FS (stdlib lue en interne).
-		// Cap RAM RETENUE du guest (par poireau, sandbox.MaxHeapMemory, en OCTETS) = budget DONNEES
-		// de l'entite (RAM / RAM_FACTOR : a cap brut egal le guest retient ~3.8x plus de donnees que
-		// le mRAM LeekScript, cf RAM_FACTOR / TestRamCalibration).
-		//   - Python : on AJOUTE la baseline runtime (cf PYTHON_BASE_HEAP_BYTES) au budget donnees,
-		//     car le cout FIXE du runtime GraalPy + prelude + compilation des modules importes ne doit
-		//     pas etre facture sur le petit budget d'un poireau bas niveau (annulation au setup, #4747).
-		//   - JS/TS : runtime bien plus leger -> simple plancher (max), le modele historique.
-		long dataBudget = (long) (getMaxRAM() / RAM_FACTOR);
-		guestRamCap = "python".equals(languageId)
-			? PYTHON_BASE_HEAP_BYTES + dataBudget
-			: Math.max(DEFAULT_MIN_HEAP_BYTES, dataBudget);
+		// guestRamCap : cap RAM RETENUE du guest, en OCTETS, que applyEntityBudgets vient de calculer.
 		context = sandbox.createContext(languageId, fileSystem, guestRamCap);
 		// TOUT-OU-RIEN : si le setup echoue en cours de route (typiquement le cap RAM sature par
 		// l'import Python du prelude), le contexte a demi construit ne doit PAS rester en place.
@@ -1865,8 +1862,8 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Cap RAM guest sature : contexte ferme (le tour suivant en reconstruit un neuf), erreur JOUEUR.
 	 *
 	 * <p>Le message GraalVM est journalise AVANT d'etre traduit : il contient la taille retenue
-	 * mesuree ("Current memory at least Y bytes"), seule donnee qui permette de calibrer la baseline
-	 * Python (#4999, #5000) : ce chiffre n'existe que sous pression de l'isolate, donc en prod.
+	 * mesuree ("Current memory at least Y bytes"), seule mesure en prod du retenu reel d'un contexte
+	 * (#4999, #5000) : ce chiffre n'existe que sous pression de l'isolate.
 	 */
 	private LeekRunException outOfMemory(Throwable cause) {
 		String message = PolyglotSandbox.memoryExhaustionMessage(cause);

@@ -31,7 +31,6 @@ tasks.register('pythonLeakTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 	filter { includeTestsMatching 'test.TestPythonSetupPressure' }
 	environment 'POLYGLOT_MAX_ISOLATE_MB', '1000'
-	environment 'POLYGLOT_PYTHON_MIN_HEAP_MB', '32'
 	environment 'PRESSURE_CONTEXTS', '200'
 	environment 'PRESSURE_PER_SANDBOX', '4'
 	environment 'PRESSURE_TURNS', '1'

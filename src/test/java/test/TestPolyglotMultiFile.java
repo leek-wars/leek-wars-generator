@@ -439,9 +439,9 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	}
 
 	/**
-	 * Poireau bas niveau (RAM 6 -> cap guest ~12,6 Mo avant plancher) : la machinerie d'import GraalPy
-	 * explosait le cap heap sur un simple {@code import voisin} alors que le mono-fichier passait.
-	 * Le plancher Python doit laisser passer l'import (#3179).
+	 * Poireau au plus petit cap (cf lowRamLeek) : la machinerie d'import GraalPy explosait le cap heap
+	 * sur un simple {@code import voisin} alors que le mono-fichier passait. Le cap doit laisser
+	 * passer l'import (#3179).
 	 */
 	@Test
 	public void pythonMultiFileImportFitsLowLevelRamCap() throws Exception {
@@ -462,10 +462,9 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	 * {@code leek-war-scripts/basic.py}). Cumule les deux conditions du signalement, poireau bas
 	 * niveau ET entree en sous-dossier.
 	 *
-	 * <p>HONNETETE : ce cas minimal passait DEJA au plancher de 32 Mo en local (verifie en abaissant
-	 * temporairement la constante ; il ne casse qu'a 8 Mo). Il ne reproduit donc pas le franchissement
-	 * observe en prod, ou le vrai code joueur et l'etat de combat reel allouent davantage. Il garde le
-	 * chemin, pas le seuil.
+	 * <p>HONNETETE : ce cas minimal passait DEJA a un cap de 32 Mo en local (il ne casse qu'a 8 Mo).
+	 * Il ne reproduit donc pas le franchissement observe en prod, ou le vrai code joueur et l'etat de
+	 * combat reel allouent davantage. Il garde le chemin, pas le seuil.
 	 */
 	@Test
 	public void pythonSubfolderImportFitsLowLevelRamCap() throws Exception {
@@ -483,9 +482,9 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	/**
 	 * #4747 : poireau RAM 6 dont l'entree {@code import}e un module VOISIN a top-level charge (le vrai
 	 * cas signale : un {@code main.py} de 16 Ko qui, a l'import, construit un dict de 613 cases, delie
-	 * des listes-litterales de bordures et definit ses fonctions). A 64 Mo de plancher, ce setup
-	 * saturait le cap heap guest AVANT la 1re action -> IA annulee, 0 operation, poireau inerte tout le
-	 * combat. La baseline additive (cf PolyglotEntityAI) doit le laisser tourner.
+	 * des listes-litterales de bordures et definit ses fonctions). En prod (08/2026), sous un cap de
+	 * 64 Mo, ce setup saturait le heap guest AVANT la 1re action -> IA annulee, 0 operation, poireau
+	 * inerte tout le combat. Le plus petit cap (cf lowRamLeek) doit le laisser tourner.
 	 *
 	 * <p>Sandbox Python SEUL (et non "js","python") a dessein : c'est la config ou l'isolate Python est
 	 * charge EN PROCESSUS, donc ou {@code sandbox.MaxHeapMemory} est reellement applique. Avec les deux
@@ -516,12 +515,15 @@ public class TestPolyglotMultiFile extends FightTestBase {
 		}
 	}
 
-	/** Poireau RAM 6 enregistre dans l'etat : Fight.me resout par fid, un fid non attribue viserait leek1. */
+	/**
+	 * Poireau au plus petit cap enregistre dans l'etat : Fight.me resout par fid, un fid non attribue
+	 * viserait leek1. RAM 1 = 64 Mo, quand un vrai poireau a au moins RAM 6 (384 Mo).
+	 */
 	private Leek lowRamLeek() {
 		// defaultLeek plutot qu'un 26e appel positionnel a new Leek(...) : le seul stat qui compte ici
 		// est la RAM, et il devient lisible au lieu d'etre le 16e argument d'une liste anonyme.
 		Leek small = defaultLeek(3, "Small");
-		small.setRAM(6);
+		small.setRAM(1);
 		small.setFight(fight);
 		fight.getState().addEntity(1, small);
 		return small;

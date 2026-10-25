@@ -52,8 +52,9 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/**
 	 * Limite memoire TOTALE de l'isolate (par langage), en octets : adresse RESERVEE, committee a la
-	 * demande. Doit couvrir la somme des caps par-poireau (jusqu'a ~8 entites qui RETIENNENT leur RAM
-	 * entre tours) + l'overhead runtime GraalJS/GraalPy. TODO calibrer vs le nombre d'entites max.
+	 * demande. Une IA n'en retient qu'un quart au plus (cf maxContextHeap), mais la somme
+	 * des caps des combats en cours le depasse : il ne se remplit que si plusieurs IA gourmandes jouent
+	 * en meme temps sur le worker, et la sonde de saturation recycle alors le worker.
 	 *
 	 * <p>Configurable par env POLYGLOT_MAX_ISOLATE_MB (#4631) : l'Engine statique partage vit au
 	 * plafond de son isolate (les contextes fermes ne sont recuperes que sous pression), donc ce
@@ -67,6 +68,23 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * retient bien plus que GraalJS par contexte, c'est son isolate qui sature aux pics de combats.
 	 */
 	private static final long MAX_PYTHON_ISOLATE_MEMORY = envMegabytes("POLYGLOT_PYTHON_MAX_ISOLATE_MB", MAX_ISOLATE_MEMORY / 1_000_000L);
+
+	/**
+	 * Part de l'isolate qu'une seule IA peut retenir : il est partage par tous les combats du worker,
+	 * une IA ne doit pas pouvoir le remplir seule. Sur le worker de prod, borne les poireaux de RAM 16
+	 * et plus en JS/TS (1 Go de 4), de RAM 20 et plus en Python (1,25 Go de 5).
+	 */
+	private static final int CONTEXT_ISOLATE_SHARE = 4;
+
+	/** Limite memoire totale de l'isolate de ce langage, en octets. */
+	private static long isolateMemory(String languageId) {
+		return "python".equals(languageId) ? MAX_PYTHON_ISOLATE_MEMORY : MAX_ISOLATE_MEMORY;
+	}
+
+	/** Ce qu'un contexte de ce langage peut retenir au plus, en octets, quelle que soit la RAM de l'entite. */
+	public static long maxContextHeap(String languageId) {
+		return isolateMemory(languageId) / CONTEXT_ISOLATE_SHARE;
+	}
 
 	/** Lit un budget memoire en Mo depuis l'environnement (recalibrage prod sans rebuild), en OCTETS. */
 	public static long envMegabytes(String variable, long defaultMb) {
@@ -130,8 +148,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * causes), null si ce n'en est pas un. Ce message est la SEULE mesure disponible de ce que le
 	 * contexte retient vraiment ("Maximum heap memory limit of X bytes exceeded. Current memory at
 	 * least Y bytes.") : GraalVM ne calcule la taille retenue que sous pression de l'isolate, jamais
-	 * a la demande, donc on le journalise plutot que de le perdre en le traduisant en erreur joueur
-	 * (#4999 : la baseline Python a ete posee a l'estime faute de ce chiffre).
+	 * a la demande, donc on le journalise plutot que de le perdre en le traduisant en erreur joueur.
 	 */
 	public static String memoryExhaustionMessage(Throwable t) {
 		return causeMessageContaining(t, HEAP_LIMIT_MARKER);
@@ -295,7 +312,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	private Engine buildEngine(String languageId, boolean externalIsolate, boolean withCounter) {
 		Engine.Builder builder = Engine.newBuilder(languageId)
 				.sandbox(SandboxPolicy.ISOLATED)
-				.option("engine.MaxIsolateMemory", memoryOption("python".equals(languageId) ? MAX_PYTHON_ISOLATE_MEMORY : MAX_ISOLATE_MEMORY))
+				.option("engine.MaxIsolateMemory", memoryOption(isolateMemory(languageId)))
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream());
 		if (externalIsolate) {
