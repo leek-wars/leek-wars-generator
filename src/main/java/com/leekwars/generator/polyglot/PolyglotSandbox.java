@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -197,8 +198,12 @@ public class PolyglotSandbox implements AutoCloseable {
 	private static final String MAX_AST_DEPTH = "5000";
 	private static final String MAX_STREAM_SIZE = "1MB";
 
-	/** Tentatives de {@code build()} quand le nettoyage GraalVM d'un contexte collecte echoue (cf createContext). */
-	private static final int CONTEXT_BUILD_ATTEMPTS = 3;
+	/**
+	 * Tentatives de {@code build()} au plus quand le nettoyage GraalVM des contextes collectes echoue (cf
+	 * buildPastCollectedContextCleanup). Chaque echec retire une reference de la file : c'est une borne de
+	 * securite, pas un nombre d'echecs attendu.
+	 */
+	public static final int CONTEXT_BUILD_ATTEMPTS = 100;
 
 	private final long statementLimit;
 	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
@@ -420,24 +425,37 @@ public class PolyglotSandbox implements AutoCloseable {
 			builder.allowIO(IOAccess.NONE);
 		}
 
-		Context context = null;
-		for (int attempt = 1; context == null; attempt++) {
-			try {
-				context = builder.build();
-			} catch (NullPointerException e) {
-				if (attempt >= CONTEXT_BUILD_ATTEMPTS || !isCollectedContextCleanupFailure(e)) throw e;
-				// build() nettoie d'abord les contextes deja collectes par le GC ; sous isolate, ce nettoyage
-				// leve parfois un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate) sans
-				// rapport avec le contexte demande. Le contexte fautif est deja sorti de la file : le build()
-				// suivant repart de la suite. Sans lui, l'IA du poireau etait invalide pour tout le combat.
-				Log.w("PolyglotSandbox", "Nettoyage GraalVM d'un contexte collecte en echec, contexte " + languageId + " reconstruit : " + e);
-			}
-		}
+		Context context = buildPastCollectedContextCleanup(builder::build, languageId);
 		contexts.add(context);
 		return context;
 	}
 
-	/** Le NPE vient du nettoyage des contextes collectes que GraalVM fait en tete de {@code build()}. */
+	/**
+	 * Construit le contexte par {@code build}, en reconstruisant tant que l'echec est le nettoyage GraalVM des
+	 * contextes deja collectes par le GC. {@code Context.Builder.build()} vide cette file APRES avoir construit le
+	 * contexte (fin de ForeignEngineDispatch.createContext) ; sous isolate, le nettoyage de l'un d'eux leve parfois
+	 * un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate : le contexte invite n'existe plus),
+	 * sans rapport avec le contexte demande. Celui-ci est alors perdu, et GraalVM le fermera quand le GC le
+	 * collectera ; la reference fautive, elle, est deja sortie de la file. Un passage du GC peut en laisser
+	 * plusieurs : chaque essai en retire une, pour le prix d'un contexte vide (~1 ms). Sans ces essais, l'IA du
+	 * poireau perdait son tour (contexte construit au tour) ou etait invalide pour le combat (validation).
+	 */
+	public static <T> T buildPastCollectedContextCleanup(Supplier<T> build, String languageId) {
+		int failures = 0;
+		while (true) {
+			try {
+				T built = build.get();
+				if (failures > 0) {
+					Log.w("PolyglotSandbox", failures + " nettoyage(s) GraalVM de contextes collectes en echec avant de construire le contexte " + languageId);
+				}
+				return built;
+			} catch (NullPointerException e) {
+				if (!isCollectedContextCleanupFailure(e) || ++failures >= CONTEXT_BUILD_ATTEMPTS) throw e;
+			}
+		}
+	}
+
+	/** Le NPE vient du nettoyage des contextes collectes que GraalVM fait en fin de {@code build()}. */
 	public static boolean isCollectedContextCleanupFailure(NullPointerException e) {
 		for (StackTraceElement frame : e.getStackTrace()) {
 			if (frame.getMethodName().equals("processReferenceQueue") && frame.getClassName().startsWith("org.graalvm.polyglot.Engine")) {
