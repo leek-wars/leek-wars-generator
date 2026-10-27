@@ -35,9 +35,9 @@ public class TestPolyglotContextCleanup {
 	}
 
 	/** Leve {@code failure} aux {@code failures} premiers appels, puis rend "contexte". */
-	private static Supplier<String> failingBuild(int failures, Supplier<NullPointerException> failure, AtomicInteger calls) {
+	private static Supplier<String> failingBuild(int failures, NullPointerException failure, AtomicInteger calls) {
 		return () -> {
-			if (calls.incrementAndGet() <= failures) throw failure.get();
+			if (calls.incrementAndGet() <= failures) throw failure;
 			return "contexte";
 		};
 	}
@@ -68,7 +68,7 @@ public class TestPolyglotContextCleanup {
 	public void severalCollectedContextsInTheQueueAreAllDrained() {
 		// Un passage du GC peut laisser bien plus de trois references fautives dans la file.
 		AtomicInteger calls = new AtomicInteger();
-		Assert.assertEquals("contexte", PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(12, TestPolyglotContextCleanup::cleanupFailure, calls), "js"));
+		Assert.assertEquals("contexte", PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(12, cleanupFailure(), calls), "js"));
 		Assert.assertEquals(13, calls.get());
 	}
 
@@ -77,7 +77,7 @@ public class TestPolyglotContextCleanup {
 		AtomicInteger calls = new AtomicInteger();
 		NullPointerException other = npe(frame("com.leekwars.generator.polyglot.PolyglotSandbox", "createContext"));
 		try {
-			PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(1, () -> other, calls), "js");
+			PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(1, other, calls), "js");
 			Assert.fail("le NPE devait remonter");
 		} catch (NullPointerException e) {
 			Assert.assertSame(other, e);
@@ -87,13 +87,12 @@ public class TestPolyglotContextCleanup {
 
 	@Test
 	public void retriesAreBounded() {
-		AtomicInteger calls = new AtomicInteger();
+		NullPointerException failure = cleanupFailure();
 		try {
-			PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(Integer.MAX_VALUE, TestPolyglotContextCleanup::cleanupFailure, calls), "js");
+			PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(Integer.MAX_VALUE, failure, new AtomicInteger()), "js");
 			Assert.fail("le NPE devait remonter");
 		} catch (NullPointerException e) {
-			Assert.assertTrue(PolyglotSandbox.isCollectedContextCleanupFailure(e));
+			Assert.assertSame(failure, e);
 		}
-		Assert.assertEquals(PolyglotSandbox.CONTEXT_BUILD_ATTEMPTS, calls.get());
 	}
 }

@@ -198,12 +198,8 @@ public class PolyglotSandbox implements AutoCloseable {
 	private static final String MAX_AST_DEPTH = "5000";
 	private static final String MAX_STREAM_SIZE = "1MB";
 
-	/**
-	 * Tentatives de {@code build()} au plus quand le nettoyage GraalVM des contextes collectes echoue (cf
-	 * buildPastCollectedContextCleanup). Chaque echec retire une reference de la file : c'est une borne de
-	 * securite, pas un nombre d'echecs attendu.
-	 */
-	public static final int CONTEXT_BUILD_ATTEMPTS = 100;
+	/** Borne de securite des essais de {@code build()} (cf buildPastCollectedContextCleanup). */
+	private static final int CONTEXT_BUILD_ATTEMPTS = 100;
 
 	private final long statementLimit;
 	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
@@ -351,7 +347,7 @@ public class PolyglotSandbox implements AutoCloseable {
 		if (!pythonStdlibProbed) {
 			synchronized (PolyglotSandbox.class) {
 				if (!pythonStdlibProbed) {
-					try (Context boot = Context.newBuilder("python").allowIO(IOAccess.ALL).build()) {
+					try (Context boot = buildPastCollectedContextCleanup(Context.newBuilder("python").allowIO(IOAccess.ALL)::build, "python")) {
 						pythonStdlibRoot = Path.of(boot.eval("python", "import sys; sys.prefix").asString()).toAbsolutePath().normalize();
 					} catch (Exception e) {
 						pythonStdlibRoot = null;
@@ -437,8 +433,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate : le contexte invite n'existe plus),
 	 * sans rapport avec le contexte demande. Celui-ci est alors perdu, et GraalVM le fermera quand le GC le
 	 * collectera ; la reference fautive, elle, est deja sortie de la file. Un passage du GC peut en laisser
-	 * plusieurs : chaque essai en retire une, pour le prix d'un contexte vide (~1 ms). Sans ces essais, l'IA du
-	 * poireau perdait son tour (contexte construit au tour) ou etait invalide pour le combat (validation).
+	 * plusieurs : chaque essai en retire une, pour le prix d'un contexte vide (~1 ms).
 	 */
 	public static <T> T buildPastCollectedContextCleanup(Supplier<T> build, String languageId) {
 		int failures = 0;
