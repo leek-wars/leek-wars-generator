@@ -11,6 +11,7 @@ work
 generator.jar
 leekscript.jar
 libs/*.jar
+libs/*.part
 node_modules
 # dossiers lourds imbriqués (ex: sous-module leekscript) non nécessaires au build du jar
 **/build

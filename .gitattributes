@@ -1,0 +1,3 @@
+# Lus par sh et read dans le Dockerfile : un checkout Windows (autocrlf) ne doit pas y mettre de CR.
+libs/fetch-isolate.sh text eol=lf
+libs/isolate-image.txt text eol=lf

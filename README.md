@@ -7,9 +7,13 @@ Leek Wars fight generator using [leekscript](https://github.com/leek-wars/leeksc
 ## Requirements
 - Java 25 (OpenJDK or Amazon Corretto)
 - Gradle 9.x
+- `sh`, `curl` and `sha256sum` (or `shasum`) for `libs/fetch-isolate.sh`
 
 ## Build
+L'**image isolate** (lib native GraalVM des IA JavaScript / Python, linux-amd64, 127 Mo) n'est
+pas commitée, mais le build l'embarque, même pour des IA LeekScript seulement :
 ```
+sh libs/fetch-isolate.sh    # release publique épinglée par libs/isolate-image.txt, sha256 vérifié
 gradle jar
 ```
 
@@ -33,7 +37,7 @@ java -jar generator.jar test/scenario/scenario1.json
 
 ## Tester une IA en local
 
-Deux façons, selon le langage de l'IA.
+Deux façons : Docker, ou Java directement.
 
 ### Docker (rien à installer côté Java)
 
@@ -57,27 +61,14 @@ docker run --rm -v "$PWD":/ai leek-wars-generator /ai/scenario.json
 
 ### En Java, sans Docker
 
-- **IA LeekScript** : rien de plus que le jar. `gradle jar` puis :
+Après le [Build](#build) :
 
-  ```sh
-  java -jar generator.jar --analyze test/ai/basic.leek
-  java -jar generator.jar test/scenario/scenario1.json
-  ```
+```sh
+java -jar generator.jar mon_scenario.json      # les IA .js / .py sont détectées par extension
+```
 
-- **IA JavaScript / Python (polyglot)** : il faut en plus l'**image isolate** (lib native
-  GraalVM, linux-amd64). Elle n'est pas commitée (127 Mo) — récupère-la depuis la release
-  publique dans `libs/` avant `gradle jar` :
-
-  ```sh
-  mkdir -p libs
-  curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-    https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-6/js-isolate-resources-linux-amd64.jar
-  gradle jar
-  java -jar generator.jar mon_scenario.json      # les IA .js / .py sont détectées par extension
-  ```
-
-  L'image isolate se rebuild aussi soi-même (build lourd) : voir
-  [leek-wars-graal-isolate](https://github.com/leek-wars/leek-wars-graal-isolate).
+L'image isolate se rebuild aussi soi-même (build lourd) : voir
+[leek-wars-graal-isolate](https://github.com/leek-wars/leek-wars-graal-isolate).
 
 ### Format de scénario
 

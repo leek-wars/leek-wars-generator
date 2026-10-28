@@ -93,10 +93,8 @@ dependencies {
 	// l'engine et lu via les polyglot bindings, cf PolyglotSandbox). Les deps transitives des
 	// meta-poms remplaces (nativebridge, truffle-api) sont declarees explicitement ci-dessous.
 	// Le jar (127 Mo, au-dela de la limite git GitHub) n'est PAS commite : il vient de la RELEASE
-	// PUBLIQUE du repo leek-wars-graal-isolate. En local, le recuperer dans libs/ :
-	//   curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-	//     https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-6/js-isolate-resources-linux-amd64.jar
-	// (ou copier dist/ du repo graal-isolate si on l'a builde soi-meme).
+	// PUBLIQUE du repo leek-wars-graal-isolate, epinglee (tag + sha256) par libs/isolate-image.txt.
+	// En local : sh libs/fetch-isolate.sh (ou copier dist/ du repo graal-isolate si on l'a builde).
 	implementation files('libs/js-isolate-resources-linux-amd64.jar')
 	implementation 'org.graalvm.sdk:nativebridge:25.1.3'
 	// truffle-api : compile StatementCounter (copie hote de l'instrument, ALIGNEE sur celle de

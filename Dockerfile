@@ -12,23 +12,22 @@
 
 # ---- build ---------------------------------------------------------------
 FROM eclipse-temurin:25-jdk AS build
-ARG GRADLE_VERSION=9.2.1
-# Release publique de l'image isolate (bump en même temps que la dépendance GraalVM).
-ARG ISOLATE_TAG=v25.1.3-combined-6
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl unzip \
  && rm -rf /var/lib/apt/lists/*
+ARG GRADLE_VERSION=9.2.1
 # Gradle 9.x (le wrapper commité est en 8.5, insuffisant pour ce projet).
 RUN curl -fsSL -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
  && unzip -q /tmp/gradle.zip -d /opt \
  && ln -s /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/local/bin/gradle \
  && rm /tmp/gradle.zip
 WORKDIR /src
+# Image isolate (cf libs/fetch-isolate.sh) après Gradle, qui change moins souvent, et avant les
+# sources, dont un changement ne la retélécharge pas (.dockerignore exclut libs/*.jar : la copie
+# des sources ne l'écrase pas).
+COPY libs/fetch-isolate.sh libs/isolate-image.txt libs/
+RUN sh libs/fetch-isolate.sh
 COPY . .
-# L'image isolate (127 Mo) n'est pas commitée : on la récupère depuis la release publique.
-RUN mkdir -p libs \
- && curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-      https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/${ISOLATE_TAG}/js-isolate-resources-linux-amd64.jar
 RUN gradle --no-daemon jar
 
 # ---- runtime -------------------------------------------------------------
