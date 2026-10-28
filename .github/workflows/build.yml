@@ -33,16 +33,11 @@ jobs:
       with:
         gradle-version: '9.2.1'
 
-    # Image isolate combinée js+python custom (repo PUBLIC leek-wars/leek-wars-graal-isolate) :
-    # 127 Mo > limite git GitHub, donc distribuée en RELEASE et non commitée
-    # (libs/ est gitignoré, build.gradle la référence en files()).
-    # Asset de release public -> curl non authentifié, aucun secret : les forks et les
-    # joueurs qui clonent le repo peuvent builder tel quel.
     - name: Download custom isolate image
-      run: |
-        mkdir -p libs
-        curl -fsSL -o libs/js-isolate-resources-linux-amd64.jar \
-          https://github.com/leek-wars/leek-wars-graal-isolate/releases/download/v25.1.3-combined-6/js-isolate-resources-linux-amd64.jar
+      timeout-minutes: 10
+      env:
+        ISOLATE_MIN_SPEED: 1048576
+      run: sh libs/fetch-isolate.sh
 
     - name: Build
       run: gradle jar
