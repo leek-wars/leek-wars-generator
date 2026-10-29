@@ -61,11 +61,25 @@ public class Generator {
 
 	public boolean use_leekscript_cache = true;
 
+	/**
+	 * Éleveurs qui peuvent compiler en version pas encore publique de LeekScript (`// @version:5`) :
+	 * LEEKSCRIPT_UNRELEASED_FARMERS, des ids séparés par des virgules, 1 par défaut.
+	 */
+	private static java.util.Set<Integer> unreleasedVersionFarmers() {
+		var value = System.getenv().getOrDefault("LEEKSCRIPT_UNRELEASED_FARMERS", "1");
+		var farmers = new java.util.HashSet<Integer>();
+		for (var id : value.split(",")) {
+			if (!id.isBlank()) farmers.add(Integer.parseInt(id.trim()));
+		}
+		return farmers;
+	}
+
 	public Generator() {
 		new File("ai/").mkdir();
 		LeekFunctions.setExtraFunctions(FightFunctions.getFunctions(), "com.leekwars.generator.classes.*");
 		LeekFunctions.setEntryPointFunctions(EntityAI.HOOK_NAMES);
 		LeekConstants.setExtraConstants("com.leekwars.generator.FightConstants");
+		LeekScript.setUnreleasedAccess(unreleasedVersionFarmers()::contains);
 		loadWeapons();
 		loadChips();
 		loadSummons();
