@@ -310,7 +310,6 @@ public class EntityAI extends AI {
 		try {
 			// Synchro sur le fichier pour ne pas compiler deux fois la même IA en parallèle
 			synchronized (file) {
-				file.setJavaClass("AI_" + file.getId());
 				file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
 				var options = new Options(file.getVersion(), file.isStrict(), generator.use_leekscript_cache, true, null, true);
 				ai = (EntityAI) file.compile(options);
@@ -400,10 +399,10 @@ public class EntityAI extends AI {
 
 	/** Le code compilé d'une IA est chargé une fois : les entités qui exécutent la même IA s'en partagent la RAM. */
 	public static void shareCompiledCode(Collection<Entity> entities) {
-		var byAI = new HashMap<Integer, List<EntityAI>>();
+		var byAI = new HashMap<String, List<EntityAI>>();
 		for (var entity : entities) {
 			if (entity.getAI() instanceof EntityAI ai && ai.getCodeRAM() > 0) {
-				byAI.computeIfAbsent(ai.getId(), id -> new ArrayList<>()).add(ai);
+				byAI.computeIfAbsent(ai.getClass().getName(), c -> new ArrayList<>()).add(ai);
 			}
 		}
 		for (var ais : byAI.values()) {

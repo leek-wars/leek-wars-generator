@@ -401,7 +401,7 @@ public class Generator {
 	 * IA dont le débordement de pile du compilateur est déjà signalé. Bornée : vidée si elle
 	 * grossit trop (au pire, un nouveau signalement par IA).
 	 */
-	private static final Set<Integer> COMPILER_STACK_OVERFLOW_REPORTED = ConcurrentHashMap.newKeySet();
+	private static final Set<String> COMPILER_STACK_OVERFLOW_REPORTED = ConcurrentHashMap.newKeySet();
 	private static final int COMPILER_STACK_OVERFLOW_REPORTED_MAX = 10_000;
 
 	/**
@@ -417,7 +417,7 @@ public class Generator {
 		if (COMPILER_STACK_OVERFLOW_REPORTED.size() >= COMPILER_STACK_OVERFLOW_REPORTED_MAX) {
 			COMPILER_STACK_OVERFLOW_REPORTED.clear();
 		}
-		if (COMPILER_STACK_OVERFLOW_REPORTED.add(file != null ? file.getId() : 0)) {
+		if (COMPILER_STACK_OVERFLOW_REPORTED.add(file != null ? file.getJavaClass() : "")) {
 			errorManager.exception(e, fightID, farmer, file);
 		}
 	}

@@ -722,6 +722,25 @@ public class TestHooksFight extends FightTestBase {
 		}
 	}
 
+	@Test
+	public void aisOfTwoFarmersWithTheSameIdKeepTheirOwnClass() throws Exception {
+		var file1 = newAIFile("setRegister('code', '1');", 1);
+		var file2 = newAIFile("setRegister('code', '2');", 2);
+		file2.setId(file1.getId());
+		file2.setTimestamp(file1.getTimestamp());
+		attachAI(leek1, file1);
+		attachAI(leek2, file2);
+		runFight();
+		var ai1 = (EntityAI) leek1.getAI();
+		var ai2 = (EntityAI) leek2.getAI();
+		Assert.assertEquals("chaque poireau exécute le code de son éleveur", "1", leek1.getRegister("code"));
+		Assert.assertEquals("chaque poireau exécute le code de son éleveur", "2", leek2.getRegister("code"));
+		Assert.assertNotEquals(ai1.getClass().getName(), ai2.getClass().getName());
+		for (var ai : new EntityAI[] { ai1, ai2 }) {
+			Assert.assertEquals(ai.getBytecodeSize() * 2 / 8, ai.getCodeRAM());
+		}
+	}
+
 	/** Coéquipier de leek1 à fréquence 50 (leek1 : 10) : sans changement, il joue avant lui. */
 	private Leek addFasterTeammate() {
 		var mate = new Leek(3, "L3", 0, 10, 500, 6, 7, 100, 100, 50, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
