@@ -684,7 +684,7 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertEquals("2", leek1.getRegister("cores"));
 		var ai = (EntityAI) leek1.getAI();
 		Assert.assertEquals(2_000_000L, ai.getMaxOperations());
-		Assert.assertEquals(4 * 8_000_000L, ai.getMaxRAM());
+		Assert.assertEquals(4L * EntityAI.RAM_UNITS_PER_POINT, ai.getMaxRAM());
 	}
 
 	@Test
@@ -694,7 +694,32 @@ public class TestHooksFight extends FightTestBase {
 		runFight();
 		var ai = (EntityAI) leek1.getAI();
 		Assert.assertEquals(8_000_000L, ai.getMaxOperations());
-		Assert.assertEquals(30 * 8_000_000L, ai.getMaxRAM());
+		Assert.assertEquals(30L * EntityAI.RAM_UNITS_PER_POINT, ai.getMaxRAM());
+	}
+
+	@Test
+	public void entitiesRunningTheSameAIShareItsCodeRAM() throws Exception {
+		var file = newAIFile("var a = [1, 2, 3];", 1);
+		attachAI(leek1, file);
+		attachAI(leek2, file);
+		runFight();
+		var ai1 = (EntityAI) leek1.getAI();
+		var ai2 = (EntityAI) leek2.getAI();
+		long full = ai1.getBytecodeSize() * 2 / 8;
+		Assert.assertTrue(full > 0);
+		Assert.assertEquals(full / 2, ai1.getCodeRAM());
+		Assert.assertEquals(full / 2, ai2.getCodeRAM());
+	}
+
+	@Test
+	public void distinctAIsPayTheirCodeRAMInFull() throws Exception {
+		attachAI(leek1, "var a = [1, 2, 3];");
+		attachAI(leek2, "var a = [1, 2, 3];");
+		runFight();
+		for (var leek : new Leek[] { leek1, leek2 }) {
+			var ai = (EntityAI) leek.getAI();
+			Assert.assertEquals(ai.getBytecodeSize() * 2 / 8, ai.getCodeRAM());
+		}
 	}
 
 	/** Coéquipier de leek1 à fréquence 50 (leek1 : 10) : sans changement, il joue avant lui. */

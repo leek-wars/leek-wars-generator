@@ -57,7 +57,7 @@ public class TestPolyglotRamBudget extends FightTestBase {
 	public void maxRamIsTheSameInEveryLanguage() throws Exception {
 		initFightOnly();
 		long ls = maxRAM(6, "");
-		Assert.assertEquals(6 * 8_000_000L * 8, ls);
+		Assert.assertEquals(6L * EntityAI.RAM_UNITS_PER_POINT * EntityAI.BYTES_PER_RAM_UNIT, ls);
 		Assume.assumeTrue("isolate reduit par l'environnement : la part d'isolate borne avant la RAM 6",
 			PolyglotSandbox.maxContextHeap("js") >= ls && PolyglotSandbox.maxContextHeap("python") >= ls);
 		Assert.assertEquals(ls, maxRAM(6, ".ts"));
@@ -71,8 +71,8 @@ public class TestPolyglotRamBudget extends FightTestBase {
 		long share = PolyglotSandbox.maxContextHeap("js");
 		// Entite sans RAM (scenario local) : le plancher qui laisse monter le runtime.
 		Assert.assertEquals(Math.min(64_000_000L, share), maxRAM(0, ".js"));
-		// RAM 50 : 3,2 Go en LeekScript, borne a la part d'isolate d'un contexte.
-		Assert.assertEquals(Math.min(50 * 8_000_000L * 8, share), maxRAM(50, ".js"));
+		// RAM 50 : 1,6 Go en LeekScript, borne a la part d'isolate d'un contexte.
+		Assert.assertEquals(Math.min(EntityAI.MAX_RAM_POINTS * EntityAI.RAM_UNITS_PER_POINT * EntityAI.BYTES_PER_RAM_UNIT, share), maxRAM(50, ".js"));
 	}
 
 	/**

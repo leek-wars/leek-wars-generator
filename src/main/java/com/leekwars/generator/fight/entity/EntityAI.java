@@ -2,8 +2,10 @@ package com.leekwars.generator.fight.entity;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 
@@ -386,9 +388,27 @@ public class EntityAI extends AI {
 		setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mInitialEntity.getCores() * 1_000_000));
 	}
 
+	/** Unités de RAM (cases de 8 octets, une par valeur) que donne un point de RAM : 32 Mo. */
+	public static final int RAM_UNITS_PER_POINT = 4_000_000;
+	/** Au-delà, les points de RAM ne donnent plus de mémoire à l'IA. */
+	public static final int MAX_RAM_POINTS = 50;
+
 	/** RAM de l'entité en unités LeekScript (une par valeur). */
 	protected int ramUnits() {
-		return Math.min(50, mInitialEntity.getRAM()) * 8_000_000;
+		return Math.min(MAX_RAM_POINTS, mInitialEntity.getRAM()) * RAM_UNITS_PER_POINT;
+	}
+
+	/** Le code compilé d'une IA est chargé une fois : les entités qui exécutent la même IA s'en partagent la RAM. */
+	public static void shareCompiledCode(Collection<Entity> entities) {
+		var byAI = new HashMap<Integer, List<EntityAI>>();
+		for (var entity : entities) {
+			if (entity.getAI() instanceof EntityAI ai && ai.getCodeRAM() > 0) {
+				byAI.computeIfAbsent(ai.getId(), id -> new ArrayList<>()).add(ai);
+			}
+		}
+		for (var ais : byAI.values()) {
+			for (var ai : ais) ai.shareCodeRAM(ais.size());
+		}
 	}
 
 	public void addSystemLog(int type, Error error, String[] parameters) {

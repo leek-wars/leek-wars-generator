@@ -190,6 +190,8 @@ public class Fight {
 			entity.startFight();
 		}
 
+		EntityAI.shareCompiledCode(state.getEntities().values());
+
 		runHooks("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
 
 		// Un setLoadout() dans beforeFight() a pu changer les cœurs, la RAM et la fréquence :
