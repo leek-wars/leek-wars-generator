@@ -1268,6 +1268,11 @@ public abstract class Entity {
 		awakenedBy.remove(trigger.getFId());
 	}
 
+	/** Ids des entités qui ont réveillé cette plante depuis le début de leur dernier tour. */
+	public Set<Integer> getAwakenedBy() {
+		return Collections.unmodifiableSet(awakenedBy);
+	}
+
 	/** Entité qui a réveillé cette plante, pendant que son IA tourne. Nulle sinon. */
 	public Entity getAwakeningTrigger() {
 		return awakeningTrigger;

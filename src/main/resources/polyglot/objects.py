@@ -398,6 +398,9 @@ def _lw_build(G, NAMES):
         def weapons(self): return _weaps(F.getWeapons(self.id))
         @property
         def chips(self): return _chps(F.getChips(self.id))
+        # Composants equipes, en ids d'objet (Entity.Component.*), ceux de getInventory et setLoadout.
+        @property
+        def components(self): return list(F.getComponents(self.id) or [])
         @property
         def effects(self): return _effs(F.getEffects(self.id))
         @property
@@ -427,6 +430,10 @@ def _lw_build(G, NAMES):
         # une plante a zone (Mais, Piment), qui elle ne joue qu'aux entrees dans sa zone.
         @property
         def awakeningZone(self): return F.getAwakeningZone(self.id)
+        # Entites qui ont deja reveille cette plante depuis le debut de leur dernier tour : y entrer
+        # de nouveau ne la reveillera pas avant leur prochain tour. Vide pour une entite sans zone.
+        @property
+        def plantTriggers(self): return _ents(F.getPlantTriggers(self.id))
         @property
         def side(self): return F.getSide(self.id)
         @property
@@ -842,6 +849,8 @@ def _lw_build(G, NAMES):
         ('FIGHT_CONTEXT_', 'cat', Fight, 'Context'),
         ('AREA_', 'cat', Item, 'Area'),
         ('STAT_', 'cat', Entity, 'Stat'),
+        # Composants : des ids (Entity.Component.NEPHELIUM), directement utilisables dans setLoadout.
+        ('COMPONENT_', 'cat', Entity, 'Component'),
         ('ENTITY_', 'cat', Entity, 'Type'),
         ('CELL_', 'cat', Cell, 'Type'),
         ('CHEST_', 'cat', Chest, 'Type'),

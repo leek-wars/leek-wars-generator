@@ -119,6 +119,11 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
 		});
+		// Composants équipés, désignés par leur id d'objet (COMPONENT_*), comme dans getInventory().
+		method("getComponents", "Entity", 40, true, new CallableVersion[] {
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT),
+		});
 		method("getEffects", "Entity", 25, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_BOOL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_BOOL))),
@@ -399,6 +404,12 @@ public class FightFunctions {
 		method("getAwakeningZone", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
+		});
+		// Entités qui ont déjà réveillé la plante depuis le début de leur dernier tour : y
+		// entrer de nouveau ne la réveillera pas avant leur prochain tour.
+		method("getPlantTriggers", "Entity", 25, true, new CallableVersion[] {
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT),
 		});
 		method("getMobType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),

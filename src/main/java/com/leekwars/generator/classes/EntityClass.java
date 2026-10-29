@@ -13,6 +13,8 @@ import com.leekwars.generator.weapons.Weapons;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
 
+import java.util.List;
+
 import leekscript.AILog;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
@@ -45,22 +47,19 @@ public class EntityClass {
 	 * getAgility, getScience, getMagic, getAbsoluteShield, getRelativeShield,
 	 * getDamageReturn, getFrequency, getCores, getRAM, getStat, getStats, getMP, getTP,
 	 * getTotalMP, getTotalTP, getPower, getTotalLife, getWeapon, getWeapons,
-	 * getChips, getEffects, getLaunchedEffects, getPassiveEffects.
+	 * getChips, getComponents, getEffects, getLaunchedEffects, getPassiveEffects.
 	 *
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
 	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
-	 * getAwakeningZone,
+	 * getAwakeningZone, getPlantTriggers,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
 	 * the lobby or fixed at fight init regardless of loadout.
 	 */
 	private static Entity resolveStatTarget(EntityAI ai, Object value) {
-		if (value == null) return ai.getEntity();
-		if (!(value instanceof Number n)) return null;
-		Entity l = ai.getFight().getEntity(n.intValue());
-		if (l == null) return null;
-		if (ai.isInBeforeFightHook() && l != ai.getEntity()) return null;
+		Entity l = resolveEntity(ai, value);
+		if (l != null && ai.isInBeforeFightHook() && l != ai.getEntity()) return null;
 		return l;
 	}
 
@@ -518,6 +517,40 @@ public class EntityClass {
 		return result;
 	}
 
+	public static LegacyArrayLeekValue getComponents_v1_3(EntityAI ai) throws LeekRunException {
+		return legacyIds(ai, ai.getEntity().getComponentTemplates());
+	}
+
+	public static ArrayLeekValue getComponents(EntityAI ai) throws LeekRunException {
+		return ids(ai, ai.getEntity().getComponentTemplates());
+	}
+
+	public static LegacyArrayLeekValue getComponents_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : legacyIds(ai, l.getComponentTemplates());
+	}
+
+	public static ArrayLeekValue getComponents(EntityAI ai, Object value) throws LeekRunException {
+		var l = resolveStatTarget(ai, value);
+		return l == null ? null : ids(ai, l.getComponentTemplates());
+	}
+
+	private static ArrayLeekValue ids(EntityAI ai, List<Integer> values) throws LeekRunException {
+		var result = new ArrayLeekValue(ai, values.size());
+		for (int id : values) {
+			result.push(ai, (long) id);
+		}
+		return result;
+	}
+
+	private static LegacyArrayLeekValue legacyIds(EntityAI ai, List<Integer> values) throws LeekRunException {
+		var result = new LegacyArrayLeekValue(ai);
+		for (int id : values) {
+			result.push(ai, (long) id);
+		}
+		return result;
+	}
+
 	public static LegacyArrayLeekValue getEffects_v1_3(EntityAI ai) throws LeekRunException {
 		var l = ai.getEntity();
 		var retour = new LegacyArrayLeekValue(ai);
@@ -962,14 +995,46 @@ public class EntityClass {
 	}
 
 	public static Long getAwakeningZone(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return (long) ai.getEntity().getAwakeningZone();
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(n.intValue());
-			if (l != null)
-				return (long) l.getAwakeningZone();
-		}
-		return null;
+		var l = resolveEntity(ai, value);
+		return l == null ? null : (long) l.getAwakeningZone();
+	}
+
+	/**
+	 * Entités vivantes qui ont déjà réveillé la plante depuis le début de LEUR dernier tour, par
+	 * id croissant : y entrer de nouveau ne la réveillera pas avant leur prochain tour. Toujours
+	 * vide pour une entité qui n'est pas une plante à zone.
+	 */
+	public static LegacyArrayLeekValue getPlantTriggers_v1_3(EntityAI ai) throws LeekRunException {
+		return legacyIds(ai, plantTriggers(ai, ai.getEntity()));
+	}
+
+	public static ArrayLeekValue getPlantTriggers(EntityAI ai) throws LeekRunException {
+		return ids(ai, plantTriggers(ai, ai.getEntity()));
+	}
+
+	public static LegacyArrayLeekValue getPlantTriggers_v1_3(EntityAI ai, Object value) throws LeekRunException {
+		var l = resolveEntity(ai, value);
+		return l == null ? null : legacyIds(ai, plantTriggers(ai, l));
+	}
+
+	public static ArrayLeekValue getPlantTriggers(EntityAI ai, Object value) throws LeekRunException {
+		var l = resolveEntity(ai, value);
+		return l == null ? null : ids(ai, plantTriggers(ai, l));
+	}
+
+	// Une entité morte reste dans la liste du moteur (elle n'en sort qu'au début de son tour)
+	private static List<Integer> plantTriggers(EntityAI ai, Entity plant) {
+		return plant.getAwakenedBy().stream().filter(id -> {
+			var e = ai.getFight().getEntity(id);
+			return e != null && !e.isDead();
+		}).sorted().toList();
+	}
+
+	/** Entité désignée par `value` (soi si null), sans masque : null si elle n'existe pas. */
+	private static Entity resolveEntity(EntityAI ai, Object value) {
+		if (value == null) return ai.getEntity();
+		if (!(value instanceof Number n)) return null;
+		return ai.getFight().getEntity(n.intValue());
 	}
 
 	public static long getSummoner(EntityAI ai) throws LeekRunException {

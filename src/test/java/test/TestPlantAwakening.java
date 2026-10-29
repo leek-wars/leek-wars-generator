@@ -16,6 +16,9 @@ import com.leekwars.generator.maps.Pathfinding;
 import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.state.State;
 
+import leekscript.compiler.LeekScript;
+import leekscript.compiler.Options;
+
 /**
  * Éveil des plantes (release/300/eveil_plantes_puces.md).
  *
@@ -317,6 +320,33 @@ public class TestPlantAwakening extends FightTestBase {
 		state.moveEntity(leek2, inside2);
 
 		Assert.assertEquals(2, awakenings.size());
+	}
+
+	/**
+	 * getPlantTriggers() : les entités qui ont déjà réveillé la plante depuis le début de LEUR
+	 * dernier tour, par id croissant — celles qui n'en provoqueront pas d'autre en entrant.
+	 */
+	@Test
+	public void getPlantTriggersListeCeuxQuiNeLaReveillerontPas() throws Exception {
+		State state = start();
+		Entity plant = plant(state, CHILLI_PEPPER);
+		put(state, leek1, freeCellAt(state, plant.getCell(), 5));
+		put(state, leek2, freeCellAt(state, plant.getCell(), 6));
+		String code = "return [getPlantTriggers(" + plant.getFId() + "), getPlantTriggers(" + leek2.getFId() + "), getPlantTriggers(), getPlantTriggers(12345)];";
+		Assert.assertEquals("[[], [], [], null]", GeneratorCompilation.runSnippet(leek1, fight, code, new Options(true)));
+
+		state.moveEntity(leek2, freeCellAt(state, plant.getCell(), 2));
+		state.moveEntity(leek1, freeCellAt(state, plant.getCell(), 3));
+		String both = "[" + Math.min(leek1.getFId(), leek2.getFId()) + ", " + Math.max(leek1.getFId(), leek2.getFId()) + "]";
+		for (int version = 1; version <= LeekScript.LATEST_VERSION; version++) {
+			Assert.assertEquals("version " + version, "[" + both + ", [], [], null]",
+				GeneratorCompilation.runSnippet(leek1, fight, code, new Options(version, false, false, true, null, true)));
+		}
+		Assert.assertEquals(both, GeneratorCompilation.runSnippet(plant, fight, "return getPlantTriggers();", new Options(true)));
+
+		// Le tour de leek2 commence : elle pourra de nouveau réveiller la plante.
+		state.clearPlantTriggers(leek2);
+		Assert.assertEquals("[[" + leek1.getFId() + "], [], [], null]", GeneratorCompilation.runSnippet(leek1, fight, code, new Options(true)));
 	}
 
 	@Test

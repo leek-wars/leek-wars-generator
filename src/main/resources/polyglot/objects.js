@@ -315,6 +315,8 @@
 		get weapon() { return weap(F.getWeapon(this.id)); }
 		get weapons() { return weaps(F.getWeapons(this.id)); }
 		get chips() { return chps(F.getChips(this.id)); }
+		// Composants équipés, en ids d'objet (Entity.Component.*), ceux de getInventory et setLoadout.
+		get components() { return F.getComponents(this.id) || []; }
 		get effects() { return effs(F.getEffects(this.id)); }
 		get launchedEffects() { return effs(F.getLaunchedEffects(this.id)); }
 		get passiveEffects() { return feats(F.getPassiveEffects(this.id)); }
@@ -331,6 +333,9 @@
 		// Rayon de la zone d'Éveil, en cases : 0 pour une entité qui joue son tour, 3 pour
 		// une plante à zone (Maïs, Piment), qui elle ne joue qu'aux entrées dans sa zone.
 		get awakeningZone() { return F.getAwakeningZone(this.id); }
+		// Entités qui ont déjà réveillé cette plante depuis le début de leur dernier tour : y entrer
+		// de nouveau ne la réveillera pas avant leur prochain tour. Vide pour une entité sans zone.
+		get plantTriggers() { return ents(F.getPlantTriggers(this.id)); }
 		get side() { return F.getSide(this.id); }
 		get leekID() { return F.getLeekID(this.id); }
 		get teamID() { return F.getTeamID(this.id); }
@@ -695,6 +700,8 @@
 			{ p: 'FIGHT_CONTEXT_', c: Fight, s: 'Context' },
 			{ p: 'AREA_', c: Item, s: 'Area' },
 			{ p: 'STAT_', c: Entity, s: 'Stat' },
+			// Composants : des ids (Entity.Component.NEPHELIUM), directement utilisables dans setLoadout.
+			{ p: 'COMPONENT_', c: Entity, s: 'Component' },
 			{ p: 'ENTITY_', c: Entity, s: 'Type' },
 			{ p: 'CELL_', c: Cell, s: 'Type' },
 			{ p: 'CHEST_', c: Chest, s: 'Type' },

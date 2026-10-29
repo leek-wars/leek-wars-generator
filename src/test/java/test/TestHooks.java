@@ -208,6 +208,18 @@ public class TestHooks {
 	}
 
 	@Test
+	public void beforeFightMasksOpponentComponents() throws Exception {
+		String code = "function beforeFight() {"
+				+ "  setRegister('opponent', getComponents(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
+				+ "  setRegister('self', getComponents(" + leek1.getFId() + ") == null ? 'null' : 'visible');"
+				+ "}";
+		EntityAI ai = compile(code, leek1);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		Assert.assertEquals("null", leek1.getRegister("opponent"));
+		Assert.assertEquals("visible", leek1.getRegister("self"));
+	}
+
+	@Test
 	public void beforeFightLeavesPublicLobbyInfoVisible() throws Exception {
 		// beforeFight masks only loadout-dependent data: equipment, stats, effects.
 		// Public lobby info (cell/name/team/level/IDs) stays visible because it's

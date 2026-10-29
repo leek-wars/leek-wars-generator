@@ -162,6 +162,27 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Composants équipés et entités qui ont déjà réveillé une plante, dans les deux langages.
+	 * Les composants restent des ids : ce sont eux que setLoadout et getInventory manient.
+	 */
+	@Test
+	public void componentsAndPlantTriggersReadableInBothLanguages() throws Exception {
+		initFightOnly();
+		long nephelium = com.leekwars.generator.FightConstants.COMPONENT_NEPHELIUM.getIntValue();
+		leek1.setComponentTemplates(java.util.List.of((int) nephelium));
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(nephelium, ((Number) eval(sb, "Entity.Component.NEPHELIUM;")).longValue());
+			Assert.assertEquals(true, eval(sb, "me.components.length === 1 && me.components[0] === Entity.Component.NEPHELIUM"
+				+ " && me.components.includes(Entity.Component.NEPHELIUM);"));
+			Assert.assertEquals(0L, ((Number) eval(sb, "Fight.getNearestEnemy().components.length;")).longValue());
+			Assert.assertEquals(true, eval(sb, "Array.isArray(me.plantTriggers) && me.plantTriggers.length === 0;"));
+			Assert.assertEquals(nephelium, ((Number) evalPy(sb, "Entity.Component.NEPHELIUM")).longValue());
+			Assert.assertEquals(true, evalPy(sb, "len(me.components) == 1 and Entity.Component.NEPHELIUM in me.components"));
+			Assert.assertEquals(0L, ((Number) evalPy(sb, "len(me.plantTriggers)")).longValue());
+		}
+	}
+
 	@Test
 	public void deadAlliesCountReadableInBothLanguages() throws Exception {
 		initFightOnly();

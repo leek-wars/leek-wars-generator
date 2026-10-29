@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.leekwars.generator.attack.DamageType;
+import com.leekwars.generator.component.Components;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
@@ -460,6 +461,66 @@ public class TestFightFunctions {
 			Assert.assertEquals("version " + version, "[42, 42, 0]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(version, false, false, true, null, true)));
 		}
 		Assert.assertEquals("strict", "[42, 42, 0]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(LeekScript.LATEST_VERSION, true, false, true, null, true)));
+	}
+
+	/**
+	 * getComponents() rend les composants équipés en ids d'objet, les mêmes que les constantes
+	 * COMPONENT_*, dans toutes les versions.
+	 */
+	@Test
+	public void getComponentsTest() throws Exception {
+		int nephelium = FightConstants.COMPONENT_NEPHELIUM.getIntValue();
+		int apple = FightConstants.COMPONENT_APPLE.getIntValue();
+		mLeek1.setComponentTemplates(List.of(nephelium, apple));
+		String code = "return [getComponents(), getComponents(getEntity()), getComponents(" + mLeek2.getFId() + "),"
+			+ " getComponents(12345), COMPONENT_NEPHELIUM, COMPONENT_APPLE];";
+		String expected = "[[" + nephelium + ", " + apple + "], [" + nephelium + ", " + apple + "], [], null, " + nephelium + ", " + apple + "]";
+		for (int version = 1; version <= LeekScript.LATEST_VERSION; version++) {
+			Assert.assertEquals("version " + version, expected, GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(version, false, false, true, null, true)));
+		}
+		Assert.assertEquals("strict", expected, GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(LeekScript.LATEST_VERSION, true, false, true, null, true)));
+		// Vu de l'ennemi
+		Assert.assertEquals("[" + nephelium + ", " + apple + "]", GeneratorCompilation.runSnippet(mLeek2, mFight, "return getComponents(" + mLeek1.getFId() + ");", new Options(true)));
+	}
+
+	/**
+	 * Les constantes COMPONENT_* valent l'id d'objet du composant de même nom (celui de getInventory).
+	 * Les composants plus récents que data/components.json sont vérifiés sur leurs ids en base.
+	 */
+	@Test
+	public void componentConstantsAreItemIdsTest() {
+		var newer = java.util.Map.of("COMPONENT_WALNUT", 591, "COMPONENT_COCOA", 593, "COMPONENT_AMETHYST_RING", 595,
+			"COMPONENT_GYROSCOPE", 597, "COMPONENT_LEVITATOR", 599);
+		int known = 0, checkedNewer = 0;
+		for (FightConstants c : FightConstants.values()) {
+			if (!c.name().startsWith("COMPONENT_")) continue;
+			var component = Components.getComponent(c.getIntValue());
+			if (component == null) {
+				Assert.assertEquals(c.name(), newer.get(c.name()), (Integer) c.getIntValue());
+				checkedNewer++;
+				continue;
+			}
+			Assert.assertEquals(c.name(), "COMPONENT_" + component.getName().toUpperCase(), c.name());
+			known++;
+		}
+		Assert.assertEquals(Components.getTemplates().size(), known);
+		Assert.assertEquals(newer.size(), checkedNewer);
+	}
+
+	/**
+	 * Une IA qui définit déjà une fonction, une globale ou une variable du nom d'une nouvelle
+	 * fonction ou constante compile toujours, dans toutes les versions, et garde la sienne.
+	 */
+	@Test
+	public void userDefinedComponentAndAwakeningNamesTest() throws Exception {
+		String code = "var a = getComponents(); var b = getPlantTriggers(1);"
+			+ " function getComponents() { return 42; } function getPlantTriggers(x) { return x + 1; }"
+			+ " global COMPONENT_CORE = 7; var COMPONENT_APPLE = 8;"
+			+ " return [a, b, getComponents(), getPlantTriggers(2), COMPONENT_CORE, COMPONENT_APPLE];";
+		for (int version = 1; version <= LeekScript.LATEST_VERSION; version++) {
+			Assert.assertEquals("version " + version, "[42, 2, 42, 3, 7, 8]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(version, false, false, true, null, true)));
+		}
+		Assert.assertEquals("strict", "[42, 2, 42, 3, 7, 8]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(LeekScript.LATEST_VERSION, true, false, true, null, true)));
 	}
 
 	@Test
