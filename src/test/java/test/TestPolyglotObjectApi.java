@@ -162,6 +162,18 @@ public class TestPolyglotObjectApi extends FightTestBase {
 		}
 	}
 
+	/** entity.aiPath, seulement pour un fichier d'IA du même éleveur, dans les deux langages. */
+	@Test
+	public void aiPathOnlyForTheFarmersOwnAIsInBothLanguages() throws Exception {
+		initFightOnly();
+		leek1.setAIFile(new AIFile("dossier/ia", "", 1, 4, 7, false));
+		leek2.setAIFile(new AIFile("secret/ia", "", 1, 4, 8, false));
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(true, eval(sb, "me.aiPath === '/dossier/ia' && Fight.getNearestEnemy().aiPath === null;"));
+			Assert.assertEquals(true, evalPy(sb, "me.aiPath == '/dossier/ia' and Fight.getNearestEnemy().aiPath is None"));
+		}
+	}
+
 	/**
 	 * Composants équipés et entités qui ont déjà réveillé une plante, dans les deux langages.
 	 * Les composants restent des ids : ce sont eux que setLoadout et getInventory manient.

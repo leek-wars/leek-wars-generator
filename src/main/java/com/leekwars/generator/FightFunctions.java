@@ -184,6 +184,10 @@ public class FightFunctions {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
 		});
+		method("getAIPath", "Entity", 15, true, new CallableVersion[] {
+			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.STRING_OR_NULL),
+		});
 		method("getAIID", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),

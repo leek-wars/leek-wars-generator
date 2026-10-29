@@ -454,6 +454,8 @@ def _lw_build(G, NAMES):
         def aiID(self): return F.getAIID(self.id)
         @property
         def aiName(self): return F.getAIName(self.id)
+        @property
+        def aiPath(self): return F.getAIPath(self.id)
         def isAlly(self): return F.isAlly(self.id)
         def isEnemy(self): return F.isEnemy(self.id)
         # Valeur d'une caractéristique par sa constante (Entity.Stat.STRENGTH...).

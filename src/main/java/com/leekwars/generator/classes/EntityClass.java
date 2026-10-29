@@ -16,6 +16,8 @@ import com.leekwars.generator.leek.FarmerLog;
 import java.util.List;
 
 import leekscript.AILog;
+import leekscript.compiler.AIFile;
+import leekscript.runner.classes.SystemClass;
 import leekscript.runner.LeekRunException;
 import leekscript.runner.values.ArrayLeekValue;
 import leekscript.runner.values.LegacyArrayLeekValue;
@@ -55,7 +57,8 @@ public class EntityClass {
 	 * getAwakeningZone, getPlantTriggers,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
-	 * the lobby or fixed at fight init regardless of loadout.
+	 * the lobby or fixed at fight init regardless of loadout. getAIPath only answers for
+	 * AIs owned by the caller's farmer.
 	 */
 	private static Entity resolveStatTarget(EntityAI ai, Object value) {
 		Entity l = resolveEntity(ai, value);
@@ -678,6 +681,34 @@ public class EntityClass {
 			var l = ai.getFight().getEntity(ai.integer(value));
 			if (l != null)
 				return l.getAIName();
+		}
+		return null;
+	}
+
+	/** Chemin de l'IA d'une entité, si son fichier appartient au même éleveur que celui de l'appelant ; sinon privé (getAIName en donne le nom de fichier). */
+	public static String getAIPath(EntityAI ai) throws LeekRunException {
+		return aiPath(ai.getEntity(), ai.getEntity());
+	}
+
+	public static String getAIPath(EntityAI ai, Object value) throws LeekRunException {
+		var l = resolveEntity(ai, value);
+		return l == null ? null : aiPath(ai.getEntity(), l);
+	}
+
+	/**
+	 * Le propriétaire du fichier d'IA, et non l'éleveur de l'entité : une tourelle (éleveur -1) ou un
+	 * bot du combat de test (éleveur 0) exécute l'IA d'un éleveur précis.
+	 */
+	private static String aiPath(Entity me, Entity target) {
+		var mine = aiFileOf(me);
+		var file = aiFileOf(target);
+		return mine != null && file != null && file.getOwner() == mine.getOwner() ? SystemClass.sourcePath(file.getPath()) : null;
+	}
+
+	/** Fichier de l'IA qu'exécute une entité : celui de son invocateur pour une invocation. */
+	private static AIFile aiFileOf(Entity entity) {
+		for (var e = entity; e != null; e = e.getSummoner()) {
+			if (e.getAIFile() instanceof AIFile file) return file;
 		}
 		return null;
 	}

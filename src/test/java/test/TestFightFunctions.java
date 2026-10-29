@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.component.Components;
+import com.leekwars.generator.entity.Bulb;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Map;
@@ -22,6 +23,7 @@ import com.leekwars.generator.test.LocalTrophyManager;
 
 import leekscript.AILog;
 import leekscript.LSException;
+import leekscript.compiler.AIFile;
 import leekscript.common.Error;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.Options;
@@ -461,6 +463,30 @@ public class TestFightFunctions {
 			Assert.assertEquals("version " + version, "[42, 42, 0]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(version, false, false, true, null, true)));
 		}
 		Assert.assertEquals("strict", "[42, 42, 0]", GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(LeekScript.LATEST_VERSION, true, false, true, null, true)));
+	}
+
+	/** getAIPath() : chemin absolu de l'IA, seulement quand son fichier est au même éleveur que celui de l'appelant. */
+	@Test
+	public void getAIPathTest() throws Exception {
+		// Même éleveur d'entité (comme deux tourelles, à -1) : c'est le propriétaire des fichiers qui compte
+		mLeek1.setFarmer(-1);
+		mLeek2.setFarmer(-1);
+		mLeek1.setAIFile(new AIFile("dossier/ia", "", 1, LeekScript.LATEST_VERSION, 7, false));
+		mLeek2.setAIFile(new AIFile("secret/ia", "", 1, LeekScript.LATEST_VERSION, 8, false));
+		String code = "return [getAIPath(), getAIPath(getEntity()), getAIPath(" + mLeek2.getFId() + "), getAIPath(12345)];";
+		String expected = "[\"/dossier/ia\", \"/dossier/ia\", null, null]";
+		for (int version = 1; version <= LeekScript.LATEST_VERSION; version++) {
+			Assert.assertEquals("version " + version, expected, GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(version, false, false, true, null, true)));
+		}
+		Assert.assertEquals("strict", expected, GeneratorCompilation.runSnippet(mLeek1, mFight, code, new Options(LeekScript.LATEST_VERSION, true, false, true, null, true)));
+		// Une invocation exécute l'IA de son invocateur
+		var bulb = new Bulb(mLeek1, 3, "Bulbe", 1, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		mFight.getState().addEntity(0, bulb);
+		Assert.assertEquals("\"/dossier/ia\"", GeneratorCompilation.runSnippet(mLeek1, mFight, "return getAIPath(" + bulb.getFId() + ");", new Options(true)));
+		// Un fichier du même éleveur, sur une entité d'un autre éleveur (bot du combat de test) : lisible
+		mLeek2.setFarmer(0);
+		mLeek2.setAIFile(new AIFile("secret/ia", "", 1, LeekScript.LATEST_VERSION, 7, false));
+		Assert.assertEquals("\"/secret/ia\"", GeneratorCompilation.runSnippet(mLeek1, mFight, "return getAIPath(" + mLeek2.getFId() + ");", new Options(true)));
 	}
 
 	/**

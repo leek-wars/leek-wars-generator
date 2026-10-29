@@ -346,6 +346,7 @@
 		get farmerCountry() { return F.getFarmerCountry(this.id); }
 		get aiID() { return F.getAIID(this.id); }
 		get aiName() { return F.getAIName(this.id); }
+		get aiPath() { return F.getAIPath(this.id); }
 		isAlly() { return F.isAlly(this.id); }
 		isEnemy() { return F.isEnemy(this.id); }
 		// Valeur d'une caractéristique par sa constante (Entity.Stat.STRENGTH...).
