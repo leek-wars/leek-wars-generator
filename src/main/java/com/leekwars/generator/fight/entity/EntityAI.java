@@ -576,13 +576,13 @@ public class EntityAI extends AI {
 			addSystemLog(LeekLog.ERROR, Error.AI_INTERRUPTED, new String[] { "Generator Error" }, e.getStackTrace());
 			fight.generator.exception(e, fight, mEntity.getFarmer(), getFile());
 			throw new RuntimeException("Erreur importante dans l'IA " + id + "  " + e.getMessage(), e);
+		} finally {
+			// Aussi après les retours anticipés sur erreur : listen() ne rend que ce qui a été dit
+			// depuis la fin du tour précédent
+			mSays.clear();
+			mMessages.clear();
+			mIARunTime += System.nanoTime() - startTime;
 		}
-
-		mSays.clear();
-		mMessages.clear();
-
-		long endTime = System.nanoTime();
-		mIARunTime += (endTime - startTime);
 	}
 
 	public boolean hasHook(String name) {
