@@ -71,7 +71,7 @@ public class TestPolyglotRamBudget extends FightTestBase {
 		long share = PolyglotSandbox.maxContextHeap("js");
 		// Entite sans RAM (scenario local) : le plancher qui laisse monter le runtime.
 		Assert.assertEquals(Math.min(64_000_000L, share), maxRAM(0, ".js"));
-		// RAM 50 : 1,6 Go en LeekScript, borne a la part d'isolate d'un contexte.
+		// RAM 50 : 800 Mo en LeekScript, borne a la part d'isolate d'un contexte.
 		Assert.assertEquals(Math.min(EntityAI.MAX_RAM_POINTS * EntityAI.RAM_UNITS_PER_POINT * EntityAI.BYTES_PER_RAM_UNIT, share), maxRAM(50, ".js"));
 	}
 

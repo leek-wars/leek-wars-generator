@@ -387,8 +387,8 @@ public class EntityAI extends AI {
 		setMaxOperations((int) Math.min(Integer.MAX_VALUE, (long) mInitialEntity.getCores() * 1_000_000));
 	}
 
-	/** Unités de RAM (cases de 8 octets, une par valeur) que donne un point de RAM : 32 Mo. */
-	public static final int RAM_UNITS_PER_POINT = 4_000_000;
+	/** Unités de RAM (cases de 8 octets, une par valeur) que donne un point de RAM : 16 Mo. */
+	public static final int RAM_UNITS_PER_POINT = 2_000_000;
 	/** Au-delà, les points de RAM ne donnent plus de mémoire à l'IA. */
 	public static final int MAX_RAM_POINTS = 50;
 
