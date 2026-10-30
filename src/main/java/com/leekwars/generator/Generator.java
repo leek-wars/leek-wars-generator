@@ -69,7 +69,13 @@ public class Generator {
 		var value = System.getenv().getOrDefault("LEEKSCRIPT_UNRELEASED_FARMERS", "1");
 		var farmers = new java.util.HashSet<Integer>();
 		for (var id : value.split(",")) {
-			if (!id.isBlank()) farmers.add(Integer.parseInt(id.trim()));
+			if (id.isBlank()) continue;
+			try {
+				farmers.add(Integer.parseInt(id.trim()));
+			} catch (NumberFormatException e) {
+				// Une valeur mal formée n'ouvre rien, sans empêcher le générateur de démarrer
+				Log.e(TAG, "LEEKSCRIPT_UNRELEASED_FARMERS : id ignoré « " + id.trim() + " »");
+			}
 		}
 		return farmers;
 	}
