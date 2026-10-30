@@ -284,6 +284,21 @@ public class TestFightCombat extends FightTestBase {
 		Assert.assertEquals(-1, fight.getWinner()); // draw
 	}
 
+	/**
+	 * Chaque IA a sa propre suite aléatoire : deux entités à la même IA ne tirent pas les mêmes
+	 * nombres (avant, toutes les IA d'un combat partaient de la graine du combat).
+	 */
+	@Test
+	public void sameAIDrawsDifferentRandomNumbersPerEntity() throws Exception {
+		var file = newAIFile("if (getTurn() == 1) setRegister('rand', randInt(0, 1000000000) + ' ' + randInt(0, 1000000000));", 0);
+		attachAI(leek1, file);
+		attachAI(leek2, file);
+		runFight();
+		Assert.assertNotNull(leek1.getRegister("rand"));
+		Assert.assertNotNull(leek2.getRegister("rand"));
+		Assert.assertNotEquals(leek1.getRegister("rand"), leek2.getRegister("rand"));
+	}
+
 	// ---------- Operations counter ----------
 
 	@Test

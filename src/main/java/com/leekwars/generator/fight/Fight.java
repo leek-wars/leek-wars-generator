@@ -164,6 +164,18 @@ public class Fight {
 		return state.getEntity(id);
 	}
 
+	/**
+	 * Graine du générateur d'une IA : celle du combat mêlée à l'id de l'entité (finaliseur de
+	 * SplitMix64). Avec la seule graine du combat, toutes les IA tiraient la même suite : quatre
+	 * poireaux à la même IA obtenaient les mêmes rand() au même appel.
+	 */
+	static long aiSeed(long fightSeed, int fid) {
+		long z = fightSeed * 0x9E3779B97F4A7C15L + fid;
+		z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+		z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+		return z ^ (z >>> 31);
+	}
+
 	private boolean canStartFight() {
 		if (state.getTeams().size() < 2) return false;
 		return true;
@@ -180,7 +192,7 @@ public class Fight {
 			entity.setAI(ai);
 			((EntityAI) ai).setFight(this);
 			((EntityAI) ai).init();
-			((EntityAI) ai).getRandom().seed(state.getSeed());
+			((EntityAI) ai).getRandom().seed(aiSeed(state.getSeed(), entity.getFId()));
 
 			// Check all entities characteristics
 			state.statistics.init(entity);

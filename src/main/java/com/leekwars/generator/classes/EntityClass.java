@@ -1,5 +1,7 @@
 package com.leekwars.generator.classes;
 
+import java.util.List;
+
 import com.leekwars.generator.Censorship;
 import com.leekwars.generator.action.ActionLama;
 import com.leekwars.generator.action.ActionSay;
@@ -385,9 +387,18 @@ public class EntityClass {
 		return null;
 	}
 
+	/**
+	 * Messages entendus par l'entité qui joue. Un bulbe exécute une fermeture de l'IA de son
+	 * invocateur : `ai` est alors l'IA de l'invocateur, dont la liste est vidée à la fin de son
+	 * tour. Le bulbe a la sienne, remplie par say() et vidée à la fin de son propre tour.
+	 */
+	private static List<Say> heard(EntityAI ai) {
+		return ((EntityAI) ai.getEntity().getAI()).getSays();
+	}
+
 	public static LegacyArrayLeekValue listen_v1_3(EntityAI ai) throws LeekRunException {
 		var values = new LegacyArrayLeekValue(ai);
-		for (var say : ai.getSays()) {
+		for (var say : heard(ai)) {
 			var s = ai.newArray(2);
 			s.push(ai, say.id);
 			s.push(ai, say.message);
@@ -398,7 +409,7 @@ public class EntityClass {
 
 	public static ArrayLeekValue listen(EntityAI ai) throws LeekRunException {
 		var values = new ArrayLeekValue(ai);
-		for (var say : ai.getSays()) {
+		for (var say : heard(ai)) {
 			var s = ai.newArray(2);
 			s.push(ai, say.id);
 			s.push(ai, say.message);

@@ -57,4 +57,24 @@ public class TestSummonFunctions extends FightTestBase {
 		Assert.assertNotNull(saved);
 		Assert.assertTrue("registre écrit par le bulbe sauvegardé chez l'invocateur : " + saved, saved.contains("\"bulb_birth\":\"3\""));
 	}
+
+	/**
+	 * listen() dans l'IA d'un bulbe rend ce que le bulbe a entendu depuis la fin de son tour
+	 * précédent, et non la liste de l'invocateur, vidée juste avant lui à la fin de son tour.
+	 */
+	@Test
+	public void bulbListensToItsOwnMessages() throws Exception {
+		attachAI(leek1, summonBulbAtTurn(2, ""
+			+ "if (getTurn() >= 3) setRegister('bulb_heard_' + getTurn(), '' + listen());")
+			+ "if (getTurn() >= 3) setRegister('leek_heard_' + getTurn(), '' + listen());");
+		attachAI(leek2, "say('hello ' + getTurn());");
+		runFight();
+
+		Assert.assertEquals("l'invocation a réussi", "1", leek1.getRegister("summon_result"));
+		// Le bulbe joue juste après son invocateur : quel que soit le camp qui ouvre le tour, ils
+		// ont entendu le même message de l'adversaire depuis la fin de leur tour précédent
+		String heard = leek1.getRegister("leek_heard_3");
+		Assert.assertTrue("l'invocateur a entendu l'adversaire : " + heard, heard != null && heard.contains("hello"));
+		Assert.assertEquals(heard, leek1.getRegister("bulb_heard_3"));
+	}
 }
