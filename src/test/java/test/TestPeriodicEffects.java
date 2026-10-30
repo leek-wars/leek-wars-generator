@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.action.Action;
+import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.leek.Leek;
@@ -143,6 +144,30 @@ public class TestPeriodicEffects extends FightTestBase {
 		leek2.startTurn();
 		Assert.assertTrue(leek2.getEffects().isEmpty());
 		Assert.assertTrue(leek1.getLaunchedEffects().isEmpty());
+	}
+
+	/** Elle perd quand même son tour, garde sa valeur, et refrappe quand l'état tombe. */
+	@Test
+	public void uneSequellePoseeAvantLInvincibiliteNeFrappePasPendant() throws Exception {
+		initFightOnly();
+		applyEffect(Effect.TYPE_AFTEREFFECT, 3, 30, leek2, leek1, false);
+		Effect sequelle = leek2.getEffects().get(0);
+		// Un tour d'invincibilité, décompté au tour de son lanceur
+		Effect.createEffect(fight.getState(), Effect.TYPE_ADD_STATE, 1, 1, EntityState.INVINCIBLE.ordinal(), 0, false,
+			leek2, leek1, null, 0, false, 0, 1, 0, Effect.MODIFIER_IRREDUCTIBLE);
+		int life = leek2.getLife();
+		int total = leek2.getTotalLife();
+
+		leek2.startTurn();
+		Assert.assertEquals("aucun PV perdu", life, leek2.getLife());
+		Assert.assertEquals("aucune érosion", total, leek2.getTotalLife());
+		Assert.assertEquals(2, sequelle.getTurns());
+
+		leek1.startTurn();
+		Assert.assertFalse(leek2.hasState(EntityState.INVINCIBLE));
+		leek2.startTurn();
+		Assert.assertEquals("l'état tombé, la séquelle frappe de nouveau", life - 30, leek2.getLife());
+		Assert.assertEquals("science à 0 : 30 de dégâts, 2 d'érosion", total - 2, leek2.getTotalLife());
 	}
 
 	@Test

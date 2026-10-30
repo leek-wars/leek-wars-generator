@@ -30,6 +30,11 @@ public class EffectAftereffect extends PeriodicEffect {
 	@Override
 	public void applyStartTurn(State state) {
 
+		// Comme le poison : pas de coup sous invincibilité, la valeur reste pour les suivants
+		if (target.hasState(EntityState.INVINCIBLE)) {
+			return;
+		}
+
 		if (target.getLife() < value) {
 			value = target.getLife();
 		}
