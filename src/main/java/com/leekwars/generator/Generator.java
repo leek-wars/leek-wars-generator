@@ -1,6 +1,7 @@
 package com.leekwars.generator;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,9 +66,9 @@ public class Generator {
 	 * Éleveurs qui peuvent compiler en version pas encore publique de LeekScript (`// @version:5`) :
 	 * LEEKSCRIPT_UNRELEASED_FARMERS, des ids séparés par des virgules, 1 par défaut.
 	 */
-	private static java.util.Set<Integer> unreleasedVersionFarmers() {
+	private static Set<Integer> unreleasedVersionFarmers() {
 		var value = System.getenv().getOrDefault("LEEKSCRIPT_UNRELEASED_FARMERS", "1");
-		var farmers = new java.util.HashSet<Integer>();
+		var farmers = new HashSet<Integer>();
 		for (var id : value.split(",")) {
 			if (id.isBlank()) continue;
 			try {
