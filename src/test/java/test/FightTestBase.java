@@ -79,11 +79,19 @@ public abstract class FightTestBase {
 		attachAI(leek, newAIFile(code, leek.getId()));
 	}
 
+	/** IA de test dans une version donnée de LeekScript. */
+	protected void attachAI(Leek leek, int version, String code) {
+		attachAI(leek, newAIFile(code, leek.getId(), version));
+	}
+
 	/** Fichier d'IA de test, à chemin (donc id) unique dans le processus. */
 	protected static AIFile newAIFile(String code, int owner) {
+		return newAIFile(code, owner, LeekScript.LATEST_VERSION);
+	}
+
+	protected static AIFile newAIFile(String code, int owner, int version) {
 		long uid = AI_COUNTER.incrementAndGet();
-		return new AIFile("<test_" + uid + ">", code, System.currentTimeMillis(),
-			LeekScript.LATEST_VERSION, owner, false);
+		return new AIFile("<test_" + uid + ">", code, System.currentTimeMillis(), version, owner, false);
 	}
 
 	/** Attache un fichier d'IA existant (plusieurs entités peuvent partager le même). */

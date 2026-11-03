@@ -1,5 +1,7 @@
 package com.leekwars.generator.classes;
 
+import java.util.List;
+
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.fight.entity.EntityAI.LeekMessage;
 import com.leekwars.generator.state.Entity;
@@ -41,34 +43,13 @@ public class NetworkClass {
 	}
 
 	public static LegacyArrayLeekValue getMessages_v1_3(EntityAI ai, long target_leek) throws LeekRunException {
-
-		ai.ops(100);
-
-		// On récupere le leek ciblé
-		var l = ai.getEntity();
-		if (target_leek != -1 && target_leek != l.getFId()) {
-			l = ai.getFight().getEntity(target_leek);
-			if (l == null) {
-				return null;
-			}
+		var mailbox = readableMessages(ai, target_leek);
+		if (mailbox == null) {
+			return null;
 		}
-
-		// On crée le tableau de retour
-		EntityAI lia = (EntityAI) l.getAI();
 		var messages = new LegacyArrayLeekValue(ai);
-
-		if (l.getType() == Entity.TYPE_MOB && l != ai.getEntity()) {
-			return messages;
-		}
-
-		// On y ajoute les messages
-		if (lia != null) {
-
-			ai.ops(lia.getMessages().size() * 100);
-
-			for (var message : lia.getMessages()) {
-				messages.push(ai, message.getArray(ai));
-			}
+		for (var message : mailbox) {
+			messages.push(ai, message.getArray(ai));
 		}
 		return messages;
 	}
@@ -78,6 +59,22 @@ public class NetworkClass {
 	}
 
 	public static ArrayLeekValue getMessages(EntityAI ai, long target_leek) throws LeekRunException {
+		var mailbox = readableMessages(ai, target_leek);
+		if (mailbox == null) {
+			return null;
+		}
+		var messages = new ArrayLeekValue(ai);
+		for (var message : mailbox) {
+			messages.push(ai, message.getArray(ai));
+		}
+		return messages;
+	}
+
+	/**
+	 * Les messages de la boîte de target_leek (-1 : la sienne) que l'IA a le droit de lire, opérations
+	 * comptées, ou null si l'entité n'existe pas. La boîte d'un mob n'est lisible que par lui-même.
+	 */
+	private static List<LeekMessage> readableMessages(EntityAI ai, long target_leek) throws LeekRunException {
 
 		ai.ops(100);
 
@@ -90,24 +87,12 @@ public class NetworkClass {
 			}
 		}
 
-		// On crée le tableau de retour
 		EntityAI lia = (EntityAI) l.getAI();
-		var messages = new ArrayLeekValue(ai);
-
-		if (l.getType() == Entity.TYPE_MOB && l != ai.getEntity()) {
-			return messages;
+		if (lia == null || (l.getType() == Entity.TYPE_MOB && l != ai.getEntity())) {
+			return List.of();
 		}
-
-		// On y ajoute les messages
-		if (lia != null) {
-
-			ai.ops(lia.getMessages().size() * 100);
-
-			for (var message : lia.getMessages()) {
-				messages.push(ai, message.getArray(ai));
-			}
-		}
-		return messages;
+		ai.ops(lia.getMessages().size() * 100);
+		return lia.getMessages();
 	}
 
 	public static long getMessageAuthor(EntityAI ai, GenericArrayLeekValue message) throws LeekRunException {

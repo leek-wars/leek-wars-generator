@@ -6,8 +6,6 @@ import org.junit.Test;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.state.Entity;
 
-import leekscript.compiler.AIFile;
-
 /**
  * La boîte aux lettres d'une entité garde 200 messages d'alliés et 200 d'ennemis par tour, comptés à
  * part : un adversaire qui l'inonde ne fait plus tomber les messages de l'équipe, et sendTo renvoie
@@ -26,7 +24,7 @@ public class TestMessageLimits extends FightTestBase {
 		ally = defaultLeek(1, "Allie");
 		receiver = defaultLeek(2, "Destinataire");
 		enemy = defaultLeek(3, "Ennemi");
-		mob = new Leek(4, "Mob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0) {
+		mob = new Leek(defaultLeek(4, "Mob")) {
 			@Override
 			public int getType() {
 				return Entity.TYPE_MOB;
@@ -36,11 +34,6 @@ public class TestMessageLimits extends FightTestBase {
 		fight.getState().addEntity(0, receiver);
 		fight.getState().addEntity(1, enemy);
 		fight.getState().addEntity(1, mob);
-	}
-
-	private void attach(Leek leek, int version, String code) {
-		attachAI(leek, new AIFile("<message_limits_v" + version + "_" + leek.getId() + "_" + System.nanoTime() + ">", code,
-			System.currentTimeMillis(), version, leek.getId(), false));
 	}
 
 	private String registers(Leek leek) {
@@ -63,15 +56,15 @@ public class TestMessageLimits extends FightTestBase {
 
 	@Test
 	public void enemyFloodDoesNotCrowdOutAllyMessages() throws Exception {
-		attach(ally, 4, flood("Destinataire"));
-		attach(enemy, 4, flood("Destinataire"));
-		attach(receiver, 4, "global allies = 0\n"
+		attachAI(ally, 4, flood("Destinataire"));
+		attachAI(enemy, 4, flood("Destinataire"));
+		attachAI(receiver, 4, "global allies = 0\n"
 			+ "global enemies = 0\n"
 			+ "for (var m in getMessages()) {\n"
 			+ "  if (isAlly(m[0])) allies++ else enemies++\n"
 			+ "}\n"
 			+ "if (getTurn() == 3) setRegister('r', allies + ',' + enemies)");
-		attach(mob, 4, "");
+		attachAI(mob, 4, "");
 		runFight();
 
 		Assert.assertTrue(registers(ally), registers(ally).contains("\"accepted\":\"200\""));
@@ -82,9 +75,9 @@ public class TestMessageLimits extends FightTestBase {
 	@Test
 	public void legacyGetMessagesCannotReadAMobMailbox() throws Exception {
 		// L'ennemi écrit chaque tour au mob, son allié, et au destinataire ; l'allié, en LS1, lit les deux boîtes
-		attach(enemy, 4, "for (var e in getAliveEnemies()) if (getName(e) == 'Destinataire') sendTo(e, 1, 'x')\n"
+		attachAI(enemy, 4, "for (var e in getAliveEnemies()) if (getName(e) == 'Destinataire') sendTo(e, 1, 'x')\n"
 			+ "for (var e in getAliveAllies()) if (getName(e) == 'Mob') sendTo(e, 1, 'x')");
-		attach(ally, 1, "global mobMax = 0;\n"
+		attachAI(ally, 1, "global mobMax = 0;\n"
 			+ "global leekMax = 0;\n"
 			+ "for (var e in getAliveEnemies()) {\n"
 			+ "  if (getName(e) == \"Mob\") { mobMax = max(mobMax, count(getMessages(e))); }\n"
@@ -93,8 +86,8 @@ public class TestMessageLimits extends FightTestBase {
 			+ "  if (getName(e) == \"Destinataire\") { leekMax = max(leekMax, count(getMessages(e))); }\n"
 			+ "}\n"
 			+ "setRegister(\"r\", mobMax + \",\" + leekMax);");
-		attach(receiver, 4, "");
-		attach(mob, 4, "");
+		attachAI(receiver, 4, "");
+		attachAI(mob, 4, "");
 		runFight();
 
 		var r = registers(ally);
