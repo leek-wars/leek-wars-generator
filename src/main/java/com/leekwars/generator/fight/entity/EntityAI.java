@@ -138,6 +138,9 @@ public class EntityAI extends AI {
 	protected String ai_name = "";
 
 	protected final List<LeekMessage> mMessages = new ArrayList<LeekMessage>();
+	private static final int MAX_MESSAGES = 200;
+	private int mAllyMessages = 0;
+	private int mEnemyMessages = 0;
 	protected final List<Say> mSays = new ArrayList<>();
 
 	protected boolean valid = false;
@@ -457,11 +460,19 @@ public class EntityAI extends AI {
 		return (LeekLog) logs;
 	}
 
-	public void addMessage(LeekMessage leekMessage) {
-		if (mMessages.size() > 200) {
-			return;
+	/**
+	 * Range un message reçu, s'il reste de la place : 200 messages d'alliés et 200 d'ennemis par
+	 * tour, comptés à part, pour qu'un adversaire qui inonde la boîte ne fasse pas tomber les
+	 * messages de l'équipe. Renvoie false si le message est refusé.
+	 */
+	public boolean addMessage(LeekMessage leekMessage, boolean fromAlly) {
+		if ((fromAlly ? mAllyMessages : mEnemyMessages) >= MAX_MESSAGES) {
+			return false;
 		}
+		if (fromAlly) mAllyMessages++;
+		else mEnemyMessages++;
 		mMessages.add(leekMessage);
+		return true;
 	}
 
 	public List<Say> getSays() {
@@ -581,6 +592,8 @@ public class EntityAI extends AI {
 			// depuis la fin du tour précédent
 			mSays.clear();
 			mMessages.clear();
+			mAllyMessages = 0;
+			mEnemyMessages = 0;
 			mIARunTime += System.nanoTime() - startTime;
 		}
 	}

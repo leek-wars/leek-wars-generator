@@ -19,8 +19,10 @@ public class NetworkClass {
 		if (l == null) {
 			return false;
 		}
-		if (l.getAI() != null)
-			((EntityAI) l.getAI()).addMessage(new LeekMessage(ai.getEntity().getFId(), type, message));
+		if (l.getAI() != null) {
+			var sender = ai.getEntity();
+			return ((EntityAI) l.getAI()).addMessage(new LeekMessage(sender.getFId(), type, message), l.getTeam() == sender.getTeam());
+		}
 		return true;
 	}
 
@@ -29,7 +31,7 @@ public class NetworkClass {
 			if (e.getFId() == ai.getEntity().getFId())
 				continue;
 			if (e.getAI() != null)
-				((EntityAI) e.getAI()).addMessage(new LeekMessage(ai.getEntity().getFId(), type, message));
+				((EntityAI) e.getAI()).addMessage(new LeekMessage(ai.getEntity().getFId(), type, message), true);
 		}
 		return null;
 	}
@@ -54,6 +56,10 @@ public class NetworkClass {
 		// On crée le tableau de retour
 		EntityAI lia = (EntityAI) l.getAI();
 		var messages = new LegacyArrayLeekValue(ai);
+
+		if (l.getType() == Entity.TYPE_MOB && l != ai.getEntity()) {
+			return messages;
+		}
 
 		// On y ajoute les messages
 		if (lia != null) {
