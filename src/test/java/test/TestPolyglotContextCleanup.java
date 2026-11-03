@@ -10,8 +10,8 @@ import com.leekwars.generator.polyglot.PolyglotSandbox;
 
 /**
  * Le NPE interne a GraalVM leve par le nettoyage d'un contexte collecte, en fin de
- * {@code Context.Builder.build()}, est reconnu (et le contexte reconstruit autant de fois qu'il le
- * faut) ; un autre NPE remonte.
+ * {@code Context.Builder.build()}, est reconnu (la file videe et le contexte reconstruit) ; un autre
+ * NPE remonte.
  *
  * <p>Test pur (pas d'isolate requis) : il garde la CLASSIFICATION sur la pile observee en prod.
  */
@@ -70,6 +70,26 @@ public class TestPolyglotContextCleanup {
 		AtomicInteger calls = new AtomicInteger();
 		Assert.assertEquals("contexte", PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(12, cleanupFailure(), calls), "js"));
 		Assert.assertEquals(13, calls.get());
+	}
+
+	@Test
+	public void queueIsDrainedBeforeEachBuild() {
+		// Plus de cent references fautives : la vidange les saute toutes avant que build() ne les rencontre.
+		AtomicInteger calls = new AtomicInteger();
+		AtomicInteger drains = new AtomicInteger();
+		Assert.assertEquals("contexte", PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(1, cleanupFailure(), calls), () -> {
+			drains.incrementAndGet();
+			return 150;
+		}, "js"));
+		Assert.assertEquals(2, calls.get());
+		Assert.assertEquals(2, drains.get());
+	}
+
+	/** La vidange directe passe par une methode interne de GraalVM : une montee de version qui la retire doit se voir ici. */
+	@Test
+	public void graalVmReferenceQueueDrainIsAvailable() {
+		Assert.assertTrue(PolyglotSandbox.canDrainCollectedContexts());
+		Assert.assertEquals(0, PolyglotSandbox.drainCollectedContexts());
 	}
 
 	@Test

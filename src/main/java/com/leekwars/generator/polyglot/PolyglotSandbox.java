@@ -1,6 +1,9 @@
 package com.leekwars.generator.polyglot;
 
 import java.io.OutputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import org.graalvm.polyglot.Context;
@@ -200,6 +204,27 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/** Borne de securite des essais de {@code build()} (cf buildPastCollectedContextCleanup). */
 	private static final int CONTEXT_BUILD_ATTEMPTS = 100;
+
+	/** Borne de securite des references fautives sautees par une vidange (cf drainCollectedContexts). */
+	private static final int DRAIN_FAILURES_LIMIT = 100_000;
+
+	/**
+	 * {@code Engine$CleanableReference.processReferenceQueue()}, la vidange que {@code build()} fait en fin de
+	 * construction : l'appeler directement vide la file sans construire de contexte. Interne a GraalVM, donc null
+	 * s'il change de forme (montee de version) : on retombe alors sur la seule reconstruction.
+	 */
+	private static final MethodHandle PROCESS_REFERENCE_QUEUE = processReferenceQueueHandle();
+
+	private static MethodHandle processReferenceQueueHandle() {
+		try {
+			Method method = Class.forName("org.graalvm.polyglot.Engine$CleanableReference").getDeclaredMethod("processReferenceQueue");
+			method.setAccessible(true);
+			return MethodHandles.lookup().unreflect(method);
+		} catch (ReflectiveOperationException | RuntimeException e) {
+			Log.w("PolyglotSandbox", "Vidange directe des contextes collectes indisponible (" + e + "), reconstruction seule");
+			return null;
+		}
+	}
 
 	private final long statementLimit;
 	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
@@ -433,21 +458,60 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate : le contexte invite n'existe plus),
 	 * sans rapport avec le contexte demande. Celui-ci est alors perdu, et GraalVM le fermera quand le GC le
 	 * collectera ; la reference fautive, elle, est deja sortie de la file. Un passage du GC peut en laisser
-	 * plusieurs : chaque essai en retire une, pour le prix d'un contexte vide (~1 ms).
+	 * plus de cent (essais epuises en prod). Seul un contexte jamais ferme peut echouer ainsi, et chaque
+	 * {@code build()} rate en laisse un : la file est donc videe AVANT chaque construction, sans rien
+	 * construire (drainCollectedContexts), pour que l'echec, et le contexte perdu, restent l'exception.
 	 */
 	public static <T> T buildPastCollectedContextCleanup(Supplier<T> build, String languageId) {
+		return buildPastCollectedContextCleanup(build, PolyglotSandbox::drainCollectedContexts, languageId);
+	}
+
+	/** Idem, {@code drain} vidant la file et rendant le nombre de references fautives sautees. */
+	public static <T> T buildPastCollectedContextCleanup(Supplier<T> build, IntSupplier drain, String languageId) {
 		int failures = 0;
+		int drained = 0;
 		while (true) {
+			drained += drain.getAsInt();
 			try {
 				T built = build.get();
-				if (failures > 0) {
-					Log.w("PolyglotSandbox", failures + " nettoyage(s) GraalVM de contextes collectes en echec avant de construire le contexte " + languageId);
+				if (failures + drained > 0) {
+					Log.w("PolyglotSandbox", "Nettoyage GraalVM de contextes collectes en echec avant de construire le contexte " + languageId
+							+ " : " + drained + " en vidant la file, " + failures + " dans build()");
 				}
 				return built;
 			} catch (NullPointerException e) {
 				if (!isCollectedContextCleanupFailure(e) || ++failures >= CONTEXT_BUILD_ATTEMPTS) throw e;
 			}
 		}
+	}
+
+	/** Faux si la methode interne de GraalVM n'est plus accessible (cf PROCESS_REFERENCE_QUEUE). */
+	public static boolean canDrainCollectedContexts() {
+		return PROCESS_REFERENCE_QUEUE != null;
+	}
+
+	/**
+	 * Vide la file des contextes collectes comme le fait {@code build()}, en sautant les references dont le
+	 * nettoyage leve le NPE de GraalVM (chacune sort de la file avant de lever, cf buildPastCollectedContextCleanup ;
+	 * tout NPE sorti de cet appel vient donc d'un nettoyage). Rend le nombre de references sautees ; 0 sans rien
+	 * faire si la vidange directe est indisponible.
+	 */
+	public static int drainCollectedContexts() {
+		if (PROCESS_REFERENCE_QUEUE == null) return 0;
+		int failures = 0;
+		while (failures < DRAIN_FAILURES_LIMIT) {
+			try {
+				PROCESS_REFERENCE_QUEUE.invokeExact();
+				return failures;
+			} catch (NullPointerException e) {
+				failures++;
+			} catch (RuntimeException | Error e) {
+				throw e;
+			} catch (Throwable e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		return failures;
 	}
 
 	/** Le NPE vient du nettoyage des contextes collectes que GraalVM fait en fin de {@code build()}. */
