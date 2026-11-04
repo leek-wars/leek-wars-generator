@@ -1215,8 +1215,7 @@ public class State {
 
 		// Entité dense (Neutronium) : ni téléportation ni permutation, qu'elle lance la puce
 		// ou qu'elle soit permutée. Rien n'est consommé.
-		if (template.getAttack().teleports() && (caster.hasState(EntityState.DENSE)
-				|| (cellEntity != null && cellEntity.hasState(EntityState.DENSE) && template.getAttack().permutes()))) {
+		if (template.getAttack().blockedByDensity(caster, cellEntity)) {
 			return Attack.USE_INVALID_STATE;
 		}
 

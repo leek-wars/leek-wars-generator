@@ -35,7 +35,7 @@ public class Attack {
 	public final static int USE_TOO_MANY_SUMMONS = -5;
 	public final static int USE_RESURRECT_INVALID_ENTIITY = -6;
 	public final static int USE_MAX_USES = -7;
-	public final static int USE_INVALID_STATE = -8; // Un état du lanceur interdit l'action (Amputé, Stérile)
+	public final static int USE_INVALID_STATE = -8; // Un état interdit l'action : lanceur Amputé ou Stérile, lanceur ou cible permutée Dense
 
 	// Launch types
 	public final static int LAUNCH_TYPE_LINE = 1;
@@ -58,6 +58,9 @@ public class Attack {
 	private final Area area;
 	private int healAttack = 0;
 	private int dammageAttack = 0;
+	// Déplacements qu'interdit l'état Dense, connus au chargement : useChip les teste à chaque lancer
+	private boolean teleports = false;
+	private EffectParameters permutation = null;
 	private final int attackType;
 	private final int itemID;
 	private Item item;
@@ -97,7 +100,14 @@ public class Attack {
 			if (type == Effect.TYPE_DAMAGE || type == Effect.TYPE_POISON) {
 				dammageAttack |= targets;
 			}
-			this.effects.add(new EffectParameters(type, value1, value2, turns, targets, modifiers));
+			var parameters = new EffectParameters(type, value1, value2, turns, targets, modifiers);
+			if (type == Effect.TYPE_TELEPORT || type == Effect.TYPE_PERMUTATION) {
+				teleports = true;
+			}
+			if (type == Effect.TYPE_PERMUTATION) {
+				permutation = parameters;
+			}
+			this.effects.add(parameters);
 		}
 	}
 
@@ -374,17 +384,16 @@ public class Attack {
 		return attackType;
 	}
 
-	/** Téléportation ou permutation : les déplacements qu'interdit l'état Dense. */
-	public boolean teleports() {
-		for (EffectParameters ep : effects) {
-			if (ep.getId() == Effect.TYPE_TELEPORT || ep.getId() == Effect.TYPE_PERMUTATION)
-				return true;
-		}
-		return false;
-	}
-
-	public boolean permutes() {
-		return getEffectParametersByType(Effect.TYPE_PERMUTATION) != null;
+	/**
+	 * Téléportation ou permutation refusée par l'état Dense : celui du lanceur, ou celui de
+	 * l'entité de la case visée si la permutation la concerne (le Rempotage ne permute
+	 * qu'alliés et invocations).
+	 */
+	public boolean blockedByDensity(Entity caster, Entity cellEntity) {
+		if (!teleports) return false;
+		if (caster.hasState(EntityState.DENSE)) return true;
+		return permutation != null && cellEntity != null && cellEntity.hasState(EntityState.DENSE)
+			&& filterTarget(permutation.getTargets(), caster, cellEntity);
 	}
 
 	public boolean needsEmptyCell() {

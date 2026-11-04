@@ -564,7 +564,7 @@ public class TestFightEffects extends FightTestBase {
 
 	// ---------- État Dense (Neutronium) ----------
 
-	private static final int TELEPORTATION = 59, JUMP = 144, INVERSION = 68, NEUTRONIUM = 625;
+	private static final int TELEPORTATION = 59, JUMP = 144, INVERSION = 68, REPOTTING = 157, NEUTRONIUM = 625;
 
 	/** Case libre où `caster` peut lancer `chip`, différente des cases exclues. */
 	private Cell castableFreeCell(Entity caster, Chip chip, Cell... excluded) {
@@ -665,6 +665,36 @@ public class TestFightEffects extends FightTestBase {
 		Cell dest = freeCell(start);
 		state.slideEntity(leek1, dest, leek2);
 		Assert.assertEquals("Une poussée déplace une entité dense", dest, leek1.getCell());
+
+		Cell step = null;
+		for (Cell c : state.getMap().getCells()) {
+			if (c.available(state.getMap()) && Pathfinding.getCaseDistance(dest, c) == 1) {
+				step = c;
+				break;
+			}
+		}
+		Assert.assertNotNull(step);
+		leek1.setMP(3);
+		Assert.assertEquals("Elle marche", 1, state.moveEntity(leek1, java.util.Arrays.asList(step)));
+		Assert.assertEquals(step, leek1.getCell());
+	}
+
+	@Test
+	public void repottingIsNotRefusedByADenseEnemyItCannotSwap() throws Exception {
+		// Le Rempotage ne permute qu'alliés et invocations : un ennemi dense sur la case visée
+		// n'est pas concerné, la puce part comme avant.
+		initFightOnly();
+		var state = fight.getState();
+		var caster = state.getOrder().current();
+		var enemy = caster == leek1 ? leek2 : leek1;
+		var repotting = Chips.getChip(REPOTTING);
+		passInitialCooldowns(caster);
+		caster.setTP(repotting.getCost());
+		caster.refillTP();
+		applyState(EntityState.DENSE, (Leek) enemy, (Leek) caster, false, 0);
+		Cell near = castableFreeCell(caster, repotting);
+		state.teleportEntity(enemy, near, enemy, 0);
+		Assert.assertNotEquals(Attack.USE_INVALID_STATE, state.useChip(caster, near, repotting));
 	}
 
 	@Test
