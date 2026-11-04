@@ -269,7 +269,7 @@ public abstract class Effect implements Cloneable {
 				if ((e.attack == null ? attack == null : attack != null && e.attack.getItemId() == attack.getItemId()) && e.getId() == id && e.turns == turns && e.caster == caster) {
 					e.mergeWith(effect);
 					state.getActions().log(new ActionStackEffect(e.getLogID(), effect.value));
-					// Les statistiques voient aussi un coup empilé, avec sa seule part (effect.value)
+					// effect et non e : la part de ce seul coup (contrat de StatisticsManager.effect)
 					state.statistics.effect(target, caster, effect);
 					return effect.value; // No need to apply the effect again
 				}

@@ -66,6 +66,12 @@ public interface StatisticsManager {
 	public void show(Entity mEntity, int cell_id);
 	public void slide(Entity entity, Entity caster, Cell start, Cell cell);
 	public void useInvalidPosition(Entity caster, Attack attack, Cell target);
+	/**
+	 * Un coup à durée vient de toucher `entity`, stats déjà à jour : une fois par coup, qu'il crée
+	 * un effet ou s'empile sur un effet existant (même item, même lanceur, même durée). Sur un
+	 * empilement, `effect` porte la seule part du coup et n'est pas attaché (absent de
+	 * entity.getEffects(), logID 0). Verrouillé par TestTrophyHooks.stackedEffectReportsItsOwnShare.
+	 */
 	public void effect(Entity entity, Entity caster, Effect effect);
 	public void entityTurn(Entity entity);
 	public void antidote(Entity entity, Entity caster, int poisonsRemoved);
