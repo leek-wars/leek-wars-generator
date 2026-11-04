@@ -7,7 +7,7 @@ public enum EntityState {
 	INVINCIBLE, // 3
 	PACIFIST, // 4
 	HEAVY, // 5
-	DENSE, // 6
+	DENSE, // 6 : ne peut plus être téléporté ni permuté
 	MAGNETIZED, // 7
 	CHAINED, // 8
 	ROOTED, // 9

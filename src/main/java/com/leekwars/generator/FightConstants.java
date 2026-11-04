@@ -142,6 +142,7 @@ public enum FightConstants implements ILeekConstant {
 	STATE_UNHEALABLE(EntityState.UNHEALABLE.ordinal(), Type.INT),
 	STATE_INVINCIBLE(EntityState.INVINCIBLE.ordinal(), Type.INT),
 	STATE_PACIFIST(EntityState.PACIFIST.ordinal(), Type.INT),
+	STATE_DENSE(EntityState.DENSE.ordinal(), Type.INT),
 	STATE_ROOTED(EntityState.ROOTED.ordinal(), Type.INT),
 	STATE_STATIC(EntityState.STATIC.ordinal(), Type.INT),
 	STATE_STERILE(EntityState.STERILE.ordinal(), Type.INT),
@@ -371,6 +372,7 @@ public enum FightConstants implements ILeekConstant {
 	CHIP_POPCORN(447, Type.INT),
 	// Puce de boss : le Graal la lance dans Fenouil & Potiron.
 	CHIP_GRAIL_PROTECTION(448, Type.INT),
+	CHIP_NEUTRONIUM(625, Type.INT),
 
 	// Composants : id d'objet, celui de getComponents(), getInventory() et setLoadout()
 	COMPONENT_CORE(290, Type.INT),

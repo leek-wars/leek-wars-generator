@@ -374,6 +374,19 @@ public class Attack {
 		return attackType;
 	}
 
+	/** Téléportation ou permutation : les déplacements qu'interdit l'état Dense. */
+	public boolean teleports() {
+		for (EffectParameters ep : effects) {
+			if (ep.getId() == Effect.TYPE_TELEPORT || ep.getId() == Effect.TYPE_PERMUTATION)
+				return true;
+		}
+		return false;
+	}
+
+	public boolean permutes() {
+		return getEffectParametersByType(Effect.TYPE_PERMUTATION) != null;
+	}
+
 	public boolean needsEmptyCell() {
 		for (EffectParameters ep : effects) {
 			if (ep.getId() == Effect.TYPE_TELEPORT || ep.getId() == Effect.TYPE_SUMMON || ep.getId() == Effect.TYPE_RESURRECT)

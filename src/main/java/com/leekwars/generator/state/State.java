@@ -1211,10 +1211,18 @@ public class State {
 			}
 		}
 
+		var cellEntity = target.getPlayer(map);
+
+		// Entité dense (Neutronium) : ni téléportation ni permutation, qu'elle lance la puce
+		// ou qu'elle soit permutée. Rien n'est consommé.
+		if (template.getAttack().teleports() && (caster.hasState(EntityState.DENSE)
+				|| (cellEntity != null && cellEntity.hasState(EntityState.DENSE) && template.getAttack().permutes()))) {
+			return Attack.USE_INVALID_STATE;
+		}
+
 		boolean critical = generateCritical(caster);
 		int result = critical ? Attack.USE_CRITICAL : Attack.USE_SUCCESS;
 
-		var cellEntity = target.getPlayer(map);
 		ActionUseChip log = new ActionUseChip(target, template, result);
 		actions.log(log);
 		if (critical) caster.onCritical();
@@ -1332,6 +1340,7 @@ public class State {
 	public void invertEntities(Entity caster, Entity target) {
 
 		if (target.hasState(EntityState.STATIC)) return;
+		if (caster.hasState(EntityState.DENSE) || target.hasState(EntityState.DENSE)) return;
 
 		Cell start = caster.getCell();
 		Cell end = target.getCell();

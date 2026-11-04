@@ -8,11 +8,13 @@ import com.leekwars.generator.attack.Attack;
 import com.leekwars.generator.attack.DamageType;
 import com.leekwars.generator.attack.EntityState;
 import com.leekwars.generator.bulbs.Bulbs;
+import com.leekwars.generator.chips.Chip;
 import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.effect.Effect;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.maps.Pathfinding;
+import com.leekwars.generator.state.Entity;
 import com.leekwars.generator.weapons.Weapons;
 
 /**
@@ -558,6 +560,166 @@ public class TestFightEffects extends FightTestBase {
 		}
 		Assert.assertNotNull("Une case de plantation valide existe", cell);
 		Assert.assertEquals(Attack.USE_INVALID_STATE, state.summonEntity(caster, cell, corn));
+	}
+
+	// ---------- État Dense (Neutronium) ----------
+
+	private static final int TELEPORTATION = 59, JUMP = 144, INVERSION = 68, NEUTRONIUM = 625;
+
+	/** Case libre où `caster` peut lancer `chip`, différente des cases exclues. */
+	private Cell castableFreeCell(Entity caster, Chip chip, Cell... excluded) {
+		var map = fight.getState().getMap();
+		outer:
+		for (Cell c : map.getCells()) {
+			if (!c.available(map) || !map.canUseAttack(caster.getCell(), c, chip.getAttack())) continue;
+			for (Cell e : excluded) {
+				if (c == e) continue outer;
+			}
+			return c;
+		}
+		return null;
+	}
+
+	/** Téléportation et Inversion ont une recharge initiale : on fait passer les tours. */
+	private static void passInitialCooldowns(Entity entity) {
+		for (int i = 0; i < 5; ++i) entity.applyCoolDown();
+	}
+
+	@Test
+	public void denseEntityCannotTeleportAndPaysNothing() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		var caster = state.getOrder().current();
+		var other = caster == leek1 ? leek2 : leek1;
+		passInitialCooldowns(caster);
+		applyState(EntityState.DENSE, (Leek) caster, (Leek) other, false, 0);
+
+		for (int id : new int[] { TELEPORTATION, JUMP }) {
+			var chip = Chips.getChip(id);
+			caster.setTP(chip.getCost());
+			caster.refillTP();
+			Cell start = caster.getCell();
+			Cell dest = castableFreeCell(caster, chip);
+			Assert.assertNotNull(dest);
+			Assert.assertEquals(chip.getName(), Attack.USE_INVALID_STATE, state.useChip(caster, dest, chip));
+			Assert.assertEquals("Il ne bouge pas", start, caster.getCell());
+			Assert.assertEquals("Aucun PT dépensé", chip.getCost(), caster.getTP());
+			Assert.assertFalse("Pas de recharge", state.hasCooldown(caster, chip));
+			Assert.assertEquals("Aucune utilisation comptée", 0, caster.getItemUses(chip.getId()));
+		}
+
+		// L'état retiré, la téléportation repart
+		caster.reduceEffectsTotal(1.0, other);
+		Assert.assertFalse(caster.hasState(EntityState.DENSE));
+		var teleportation = Chips.getChip(TELEPORTATION);
+		caster.setTP(teleportation.getCost());
+		caster.refillTP();
+		Cell dest = castableFreeCell(caster, teleportation);
+		Assert.assertTrue(state.useChip(caster, dest, teleportation) > 0);
+		Assert.assertEquals(dest, caster.getCell());
+	}
+
+	@Test
+	public void inversionIsRefusedWhenCasterOrTargetIsDense() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		var caster = state.getOrder().current();
+		var target = caster == leek1 ? leek2 : leek1;
+		var inversion = Chips.getChip(INVERSION);
+		passInitialCooldowns(caster);
+		caster.setTP(inversion.getCost());
+		caster.refillTP();
+		// L'Inversion vise la cible en ligne : on la place à portée
+		Cell aligned = null;
+		for (Cell c : state.getMap().getCells()) {
+			if (c.available(state.getMap()) && state.getMap().canUseAttack(caster.getCell(), c, inversion.getAttack())) {
+				aligned = c;
+				break;
+			}
+		}
+		Assert.assertNotNull(aligned);
+		state.teleportEntity(target, aligned, target, 0);
+		Cell casterCell = caster.getCell();
+
+		for (var dense : new Entity[] { caster, target }) {
+			applyState(EntityState.DENSE, (Leek) dense, (Leek) (dense == caster ? target : caster), false, 0);
+			Assert.assertEquals(Attack.USE_INVALID_STATE, state.useChip(caster, aligned, inversion));
+			state.invertEntities(caster, target);
+			Assert.assertEquals("Personne n'est permuté", casterCell, caster.getCell());
+			Assert.assertEquals(aligned, target.getCell());
+			Assert.assertEquals(inversion.getCost(), caster.getTP());
+			dense.reduceEffectsTotal(1.0, caster);
+			Assert.assertFalse(dense.hasState(EntityState.DENSE));
+		}
+
+		Assert.assertTrue(state.useChip(caster, aligned, inversion) > 0);
+		Assert.assertEquals(aligned, caster.getCell());
+	}
+
+	@Test
+	public void denseEntityCanStillWalkAndBePushed() throws Exception {
+		initFightOnly();
+		var state = fight.getState();
+		applyState(EntityState.DENSE, leek1, leek2, false, 0);
+		Cell start = leek1.getCell();
+		Cell dest = freeCell(start);
+		state.slideEntity(leek1, dest, leek2);
+		Assert.assertEquals("Une poussée déplace une entité dense", dest, leek1.getCell());
+	}
+
+	@Test
+	public void denseWearsOffAtTheCasterNextTurn() throws Exception {
+		initFightOnly();
+		Effect.createEffect(fight.getState(), Effect.TYPE_ADD_STATE, 1, 1, EntityState.DENSE.ordinal(), 0, false,
+			leek1, leek2, null, 0, false, 0, 1, 0, 0);
+		Assert.assertTrue(leek1.hasState(EntityState.DENSE));
+		leek1.startTurn();
+		Assert.assertTrue("Le tour de la cible ne l'use pas", leek1.hasState(EntityState.DENSE));
+		leek2.startTurn();
+		Assert.assertFalse("L'état tombe au tour suivant du lanceur", leek1.hasState(EntityState.DENSE));
+	}
+
+	/**
+	 * Lance la Neutronium sur une case à distance 2 du lanceur (lui-même dans le cercle 3),
+	 * l'autre poireau posé à `distance` du centre.
+	 */
+	private Entity castNeutroniumWithOtherAt(int distance) {
+		var state = fight.getState();
+		var map = state.getMap();
+		var caster = state.getOrder().current();
+		var other = caster == leek1 ? leek2 : leek1;
+		var neutronium = Chips.getChip(NEUTRONIUM);
+
+		for (Cell center : map.getCells()) {
+			if (!center.isWalkable() || Pathfinding.getCaseDistance(caster.getCell(), center) != 2) continue;
+			if (!map.canUseAttack(caster.getCell(), center, neutronium.getAttack())) continue;
+			for (Cell n : map.getCells()) {
+				if (!n.available(map) || Pathfinding.getCaseDistance(center, n) != distance) continue;
+				state.teleportEntity(other, n, other, 0);
+				caster.setTP(neutronium.getCost());
+				caster.refillTP();
+				Assert.assertTrue(state.useChip(caster, center, neutronium) > 0);
+				Assert.assertTrue("Le lanceur dans la zone est touché", caster.hasState(EntityState.DENSE));
+				return other;
+			}
+		}
+		Assert.fail("Aucune case pour lancer la Neutronium");
+		return null;
+	}
+
+	@Test
+	public void neutroniumMakesEveryEntityInItsZoneDense() throws Exception {
+		initFightOnly();
+		var neutronium = Chips.getChip(NEUTRONIUM);
+		Assert.assertEquals(262, neutronium.getLevel());
+		Assert.assertEquals(5, neutronium.getCost());
+		Assert.assertTrue("Toute entité dans la zone est touchée", castNeutroniumWithOtherAt(3).hasState(EntityState.DENSE));
+	}
+
+	@Test
+	public void neutroniumSparesEntitiesOutsideItsZone() throws Exception {
+		initFightOnly();
+		Assert.assertFalse("Hors de la zone, pas d'état", castNeutroniumWithOtherAt(4).hasState(EntityState.DENSE));
 	}
 
 	// ---------- Surinfection ----------

@@ -3627,5 +3627,33 @@
 		"template": 121,
 		"type": 2,
 		"max_uses": -1
+	},
+	"625": {
+		"id": 625,
+		"name": "neutronium",
+		"level": 262,
+		"min_range": 2,
+		"max_range": 7,
+		"launch_type": 7,
+		"effects": [
+			{
+				"id": 59,
+				"value1": 6,
+				"value2": 0,
+				"turns": 1,
+				"targets": 31,
+				"modifiers": 0,
+				"type": 9
+			}
+		],
+		"cost": 5,
+		"area": 5,
+		"cooldown": 4,
+		"los": true,
+		"team_cooldown": false,
+		"initial_cooldown": 0,
+		"template": 123,
+		"type": 9,
+		"max_uses": 1
 	}
 }
