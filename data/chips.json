@@ -3646,14 +3646,14 @@
 				"type": 9
 			}
 		],
-		"cost": 5,
+		"cost": 7,
 		"area": 5,
-		"cooldown": 4,
+		"cooldown": 6,
 		"los": true,
 		"team_cooldown": false,
 		"initial_cooldown": 0,
 		"template": 123,
 		"type": 9,
-		"max_uses": 1
+		"max_uses": -1
 	}
 }
