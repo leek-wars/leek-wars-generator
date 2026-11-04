@@ -1339,7 +1339,6 @@ public class State {
 	public void invertEntities(Entity caster, Entity target) {
 
 		if (target.hasState(EntityState.STATIC)) return;
-		if (caster.hasState(EntityState.DENSE) || target.hasState(EntityState.DENSE)) return;
 
 		Cell start = caster.getCell();
 		Cell end = target.getCell();

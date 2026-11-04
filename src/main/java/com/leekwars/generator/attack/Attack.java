@@ -58,9 +58,8 @@ public class Attack {
 	private final Area area;
 	private int healAttack = 0;
 	private int dammageAttack = 0;
-	// Déplacements qu'interdit l'état Dense, connus au chargement : useChip les teste à chaque lancer
+	// Téléportation ou permutation : lu au chargement, useChip le teste à chaque lancer
 	private boolean teleports = false;
-	private EffectParameters permutation = null;
 	private final int attackType;
 	private final int itemID;
 	private Item item;
@@ -100,14 +99,8 @@ public class Attack {
 			if (type == Effect.TYPE_DAMAGE || type == Effect.TYPE_POISON) {
 				dammageAttack |= targets;
 			}
-			var parameters = new EffectParameters(type, value1, value2, turns, targets, modifiers);
-			if (type == Effect.TYPE_TELEPORT || type == Effect.TYPE_PERMUTATION) {
-				teleports = true;
-			}
-			if (type == Effect.TYPE_PERMUTATION) {
-				permutation = parameters;
-			}
-			this.effects.add(parameters);
+			teleports |= type == Effect.TYPE_TELEPORT || type == Effect.TYPE_PERMUTATION;
+			this.effects.add(new EffectParameters(type, value1, value2, turns, targets, modifiers));
 		}
 	}
 
@@ -392,8 +385,9 @@ public class Attack {
 	public boolean blockedByDensity(Entity caster, Entity cellEntity) {
 		if (!teleports) return false;
 		if (caster.hasState(EntityState.DENSE)) return true;
-		return permutation != null && cellEntity != null && cellEntity.hasState(EntityState.DENSE)
-			&& filterTarget(permutation.getTargets(), caster, cellEntity);
+		if (cellEntity == null || !cellEntity.hasState(EntityState.DENSE)) return false;
+		var permutation = getEffectParametersByType(Effect.TYPE_PERMUTATION);
+		return permutation != null && filterTarget(permutation.getTargets(), caster, cellEntity);
 	}
 
 	public boolean needsEmptyCell() {
