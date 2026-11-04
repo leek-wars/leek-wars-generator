@@ -27,6 +27,7 @@ public class TestTrophyHooks extends FightTestBase {
 	private Leek leek1, leek2;
 	private int maxTotalMP = 0;
 	private final List<Entity[]> heals = new ArrayList<>();
+	private final List<List<Integer>> effectsOnLeek2 = new ArrayList<>();
 
 	@Override
 	protected void createLeeks() {
@@ -41,6 +42,9 @@ public class TestTrophyHooks extends FightTestBase {
 			}
 			@Override public void heal(Entity healer, Entity entity, int pv) {
 				if (pv > 0) heals.add(new Entity[] { healer, entity });
+			}
+			@Override public void effect(Entity entity, Entity caster, Effect effect) {
+				if (entity == leek2) effectsOnLeek2.add(List.of(entity.getAbsoluteShield(), effect.getValue()));
 			}
 		});
 	}
@@ -82,5 +86,19 @@ public class TestTrophyHooks extends FightTestBase {
 			Assert.assertEquals("soin du lanceur sur lui-même", leek1, heal[0]);
 			Assert.assertEquals(leek1, heal[1]);
 		}
+	}
+
+	/**
+	 * Un coup qui s'empile sur l'effet d'un coup précédent (même arme, même lanceur) passe aussi
+	 * par effect(), avec le bouclier après le coup et sa seule part : un seuil franchi sur un coup
+	 * empilé ne doit pas échapper aux trophées.
+	 */
+	@Test
+	public void stackedEffectReportsItsOwnShare() throws Exception {
+		initFightOnly();
+		applyEffect(Effect.TYPE_ABSOLUTE_VULNERABILITY, 2, 25, leek2, leek1, true);
+		applyEffect(Effect.TYPE_ABSOLUTE_VULNERABILITY, 2, 33, leek2, leek1, true);
+		Assert.assertEquals("un seul effet, empilé", 1, leek2.getEffects().size());
+		Assert.assertEquals(List.of(List.of(-25, 25), List.of(-58, 33)), effectsOnLeek2);
 	}
 }
