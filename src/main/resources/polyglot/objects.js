@@ -427,7 +427,7 @@
 		}
 		canUseChip(chip, target) { return F.canUseChip(cpid(chip), eid(target)); }
 		canUseChipOnCell(chip, cell) { return F.canUseChipOnCell(cpid(chip), cid(cell)); }
-		resurrect(target, cell) { return F.resurrect(eid(target), cid(cell)); }
+		resurrect(target, cell, chip) { return (chip === undefined) ? F.resurrect(eid(target), cid(cell)) : F.resurrect(eid(target), cid(cell), cpid(chip)); }
 		// Nombre d'utilisations de l'item (arme ou puce) par l'entité courante ce tour.
 		itemUses(item) { return F.getItemUses(unwrap(item)); }
 		// Change l'équipement courant (nom du loadout). changeStats = appliquer aussi la

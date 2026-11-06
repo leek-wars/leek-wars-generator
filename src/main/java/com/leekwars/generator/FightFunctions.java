@@ -341,7 +341,10 @@ public class FightFunctions {
 		method("isChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("getChipLaunchType", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getChipArea", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
-		method("resurrect", "Chip", 500, true, Type.INT, new Type[] { Type.INT, Type.INT });
+		method("resurrect", "Chip", 500, true, new CallableVersion[] {
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.INT }),
+			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
+		});
 		method("summon", "Chip", 1750, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.FUNCTION, Type.STRING }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.FUNCTION }),

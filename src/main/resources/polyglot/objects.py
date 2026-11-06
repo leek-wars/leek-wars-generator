@@ -529,7 +529,8 @@ def _lw_build(G, NAMES):
             return F.canUseWeaponOnCell(_cid(cell)) if weapon is None else F.canUseWeaponOnCell(_wid(weapon), _cid(cell))
         def canUseChip(self, chip, target): return F.canUseChip(_cpid(chip), _eid(target))
         def canUseChipOnCell(self, chip, cell): return F.canUseChipOnCell(_cpid(chip), _cid(cell))
-        def resurrect(self, target, cell): return F.resurrect(_eid(target), _cid(cell))
+        def resurrect(self, target, cell, chip=None):
+            return F.resurrect(_eid(target), _cid(cell)) if chip is None else F.resurrect(_eid(target), _cid(cell), _cpid(chip))
         # Nombre d'utilisations de l'item (arme ou puce) par l'entité courante ce tour.
         def itemUses(self, item): return F.getItemUses(_unwrap(item))
         # Change l'équipement courant (nom du loadout). changeStats = appliquer aussi la

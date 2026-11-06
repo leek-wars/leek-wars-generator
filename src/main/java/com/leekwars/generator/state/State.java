@@ -14,6 +14,7 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.util.Json;
 import com.leekwars.generator.Generator;
+import com.leekwars.generator.FightConstants;
 import com.leekwars.generator.action.Action;
 import com.leekwars.generator.action.ActionChestOpened;
 import com.leekwars.generator.action.ActionEndTurn;
@@ -1436,7 +1437,7 @@ public class State {
 		return result;
 	}
 
-	public int resurrectEntity(Entity caster, Cell target, Chip template, Entity target_entity, boolean fullLife) {
+	public int resurrectEntity(Entity caster, Cell target, Chip template, Entity target_entity) {
 
 		if (!canAct(caster)) {
 			return Attack.USE_INVALID_TARGET;
@@ -1469,8 +1470,8 @@ public class State {
 		actions.log(log);
 		if (critical) caster.onCritical();
 
-		// Resurrect
-		resurrect(caster, target_entity, target, critical, fullLife);
+		// Resurrect : Réveil ramène à pleine vie, les autres puces à la moitié
+		resurrect(caster, target_entity, target, critical, template.getId() == FightConstants.CHIP_AWAKENING.getIntValue());
 		statistics.useChip(caster, template, target, new ArrayList<>(), null);
 		statistics.resurrect(caster, target_entity);
 

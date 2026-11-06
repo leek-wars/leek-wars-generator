@@ -284,8 +284,14 @@ public class ChipClass {
 	}
 
 	public static long resurrect(EntityAI ai, long entity, long cell) throws LeekRunException {
+		// Sans puce précisée : Résurrection, ou Réveil si c'est la seule équipée
+		int resurrection = FightConstants.CHIP_RESURRECTION.getIntValue();
+		int awakening = FightConstants.CHIP_AWAKENING.getIntValue();
+		var me = ai.getEntity();
+		return resurrect(ai, entity, cell, me.getChip(resurrection) == null && me.getChip(awakening) != null ? awakening : resurrection);
+	}
 
-		int success = -1;
+	public static long resurrect(EntityAI ai, long entity, long cell, long chip) throws LeekRunException {
 
 		Cell target = ai.getState().getMap().getCell((int) cell);
 		if (target == null) {
@@ -297,24 +303,17 @@ public class ChipClass {
 			return FightConstants.USE_RESURRECT_INVALID_ENTITY.getIntValue();
 		}
 
-		Chip template = ai.getEntity().getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
-		Chip template2 = ai.getEntity().getChip(415);
-		boolean fullLife = template2 != null;
-		if (template == null && template2 == null) {
-
-			Chip ct = Chips.getChip(FightConstants.CHIP_RESURRECTION.getIntValue());
-
+		Chip template = ai.getEntity().getChip((int) chip);
+		if (template == null) {
+			Chip ct = Chips.getChip((int) chip);
 			if (ct == null)
-				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION) });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EXISTS, new String[] { String.valueOf(chip) });
 			else
-				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(FightConstants.CHIP_RESURRECTION), ct.getName() });
+				ai.addSystemLog(AILog.WARNING, FarmerLog.CHIP_NOT_EQUIPPED, new String[] { String.valueOf(chip), ct.getName() });
 			return -1;
 		}
 
-		if (target != null && (template != null || template2 != null)) {
-			success = ai.getState().resurrectEntity(ai.getEntity(), target, template != null ? template : template2, l, fullLife);
-		}
-		return success;
+		return ai.getState().resurrectEntity(ai.getEntity(), target, template, l);
 	}
 
 	public static LegacyArrayLeekValue getChipEffectiveArea_v1_3(EntityAI ai, long value1, long value2) throws LeekRunException {
