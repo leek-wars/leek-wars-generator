@@ -258,6 +258,8 @@ public class ChipClass {
 
 	public static long summon(EntityAI ai, long chip, long cell, FunctionLeekValue summonAI, String name) throws LeekRunException {
 
+		if (denyDuringHook(ai, "summon")) return -1;
+
 		int success = -1;
 
 		Cell target = ai.getState().getMap().getCell((int) cell);
@@ -292,6 +294,8 @@ public class ChipClass {
 	}
 
 	public static long resurrect(EntityAI ai, long entity, long cell, long chip) throws LeekRunException {
+
+		if (denyDuringHook(ai, "resurrect")) return -1;
 
 		Cell target = ai.getState().getMap().getCell((int) cell);
 		if (target == null) {

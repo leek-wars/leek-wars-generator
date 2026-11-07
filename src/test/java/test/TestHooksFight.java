@@ -501,6 +501,30 @@ public class TestHooksFight extends FightTestBase {
 		Assert.assertFalse("No SAY action expected from a hook", actions.contains("[203,"));
 	}
 
+	@Test
+	public void movesSummonResurrectAndShowAreDeniedInHooks() throws Exception {
+		// Same rule as moveToward / useChip: no turn is active during a hook. (summon fails in
+		// afterFight anyway, without TP: its assertion only guards against a crash.)
+		attachAI(leek1,
+			"function afterFight() {"
+			+ "  var c = getCell();"
+			+ "  var e = getEnemies();"
+			+ "  setRegister('moves', '' + moveAwayFromEntities(e) + moveAwayFromCells([getCell(e[0])])"
+			+ "    + moveAwayFromLine(getCell(e[0]), getCell(e[0]) + 1) + moveTowardLine(0, 1));"
+			+ "  setRegister('summon', '' + summon(CHIP_PUNY_BULB, c + 1, function() {}));"
+			+ "  setRegister('resurrect', '' + resurrect(e[0], c + 1));"
+			+ "  setRegister('show', '' + show(c));"
+			+ "  setRegister('same_cell', '' + (getCell() == c));"
+			+ "}");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("0000", leek1.getRegister("moves"));
+		Assert.assertEquals("-1", leek1.getRegister("summon"));
+		Assert.assertEquals("-1", leek1.getRegister("resurrect"));
+		Assert.assertEquals("false", leek1.getRegister("show"));
+		Assert.assertEquals("true", leek1.getRegister("same_cell"));
+	}
+
 	// ---------- Hook robustness (errors / ops) ----------
 
 	@Test

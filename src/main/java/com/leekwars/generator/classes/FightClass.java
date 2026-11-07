@@ -729,6 +729,7 @@ public class FightClass {
 	}
 
 	public static long moveAwayFromEntities(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveAwayFromEntities")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -756,6 +757,7 @@ public class FightClass {
 	}
 
 	public static long moveAwayFromCells(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveAwayFromCells")) return 0;
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -783,6 +785,7 @@ public class FightClass {
 	}
 
 	public static long moveAwayFromLine(EntityAI ai, long cell1, long cell2, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveAwayFromLine")) return 0;
 		// Nombre de PM à utiliser au max pour fuir comme un lache
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
@@ -816,6 +819,7 @@ public class FightClass {
 	}
 
 	public static long moveTowardLine(EntityAI ai, long cell1, long cell2, long pm_to_use) throws LeekRunException {
+		if (denyDuringHook(ai, "moveTowardLine")) return 0;
 		// Nombre de PM à utiliser au max
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())

@@ -241,6 +241,9 @@ public class UtilClass {
 
 	public static boolean show(EntityAI ai, long cell, long color) throws LeekRunException {
 
+		// Comme say() : hors tour, l'action serait attribuée au dernier poireau joué
+		if (ai.denyDuringHook("show")) return false;
+
 		if (ai.getState().getMap().getCell((int) cell) == null)
 			return false;
 
