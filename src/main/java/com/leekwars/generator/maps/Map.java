@@ -127,6 +127,15 @@ public class Map {
 							}
 						}
 					}
+					// Case choisie occupée ou bloquée (deux poireaux sur la même case, obstacle) :
+					// une case libre plutôt qu'une entité vivante sans case, qui ferait planter
+					// tout calcul de distance pendant le combat.
+					if ((c == null || !c.available(map)) && teams.size() == 2) {
+						c = map.getRandomCell(state, t == 0 ? 1 : 4);
+					}
+					if (c == null || !c.available(map)) {
+						c = map.getRandomCell(state);
+					}
 					if (c != null && c.available(map)) {
 						map.setEntity(l, c);
 					}
