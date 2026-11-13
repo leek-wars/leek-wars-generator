@@ -7,6 +7,7 @@ import com.leekwars.generator.Generator;
 import com.leekwars.generator.Log;
 import com.leekwars.generator.outcome.Outcome;
 import com.leekwars.generator.scenario.Scenario;
+import com.leekwars.generator.test.FightTestRunner;
 import com.leekwars.generator.test.LocalDbFileSystem;
 import com.leekwars.generator.test.LocalDbRegisterManager;
 import com.leekwars.generator.test.LocalTrophyManager;
@@ -14,6 +15,7 @@ import com.leekwars.generator.test.LocalTrophyManager;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.resolver.NativeFileSystem;
+import leekscript.testing.TestResult;
 
 public class Main {
 
@@ -56,7 +58,7 @@ public class Main {
 		Log.enable(verbose);
 		Log.i(TAG, "Generator v1");
 		// System.out.println("db_resolver " + db_resolver + " folder=" + folder + " farmer=" + farmer);
-		if (file == null) {
+		if (file == null && !test) {
 			Log.i(TAG, "No scenario/ai file passed!");
 			return;
 		}
@@ -97,32 +99,22 @@ public class Main {
 	 * rapport en JSON. Rend vrai si tout est passé.
 	 */
 	private static boolean runTests(Generator generator, String root, java.util.List<String> modules) {
-		if (root != null) {
-			final leekscript.compiler.Folder[] holder = new leekscript.compiler.Folder[1];
-			var fs = new NativeFileSystem() {
-				@Override public leekscript.compiler.Folder getRoot() { return holder[0]; }
-				@Override public leekscript.compiler.Folder getRoot(int owner) { return holder[0]; }
-				@Override public leekscript.compiler.Folder getRoot(int owner, int farmer) { return holder[0]; }
-			};
-			// Propriétaire 1 : celui à qui les versions pas encore publiques sont ouvertes par défaut
-			var folder = new leekscript.compiler.Folder(0, 1, root, null, null, fs, System.currentTimeMillis());
-			folder.setParent(folder);
-			folder.setRoot(folder);
-			holder[0] = folder;
-			LeekScript.setFileSystem(fs);
-		}
-		var results = new java.util.ArrayList<leekscript.testing.TestResult>();
+		// Propriétaire 1 : celui à qui les versions pas encore publiques sont ouvertes par défaut
+		if (root != null) LeekScript.setFileSystem(new NativeFileSystem(root, 1));
+		var results = new java.util.ArrayList<TestResult>();
 		for (var path : modules) {
 			try {
 				var module = LeekScript.getFileSystem().getRoot().resolve(path);
-				results.addAll(com.leekwars.generator.test.FightTestRunner.runModule(generator, module));
+				var found = FightTestRunner.runModule(generator, module, path);
+				// Pas un module de test, ou aucun `@test` reconnu : le dire, plutôt qu'un succès sans rien lancer
+				if (found.isEmpty()) found = java.util.List.of(TestResult.error(path, "<module>", 0, "no_test", null));
+				results.addAll(found);
 			} catch (Throwable e) {
 				// Module introuvable ou qui ne compile pas : une erreur à son nom, les autres continuent
-				results.add(new leekscript.testing.TestResult(path, "<module>", 0, leekscript.testing.TestResult.Status.ERROR, null, 0, 0, 0,
-					java.util.List.of(), java.util.List.of(), String.valueOf(e), java.util.List.of()));
+				results.add(TestResult.error(path, "<module>", 0, String.valueOf(e), null));
 			}
 		}
-		var report = com.leekwars.generator.test.FightTestRunner.report(results);
+		var report = FightTestRunner.report(results);
 		System.out.println(report.toString());
 		return report.get("summary").get("ok").booleanValue();
 	}

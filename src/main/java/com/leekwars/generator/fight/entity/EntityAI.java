@@ -485,21 +485,12 @@ public class EntityAI extends AI {
 	}
 
 	// Framework de test : le test que cette IA lance à son tour, à la place de son code de combat
-	private java.util.List<leekscript.testing.TestCase> testTable = null;
-	private leekscript.testing.TestCase testCase = null;
+	private leekscript.testing.TestRun testRun = null;
 	private leekscript.testing.TestResult testResult = null;
-	private java.util.List<String> testLogs = null;
-	private String testModule = null;
 
-	/**
-	 * Fait de cette IA, compilée depuis un module de test, le lanceur du test `test` de sa table.
-	 * `logs` : la liste où le journal de l'entité est recopié, jointe au résultat (null : rien).
-	 */
-	public void setTest(String module, java.util.List<leekscript.testing.TestCase> table, leekscript.testing.TestCase test, java.util.List<String> logs) {
-		this.testModule = module;
-		this.testTable = table;
-		this.testCase = test;
-		this.testLogs = logs;
+	/** Fait de cette IA, compilée depuis un module de test, le lanceur du test `run`. */
+	public void setTest(leekscript.testing.TestRun run) {
+		this.testRun = run;
 	}
 
 	/** Résultat du test lancé par cette IA, null tant que son tour n'est pas venu. */
@@ -523,10 +514,12 @@ public class EntityAI extends AI {
 				staticInit();
 				staticInitialized = true;
 			}
-			// Lancement de tests : le tour de l'entité est celui du test, une seule fois
-			if (testCase != null) {
+			// Lancement de tests : le tour de l'entité est celui du test, une seule fois. Son plafond
+			// d'opérations est celui du test, à l'unité près (les cœurs de l'entité l'arrondissent).
+			if (testRun != null) {
 				if (testResult == null) {
-					testResult = leekscript.testing.TestRunner.run(this, testModule, testTable, testCase, testLogs);
+					setMaxOperations((int) Math.min(Integer.MAX_VALUE, testRun.test().maxOperations(leekscript.testing.TestRunner.DEFAULT_MAX_OPERATIONS)));
+					testResult = testRun.on(this);
 				}
 				return;
 			}
