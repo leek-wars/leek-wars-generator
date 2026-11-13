@@ -43,6 +43,14 @@ public class FightTestRunner {
 	public static final int TESTER_ID = 1;
 	public static final int DUMMY_ID = 2;
 
+	/** Plafond d'opérations d'un test, même s'il demande plus (`@test(ops: …)`) : borne sa durée. */
+	public static final long MAX_OPERATIONS = 500_000_000;
+
+	/** Plafond d'opérations du test : le sien (`@test(ops: …)`) ou celui par défaut, borné. */
+	public static long maxOperations(TestCase test) {
+		return Math.min(MAX_OPERATIONS, test.maxOperations(TestRunner.DEFAULT_MAX_OPERATIONS));
+	}
+
 	/** Lignes de journal gardées par test, et longueur d'une ligne : un `debug` en boucle ne remplit pas le rapport. */
 	private static final int MAX_LOG_LINES = 500;
 	private static final int MAX_LOG_LINE_LENGTH = 2000;
@@ -85,11 +93,23 @@ public class FightTestRunner {
 	 * nom du module dans les résultats (son chemin tel que l'appelant l'a donné).
 	 */
 	public static List<TestResult> runModule(Generator generator, AIFile module, String name) throws Exception {
-		List<TestCase> table;
+		return runTable(generator, module, name, compile(generator, module));
+	}
+
+	/**
+	 * Compile le module de test et rend sa table (vide s'il n'est pas un module de test). Seule
+	 * étape qui lit les autres fichiers de l'éleveur : l'appelant qui partage le système de
+	 * fichiers la prend sous son verrou, et lance les tests ({@link #runTable}) en dehors.
+	 */
+	public static List<TestCase> compile(Generator generator, AIFile module) throws Exception {
 		synchronized (module) {
 			module.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-			table = TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), generator.use_leekscript_cache, true, null, true)));
+			return TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), generator.use_leekscript_cache, true, null, true)));
 		}
+	}
+
+	/** Lance les tests d'une table rendue par {@link #compile}, dans l'ordre du fichier. */
+	public static List<TestResult> runTable(Generator generator, AIFile module, String name, List<TestCase> table) {
 		var results = new ArrayList<TestResult>();
 		for (var test : table) {
 			if (test.isTest()) results.add(runTest(generator, module, new TestRun(name, table, test, new ArrayList<>())));
@@ -114,7 +134,7 @@ public class FightTestRunner {
 
 			// Un cœur = un million d'opérations par tour : assez de cœurs pour le plafond du test, que
 			// l'IA applique ensuite à l'unité près
-			long maxOperations = test.maxOperations(TestRunner.DEFAULT_MAX_OPERATIONS);
+			long maxOperations = maxOperations(test);
 			int cores = (int) Math.max(1, Math.min(Integer.MAX_VALUE / 1_000_000, (maxOperations + 999_999) / 1_000_000));
 
 			tester = new Leek(TESTER_ID, "Tester", 1, 301, 5000, 30, 10, 500, 500, 100, 500, 500, 500, 500, cores, 100, 0, false, 0, 1, "", 0, "", "", "", 0);
