@@ -15,14 +15,12 @@ import com.leekwars.generator.test.LocalTrophyManager;
 import leekscript.compiler.LeekScript;
 import leekscript.compiler.IACompiler.AnalyzeResult;
 import leekscript.compiler.resolver.NativeFileSystem;
-import leekscript.testing.TestResult;
 
 public class Main {
 
 	private static final String TAG = Main.class.getSimpleName();
 
 	public static void main(String[] args) {
-		String file = null;
 		boolean nocache = false;
 		boolean db_resolver = false;
 		boolean verbose = false;
@@ -51,10 +49,10 @@ public class Main {
 					root = arg.substring("--root=".length());
 				}
 			} else {
-				file = arg;
 				files.add(arg);
 			}
 		}
+		String file = files.isEmpty() ? null : files.getLast();
 		Log.enable(verbose);
 		Log.i(TAG, "Generator v1");
 		// System.out.println("db_resolver " + db_resolver + " folder=" + folder + " farmer=" + farmer);
@@ -101,19 +99,8 @@ public class Main {
 	private static boolean runTests(Generator generator, String root, java.util.List<String> modules) {
 		// Propriétaire 1 : celui à qui les versions pas encore publiques sont ouvertes par défaut
 		if (root != null) LeekScript.setFileSystem(new NativeFileSystem(root, 1));
-		var results = new java.util.ArrayList<TestResult>();
-		for (var path : modules) {
-			try {
-				var module = LeekScript.getFileSystem().getRoot().resolve(path);
-				var found = FightTestRunner.runModule(generator, module, path);
-				// Pas un module de test, ou aucun `@test` reconnu : le dire, plutôt qu'un succès sans rien lancer
-				if (found.isEmpty()) found = java.util.List.of(TestResult.error(path, "<module>", 0, "no_test", null));
-				results.addAll(found);
-			} catch (Throwable e) {
-				// Module introuvable ou qui ne compile pas : une erreur à son nom, les autres continuent
-				results.add(TestResult.error(path, "<module>", 0, String.valueOf(e), null));
-			}
-		}
+		var selections = modules.stream().map(path -> new FightTestRunner.Selection(path, null)).toList();
+		var results = FightTestRunner.run(generator, selections, path -> LeekScript.getFileSystem().getRoot().resolve(path), new Object(), () -> true, Long.MAX_VALUE);
 		var report = FightTestRunner.report(results);
 		System.out.println(report.toString());
 		return report.get("summary").get("ok").booleanValue();

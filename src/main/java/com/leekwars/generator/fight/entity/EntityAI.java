@@ -518,7 +518,7 @@ public class EntityAI extends AI {
 			// d'opérations est celui du test, à l'unité près (les cœurs de l'entité l'arrondissent).
 			if (testRun != null) {
 				if (testResult == null) {
-					setMaxOperations((int) Math.min(Integer.MAX_VALUE, com.leekwars.generator.test.FightTestRunner.maxOperations(testRun.test())));
+					setMaxOperations(testRun.test().maxOperations());
 					testResult = testRun.on(this);
 				}
 				return;

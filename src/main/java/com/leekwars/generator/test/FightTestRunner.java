@@ -3,6 +3,7 @@ package com.leekwars.generator.test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.chips.Chips;
@@ -36,20 +37,12 @@ import tools.jackson.databind.node.ObjectNode;
 public class FightTestRunner {
 
 	/** Case du testeur : le centre de la carte. */
-	public static final int TESTER_CELL = 306;
+	private static final int TESTER_CELL = 306;
 	/** Case du mannequin : 5 cases plus loin, sur la même ligne. */
-	public static final int DUMMY_CELL = 216;
+	private static final int DUMMY_CELL = 216;
 
-	public static final int TESTER_ID = 1;
-	public static final int DUMMY_ID = 2;
-
-	/** Plafond d'opérations d'un test, même s'il demande plus (`@test(ops: …)`) : borne sa durée. */
-	public static final long MAX_OPERATIONS = 500_000_000;
-
-	/** Plafond d'opérations du test : le sien (`@test(ops: …)`) ou celui par défaut, borné. */
-	public static long maxOperations(TestCase test) {
-		return Math.min(MAX_OPERATIONS, test.maxOperations(TestRunner.DEFAULT_MAX_OPERATIONS));
-	}
+	private static final int TESTER_ID = 1;
+	private static final int DUMMY_ID = 2;
 
 	/** Lignes de journal gardées par test, et longueur d'une ligne : un `debug` en boucle ne remplit pas le rapport. */
 	private static final int MAX_LOG_LINES = 500;
@@ -88,33 +81,71 @@ public class FightTestRunner {
 		}
 	}
 
-	/**
-	 * Lance tous les tests du module et rend leurs résultats, dans l'ordre du fichier. `name` : le
-	 * nom du module dans les résultats (son chemin tel que l'appelant l'a donné).
-	 */
-	public static List<TestResult> runModule(Generator generator, AIFile module, String name) throws Exception {
-		return runTable(generator, module, name, compile(generator, module));
+	/** Les tests d'un module de test, ou l'un d'eux (`test` : son nom, `Classe.méthode` pour une méthode statique). */
+	public record Selection(String module, String test) {}
+
+	/** Trouve un module par son chemin ; null ou une exception s'il n'existe pas. */
+	public interface Resolver {
+		AIFile resolve(String path) throws Exception;
 	}
 
 	/**
-	 * Compile le module de test et rend sa table (vide s'il n'est pas un module de test). Seule
-	 * étape qui lit les autres fichiers de l'éleveur : l'appelant qui partage le système de
-	 * fichiers la prend sous son verrou, et lance les tests ({@link #runTable}) en dehors.
+	 * Lance les tests choisis, chacun dans un combat bac à sable neuf, dans l'ordre demandé.
+	 *
+	 * @param lock tenu pendant la lecture et la compilation d'un module, puis pendant chaque test
+	 *        (son combat peut recompiler un module modifié entre-temps) et rendu entre deux : un
+	 *        appelant qui partage le système de fichiers n'attend jamais plus d'un test
+	 * @param keepGoing faux : arrêt entre deux tests, résultats partiels
+	 * @param timeLimitMs au-delà, les tests restants sont rendus en erreur `time_limit` sans être lancés
 	 */
-	public static List<TestCase> compile(Generator generator, AIFile module) throws Exception {
+	public static List<TestResult> run(Generator generator, List<Selection> selections, Resolver resolver, Object lock, BooleanSupplier keepGoing, long timeLimitMs) {
+		long start = System.currentTimeMillis();
+		var results = new ArrayList<TestResult>();
+		for (var selection : selections) {
+			var path = selection.module();
+			try {
+				AIFile module;
+				List<TestCase> table;
+				synchronized (lock) {
+					module = resolver.resolve(path);
+					table = module == null ? null : compile(generator, module);
+				}
+				if (module == null) {
+					results.add(TestResult.error(path, "<module>", 0, "file_not_found", null));
+					continue;
+				}
+				// La préparation et la clôture du module accompagnent chaque test
+				var hooks = table.stream().filter(row -> !row.isTest()).toList();
+				var tests = table.stream().filter(row -> row.isTest() && (selection.test() == null || row.name().equals(selection.test()))).toList();
+				// Pas un module de test, ou aucun `@test` (de ce nom) : le dire, plutôt qu'un succès sans rien lancer
+				if (tests.isEmpty()) results.add(TestResult.error(path, selection.test() != null ? selection.test() : "<module>", 0, "no_test", null));
+				for (var test : tests) {
+					if (!keepGoing.getAsBoolean()) return results;
+					if (System.currentTimeMillis() - start > timeLimitMs) {
+						results.add(TestResult.error(path, test.name(), test.line(), "time_limit", null));
+						continue;
+					}
+					var single = new ArrayList<>(hooks);
+					single.add(test);
+					synchronized (lock) {
+						results.add(runTest(generator, module, new TestRun(path, single, test, new ArrayList<>())));
+					}
+				}
+			} catch (Throwable e) {
+				// Module introuvable ou qui ne compile pas : une erreur à son nom, les autres continuent
+				var reason = e instanceof java.io.FileNotFoundException ? "file_not_found" : e.getMessage() != null ? e.getMessage() : String.valueOf(e);
+				results.add(TestResult.error(path, "<module>", 0, reason, null));
+			}
+		}
+		return results;
+	}
+
+	/** Compile le module de test et rend sa table (vide s'il n'est pas un module de test). */
+	private static List<TestCase> compile(Generator generator, AIFile module) throws Exception {
 		synchronized (module) {
 			module.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
 			return TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), generator.use_leekscript_cache, true, null, true)));
 		}
-	}
-
-	/** Lance les tests d'une table rendue par {@link #compile}, dans l'ordre du fichier. */
-	public static List<TestResult> runTable(Generator generator, AIFile module, String name, List<TestCase> table) {
-		var results = new ArrayList<TestResult>();
-		for (var test : table) {
-			if (test.isTest()) results.add(runTest(generator, module, new TestRun(name, table, test, new ArrayList<>())));
-		}
-		return results;
 	}
 
 	private static TestResult runTest(Generator generator, AIFile module, TestRun run) {
@@ -134,8 +165,7 @@ public class FightTestRunner {
 
 			// Un cœur = un million d'opérations par tour : assez de cœurs pour le plafond du test, que
 			// l'IA applique ensuite à l'unité près
-			long maxOperations = maxOperations(test);
-			int cores = (int) Math.max(1, Math.min(Integer.MAX_VALUE / 1_000_000, (maxOperations + 999_999) / 1_000_000));
+			int cores = Math.max(1, (test.maxOperations() + 999_999) / 1_000_000);
 
 			tester = new Leek(TESTER_ID, "Tester", 1, 301, 5000, 30, 10, 500, 500, 100, 500, 500, 500, 500, cores, 100, 0, false, 0, 1, "", 0, "", "", "", 0);
 			for (var weapon : Weapons.getTemplates().values()) tester.addWeapon(weapon);
