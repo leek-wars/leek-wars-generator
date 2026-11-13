@@ -181,6 +181,20 @@ public class Fight {
 		return true;
 	}
 
+	// Framework de test : l'entité dont l'IA lance un test à son tour (null dans un combat ordinaire)
+	private Entity testEntity = null;
+	private java.util.List<leekscript.testing.TestCase> testTable = null;
+	private leekscript.testing.TestCase testCase = null;
+	private java.util.List<String> testLogs = null;
+
+	/** À appeler avant {@link #startFight} : `entity`, dont l'IA est un module de test, lancera `test`. */
+	public void setTest(Entity entity, java.util.List<leekscript.testing.TestCase> table, leekscript.testing.TestCase test, java.util.List<String> logs) {
+		this.testEntity = entity;
+		this.testTable = table;
+		this.testCase = test;
+		this.testLogs = logs;
+	}
+
 	public void startFight(boolean drawCheckLife) throws Exception {
 
 		initFight();
@@ -190,6 +204,7 @@ public class Fight {
 			// Build AI after the fight is ready (static init)
 			var ai = EntityAI.build(this.generator, (AIFile) entity.getAIFile(), entity);
 			entity.setAI(ai);
+			if (entity == testEntity) ((EntityAI) ai).setTest(((AIFile) entity.getAIFile()).getPath(), testTable, testCase, testLogs);
 			((EntityAI) ai).setFight(this);
 			((EntityAI) ai).init();
 			((EntityAI) ai).getRandom().seed(aiSeed(state.getSeed(), entity.getFId()));
