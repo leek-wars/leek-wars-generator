@@ -20,14 +20,27 @@ import tools.jackson.databind.node.ObjectNode;
  * mannequin sans caractéristiques à 5 cases, en ligne, sur une carte vide. Avec
  * `@test(scenario: "plateau.json")`, un fichier de scénario de test (`"type": "leek-wars-scenario"`,
  * le format des scénarios de l'éditeur) : ses poireaux écrits en entier, ses armes et puces par leur
- * nom, sa carte écrite en données. Le chemin part du dossier du module de test, comme un import, ou
- * de la racine avec un « / ».
+ * nom, sa carte écrite en données ; sans adversaire écrit, le mannequin. Le chemin part du dossier
+ * du module de test, comme un import, ou de la racine avec un « / ».
  *
  * @param teams les poireaux de chaque équipe, sans combat ni IA : le lanceur les y pose
  */
 public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 
 	public static final String TYPE = "leek-wars-scenario";
+
+	/**
+	 * Un poireau écrit dans le fichier : [défaut, min, max] de chaque champ, comme pour un combat de
+	 * test lancé de ce fichier (TestScenarioFile côté API) : un test et un combat jouent le même plateau.
+	 */
+	private static final java.util.Map<String, int[]> FIELDS = java.util.Map.ofEntries(
+		java.util.Map.entry("level", new int[] { 1, 1, 301 }), java.util.Map.entry("life", new int[] { 100, 1, 100000 }),
+		java.util.Map.entry("strength", new int[] { 0, 0, 9999 }), java.util.Map.entry("wisdom", new int[] { 0, 0, 9999 }),
+		java.util.Map.entry("agility", new int[] { 0, 0, 9999 }), java.util.Map.entry("resistance", new int[] { 0, 0, 9999 }),
+		java.util.Map.entry("science", new int[] { 0, 0, 9999 }), java.util.Map.entry("magic", new int[] { 0, 0, 9999 }),
+		java.util.Map.entry("frequency", new int[] { 100, 100, 9999 }), java.util.Map.entry("tp", new int[] { 10, 0, 1000 }),
+		java.util.Map.entry("mp", new int[] { 3, 0, 100 }), java.util.Map.entry("cores", new int[] { 1, 1, 30 }),
+		java.util.Map.entry("ram", new int[] { 6, 1, 40 }), java.util.Map.entry("skin", new int[] { 1, 1, 1000 }));
 
 	/** Case du testeur du bac à sable : le centre de la carte. */
 	private static final int TESTER_CELL = 306;
@@ -50,12 +63,17 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 		var tester = new Leek(1, "Tester", 1, 301, 5000, 30, 10, 500, 500, 100, 500, 500, 500, 500, 1, 100, 0, false, 0, 1, "", 0, "", "", "", 0);
 		for (var weapon : Weapons.getTemplates().values()) tester.addWeapon(weapon);
 		for (var chip : Chips.getTemplates().values()) tester.addChip(chip);
-		var dummy = new Leek(2, "Dummy", 2, 301, 5000, 10, 3, 0, 0, 0, 0, 0, 0, 0, 1, 100, 0, false, 0, 2, "", 0, "", "", "", 0);
+		var dummy = dummy(2);
 		ObjectNode map = Json.createObject();
 		map.set("obstacles", Json.createObject());
 		map.putArray("team1").add(TESTER_CELL);
 		map.putArray("team2").add(DUMMY_CELL);
 		return new TestScenario(List.of(List.of(tester), List.of(dummy)), map, 1);
+	}
+
+	/** Le mannequin : sans IA, sans équipement, toutes caractéristiques à zéro. */
+	private static Leek dummy(int id) {
+		return new Leek(id, "Dummy", 2, 301, 5000, 10, 3, 0, 0, 0, 0, 0, 0, 0, 1, 100, 0, false, 0, 2, "", 0, "", "", "", 0);
 	}
 
 	/** Le plateau du fichier de scénario `path`, relu sur le disque. */
@@ -74,6 +92,10 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 			throw new ScenarioException("scenario_invalid_json", path);
 		}
 		if (json == null || !TYPE.equals(json.path("type").asString(""))) throw new ScenarioException("scenario_not_a_scenario", path);
+		// Ce que le plateau d'un test ne sait pas encore poser : le dire plutôt que l'ignorer
+		var fightType = json.path("fight").asString("free");
+		if (!fightType.equals("free")) throw new ScenarioException("scenario_fight_unsupported", fightType);
+		if (json.path("turrets").isObject() && !json.get("turrets").isEmpty()) throw new ScenarioException("scenario_turrets_unsupported", path);
 
 		var teams = new ArrayList<List<Leek>>();
 		int id = 1;
@@ -83,6 +105,8 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 			teams.add(team);
 		}
 		if (teams.get(0).isEmpty()) throw new ScenarioException("scenario_no_tester", path);
+		// Un combat se joue à deux équipes : sans adversaire écrit, le mannequin du bac à sable
+		if (teams.get(1).isEmpty()) teams.get(1).add(dummy(id));
 		return new TestScenario(teams, map(json.get("map")), json.path("seed").asInt(0) != 0 ? json.get("seed").asInt() : 1);
 	}
 
@@ -95,11 +119,11 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 		for (var key : List.of("leek", "test_leek", "bot")) {
 			if (entry.has(key)) throw new ScenarioException("scenario_leek_not_written", entry.path(key).asString(""));
 		}
-		var leek = new Leek(id, entry.path("name").asString("Leek " + id), team + 1, field(entry, "level", 1),
-			field(entry, "life", 100), field(entry, "tp", 10), field(entry, "mp", 3), field(entry, "strength", 0),
-			field(entry, "agility", 0), field(entry, "frequency", 100), field(entry, "wisdom", 0), field(entry, "resistance", 0),
-			field(entry, "science", 0), field(entry, "magic", 0), field(entry, "cores", 1), field(entry, "ram", 100),
-			field(entry, "skin", 1), false, 0, team + 1, "", 0, "", "", "", 0);
+		var leek = new Leek(id, entry.path("name").asString("Leek " + id), team + 1, field(entry, "level"),
+			field(entry, "life"), field(entry, "tp"), field(entry, "mp"), field(entry, "strength"),
+			field(entry, "agility"), field(entry, "frequency"), field(entry, "wisdom"), field(entry, "resistance"),
+			field(entry, "science"), field(entry, "magic"), field(entry, "cores"), field(entry, "ram"),
+			field(entry, "skin"), false, 0, team + 1, "", 0, "", "", "", 0);
 		for (var name : entry.path("weapons")) {
 			var weapon = Weapons.getWeapon(name.asString(""));
 			if (weapon == null) throw new ScenarioException("scenario_unknown_weapon", name.asString(""));
@@ -113,8 +137,9 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 		return leek;
 	}
 
-	private static int field(JsonNode entry, String key, int byDefault) {
-		return entry.path(key).isNumber() ? entry.get(key).asInt() : byDefault;
+	private static int field(JsonNode entry, String key) {
+		var bounds = FIELDS.get(key);
+		return entry.path(key).isNumber() ? Math.max(bounds[1], Math.min(bounds[2], entry.get(key).asInt())) : bounds[0];
 	}
 
 	/**

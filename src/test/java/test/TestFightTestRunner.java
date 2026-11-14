@@ -59,6 +59,8 @@ public class TestFightTestRunner {
 			 "team1": [{"name": "Moi", "level": 120, "life": 1234, "strength": 300, "tp": 12, "weapons": ["pistol"], "chips": ["shield"]}],
 			 "team2": [{"name": "A", "life": 50}, {"name": "B", "life": 60}]}""");
 		write("sc/compte.json", "{\"type\": \"leek-wars-scenario\", \"team1\": [{\"leek\": \"Gorglucks\"}]}");
+		write("sc/equipe.json", "{\"type\": \"leek-wars-scenario\", \"fight\": \"team\", \"team1\": [{\"name\": \"A\"}]}");
+		write("sc/borne.json", "{\"type\": \"leek-wars-scenario\", \"team1\": [{\"name\": \"A\", \"life\": 0, \"frequency\": 5}]}");
 		write("sc/test/s.test.leek", """
 			// @version:5
 			@test(scenario: "../plateau.json")
@@ -79,6 +81,13 @@ public class TestFightTestRunner {
 			function accountLeek() { assert(true) }
 			@test(scenario: "absent.json")
 			function missing() { assert(true) }
+			@test(scenario: "../equipe.json")
+			function teamFight() { assert(true) }
+			@test(scenario: "../borne.json")
+			function bounded() {
+				assertEquals(1, getLife())
+				assertEquals(100, getFrequency())
+			}
 			""");
 		var results = run("sc/test/s.test.leek");
 		assertEquals(TestResult.Status.PASSED, results.get("board").status());
@@ -86,5 +95,8 @@ public class TestFightTestRunner {
 		assertEquals(TestResult.Status.ERROR, results.get("accountLeek").status());
 		assertTrue(results.get("accountLeek").error(), results.get("accountLeek").error().startsWith("scenario_leek_not_written"));
 		assertTrue(results.get("missing").error(), results.get("missing").error().startsWith("scenario_not_found"));
+		assertTrue(results.get("teamFight").error(), results.get("teamFight").error().startsWith("scenario_fight_unsupported"));
+		// Bornes d'un poireau écrit : celles d'un combat de test lancé du même fichier
+		assertEquals(TestResult.Status.PASSED, results.get("bounded").status());
 	}
 }
