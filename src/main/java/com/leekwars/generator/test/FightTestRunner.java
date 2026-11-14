@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 import com.leekwars.generator.Generator;
-import com.leekwars.generator.chips.Chips;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.EntityAI;
 import com.leekwars.generator.leek.FarmerLog;
@@ -14,7 +13,6 @@ import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.util.Json;
-import com.leekwars.generator.weapons.Weapons;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.Options;
@@ -29,20 +27,11 @@ import tools.jackson.databind.node.ObjectNode;
  * bac à sable et son IA neufs : les fonctions du combat y répondent pour de vrai, et rien ne passe
  * d'un test au suivant.
  *
- * Le bac à sable : sur une carte vide, un testeur qui porte toutes les armes et toutes les puces
- * (case {@link #TESTER_CELL}), et un mannequin sans IA ni équipement, toutes caractéristiques à
- * zéro (case {@link #DUMMY_CELL}, à 5 cases du testeur, en ligne). Le test tourne au tour 1 du
- * testeur, à la place de son code ; son plafond d'opérations est celui du test.
+ * Le plateau est le bac à sable, ou le fichier de scénario du test (cf. {@link TestScenario}). Le
+ * test tourne au tour 1 du testeur, à la place de son code ; son plafond d'opérations est celui du
+ * test.
  */
 public class FightTestRunner {
-
-	/** Case du testeur : le centre de la carte. */
-	private static final int TESTER_CELL = 306;
-	/** Case du mannequin : 5 cases plus loin, sur la même ligne. */
-	private static final int DUMMY_CELL = 216;
-
-	private static final int TESTER_ID = 1;
-	private static final int DUMMY_ID = 2;
 
 	/** Lignes de journal gardées par test, et longueur d'une ligne : un `debug` en boucle ne remplit pas le rapport. */
 	private static final int MAX_LOG_LINES = 500;
@@ -163,32 +152,25 @@ public class FightTestRunner {
 			fight.setMaxTurns(1);
 			var farmerLog = new FarmerLog(fight, 0);
 
+			var scenario = test.options().get("scenario") instanceof String path ? TestScenario.read(module, path) : TestScenario.standard();
+			for (int t = 0; t < scenario.teams().size(); t++) {
+				for (var leek : scenario.teams().get(t)) {
+					fight.getState().addEntity(t, leek);
+					leek.setFight(fight);
+					leek.setBirthTurn(1);
+					leek.setLogs(new LeekLog(farmerLog, leek));
+					leek.setAIEquipped(false);
+				}
+			}
+			tester = scenario.tester();
 			// Un cœur = un million d'opérations par tour : assez de cœurs pour le plafond du test, que
 			// l'IA applique ensuite à l'unité près
-			int cores = Math.max(1, (test.maxOperations() + 999_999) / 1_000_000);
-
-			tester = new Leek(TESTER_ID, "Tester", 1, 301, 5000, 30, 10, 500, 500, 100, 500, 500, 500, 500, cores, 100, 0, false, 0, 1, "", 0, "", "", "", 0);
-			for (var weapon : Weapons.getTemplates().values()) tester.addWeapon(weapon);
-			for (var chip : Chips.getTemplates().values()) tester.addChip(chip);
-			fight.getState().addEntity(0, tester);
+			tester.setCores(Math.max(1, (test.maxOperations() + 999_999) / 1_000_000));
 			tester.setLogs(new CapturingLog(farmerLog, tester, run.logs()));
-			tester.setFight(fight);
-			tester.setBirthTurn(1);
+			tester.setAIEquipped(true);
 			tester.setAIFile(module);
-
-			var dummy = new Leek(DUMMY_ID, "Dummy", 2, 301, 5000, 10, 3, 0, 0, 0, 0, 0, 0, 0, 1, 100, 0, false, 0, 2, "", 0, "", "", "", 0);
-			fight.getState().addEntity(1, dummy);
-			dummy.setLogs(new LeekLog(farmerLog, dummy));
-			dummy.setFight(fight);
-			dummy.setBirthTurn(1);
-			dummy.setAIEquipped(false);
-
-			ObjectNode map = Json.createObject();
-			map.set("obstacles", Json.createObject());
-			map.putArray("team1").add(TESTER_CELL);
-			map.putArray("team2").add(DUMMY_CELL);
-			fight.getState().setCustomMap(map);
-			fight.getState().seed(1);
+			fight.getState().setCustomMap(scenario.map());
+			fight.getState().seed(scenario.seed());
 
 			fight.setTest(tester, run);
 			fight.startFight(false);
@@ -196,6 +178,9 @@ public class FightTestRunner {
 			var result = result(tester);
 			// Le tour du testeur n'est pas venu : son IA n'a pas compilé, ou le combat s'est arrêté avant
 			return result != null ? result : run.error("test_not_run");
+		} catch (TestScenario.ScenarioException e) {
+			// Un plateau que le lanceur ne sait pas monter : le test n'a pas tourné
+			return run.error(e.getMessage());
 		} catch (Throwable e) {
 			// Le combat a planté après le tour du testeur : le résultat du test est déjà là
 			var result = result(tester);
