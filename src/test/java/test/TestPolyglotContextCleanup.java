@@ -45,6 +45,11 @@ public class TestPolyglotContextCleanup {
 		return new MarshalledException(NullPointerException.class.getName(), null, CLEANUP_FRAMES);
 	}
 
+	/** Un autre echec du nettoyage (isolate plein), lui aussi venu de l'isolate. */
+	private static RuntimeException otherCleanupFailure() {
+		return new MarshalledException(IllegalStateException.class.getName(), "isolate plein", CLEANUP_FRAMES);
+	}
+
 	/** Leve {@code failure} aux {@code failures} premiers appels, puis rend "contexte". */
 	private static Supplier<String> failingBuild(int failures, RuntimeException failure, AtomicInteger calls) {
 		return () -> {
@@ -121,5 +126,47 @@ public class TestPolyglotContextCleanup {
 		} catch (MarshalledException e) {
 			Assert.assertSame(failure, e);
 		}
+	}
+
+	/** Leve {@code failures[i]} au i-eme appel, puis rend la main (file videe). */
+	private static Runnable failingQueue(AtomicInteger calls, RuntimeException... failures) {
+		return () -> {
+			int call = calls.getAndIncrement();
+			if (call < failures.length) throw failures[call];
+		};
+	}
+
+	@Test
+	public void drainSkipsEveryCleanupFailure() {
+		// Le NPE connu, puis un echec d'un autre genre (isolate plein) : tous deux saute, la vidange continue.
+		AtomicInteger calls = new AtomicInteger();
+		RuntimeException other = otherCleanupFailure();
+		Assert.assertEquals(3, PolyglotSandbox.drainCollectedContexts(failingQueue(calls, cleanupFailure(), other, cleanupFailure())));
+		Assert.assertEquals(4, calls.get());
+	}
+
+	@Test
+	public void drainRethrowsWhatIsNotACleanup() {
+		IllegalStateException other = new IllegalStateException("pas un nettoyage");
+		try {
+			PolyglotSandbox.drainCollectedContexts(failingQueue(new AtomicInteger(), other));
+			Assert.fail("l'exception devait remonter");
+		} catch (IllegalStateException e) {
+			Assert.assertSame(other, e);
+		}
+	}
+
+	@Test
+	public void buildDoesNotRetryOtherCleanupFailures() {
+		// Reconstruire abandonne un contexte : on ne le fait pas pour un isolate plein.
+		AtomicInteger calls = new AtomicInteger();
+		RuntimeException other = otherCleanupFailure();
+		try {
+			PolyglotSandbox.buildPastCollectedContextCleanup(failingBuild(1, other, calls), () -> 0, "js");
+			Assert.fail("l'echec devait remonter");
+		} catch (MarshalledException e) {
+			Assert.assertSame(other, e);
+		}
+		Assert.assertEquals(1, calls.get());
 	}
 }

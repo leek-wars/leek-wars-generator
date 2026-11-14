@@ -461,9 +461,8 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * la reference fautive, elle, est deja sortie de la file. La file est donc videe AVANT chaque construction,
 	 * sans rien construire (drainCollectedContexts), pour que l'echec, et le contexte perdu, restent l'exception.
 	 *
-	 * <p>L'echec vient de l'isolate : il arrive en {@code org.graalvm.nativebridge.MarshalledException}, une
-	 * RuntimeException qui s'affiche sous le nom de la classe d'origine ({@code java.lang.NullPointerException}),
-	 * pas en NullPointerException. On le reconnait donc a sa pile (cf isCollectedContextCleanupFailure).
+	 * <p>CONTOURNEMENT d'un bug de GraalVM 25.1.3 (inchange sur leur master en novembre 2026, sans issue connue) :
+	 * sa cause n'est pas reproduite. Le NPE, leve dans l'isolate, arrive en MarshalledException (cf isKnownCleanupFailure).
 	 */
 	public static <T> T buildPastCollectedContextCleanup(Supplier<T> build, String languageId) {
 		return buildPastCollectedContextCleanup(build, PolyglotSandbox::drainCollectedContexts, languageId);
@@ -483,7 +482,8 @@ public class PolyglotSandbox implements AutoCloseable {
 				}
 				return built;
 			} catch (RuntimeException e) {
-				if (!isCollectedContextCleanupFailure(e) || ++failures >= CONTEXT_BUILD_ATTEMPTS) throw e;
+				// Seul le NPE connu est retente : chaque essai abandonne un contexte deja construit.
+				if (!isKnownCleanupFailure(e) || ++failures >= CONTEXT_BUILD_ATTEMPTS) throw e;
 			}
 		}
 	}
@@ -495,27 +495,39 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/**
 	 * Vide la file des contextes collectes comme le fait {@code build()}, en sautant les references dont le
-	 * nettoyage echoue : chacune sort de la file avant d'etre nettoyee, et cet appel ne fait que nettoyer, donc
-	 * toute RuntimeException qui en sort vient du nettoyage d'un contexte deja collecte, jamais de celui qu'on
-	 * construit. Rend le nombre de references sautees ; 0 sans rien faire si la vidange directe est indisponible.
+	 * nettoyage echoue : chacune sort de la file avant d'etre nettoyee, et cet appel ne construit rien, donc un
+	 * tel echec ne concerne jamais le contexte du joueur. Le NPE connu est saute en silence, un autre echec du
+	 * nettoyage aussi mais signale (table error) ; une exception d'ailleurs remonte. Rend le nombre de
+	 * references sautees ; 0 sans rien faire si la vidange directe est indisponible.
 	 */
 	public static int drainCollectedContexts() {
 		if (PROCESS_REFERENCE_QUEUE == null) return 0;
-		int failures = 0;
-		while (failures < DRAIN_FAILURES_LIMIT) {
+		return drainCollectedContexts(() -> {
 			try {
 				PROCESS_REFERENCE_QUEUE.invokeExact();
-				return failures;
-			} catch (RuntimeException e) {
-				failures++;
-				if (!isGraalVmNullPointer(e)) {
-					// Echec d'un autre genre : saute aussi (le contexte du joueur n'y est pour rien), mais visible.
-					Log.w("PolyglotSandbox", "Nettoyage GraalVM d'un contexte collecte en echec inattendu : " + e);
-				}
-			} catch (Error e) {
+			} catch (RuntimeException | Error e) {
 				throw e;
 			} catch (Throwable e) {
 				throw new IllegalStateException(e);
+			}
+		});
+	}
+
+	/** Idem, {@code processQueue} vidant la file (et levant au premier nettoyage en echec). */
+	public static int drainCollectedContexts(Runnable processQueue) {
+		int failures = 0;
+		boolean unexpectedReported = false; // un signalement par vidange : la file peut en contenir des milliers
+		while (failures < DRAIN_FAILURES_LIMIT) {
+			try {
+				processQueue.run();
+				return failures;
+			} catch (RuntimeException e) {
+				if (!isCollectedContextCleanupFailure(e)) throw e;
+				failures++;
+				if (!unexpectedReported && !isKnownCleanupFailure(e)) {
+					unexpectedReported = true;
+					Generator.reportException(e);
+				}
 			}
 		}
 		return failures;
@@ -531,10 +543,11 @@ public class PolyglotSandbox implements AutoCloseable {
 		return false;
 	}
 
-	/** Un NPE, local ou leve dans l'isolate (qui arrive alors en MarshalledException, cf buildPastCollectedContextCleanup). */
-	private static boolean isGraalVmNullPointer(RuntimeException e) {
-		return e instanceof NullPointerException
+	/** Le NPE connu du nettoyage, local ou leve dans l'isolate (il arrive alors en MarshalledException). */
+	private static boolean isKnownCleanupFailure(RuntimeException e) {
+		boolean nullPointer = e instanceof NullPointerException
 				|| e instanceof MarshalledException m && NullPointerException.class.getName().equals(m.getForeignExceptionClassName());
+		return nullPointer && isCollectedContextCleanupFailure(e);
 	}
 
 	/**
