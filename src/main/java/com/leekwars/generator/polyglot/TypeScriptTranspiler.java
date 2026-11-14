@@ -83,13 +83,12 @@ public final class TypeScriptTranspiler {
 							.err(OutputStream.nullOutputStream())
 							.build();
 				}
-				Context c = Context.newBuilder("js")
+				Context c = PolyglotSandbox.buildPastCollectedContextCleanup(Context.newBuilder("js")
 						.engine(tsEngine)
 						.allowHostAccess(HostAccess.NONE)
 						.allowIO(IOAccess.NONE)
 						.out(OutputStream.nullOutputStream())
-						.err(OutputStream.nullOutputStream())
-						.build();
+						.err(OutputStream.nullOutputStream())::build, "js");
 				// Shim CommonJS minimal : le bundle UMD de TS s'expose via module.exports (fallback global ts).
 				c.eval("js", "var module = { exports: {} }; var exports = module.exports;");
 				c.eval("js", loadCompiler());

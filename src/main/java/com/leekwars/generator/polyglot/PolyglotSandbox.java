@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
+import org.graalvm.nativebridge.MarshalledException;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.PolyglotException;
@@ -454,13 +455,15 @@ public class PolyglotSandbox implements AutoCloseable {
 	/**
 	 * Construit le contexte par {@code build}, en reconstruisant tant que l'echec est le nettoyage GraalVM des
 	 * contextes deja collectes par le GC. {@code Context.Builder.build()} vide cette file APRES avoir construit le
-	 * contexte (fin de ForeignEngineDispatch.createContext) ; sous isolate, le nettoyage de l'un d'eux leve parfois
-	 * un NPE interne a GraalVM (ForeignContextDispatch.resolveForeignDelegate : le contexte invite n'existe plus),
-	 * sans rapport avec le contexte demande. Celui-ci est alors perdu, et GraalVM le fermera quand le GC le
-	 * collectera ; la reference fautive, elle, est deja sortie de la file. Un passage du GC peut en laisser
-	 * plus de cent (essais epuises en prod). Seul un contexte jamais ferme peut echouer ainsi, et chaque
-	 * {@code build()} rate en laisse un : la file est donc videe AVANT chaque construction, sans rien
-	 * construire (drainCollectedContexts), pour que l'echec, et le contexte perdu, restent l'exception.
+	 * contexte (fin de ForeignEngineDispatch.createContext) ; sous isolate, le nettoyage de l'un d'eux echoue
+	 * parfois (ForeignContextDispatch.resolveForeignDelegate : le handle du contexte invite est deja libere), sans
+	 * rapport avec le contexte demande. Celui-ci est alors perdu, et GraalVM le fermera quand le GC le collectera ;
+	 * la reference fautive, elle, est deja sortie de la file. La file est donc videe AVANT chaque construction,
+	 * sans rien construire (drainCollectedContexts), pour que l'echec, et le contexte perdu, restent l'exception.
+	 *
+	 * <p>L'echec vient de l'isolate : il arrive en {@code org.graalvm.nativebridge.MarshalledException}, une
+	 * RuntimeException qui s'affiche sous le nom de la classe d'origine ({@code java.lang.NullPointerException}),
+	 * pas en NullPointerException. On le reconnait donc a sa pile (cf isCollectedContextCleanupFailure).
 	 */
 	public static <T> T buildPastCollectedContextCleanup(Supplier<T> build, String languageId) {
 		return buildPastCollectedContextCleanup(build, PolyglotSandbox::drainCollectedContexts, languageId);
@@ -479,7 +482,7 @@ public class PolyglotSandbox implements AutoCloseable {
 							+ " : " + drained + " en vidant la file, " + failures + " dans build()");
 				}
 				return built;
-			} catch (NullPointerException e) {
+			} catch (RuntimeException e) {
 				if (!isCollectedContextCleanupFailure(e) || ++failures >= CONTEXT_BUILD_ATTEMPTS) throw e;
 			}
 		}
@@ -492,9 +495,9 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/**
 	 * Vide la file des contextes collectes comme le fait {@code build()}, en sautant les references dont le
-	 * nettoyage leve le NPE de GraalVM (chacune sort de la file avant de lever, cf buildPastCollectedContextCleanup ;
-	 * tout NPE sorti de cet appel vient donc d'un nettoyage). Rend le nombre de references sautees ; 0 sans rien
-	 * faire si la vidange directe est indisponible.
+	 * nettoyage echoue : chacune sort de la file avant d'etre nettoyee, et cet appel ne fait que nettoyer, donc
+	 * toute RuntimeException qui en sort vient du nettoyage d'un contexte deja collecte, jamais de celui qu'on
+	 * construit. Rend le nombre de references sautees ; 0 sans rien faire si la vidange directe est indisponible.
 	 */
 	public static int drainCollectedContexts() {
 		if (PROCESS_REFERENCE_QUEUE == null) return 0;
@@ -503,9 +506,13 @@ public class PolyglotSandbox implements AutoCloseable {
 			try {
 				PROCESS_REFERENCE_QUEUE.invokeExact();
 				return failures;
-			} catch (NullPointerException e) {
+			} catch (RuntimeException e) {
 				failures++;
-			} catch (RuntimeException | Error e) {
+				if (!isGraalVmNullPointer(e)) {
+					// Echec d'un autre genre : saute aussi (le contexte du joueur n'y est pour rien), mais visible.
+					Log.w("PolyglotSandbox", "Nettoyage GraalVM d'un contexte collecte en echec inattendu : " + e);
+				}
+			} catch (Error e) {
 				throw e;
 			} catch (Throwable e) {
 				throw new IllegalStateException(e);
@@ -514,14 +521,20 @@ public class PolyglotSandbox implements AutoCloseable {
 		return failures;
 	}
 
-	/** Le NPE vient du nettoyage des contextes collectes que GraalVM fait en fin de {@code build()}. */
-	public static boolean isCollectedContextCleanupFailure(NullPointerException e) {
+	/** L'exception vient du nettoyage des contextes collectes que GraalVM fait en fin de {@code build()}. */
+	public static boolean isCollectedContextCleanupFailure(RuntimeException e) {
 		for (StackTraceElement frame : e.getStackTrace()) {
 			if (frame.getMethodName().equals("processReferenceQueue") && frame.getClassName().startsWith("org.graalvm.polyglot.Engine")) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/** Un NPE, local ou leve dans l'isolate (qui arrive alors en MarshalledException, cf buildPastCollectedContextCleanup). */
+	private static boolean isGraalVmNullPointer(RuntimeException e) {
+		return e instanceof NullPointerException
+				|| e instanceof MarshalledException m && NullPointerException.class.getName().equals(m.getForeignExceptionClassName());
 	}
 
 	/**
