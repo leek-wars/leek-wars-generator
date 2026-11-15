@@ -153,21 +153,20 @@ public class FightTestRunner {
 			var farmerLog = new FarmerLog(fight, 0);
 
 			var scenario = test.options().get("scenario") instanceof String path ? TestScenario.read(module, path) : TestScenario.standard();
+			tester = scenario.tester();
 			for (int t = 0; t < scenario.teams().size(); t++) {
 				for (var leek : scenario.teams().get(t)) {
 					fight.getState().addEntity(t, leek);
 					leek.setFight(fight);
 					leek.setBirthTurn(1);
-					leek.setLogs(new LeekLog(farmerLog, leek));
-					leek.setAIEquipped(false);
+					// Le journal du testeur est recopié dans le résultat ; les autres n'ont pas d'IA
+					leek.setLogs(leek == tester ? new CapturingLog(farmerLog, leek, run.logs()) : new LeekLog(farmerLog, leek));
+					leek.setAIEquipped(leek == tester);
 				}
 			}
-			tester = scenario.tester();
 			// Un cœur = un million d'opérations par tour : assez de cœurs pour le plafond du test, que
 			// l'IA applique ensuite à l'unité près
 			tester.setCores(Math.max(1, (test.maxOperations() + 999_999) / 1_000_000));
-			tester.setLogs(new CapturingLog(farmerLog, tester, run.logs()));
-			tester.setAIEquipped(true);
 			tester.setAIFile(module);
 			fight.getState().setCustomMap(scenario.map());
 			fight.getState().seed(scenario.seed());

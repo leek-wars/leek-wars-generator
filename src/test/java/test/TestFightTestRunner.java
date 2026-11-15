@@ -60,7 +60,8 @@ public class TestFightTestRunner {
 			 "team2": [{"name": "A", "life": 50}, {"name": "B", "life": 60}]}""");
 		write("sc/compte.json", "{\"type\": \"leek-wars-scenario\", \"team1\": [{\"leek\": \"Gorglucks\"}]}");
 		write("sc/equipe.json", "{\"type\": \"leek-wars-scenario\", \"fight\": \"team\", \"team1\": [{\"name\": \"A\"}]}");
-		write("sc/borne.json", "{\"type\": \"leek-wars-scenario\", \"team1\": [{\"name\": \"A\", \"life\": 0, \"frequency\": 5}]}");
+		write("sc/borne.json", "{\"type\": \"leek-wars-scenario\", \"team1\": [{\"name\": \"A\", \"life\": 0}]}");
+		write("sc/seul.json", "{\"type\": \"leek-wars-scenario\", \"team1\": [{\"name\": \"A\", \"chips\": [\"shield\", \"helmet\", \"wall\", \"cure\", \"bandage\", \"protein\", \"motivation\"]}]}");
 		write("sc/test/s.test.leek", """
 			// @version:5
 			@test(scenario: "../plateau.json")
@@ -84,9 +85,11 @@ public class TestFightTestRunner {
 			@test(scenario: "../equipe.json")
 			function teamFight() { assert(true) }
 			@test(scenario: "../borne.json")
-			function bounded() {
-				assertEquals(1, getLife())
-				assertEquals(100, getFrequency())
+			function outOfBounds() { assert(true) }
+			@test(scenario: "../seul.json")
+			function alone() {
+				assertEquals(1, Array.count(getAliveEnemies()))
+				assertEquals(7, getRAM())
 			}
 			""");
 		var results = run("sc/test/s.test.leek");
@@ -96,7 +99,9 @@ public class TestFightTestRunner {
 		assertTrue(results.get("accountLeek").error(), results.get("accountLeek").error().startsWith("scenario_leek_not_written"));
 		assertTrue(results.get("missing").error(), results.get("missing").error().startsWith("scenario_not_found"));
 		assertTrue(results.get("teamFight").error(), results.get("teamFight").error().startsWith("scenario_fight_unsupported"));
-		// Bornes d'un poireau écrit : celles d'un combat de test lancé du même fichier
-		assertEquals(TestResult.Status.PASSED, results.get("bounded").status());
+		// Bornes d'un poireau écrit : une valeur hors bornes est refusée, comme pour un combat de test
+		assertTrue(results.get("outOfBounds").error(), results.get("outOfBounds").error().startsWith("scenario_leek_invalid life"));
+		// Sans adversaire écrit, le mannequin ; sans RAM écrite, assez pour ses puces
+		assertEquals(TestResult.Status.PASSED, results.get("alone").status());
 	}
 }

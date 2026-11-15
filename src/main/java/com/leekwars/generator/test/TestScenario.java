@@ -30,8 +30,10 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 	public static final String TYPE = "leek-wars-scenario";
 
 	/**
-	 * Un poireau écrit dans le fichier : [défaut, min, max] de chaque champ, comme pour un combat de
-	 * test lancé de ce fichier (TestScenarioFile côté API) : un test et un combat jouent le même plateau.
+	 * Un poireau écrit dans le fichier : [défaut, min, max] de chaque champ, et une valeur hors bornes
+	 * refusée, comme pour un combat de test lancé de ce fichier (TestScenarioFile côté API). Écart
+	 * connu : sans niveau écrit, l'API prend celui de ses objets, le test 1 (le générateur ne connaît
+	 * pas le niveau d'une arme ; il ne joue sur rien dans le combat).
 	 */
 	private static final java.util.Map<String, int[]> FIELDS = java.util.Map.ofEntries(
 		java.util.Map.entry("level", new int[] { 1, 1, 301 }), java.util.Map.entry("life", new int[] { 100, 1, 100000 }),
@@ -82,7 +84,7 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 		try {
 			file = module.getFolder().resolve(path);
 		} catch (Exception e) {
-			file = null;
+			throw new ScenarioException("scenario_not_found", path);
 		}
 		if (file == null) throw new ScenarioException("scenario_not_found", path);
 		JsonNode json;
@@ -107,7 +109,8 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 		if (teams.get(0).isEmpty()) throw new ScenarioException("scenario_no_tester", path);
 		// Un combat se joue à deux équipes : sans adversaire écrit, le mannequin du bac à sable
 		if (teams.get(1).isEmpty()) teams.get(1).add(dummy(id));
-		return new TestScenario(teams, map(json.get("map")), json.path("seed").asInt(0) != 0 ? json.get("seed").asInt() : 1);
+		int seed = json.path("seed").asInt(0);
+		return new TestScenario(teams, map(json.get("map")), seed != 0 ? seed : 1);
 	}
 
 	/**
@@ -134,12 +137,17 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 			if (chip == null) throw new ScenarioException("scenario_unknown_chip", name.asString(""));
 			leek.addChip(chip);
 		}
+		// Assez de RAM pour les puces écrites, si elle n'est pas donnée (comme l'API)
+		if (!entry.has("ram")) leek.setRAM(Math.min(FIELDS.get("ram")[2], Math.max(FIELDS.get("ram")[0], entry.path("chips").size())));
 		return leek;
 	}
 
-	private static int field(JsonNode entry, String key) {
+	private static int field(JsonNode entry, String key) throws ScenarioException {
 		var bounds = FIELDS.get(key);
-		return entry.path(key).isNumber() ? Math.max(bounds[1], Math.min(bounds[2], entry.get(key).asInt())) : bounds[0];
+		var value = entry.get(key);
+		if (value == null || value.isNull()) return bounds[0];
+		if (!value.isIntegralNumber() || value.asLong() < bounds[1] || value.asLong() > bounds[2]) throw new ScenarioException("scenario_leek_invalid", key);
+		return value.asInt();
 	}
 
 	/**
@@ -156,7 +164,7 @@ public record TestScenario(List<List<Leek>> teams, ObjectNode map, int seed) {
 		if (written.isArray()) {
 			for (var cell : written) obstacles.put(String.valueOf(cell.asInt()), 1);
 		} else if (written.isObject()) {
-			for (var cell : written.properties()) obstacles.set(cell.getKey(), cell.getValue());
+			obstacles.setAll((ObjectNode) written);
 		}
 		for (var team : List.of("team1", "team2")) {
 			if (data.path(team).isArray()) map.set(team, data.get(team));
