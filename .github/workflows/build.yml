@@ -65,6 +65,10 @@ jobs:
       run: |
         java -jar generator.jar --analyze test/ai/basic.leek
         java -jar generator.jar test/scenario/scenario1.json
+    # JVM tombée (SIGSEGV…) : son rapport hs_err, écrit dans le dossier du projet, dans le journal
+    - name: JVM crash report
+      if: failure()
+      run: tail -n +1 hs_err_pid*.log 2>/dev/null || true
 
   # Déploiement : le serveur recompile le worker et le démon avec le master de ce dépôt.
   # Job à part, sur une machine neuve et sans checkout : aucun code du dépôt ne tourne à côté
