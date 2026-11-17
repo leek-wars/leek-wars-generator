@@ -8,6 +8,12 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  # Appelé par la CI de leekscript : ce générateur sur un commit de leekscript.
+  workflow_call:
+    inputs:
+      leekscript-ref:
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -21,9 +27,17 @@ jobs:
     runs-on: ${{ github.repository == '5pilow/leek-wars-generator-private' && fromJSON('["self-hosted", "leekwars-generator"]') || 'ubuntu-latest' }}
 
     steps:
+    # Appelé par leekscript, github.repository est celui de l'appelant.
     - uses: actions/checkout@v4
       with:
-        submodules: recursive
+        repository: ${{ inputs.leekscript-ref && 'leek-wars/leek-wars-generator' || github.repository }}
+    # Leekscript master et pas le commit épinglé du sous-module : le serveur compile les masters
+    # des deux dépôts.
+    - uses: actions/checkout@v4
+      with:
+        repository: leek-wars/leekscript
+        ref: ${{ inputs.leekscript-ref || 'master' }}
+        path: leekscript
     - name: Set up JDK 25
       uses: actions/setup-java@v4
       with:
@@ -43,7 +57,9 @@ jobs:
       run: gradle jar
     - name: Unit tests
       run: gradle :test
+    # Isolate Python seul, que leekscript ne touche pas : pas quand leekscript appelle (~3 min).
     - name: Python isolate leak tests (#4999, graalpython#1083)
+      if: ${{ !inputs.leekscript-ref }}
       run: gradle :pythonLeakTest
     - name: Integration tests
       run: |
