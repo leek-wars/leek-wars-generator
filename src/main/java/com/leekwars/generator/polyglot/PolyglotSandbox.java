@@ -263,9 +263,9 @@ public class PolyglotSandbox implements AutoCloseable {
 
 	/**
 	 * Compteur de statements DETERMINISTE de l'image isolate JS custom (repo graal-isolate), publie par
-	 * l'instrument {@link StatementCounter} dans les polyglot bindings de chaque contexte — le lookup de
-	 * service hote ({@code getInstruments().get(ID).lookup(Counter.class)}) ne traverse PAS la frontiere
-	 * isolate. Renvoie l'executable (execute() = lire, execute(x) = remise a zero), ou null si l'image
+	 * l'instrument {@link StatementCounter} dans les polyglot bindings de chaque contexte : un compteur
+	 * propre au contexte, l'engine etant partage par les combats paralleles du worker. Renvoie
+	 * l'executable (execute() = lire, execute(x) = remise a zero), ou null si l'image
 	 * ne l'embarque pas (image officielle, ex Python) -&gt; {@code getOperations()} retombe sur le terme
 	 * temps CPU (non deterministe).
 	 */
