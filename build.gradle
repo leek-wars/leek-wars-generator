@@ -22,6 +22,14 @@ test {
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }
 
+// Pas de cache de piles glibc dans les JVM de test : la pile recyclee d'un TruffleCompilerThread detache
+// garde une page PROT_NONE (os::remove_stack_guard_pages) au-dessus des zones de garde du thread suivant,
+// et une recursion profonde y tue la JVM (SIGSEGV, code 139) au lieu de lever StackOverflowError.
+// Garder ces threads attaches (engine.CompilerIdleDelay=0) est refuse sous SandboxPolicy.ISOLATED.
+tasks.withType(Test).configureEach {
+	environment 'GLIBC_TUNABLES', [System.getenv('GLIBC_TUNABLES'), 'glibc.pthread.stack_cache_size=0'].findAll().join(':')
+}
+
 // Non-regression des fuites d'isolate Python, cf TestPythonSetupPressure. JVM dediee : le plafond
 // d'isolate est statique par processus.
 tasks.register('pythonLeakTest', Test) {
