@@ -84,7 +84,11 @@ public class Map {
 		int nb = 0;
 		Map map = null;
 
-		if (custom_map != null) {
+		// Une carte custom sans obstacles ne fait qu'imposer son type (`type`) : obstacles et positions
+		// sont tirés comme une carte aléatoire (ex. l'échiquier des tournois d'IA).
+		boolean typeOnly = custom_map != null && !custom_map.has("obstacles") && custom_map.has("type");
+
+		if (custom_map != null && !typeOnly) {
 
 			int mapId = custom_map.hasNonNull("id") ? custom_map.get("id").intValue() : 0;
 			map = new Map(width, height, mapId);
@@ -233,10 +237,12 @@ public class Map {
 			}
 		}
 
-		// Generate type
+		// Generate type (tiré dans tous les cas : la suite aléatoire des combats ne bouge pas)
 		map.setType(state.getRandom().getInt(0, 4));
 
-		if (context == State.CONTEXT_TEST) {
+		if (typeOnly) {
+			map.setType(custom_map.get("type").intValue());
+		} else if (context == State.CONTEXT_TEST) {
 			map.setType(-1); // Nexus
 		} else if (context == State.CONTEXT_TOURNAMENT) {
 			map.setType(5); // Arena

@@ -141,6 +141,32 @@ public class TestFightMap {
 	}
 
 	@Test
+	public void typeOnlyCustomMapKeepsRandomObstacles() throws Exception {
+		// Une carte custom réduite à son type (l'échiquier des tournois d'IA) : obstacles aléatoires,
+		// joueurs reliés, et le type imposé même en contexte de test (Nexus sinon)
+		Leek l1 = new Leek(1, "Bob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		Leek l2 = new Leek(2, "Martin", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		var team1 = new Team();
+		var team2 = new Team();
+		team1.addEntity(l1);
+		team2.addEntity(l2);
+		var teams = new ArrayList<Team>();
+		teams.add(team1);
+		teams.add(team2);
+		var custom = JsonNodeFactory.instance.objectNode();
+		custom.put("type", 9);
+
+		Map map = Map.generateMap(fight.getState(), com.leekwars.generator.state.State.CONTEXT_TEST, 18, 18, 50, teams, custom);
+		Assert.assertEquals(9, map.getType());
+		int obst = 0;
+		for (int i = 0; i < map.getNbCell(); i++) {
+			if (map.getCell(i).getObstacle() > 0) obst++;
+		}
+		Assert.assertTrue("Des obstacles aléatoires", obst > 0);
+		Assert.assertNotNull(map.getAStarPath(l1.getCell(), new Cell[] { l2.getCell() }));
+	}
+
+	@Test
 	public void composanteTest() throws Exception {
 
 		// Le trophée Planqué compare les numéros de composante des cases de départ et

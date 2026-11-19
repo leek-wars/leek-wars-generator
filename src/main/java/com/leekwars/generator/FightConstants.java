@@ -443,6 +443,7 @@ public enum FightConstants implements ILeekConstant {
 	MAP_TEIEN(8, Type.INT),
 	MAP_CASTLE(9, Type.INT),
 	MAP_CEMETERY(10, Type.INT),
+	MAP_CHESS(11, Type.INT),
 
 	FIGHT_TYPE_SOLO(Fight.TYPE_SOLO, Type.INT),
 	FIGHT_TYPE_FARMER(Fight.TYPE_FARMER, Type.INT),
