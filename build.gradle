@@ -21,7 +21,7 @@ test {
 	// Forward -Dleak.fights (et autres -D de diagnostic) au JVM de test forke.
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 	// DIAG SIGSEGV (branche diag-sigsegv, à ne pas fusionner) : suite complète, comme sur master.
-	jvmArgs diagVmArgs('test')
+	jvmArgs diagVmArgs('test') + ['-Xlog:os+thread=debug:stdout']
 	// Core dump du plantage, lu par gdb (diag/jdk/bin/java, diag/core-*.sh).
 	executable = file('diag/jdk/bin/java').absolutePath
 	environment 'DIAG_REAL_JAVA', org.gradle.internal.jvm.Jvm.current().javaExecutable.absolutePath
