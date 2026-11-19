@@ -16,6 +16,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.LanguageInfo;
+import com.oracle.truffle.api.ContextLocal;
 import com.oracle.truffle.api.Option;
 import com.oracle.truffle.api.TruffleContext;
 
@@ -38,13 +39,17 @@ import org.graalvm.polyglot.SandboxPolicy;
  * publie un objet executable sous {@link #BINDING_NAME} ; l'hote le lit via
  * context.getPolyglotBindings().getMember(...).execute() (0 arg = lire, 1 arg = reset).
  *
- * Compteur = simple champ long : PAS de ThreadLocal (blocklist en compilation runtime
- * native-image, et un engine = un combat = un thread chez LeekWars).
+ * Un compteur PAR CONTEXTE ({@link ContextLocal}) : l'engine, donc cet instrument, est partage
+ * par tous les contextes du processus, qui peuvent tourner en parallele sur plusieurs threads.
+ * Un compteur unique additionnait les statements de tous ces contextes (et la remise a zero de
+ * l'un effacait ceux des autres). Un contexte ne s'execute que sur un thread a la fois : le
+ * compteur reste un simple champ long, PAS de ThreadLocal (blocklist en compilation runtime
+ * native-image).
  *
  * <p>Publie aussi {@link #HEAP_BINDING_NAME} : la memoire retenue par le contexte (System.usedRAM
  * des IA polyglot), meme calcul que celui de sandbox.MaxHeapMemory.
  */
-@TruffleInstrument.Registration(id = StatementCounter.ID, name = "LeekWars Statement Counter", services = StatementCounter.Counter.class, sandbox = SandboxPolicy.ISOLATED)
+@TruffleInstrument.Registration(id = StatementCounter.ID, name = "LeekWars Statement Counter", sandbox = SandboxPolicy.ISOLATED)
 public final class StatementCounter extends TruffleInstrument {
 
 	public static final String ID = "lw-statement-counter";
@@ -64,7 +69,7 @@ public final class StatementCounter extends TruffleInstrument {
 		return new StatementCounterOptionDescriptors();
 	}
 
-	/** Compteur de statements guest (un engine = un combat = un thread). */
+	/** Compteur de statements guest d'un contexte. */
 	public static final class Counter {
 		private long count;
 		public long get() { return count; }
@@ -104,13 +109,12 @@ public final class StatementCounter extends TruffleInstrument {
 		}
 	}
 
-	private final Counter counter = new Counter();
+	private final ContextLocal<Counter> counters = locals.createContextLocal(context -> new Counter());
 
 	@Override
 	protected void onCreate(Env env) {
-		env.registerService(counter);
 		ExecutionEventListener listener = new ExecutionEventListener() {
-			@Override public void onEnter(EventContext context, VirtualFrame frame) { counter.increment(); }
+			@Override public void onEnter(EventContext context, VirtualFrame frame) { counters.get().increment(); }
 			@Override public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {}
 			@Override public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {}
 		};
@@ -133,10 +137,9 @@ public final class StatementCounter extends TruffleInstrument {
 				.tagIs(StandardTags.StatementTag.class, StandardTags.ExpressionTag.class)
 				.build();
 		env.getInstrumenter().attachExecutionEventListener(filter, listener);
-		// Publie la facade dans les polyglot bindings de chaque contexte cree (il faut etre
+		// Publie la facade du compteur du contexte dans ses polyglot bindings (il faut etre
 		// entre dans le contexte pour y acceder). Tente aux deux hooks (creation + init
 		// langage) : le premier qui passe gagne, les erreurs sont loggees (jamais bloquant).
-		CounterObject facade = new CounterObject(counter);
 		env.getInstrumenter().attachContextsListener(new ContextsListener() {
 			private void publish(TruffleContext context, String where) {
 				try {
@@ -150,7 +153,7 @@ public final class StatementCounter extends TruffleInstrument {
 					}
 					try {
 						InteropLibrary bindings = InteropLibrary.getUncached();
-						bindings.writeMember(env.getPolyglotBindings(), BINDING_NAME, facade);
+						bindings.writeMember(env.getPolyglotBindings(), BINDING_NAME, new CounterObject(counters.get(context)));
 						bindings.writeMember(env.getPolyglotBindings(), HEAP_BINDING_NAME, new HeapSizeObject(env, context));
 					} finally {
 						if (entered) {
