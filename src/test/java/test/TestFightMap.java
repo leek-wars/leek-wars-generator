@@ -167,6 +167,55 @@ public class TestFightMap {
 	}
 
 	@Test
+	public void chessMapPlacesAFamousPosition() throws Exception {
+		// L'échiquier : chaque pièce de la position est un 2x2 sur son carré, les blocs ont la couleur du leur
+		Leek l1 = new Leek(1, "Bob", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		Leek l2 = new Leek(2, "Martin", 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 0, 0, 0, false, 0, 0, "", 0, "", "", "", 0);
+		var team1 = new Team();
+		var team2 = new Team();
+		team1.addEntity(l1);
+		team2.addEntity(l2);
+		var teams = new ArrayList<Team>();
+		teams.add(team1);
+		teams.add(team2);
+		var custom = JsonNodeFactory.instance.objectNode();
+		custom.put("type", 9);
+
+		Map map = Map.generateMap(fight.getState(), com.leekwars.generator.state.State.CONTEXT_GARDEN, 18, 18, 60, teams, custom);
+		Assert.assertEquals(9, map.getType());
+		int position = map.getId() - 1000;
+		Assert.assertTrue("Une position de la liste", position >= 0 && position < 10);
+		int pieces = 0, blocks = 0;
+		for (int i = 0; i < map.getNbCell(); i++) {
+			Cell c = map.getCell(i);
+			if (c.getObstacleSize() == 2) {
+				pieces++;
+				Assert.assertTrue(c.getObstacle() >= 68 && c.getObstacle() <= 79);
+				// Ancrée dans le coin de son carré : x et y du client pairs
+				Assert.assertEquals(0, Math.floorMod(c.getX() - 17, 2));
+				Assert.assertEquals(0, Math.floorMod(c.getY(), 2));
+			} else if (c.getObstacleSize() == 1) {
+				blocks++;
+				int x = c.getX() - 17, y = c.getY();
+				boolean dark = Math.floorMod(Math.floorDiv(x, 2) + Math.floorDiv(y, 2), 2) != 0;
+				Assert.assertEquals(dark ? 84 : 83, c.getObstacle());
+			}
+		}
+		String fen = com.leekwars.generator.maps.ChessMap.POSITIONS[position];
+		Assert.assertEquals(fen.replaceAll("[0-9/]", "").length(), pieces);
+		Assert.assertTrue("Des blocs", blocks > 0);
+		Assert.assertNotNull(map.getAStarPath(l1.getCell(), new Cell[] { l2.getCell() }));
+		// Chaque position tient entière sur le terrain : toutes ses pièces sont posées
+		for (int p = 0; p < com.leekwars.generator.maps.ChessMap.POSITIONS.length; p++) {
+			Map m = new Map(18, 18);
+			com.leekwars.generator.maps.ChessMap.place(m, p, fight.getState(), 0);
+			int count = 0;
+			for (int i = 0; i < m.getNbCell(); i++) if (m.getCell(i).getObstacleSize() == 2) count++;
+			Assert.assertEquals("position " + p, com.leekwars.generator.maps.ChessMap.POSITIONS[p].replaceAll("[0-9/]", "").length(), count);
+		}
+	}
+
+	@Test
 	public void composanteTest() throws Exception {
 
 		// Le trophée Planqué compare les numéros de composante des cases de départ et

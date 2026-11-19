@@ -49,6 +49,9 @@ public class ObstacleInfo {
 		// Obstacles 2x2 alignes sur la table de rendu client (ground.ts OBSTACLES).
 		// Sans ces entrees le generateur les traitait en taille 1 : des cases
 		// affichees comme murs restaient traversables (maps fixes / arenes de boss).
+		// Échiquier (ChessMap) : les pièces en 2x2, les blocs et les anciens petits obstacles en 1x1
+		for (int id = 68; id <= 79; id++) obstacles.put(id, new ObstacleInfo(2));
+		for (int id = 80; id <= 84; id++) obstacles.put(id, new ObstacleInfo(1));
 		obstacles.put(2, new ObstacleInfo(2));
 		obstacles.put(4, new ObstacleInfo(2));
 		obstacles.put(10, new ObstacleInfo(2));

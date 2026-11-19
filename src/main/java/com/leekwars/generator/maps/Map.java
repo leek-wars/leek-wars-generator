@@ -150,12 +150,16 @@ public class Map {
 
 		} else {
 
+			// L'échiquier : la position d'une partie célèbre, la même à chaque nouvel essai
+			int chess = typeOnly && custom_map.get("type").intValue() == ChessMap.TYPE ? ChessMap.pick(state) : -1;
+
 			while (!valid && nb++ < 63) {
 
-				map = new Map(width, height);
+				map = new Map(width, height, chess >= 0 ? ChessMap.ID_BASE + chess : 0);
 				map.state = state;
 
-				for (int i = 0; i < obstacles_count; i++) {
+				if (chess >= 0) ChessMap.place(map, chess, state, obstacles_count / 3);
+				else for (int i = 0; i < obstacles_count; i++) {
 					Cell c = map.getCell(state.getRandom().getInt(0, map.getNbCell()));
 					if (c != null && c.available(map)) {
 						int size = state.getRandom().getInt(1, 2);
@@ -213,7 +217,8 @@ public class Map {
 						// If turret, remove obstacles 5 cells around
 						if (l.getType() == Entity.TYPE_TURRET) {
 							for (Cell cell : map.getCellsInCircle(c, 5)) {
-								map.removeObstacle(cell);
+								// Sur l'échiquier, une pièce touchée part en entier (jamais à moitié)
+								map.removeObstacle(chess >= 0 ? map.obstacleAnchor(cell) : cell);
 							}
 						}
 					}
@@ -415,7 +420,7 @@ public class Map {
 	 * l'ordre de marquage. Null si l'une d'elles sort de la grille, ou pour une taille inconnue :
 	 * l'obstacle n'est alors pas posé du tout.
 	 */
-	private Cell[] coveredCells(Cell anchor, int size) {
+	Cell[] coveredCells(Cell anchor, int size) {
 		Cell[] cells;
 		switch (size) {
 			case 1:
@@ -785,6 +790,16 @@ public class Map {
 			}
 		}
 		return cells;
+	}
+
+	/** Case d'ancrage de l'obstacle qui couvre `cell` (elle-même hors d'un 2x2). */
+	Cell obstacleAnchor(Cell cell) {
+		return switch (cell.getObstacleSize()) {
+			case -1 -> getCellByDir(cell, Pathfinding.WEST);
+			case -2 -> getCellByDir(cell, Pathfinding.NORTH);
+			case -3 -> getCellByDir(getCellByDir(cell, Pathfinding.WEST), Pathfinding.NORTH);
+			default -> cell;
+		};
 	}
 
 	private void removeObstacle(Cell cell) {
