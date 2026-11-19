@@ -32,9 +32,9 @@ import org.graalvm.polyglot.SandboxPolicy;
  * tague nativement ; pour GraalPy c'est patches/graalpython.patch (repo leek-wars-graal-isolate)
  * qui emet les Tag(Expression). Version SPIKE custom isolate.
  *
- * Compile DANS l'image native isolate (via isolate_deps / LW_INSTRUMENT). Le lookup de service
- * hote (engine.getInstruments().get(ID).lookup(Counter.class)) ne traverse PAS la frontiere
- * isolate (verifie : renvoie null) ; le compteur est donc expose via les POLYGLOT BINDINGS,
+ * Compile DANS l'image native isolate (via isolate_deps / LW_INSTRUMENT). Un service d'instrument
+ * ne traverse PAS la frontiere isolate (son lookup hote renvoie null) ; le compteur est donc expose
+ * via les POLYGLOT BINDINGS,
  * seule voie marshallee par le nativebridge : a la creation de chaque contexte, l'instrument
  * publie un objet executable sous {@link #BINDING_NAME} ; l'hote le lit via
  * context.getPolyglotBindings().getMember(...).execute() (0 arg = lire, 1 arg = reset).
@@ -57,8 +57,8 @@ public final class StatementCounter extends TruffleInstrument {
 	public static final String HEAP_BINDING_NAME = "lwHeapSize";
 
 	/**
-	 * Option d'activation : sous isolate le lookup de service hote (qui activait l'instrument
-	 * en in-process) ne traverse pas la frontiere ; l'engine doit poser
+	 * Option d'activation : un instrument est lazy et, sous isolate, aucun lookup de service
+	 * hote ne peut l'activer ; l'engine doit poser
 	 * {@code .option("lw-statement-counter", "true")} pour activer l'instrument.
 	 */
 	@Option(name = "", help = "Enable the LeekWars statement counter.", category = OptionCategory.EXPERT, stability = OptionStability.STABLE, sandbox = SandboxPolicy.ISOLATED)
@@ -69,26 +69,19 @@ public final class StatementCounter extends TruffleInstrument {
 		return new StatementCounterOptionDescriptors();
 	}
 
-	/** Compteur de statements guest d'un contexte. */
-	public static final class Counter {
-		private long count;
-		public long get() { return count; }
-		public void reset() { count = 0L; }
-		void increment() { count++; }
-	}
-
-	/** Facade interop : execute() = lire, execute(x) = reset. Publiee dans les polyglot bindings. */
+	/**
+	 * Compteur de statements guest d'un contexte, publie tel quel dans ses polyglot bindings :
+	 * execute() = lire, execute(x) = reset.
+	 */
 	@ExportLibrary(InteropLibrary.class)
 	static final class CounterObject implements TruffleObject {
-		final Counter counter;
-		CounterObject(Counter counter) { this.counter = counter; }
+		long count;
 		@ExportMessage boolean isExecutable() { return true; }
 		@ExportMessage Object execute(Object[] args) {
 			if (args.length > 0) {
-				counter.reset();
-				return 0L;
+				count = 0L;
 			}
-			return counter.get();
+			return count;
 		}
 	}
 
@@ -109,12 +102,12 @@ public final class StatementCounter extends TruffleInstrument {
 		}
 	}
 
-	private final ContextLocal<Counter> counters = locals.createContextLocal(context -> new Counter());
+	private final ContextLocal<CounterObject> counters = locals.createContextLocal(context -> new CounterObject());
 
 	@Override
 	protected void onCreate(Env env) {
 		ExecutionEventListener listener = new ExecutionEventListener() {
-			@Override public void onEnter(EventContext context, VirtualFrame frame) { counters.get().increment(); }
+			@Override public void onEnter(EventContext context, VirtualFrame frame) { counters.get().count++; }
 			@Override public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {}
 			@Override public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {}
 		};
@@ -153,7 +146,7 @@ public final class StatementCounter extends TruffleInstrument {
 					}
 					try {
 						InteropLibrary bindings = InteropLibrary.getUncached();
-						bindings.writeMember(env.getPolyglotBindings(), BINDING_NAME, new CounterObject(counters.get(context)));
+						bindings.writeMember(env.getPolyglotBindings(), BINDING_NAME, counters.get(context));
 						bindings.writeMember(env.getPolyglotBindings(), HEAP_BINDING_NAME, new HeapSizeObject(env, context));
 					} finally {
 						if (entered) {
