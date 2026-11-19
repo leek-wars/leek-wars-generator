@@ -20,6 +20,58 @@ test {
 	}
 	// Forward -Dleak.fights (et autres -D de diagnostic) au JVM de test forke.
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
+	// DIAG SIGSEGV (branche diag-sigsegv, à ne pas fusionner) : reproduction telle quelle
+	// (combat polyglot puis débordement de pile du compilateur dans la même JVM).
+	filter {
+		includeTestsMatching 'test.TestAttackProbe'
+		includeTestsMatching 'test.TestCompileStackOverflow'
+	}
+	jvmArgs diagVmArgs('test')
+	finalizedBy 'diagNoIsolate', 'diagCheckJni', 'diagDump'
+}
+
+def diagDir() { return layout.buildDirectory.dir('diag').get().asFile.path }
+// DIAG SIGSEGV : sortie de la VM et fichier d'erreur fatale gardés dans build/diag.
+def diagVmArgs(String name) {
+	file("${diagDir()}").mkdirs()
+	return ['-XX:+UnlockDiagnosticVMOptions', '-XX:+LogVMOutput', "-XX:LogFile=${diagDir()}/vm-${name}.log",
+		"-XX:ErrorFile=${diagDir()}/hs_err-${name}-%p.log", '-Xlog:os=info,os+thread=info:file=' + "${diagDir()}/os-${name}.log"]
+}
+// Même débordement dans une JVM où aucune isolate n'a été chargée.
+tasks.register('diagNoIsolate', Test) {
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	filter { includeTestsMatching 'test.TestCompileStackOverflow' }
+	jvmArgs diagVmArgs('noisolate')
+	ignoreFailures = true
+	outputs.upToDateWhen { false }
+	testLogging { events "passed", "skipped", "failed"; showStandardStreams = true }
+}
+// -Xcheck:jni : HotSpot vérifie périodiquement que ses gestionnaires de signaux n'ont pas été
+// remplacés par une bibliothèque native (« SIGSEGV handler modified! »).
+tasks.register('diagCheckJni', Test) {
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	filter {
+		includeTestsMatching 'test.TestAttackProbe'
+		includeTestsMatching 'test.TestCompileStackOverflow'
+	}
+	jvmArgs diagVmArgs('checkjni') + ['-Xcheck:jni']
+	ignoreFailures = true
+	outputs.upToDateWhen { false }
+	testLogging { events "passed", "skipped", "failed"; showStandardStreams = true }
+	mustRunAfter 'diagNoIsolate'
+}
+tasks.register('diagDump') {
+	mustRunAfter 'diagNoIsolate', 'diagCheckJni'
+	doLast {
+		fileTree("${diagDir()}").each { f ->
+			println "===== DIAG ${f.name} (${f.length()} o) ====="
+			def lines = f.readLines()
+			def keep = lines.findAll { it =~ /(?i)signal|handler|SIGSEGV|guard|stack|overflow|fatal|Problematic|siginfo|warning/ }
+			println((f.name.startsWith('hs_err') ? lines.take(400) : keep.take(200)).join('\n'))
+		}
+	}
 }
 
 // Non-regression des fuites d'isolate Python, cf TestPythonSetupPressure. JVM dediee : le plafond
