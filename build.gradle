@@ -22,7 +22,11 @@ test {
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 	// DIAG SIGSEGV (branche diag-sigsegv, à ne pas fusionner) : suite complète, comme sur master.
 	jvmArgs diagVmArgs('test')
-	finalizedBy 'diagCheckJni', 'diagDump'
+	// Core dump du plantage, lu par gdb (diag/jdk/bin/java, diag/core-*.sh).
+	executable = file('diag/jdk/bin/java').absolutePath
+	environment 'DIAG_REAL_JAVA', org.gradle.internal.jvm.Jvm.current().javaExecutable.absolutePath
+	dependsOn 'diagCoreSetup'
+	finalizedBy 'diagCore', 'diagDump'
 }
 
 def diagDir() { return layout.buildDirectory.dir('diag').get().asFile.path }
@@ -32,18 +36,16 @@ def diagVmArgs(String name) {
 	return ['-XX:+UnlockDiagnosticVMOptions', '-XX:+LogVMOutput', "-XX:LogFile=${diagDir()}/vm-${name}.log",
 		"-XX:ErrorFile=${diagDir()}/hs_err-${name}-%p.log", '-Xlog:os=info,os+thread=info:file=' + "${diagDir()}/os-${name}.log"]
 }
-// -Xcheck:jni : HotSpot vérifie périodiquement que ses gestionnaires de signaux n'ont pas été
-// remplacés par une bibliothèque native (« SIGSEGV handler modified! »).
-tasks.register('diagCheckJni', Test) {
-	testClassesDirs = sourceSets.test.output.classesDirs
-	classpath = sourceSets.test.runtimeClasspath
-	jvmArgs diagVmArgs('checkjni') + ['-Xcheck:jni']
-	ignoreFailures = true
-	outputs.upToDateWhen { false }
-	testLogging { events "passed", "skipped", "failed"; showStandardStreams = true }
+tasks.register('diagCoreSetup', Exec) {
+	commandLine 'bash', 'diag/core-setup.sh'
+}
+tasks.register('diagCore', Exec) {
+	commandLine 'bash', 'diag/core-dump.sh'
+	environment 'DIAG_REAL_JAVA', org.gradle.internal.jvm.Jvm.current().javaExecutable.absolutePath
+	ignoreExitValue = true
 }
 tasks.register('diagDump') {
-	mustRunAfter 'diagCheckJni'
+	mustRunAfter 'diagCore'
 	doLast {
 		fileTree("${diagDir()}").each { f ->
 			println "===== DIAG ${f.name} (${f.length()} o) ====="

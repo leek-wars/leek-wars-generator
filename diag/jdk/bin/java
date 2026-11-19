@@ -1,0 +1,6 @@
+#!/bin/bash
+# DIAG : lance la JVM de test avec les core dumps autorisés (branche diag-sigsegv). Gradle sonde
+# aussi ce script comme un JDK, sans DIAG_REAL_JAVA : repli sur JAVA_HOME.
+real=${DIAG_REAL_JAVA:-${JAVA_HOME:+$JAVA_HOME/bin/java}}
+ulimit -c unlimited
+exec "${real:-/usr/bin/java}" "$@"
