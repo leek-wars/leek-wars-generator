@@ -26,6 +26,9 @@ test {
 	executable = file('diag/jdk/bin/java').absolutePath
 	environment 'DIAG_REAL_JAVA', org.gradle.internal.jvm.Jvm.current().javaExecutable.absolutePath
 	dependsOn 'diagCoreSetup'
+	// Hypothèse : pile recyclée par le cache de glibc depuis un thread attaché (TruffleCompilerThread),
+	// avec une page de garde HotSpot restée PROT_NONE au milieu. Sans cache, chaque thread a une pile neuve.
+	environment 'GLIBC_TUNABLES', 'glibc.pthread.stack_cache_size=0'
 	finalizedBy 'diagCore', 'diagDump'
 }
 
