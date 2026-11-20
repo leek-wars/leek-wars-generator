@@ -214,7 +214,7 @@ public class PolyglotAPIBridge {
 		try {
 			ai.ops(1);
 			Object result = call.call();
-			ai.syncRealToGuest();
+			ai.afterHostCall();
 			return result;
 		} catch (LeekRunException e) {
 			throw new RuntimeException(e); // TOO_MUCH_OPERATIONS : runIA la déballe
@@ -262,7 +262,7 @@ public class PolyglotAPIBridge {
 				Object result = TypeMarshaller.toGuest(m.invoke(null, callArgs), python);
 				// La fonction de combat a pu charger des ops (ai.ops) : rafraichir le miroir __lw_real
 				// pour le getOperations() cote guest (cf PolyglotEntityAI.installGuestGetOperations).
-				if (ai instanceof PolyglotEntityAI) ((PolyglotEntityAI) ai).syncRealToGuest();
+				if (ai instanceof PolyglotEntityAI) ((PolyglotEntityAI) ai).afterHostCall();
 				return result;
 			} catch (InvocationTargetException ite) {
 				Throwable cause = ite.getCause();

@@ -743,7 +743,7 @@ public class PolyglotSandbox implements AutoCloseable {
 	// est faite sur un pool separe pour ne jamais saturer le timer.
 
 	/** Delai laisse a une interruption douce avant d'escalader vers une annulation dure (close). */
-	private static final long INTERRUPT_GRACE_MS = 2_000;
+	static final long INTERRUPT_GRACE_MS = 2_000;
 
 	private static volatile ScheduledThreadPoolExecutor watchdogTimer;
 	private static volatile ExecutorService watchdogWorkers;

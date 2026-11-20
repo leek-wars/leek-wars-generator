@@ -99,19 +99,10 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Duree, depuis le tir du watchdog, au-dela de laquelle l'interruption n'a pas pris : le tour etait
 	 * dans un natif que Truffle ne coupe pas (parseur JS...) et l'a mene a son terme. Un tour
 	 * interruptible s'arrete en quelques millisecondes ; celui-ci a pu bloquer le worker longtemps et
-	 * recommencerait au tour suivant. L'IA est neutralisee des le premier. Meme delai que la grace de
-	 * l'interruption (PolyglotSandbox) : au-dela, elle aussi conclut a un echec.
+	 * recommencerait au tour suivant. L'IA est neutralisee des le premier. C'est la grace de
+	 * l'interruption : au-dela, elle aussi conclut a un echec.
 	 */
-	private static final long NATIVE_OVERSHOOT_MS = 2_000;
-	/**
-	 * Source evaluee a l'execution en JS (eval, constructeurs de fonctions, load) : le parseur GraalJS ne
-	 * s'interrompt pas, une source de 16 Mo l'occupe ~20 s. Taille bornee par appel, et facturee au
-	 * caractere a peu pres au prix du parseur (~1 us par caractere, ~20 ops LeekScript). L'image isolate
-	 * borne aussi ces sources (1 Mo), sans contournement possible. Python n'en a pas besoin : son parseur
-	 * s'interrompt, et compile() sert aussi a importer les modules (stdlib comprise, jusqu'a 230 Ko).
-	 */
-	public static final int MAX_EVAL_SOURCE_CHARS = 65_536;
-	private static final int EVAL_OPS_PER_CHAR = 20;
+	private static final long NATIVE_OVERSHOOT_MS = PolyglotSandbox.INTERRUPT_GRACE_MS;
 	/**
 	 * Temps BLOQUE (temps mur moins temps CPU du thread de combat) toléré par tour avant d'être compté.
 	 * Une IA qui attend sans calculer ({@code time.sleep}, {@code Event.wait}, {@code Lock.acquire(timeout)}
@@ -781,6 +772,7 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/** Chargement de l'entree au 1er tour, selon le mode (module ES / script). */
 	private Value loadEntryFirstTurn() throws LeekRunException {
+		loadingEntry = true; // execution hors garde-fou CPU, cf chargeUnexplainedTime
 		if (jsModule) {
 			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
 			// resolvent contre /ai. Un `function turn()` de premier niveau y est module-scoped : l'epilogue
@@ -879,8 +871,8 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "var acc=0;var FLUSH=4096;function ch(n){acc+=n;if(acc>=FLUSH){C(acc);acc=0;}}"
 		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
 		// ramenait {length: 2**32} a 0.
-		+ "var N=Number,MF=Math.floor,MM=Math.min,S=String,RC=Reflect.construct;"
-		+ "function L(o){var n=N(o.length);return n>0?MM(MF(n),9007199254740991):0;}"
+		+ "var N=Number,MF=Math.floor,MM=Math.min;"
+		+ "function L(o){var n=o.length;if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),9007199254740991):0;}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
 		+ "function wrapLen(name){var o=Array.prototype[name];if(!o)return;"
 		+ "Object.defineProperty(Array.prototype,name,{value:function(){ch(L(this));return o.apply(this,arguments);},writable:false,configurable:false});}"
@@ -896,24 +888,6 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get;"
 		+ "['sort','fill','reverse','join','copyWithin'].forEach(function(n){var o=TA[n];if(!o)return;"
 		+ "Object.defineProperty(TA,n,{value:function(){ch(TL.call(this));return o.apply(this,arguments);},writable:false,configurable:false});});"
-		// Sources evaluees a l'execution, cf MAX_EVAL_SOURCE_CHARS. eval enveloppe devient un eval
-		// indirect (portee globale) ; les 4 constructeurs de fonctions sont remplaces la ou le joueur
-		// peut les atteindre (global et .constructor de leur prototype).
-		+ "var MS=" + MAX_EVAL_SOURCE_CHARS + ",PC=" + EVAL_OPS_PER_CHAR + ";"
-		// Les arguments sont convertis ICI, une seule fois : le parseur recevrait sinon un objet dont le
-		// toString rendrait une source que ce compte n'a pas vue.
-		+ "function src(a){var t=0;for(var i=0;i<a.length;i++)t+=a[i].length;"
-		+ "if(t>MS)throw new RangeError('Source too long to evaluate ('+t+' > '+MS+' characters)');ch(t*PC);return a;}"
-		+ "function strs(args){var a=[];for(var i=0;i<args.length;i++)a[i]=S(args[i]);return src(a);}"
-		+ "var EV=globalThis.eval;Object.defineProperty(globalThis,'eval',{value:function eval(s){if(typeof s==='string')src([s]);return EV(s);},writable:false,configurable:false});"
-		+ "['load','loadWithNewGlobal'].forEach(function(n){var LD=globalThis[n];if(typeof LD!=='function')return;"
-		+ "Object.defineProperty(globalThis,n,{value:function(x){if(x!==null&&typeof x==='object'){x={script:S(x.script),name:S(x.name)};src([x.script]);}"
-		+ "else{x=S(x);src([x]);}return LD.call(this,x);},writable:false,configurable:false});});"
-		+ "function wc(F,isGlobal){var W=function(){return RC(F,strs(arguments),new.target||F);};"
-		+ "Object.defineProperty(W,'prototype',{value:F.prototype});Object.defineProperty(W,'name',{value:F.name});"
-		+ "Object.defineProperty(F.prototype,'constructor',{value:W,writable:false,configurable:false});"
-		+ "if(isGlobal)Object.defineProperty(globalThis,F.name,{value:W,writable:false,configurable:false});}"
-		+ "wc(Function,true);[function*(){},async function(){},async function*(){}].forEach(function(f){wc(Object.getPrototypeOf(f).constructor,false);});"
 		// Hooks consommes (puis retires du global) par JS_NATIVE_COSTS, l'override de System.operations
 		// (pending : charges accumulees pas encore flushees, pour un compteur exact a la lecture) et
 		// l'hote (flush en fin de tour, cf captureChargeFlush).
@@ -1252,8 +1226,13 @@ public class PolyglotEntityAI extends EntityAI {
 	 * mOperations ne change QUE dans {@code ops()} (fonctions de combat + charge), donc entre deux tels
 	 * appels le miroir est exact -> les milliers de getOperations() intermediaires lisent une valeur juste.
 	 */
+	/** Apres un appel de l'API de combat : compte pour le garde-fou CPU (CPU_NANOS_PER_HOST_CALL) et rafraichit le miroir guest. */
+	void afterHostCall() {
+		hostCalls++;
+		syncRealToGuest();
+	}
+
 	void syncRealToGuest() {
-		hostCalls++; // appele apres chaque appel de l'API de combat, cf CPU_NANOS_PER_HOST_CALL
 		if (guestBindings != null && statementCounter != null) {
 			try { guestBindings.putMember("__lw_real", super.getOperations()); } catch (Exception ignore) {}
 		}
@@ -1465,7 +1444,6 @@ public class PolyglotEntityAI extends EntityAI {
 				// On marque initialized tot : meme si le chargement echoue (et leve), on ne recharge pas
 				// (les tours suivants passeront par replayFlatTurn, inertes, plutot que de boucler).
 				initialized = true;
-				loadingEntry = true;
 				Value top = loadEntryFirstTurn();
 				Value turnFn = resolveGuestFunction(TURN_FUNCTION);
 				warnAboutSkippedHooks(turnFn != null); // hook defini mais jamais appele : on le dit
@@ -1676,7 +1654,6 @@ public class PolyglotEntityAI extends EntityAI {
 		beginHookLoad();    // les actions du top-level sont refusees EN SILENCE, et notees
 		boolean acted;
 		try {
-			loadingEntry = true;
 			loadEntryFirstTurn();
 			entry = resolveGuestFunction(TURN_FUNCTION);
 		} catch (Throwable loadFailed) {
@@ -1761,8 +1738,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 * compte le temps bloque. Une IA qui a epuise son budget d'attente est neutralisee.
 	 */
 	private void settle(Execution execution, long ops) throws LeekRunException {
-		boolean idleExhausted = chargeIdleTime(execution);
-		boolean nativeExhausted = chargeUnexplainedTime(execution, ops);
+		// Temps CPU du thread de combat pendant l'execution ; sans mesure fiable, rien n'est compte.
+		long nowCpu = execution.startCpuNanos() < 0 ? -1L : THREAD_MX.getCurrentThreadCpuTime();
+		long cpu = nowCpu < 0 ? -1L : nowCpu - execution.startCpuNanos();
+		boolean idleExhausted = cpu >= 0 && chargeIdleTime(execution, cpu);
+		boolean nativeExhausted = cpu >= 0 && chargeUnexplainedTime(cpu, ops);
 		if (!winRace(execution.settled(), execution.watchdog())) {
 			throw onWallClockTimeout(execution);
 		}
@@ -1859,7 +1839,7 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 			throw outOfMemory(t);
 		} finally {
-			settle(execution, operationsOrZero());
+			settle(execution, safeOperations());
 		}
 	}
 
@@ -1942,16 +1922,9 @@ public class PolyglotEntityAI extends EntityAI {
 	 * {@link #IDLE_TURN_TOLERANCE_NANOS}. Vrai si l'IA vient d'epuiser son budget : elle est alors
 	 * neutralisee pour le reste du combat. Sans temps CPU fiable, rien n'est mesure (cf {@link #armWatchdog}).
 	 */
-	private boolean chargeIdleTime(Execution execution) {
-		if (execution.startCpuNanos() < 0) {
-			return false;
-		}
-		long nowCpu = THREAD_MX.getCurrentThreadCpuTime();
-		if (nowCpu < 0) {
-			return false; // mesure du temps CPU coupee en cours de route
-		}
+	private boolean chargeIdleTime(Execution execution, long cpu) {
 		long wall = System.nanoTime() - execution.startNanos();
-		long idle = wall - (nowCpu - execution.startCpuNanos());
+		long idle = wall - cpu;
 		if (idle <= IDLE_TURN_TOLERANCE_NANOS || idle * 2 <= wall) {
 			return false;
 		}
@@ -1969,19 +1942,15 @@ public class PolyglotEntityAI extends EntityAI {
 	 * lente mais qui calcule en code guest est payee par ses ops ; une IA qui remplit ses tours d'ops
 	 * pour masquer du natif reste bornee par son budget d'ops, comme une IA legitime.
 	 */
-	private boolean chargeUnexplainedTime(Execution execution, long ops) {
+	private boolean chargeUnexplainedTime(long cpu, long ops) {
 		// Sans compteur deterministe, getOperations() derive lui-meme du temps CPU : rien a comparer.
 		// Le chargement de l'entree parse les sources et les modules importes (GraalPy : ~10 us par
 		// caractere), sans ops en face : il n'est borne que par le watchdog, une fois par combat.
-		if (execution.startCpuNanos() < 0 || statementCounter == null || loadingEntry) {
-			return false;
-		}
-		long nowCpu = THREAD_MX.getCurrentThreadCpuTime();
-		if (nowCpu < 0) {
+		if (statementCounter == null || loadingEntry) {
 			return false;
 		}
 		long paid = Math.max(0, ops) * CPU_NANOS_PER_OP + hostCalls * CPU_NANOS_PER_HOST_CALL;
-		long unexplained = nowCpu - execution.startCpuNanos() - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS;
+		long unexplained = cpu - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS;
 		if (unexplained <= 0) {
 			return false;
 		}
@@ -2086,11 +2055,7 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Fige le total d'operations du tour (guest + hote), lu par le moteur apres le tour, et cumule son temps (cf getUsedRAM). */
 	private void snapshotTurnOperations() {
 		ownNanos += System.nanoTime() - turnStartNanos;
-		try {
-			turnOperations = getOperations();
-		} catch (Exception e) {
-			turnOperations = super.getOperations();
-		}
+		turnOperations = safeOperations();
 		if (opsExhausted) {
 			// Une facturation saturee ajoute jusqu'a Integer.MAX_VALUE d'un coup : le tour a consomme son budget, pas plus.
 			turnOperations = Math.min(turnOperations, getMaxOperations());
@@ -2112,11 +2077,12 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 
-	private long operationsOrZero() {
+	/** Total guest + hote, ou le seul compteur hote si le guest ne repond plus (contexte annule). */
+	private long safeOperations() {
 		try {
 			return getOperations();
 		} catch (Exception e) {
-			return 0;
+			return super.getOperations();
 		}
 	}
 

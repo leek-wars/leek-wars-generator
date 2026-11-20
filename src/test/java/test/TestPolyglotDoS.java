@@ -195,45 +195,44 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
-	/** Entiers plafonnes dans l'image isolate (patches graaljs / graalpython) : refus immediat, l'IA continue. */
-	@Test(timeout = 60_000)
-	public void jsBigIntSizeIsCapped() throws Exception {
+	/** Un tour qui rend {@code expected} en moins de 3 s : les refus de l'image sont immediats. */
+	private void assertQuickResult(String lang, String src, long expected) throws Exception {
 		initFightOnly();
-		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			String src = "function turn(){ var refused = 0;\n"
-				+ " [function(){ return 3n ** 60000000n; }, function(){ return 1n << 100000000n; }, function(){ return BigInt('9'.repeat(5000000)); },"
-				+ "  function(){ var x = 2n ** 40000n; return x * x; }, function(){ return BigInt.asUintN(1000000, -1n); }]"
-				+ " .forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
-				+ " var ok = (2n ** 65535n).toString(2).length === 65536 && BigInt.asUintN(64, -1n) === 18446744073709551615n;\n"
-				+ " return refused * 10 + (ok ? 1 : 0); }";
-			PolyglotEntityAI ai = ai(sb, "js", src, 5_000);
+		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
+			PolyglotEntityAI ai = ai(sb, lang, src, 5_000);
 			long start = System.nanoTime();
-			Assert.assertEquals(51L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(expected, ((Number) ai.runIA()).longValue());
 			Assert.assertTrue("refus immediats", (System.nanoTime() - start) / 1_000_000 < 3_000);
 		}
 	}
 
+	/** Entiers plafonnes dans l'image isolate (patches graaljs / graalpython) : refus immediat, l'IA continue. */
+	@Test(timeout = 60_000)
+	public void jsBigIntSizeIsCapped() throws Exception {
+		String src = "function turn(){ var refused = 0;\n"
+			+ " [function(){ return 3n ** 60000000n; }, function(){ return 1n << 100000000n; }, function(){ return BigInt('9'.repeat(5000000)); },"
+			+ "  function(){ var x = 2n ** 40000n; return x * x; }, function(){ return BigInt.asUintN(1000000, -1n); }]"
+			+ " .forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
+			+ " var ok = (2n ** 65535n).toString(2).length === 65536 && BigInt.asUintN(64, -1n) === 18446744073709551615n;\n"
+			+ " return refused * 10 + (ok ? 1 : 0); }";
+		assertQuickResult("js", src, 51L);
+	}
+
 	@Test(timeout = 60_000)
 	public void pythonIntSizeIsCapped() throws Exception {
-		initFightOnly();
-		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
-			String src = "import math, random\n"
-				+ "def turn():\n"
-				+ "    refused = 0\n"
-				+ "    for f in (lambda: 3 ** 60000000, lambda: 1 << 100000000, lambda: (2 ** 40000) * (2 ** 40000),\n"
-				+ "              lambda: math.factorial(10 ** 6), lambda: math.comb(10 ** 6, 300000), lambda: math.perm(10 ** 6, 300000),\n"
-				+ "              lambda: pow(7, 3 ** 20000 + 1, 3 ** 20000 + 1), lambda: int('f' * 4000000, 16), lambda: random.getrandbits(10 ** 9)):\n"
-				+ "        try:\n"
-				+ "            f()\n"
-				+ "        except OverflowError:\n"
-				+ "            refused += 1\n"
-				+ "    ok = (2 ** 65535).bit_length() == 65536 and math.factorial(5000) > 0 and pow(7, 2 ** 64 + 13, 10 ** 9 + 7) == 948541898\n"
-				+ "    return refused * 10 + (1 if ok else 0)\n";
-			PolyglotEntityAI ai = ai(sb, "python", src, 5_000);
-			long start = System.nanoTime();
-			Assert.assertEquals(91L, ((Number) ai.runIA()).longValue());
-			Assert.assertTrue("refus immediats", (System.nanoTime() - start) / 1_000_000 < 3_000);
-		}
+		String src = "import math, random\n"
+			+ "def turn():\n"
+			+ "    refused = 0\n"
+			+ "    for f in (lambda: 3 ** 60000000, lambda: 1 << 100000000, lambda: (2 ** 40000) * (2 ** 40000),\n"
+			+ "              lambda: math.factorial(10 ** 6), lambda: math.comb(10 ** 6, 300000), lambda: math.perm(10 ** 6, 300000),\n"
+			+ "              lambda: pow(7, 3 ** 20000 + 1, 3 ** 20000 + 1), lambda: int('f' * 4000000, 16), lambda: random.getrandbits(10 ** 9)):\n"
+			+ "        try:\n"
+			+ "            f()\n"
+			+ "        except OverflowError:\n"
+			+ "            refused += 1\n"
+			+ "    ok = (2 ** 65535).bit_length() == 65536 and math.factorial(5000) > 0 and pow(7, 2 ** 64 + 13, 10 ** 9 + 7) == 948541898\n"
+			+ "    return refused * 10 + (1 if ok else 0)\n";
+		assertQuickResult("python", src, 91L);
 	}
 
 	/** Boucle native sur une taille virtuelle (sans memoire) : l'interruption du watchdog y atterrit. */
@@ -260,27 +259,24 @@ public class TestPolyglotDoS extends FightTestBase {
 		assertNativeLoopInterrupted("python", "def turn():\n    return max(iter(range(10 ** 10)))\n");
 	}
 
-	/** Source trop longue refusee par chaque chemin d'evaluation ; les petites sources marchent comme avant. */
+	/** Source trop longue (plafond de l'image, 1 Mo) refusee par chaque chemin d'evaluation ; les autres marchent comme avant. */
 	@Test(timeout = 60_000)
 	public void jsEvaluatedSourceIsCapped() throws Exception {
-		initFightOnly();
-		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			String src = "function turn(){\n"
-				+ " var big = '1+'.repeat(" + (PolyglotEntityAI.MAX_EVAL_SOURCE_CHARS / 2) + ") + '1';\n"
-				+ " var G = Object.getPrototypeOf(function*(){}).constructor, A = Object.getPrototypeOf(async function(){}).constructor,"
-				+ "  AG = Object.getPrototypeOf(async function*(){}).constructor;\n"
-				+ " var paths = [function(){ eval(big); }, function(){ new Function(big); }, function(){ Function(big); },"
-				+ "  function(){ (function(){}).constructor(big); }, function(){ G(big); }, function(){ A(big); }, function(){ AG(big); },"
-				+ "  function(){ load({script: big, name: 'x.js'}); }, function(){ new Function({toString: function(){ return big; }}); },"
-				+ "  function(){ Function([big]); }];\n"
-				+ " var refused = 0;\n"
-				+ " paths.forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
-				+ " var ok = eval('6*7') === 42 && new Function('a', 'return a*2')(21) === 42 && load({script: '6*7', name: 'y.js'}) === 42"
-				+ "  && (function(){}).constructor === Function && (function(){}) instanceof Function && G('yield 1')().next().value === 1;\n"
-				+ " return refused * 10 + (ok ? 1 : 0);\n"
-				+ "}";
-			Assert.assertEquals(101L, ((Number) ai(sb, "js", src, 5_000).runIA()).longValue());
-		}
+		String src = "function turn(){\n"
+			+ " var big = '1+'.repeat(600000) + '1';\n"
+			+ " var G = Object.getPrototypeOf(function*(){}).constructor, A = Object.getPrototypeOf(async function(){}).constructor,"
+			+ "  AG = Object.getPrototypeOf(async function*(){}).constructor;\n"
+			+ " var paths = [function(){ eval(big); }, function(){ (0, eval)(big); }, function(){ new Function(big); }, function(){ Function(big); },"
+			+ "  function(){ (function(){}).constructor(big); }, function(){ G(big); }, function(){ A(big); }, function(){ AG(big); },"
+			+ "  function(){ load({script: big, name: 'x.js'}); }, function(){ new Function({toString: function(){ return big; }}); }];\n"
+			+ " var refused = 0;\n"
+			+ " paths.forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
+			+ " var loc = 21;\n"
+			+ " var ok = eval('loc * 2') === 42 && new Function('a', 'return a*2')(21) === 42 && load({script: '6*7', name: 'y.js'}) === 42"
+			+ "  && eval('1+'.repeat(100000) + '1') === 100001 && G('yield 1')().next().value === 1;\n"
+			+ " return refused * 10 + (ok ? 1 : 0);\n"
+			+ "}";
+		assertQuickResult("js", src, 101L);
 	}
 
 	/** Python : compile() sert aussi a importer les modules, sans plafond de source ; le parseur s'interrompt. */
