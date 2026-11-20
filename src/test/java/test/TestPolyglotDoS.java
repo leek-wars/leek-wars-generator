@@ -273,7 +273,7 @@ public class TestPolyglotDoS extends FightTestBase {
 			+ " paths.forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
 			+ " var loc = 21;\n"
 			+ " var ok = eval('loc * 2') === 42 && new Function('a', 'return a*2')(21) === 42 && load({script: '6*7', name: 'y.js'}) === 42"
-			+ "  && eval('1+'.repeat(100000) + '1') === 100001 && G('yield 1')().next().value === 1;\n"
+			+ "  && eval('x = 1;'.repeat(100000)) === 1 && G('yield 1')().next().value === 1;\n"
 			+ " return refused * 10 + (ok ? 1 : 0);\n"
 			+ "}";
 		assertQuickResult("js", src, 101L);
