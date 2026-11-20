@@ -276,7 +276,11 @@ public class TestPolyglotDoS extends FightTestBase {
 			+ "  && eval('x = 1;'.repeat(100000)) === 1 && G('yield 1')().next().value === 1;\n"
 			+ " return refused * 10 + (ok ? 1 : 0);\n"
 			+ "}";
-		assertQuickResult("js", src, 101L);
+		// Pas assertQuickResult : l'eval legitime de 600 Ko fait partie du tour.
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			Assert.assertEquals(101L, ((Number) ai(sb, "js", src, 5_000).runIA()).longValue());
+		}
 	}
 
 	/** Python : compile() sert aussi a importer les modules, sans plafond de source ; le parseur s'interrompt. */
