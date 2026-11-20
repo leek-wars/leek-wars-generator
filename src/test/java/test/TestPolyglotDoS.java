@@ -141,6 +141,92 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
+	@Test(timeout = 60_000)
+	public void uninterruptibleNativeDisablesAiAfterOneTurn() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			// L'exponentiation BigInt ne passe par aucun safepoint : l'interruption ne la coupe pas (~3 s ici).
+			PolyglotEntityAI ai = ai(sb, "js", "function turn(){ var x = 3n ** 40000000n; return 1; }", 200);
+			expectTooMuchOperations(ai, "le tour aurait du depasser son echeance");
+			assertDisabledReturnsImmediately(ai);
+		}
+	}
+
+	/** Source trop longue refusee par chaque chemin d'evaluation ; les petites sources marchent comme avant. */
+	@Test(timeout = 60_000)
+	public void jsEvaluatedSourceIsCapped() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			String src = "function turn(){\n"
+				+ " var big = '1+'.repeat(" + (PolyglotEntityAI.MAX_EVAL_SOURCE_CHARS / 2) + ") + '1';\n"
+				+ " var G = Object.getPrototypeOf(function*(){}).constructor, A = Object.getPrototypeOf(async function(){}).constructor,"
+				+ "  AG = Object.getPrototypeOf(async function*(){}).constructor;\n"
+				+ " var paths = [function(){ eval(big); }, function(){ new Function(big); }, function(){ Function(big); },"
+				+ "  function(){ (function(){}).constructor(big); }, function(){ G(big); }, function(){ A(big); }, function(){ AG(big); },"
+				+ "  function(){ load({script: big, name: 'x.js'}); }];\n"
+				+ " var refused = 0;\n"
+				+ " paths.forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
+				+ " var ok = eval('6*7') === 42 && new Function('a', 'return a*2')(21) === 42 && load({script: '6*7', name: 'y.js'}) === 42"
+				+ "  && (function(){}).constructor === Function && (function(){}) instanceof Function && G('yield 1')().next().value === 1;\n"
+				+ " return refused * 10 + (ok ? 1 : 0);\n"
+				+ "}";
+			Assert.assertEquals(81L, ((Number) ai(sb, "js", src, 5_000).runIA()).longValue());
+		}
+	}
+
+	@Test(timeout = 60_000)
+	public void pythonEvaluatedSourceIsCapped() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			String src = "import sys\n"
+				+ "def turn():\n"
+				+ "    big = '1+' * " + (PolyglotEntityAI.MAX_EVAL_SOURCE_CHARS / 2) + " + '1'\n"
+				+ "    refused = 0\n"
+				+ "    for f in (lambda: eval(big), lambda: exec(big), lambda: compile(big, 'x', 'exec')):\n"
+				+ "        try:\n"
+				+ "            f()\n"
+				+ "        except ValueError:\n"
+				+ "            refused += 1\n"
+				+ "    x = 5\n"
+				+ "    g = {}\n"
+				+ "    exec('z = 4', g)\n"
+				+ "    ok = eval('x * 2') == 10 and g['z'] == 4\n"
+				// str(int) quadratique : la limite de chiffres reste en place.
+				+ "    try:\n"
+				+ "        sys.set_int_max_str_digits(0)\n"
+				+ "        ok = False\n"
+				+ "    except ValueError:\n"
+				+ "        pass\n"
+				+ "    try:\n"
+				+ "        str(10 ** 5000)\n"
+				+ "        ok = False\n"
+				+ "    except ValueError:\n"
+				+ "        pass\n"
+				+ "    return refused * 10 + (1 if ok else 0)\n";
+			Assert.assertEquals(31L, ((Number) ai(sb, "python", src, 5_000).runIA()).longValue());
+		}
+	}
+
+	/** Budget d'ops epuise par une facturation, exception attrapee par le guest : le tour finit quand meme en depassement. */
+	private void assertCaughtExhaustionEndsTurn(String lang, String src) throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
+			PolyglotEntityAI ai = ai(sb, lang, src, 5_000);
+			expectTooMuchOperations(ai, "le depassement attrape par le guest aurait du finir le tour en erreur");
+			Assert.assertTrue("ops du tour bornees au budget (etait " + ai.operations() + ")", ai.operations() <= ai.getMaxOperations());
+		}
+	}
+
+	@Test(timeout = 30_000)
+	public void jsCaughtOpsExhaustionEndsTurn() throws Exception {
+		assertCaughtExhaustionEndsTurn("js", "function turn(){ for (var i = 0; i < 4; i++) { try { Array.prototype.fill.call({length: 4294967295}, 0); } catch (e) {} } return 1; }");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonCaughtOpsExhaustionEndsTurn() throws Exception {
+		assertCaughtExhaustionEndsTurn("python", "def turn():\n    for i in range(4):\n        try:\n            sum(range(2 * 10 ** 9))\n        except BaseException:\n            pass\n    return 1\n");
+	}
+
 	@Test(timeout = 30_000)
 	public void normalTurnIsNotAffectedByWatchdog() throws Exception {
 		initFightOnly();
