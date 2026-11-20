@@ -94,17 +94,29 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
-	@Test(timeout = 30_000)
-	public void pythonSleepDoesNotWait() throws Exception {
+	/** Tour Python rapide (hors construction du contexte, au 1er tour) qui renvoie {@code expected}. */
+	private void assertFastPythonTurn(String src, long expected, String what) throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
-			PolyglotEntityAI ai = ai(sb, "python", "import time\nfrom time import sleep\ndef turn():\n    time.sleep(3)\n    sleep(3)\n    return 1\n", 5_000);
-			ai.runIA(); // 1er tour : construction du contexte
+			PolyglotEntityAI ai = ai(sb, "python", src, 5_000);
+			ai.runIA();
 			long start = System.nanoTime();
-			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			Assert.assertEquals(what, expected, ((Number) ai.runIA()).longValue());
 			long elapsedMs = (System.nanoTime() - start) / 1_000_000;
-			Assert.assertTrue("time.sleep ne doit pas attendre (etait " + elapsedMs + " ms)", elapsedMs < 1_000);
+			Assert.assertTrue(what + " : tour trop long (" + elapsedMs + " ms)", elapsedMs < 1_000);
 		}
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonSleepIsForbidden() throws Exception {
+		assertFastPythonTurn("import time\nfrom time import sleep\ndef turn():\n    n = 0\n    for f in (time.sleep, sleep):\n        try:\n            f(3)\n        except RuntimeError:\n            n += 1\n    return n\n",
+			2, "time.sleep doit lever une erreur sans attendre");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonGcCollectIsFree() throws Exception {
+		assertFastPythonTurn("import gc\ndef turn():\n    return sum(gc.collect() for i in range(1000))\n",
+			0, "gc.collect ne doit plus forcer de GC");
 	}
 
 	@Test(timeout = 30_000)

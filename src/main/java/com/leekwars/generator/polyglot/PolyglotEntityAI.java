@@ -931,6 +931,10 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "            setattr(_lwb, _n, _wrap_type(getattr(_lwb, _n)))\n"
 		+ "        except Exception:\n"
 		+ "            pass\n"
+		// gc.collect() force un GC complet de l'isolate partage (~40 ms de CPU, plus 15 ms de pause) pour
+		// une dizaine d'operations : en boucle, il occupe le worker et gele les autres combats Python.
+		+ "    import gc\n"
+		+ "    gc.collect = lambda generation=2: 0\n"
 		// Hooks consommes (puis retires de builtins) par PY_NATIVE_COSTS, l'override de
 		// System.operations (pending) et l'hote (flush en fin de tour, cf captureChargeFlush).
 		+ "    def _flush():\n"
@@ -1327,9 +1331,10 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "random.seed(" + seed + ")\n"
 			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
 			+ "time.time_ns = lambda: 0\ntime.monotonic_ns = lambda: 0\ntime.perf_counter_ns = lambda: 0\n"
-			// Horloge figee : attendre n'a rien a observer, et un sleep immobiliserait le worker
-			// (les autres attentes, verrous C immuables, sont bornees par chargeIdleTime).
-			+ "time.sleep = lambda secs: None\n"
+			// Attendre est interdit : l'horloge est figee (rien a observer) et une attente immobiliserait
+			// le worker. Les attentes des verrous C (immuables) sont bornees par chargeIdleTime.
+			+ "def sleep(secs):\n    raise RuntimeError('waiting is not allowed in Leek Wars')\n"
+			+ "time.sleep = sleep\ndel sleep\n"
 			+ "time.gmtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
 			+ "time.localtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
 			+ "try:\n"
