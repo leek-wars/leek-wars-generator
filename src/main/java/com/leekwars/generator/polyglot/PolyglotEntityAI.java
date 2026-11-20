@@ -94,6 +94,21 @@ public class PolyglotEntityAI extends EntityAI {
 	 * par le statement limit), donc ce compteur ne la touche pas.
 	 */
 	private static final int MAX_WALL_CLOCK_TIMEOUTS = 3;
+	/**
+	 * Temps BLOQUE (temps mur moins temps CPU du thread de combat) toléré par tour avant d'être compté.
+	 * Une IA qui attend sans calculer ({@code time.sleep}, {@code Event.wait}, {@code Lock.acquire(timeout)}
+	 * en Python) ne consomme ni statements ni CPU : sous l'échéance wall-clock, elle immobiliserait le
+	 * worker jusqu'à ~5 s par tour sans rien déclencher. Les verrous C de GraalPy sont des types
+	 * immuables : on ne peut pas boucher ces attentes côté guest, d'où la mesure côté hôte.
+	 */
+	private static final long IDLE_TURN_TOLERANCE_NANOS = 100_000_000L;
+	/**
+	 * Temps bloqué cumulé sur le combat (au-delà de la tolérance par tour) au-delà duquel l'IA est
+	 * neutralisée. Ne compte que les tours qui ont plus attendu que calculé : une IA légitime calcule
+	 * presque tout son tour, seule une machine très surchargée (préemption) pourrait l'approcher.
+	 * Coupure NON déterministe, comme le backstop wall-clock.
+	 */
+	private static final long IDLE_FIGHT_BUDGET_NANOS = 1_000_000_000L;
 
 	private final String languageId;
 	private final String source;
@@ -114,7 +129,8 @@ public class PolyglotEntityAI extends EntityAI {
 
 	private long turnWallClockLimitMs = DEFAULT_TURN_WALL_CLOCK_LIMIT_MS;
 	private int wallClockTimeouts;             // nb de tours coupes par le watchdog sur ce combat
-	private boolean disabled;                  // IA neutralisee apres trop de depassements wall-clock
+	private boolean disabled;                  // IA neutralisee apres trop de depassements wall-clock ou d'attente
+	private long idleNanos;                    // temps bloque compte sur le combat, cf chargeIdleTime
 
 	/**
 	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
@@ -1311,6 +1327,9 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "random.seed(" + seed + ")\n"
 			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
 			+ "time.time_ns = lambda: 0\ntime.monotonic_ns = lambda: 0\ntime.perf_counter_ns = lambda: 0\n"
+			// Horloge figee : attendre n'a rien a observer, et un sleep immobiliserait le worker
+			// (les autres attentes, verrous C immuables, sont bornees par chargeIdleTime).
+			+ "time.sleep = lambda secs: None\n"
 			+ "time.gmtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
 			+ "time.localtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
 			+ "try:\n"
@@ -1368,15 +1387,9 @@ public class PolyglotEntityAI extends EntityAI {
 		//   - interruptAsync n'est declenche QUE si le watchdog gagne le CAS ;
 		//   - si le watchdog gagne, le tour PERD le CAS dans le finally et passe par onWallClockTimeout(),
 		//     qui FERME le contexte -> le tour suivant en reconstruit un neuf. Donc l'interruption asynchrone
-		//     (qui vise l'ancien `running`) ne peut JAMAIS toucher le contexte d'un tour suivant ;
+		//     (qui vise l'ancien contexte) ne peut JAMAIS toucher le contexte d'un tour suivant ;
 		//   - si le tour gagne, le watchdog ne declenche jamais rien (son CAS echoue) et on l'annule.
-		final Context running = context;
-		final AtomicBoolean settled = new AtomicBoolean(false);
-		final ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
-			if (settled.compareAndSet(false, true)) {
-				PolyglotSandbox.interruptAsync(running);
-			}
-		}, turnWallClockLimitMs);
+		final Execution execution = armWatchdog();
 		try {
 			Value value;
 			if (!initialized) {
@@ -1435,15 +1448,13 @@ public class PolyglotEntityAI extends EntityAI {
 			// Resolution UNIQUE de la course, pour TOUTE sortie du tour : succes, exception verifiee
 			// (LeekRunException du marshalling/chargement, non capturee ci-dessus), erreur hote, ET
 			// java.lang.Error (StackOverflow...) hors taxonomie des catch. Le tour gagne -> on annule le
-			// watchdog. Le WATCHDOG gagne -> il a interrompu `running` ; onWallClockTimeout() FERME le
+			// watchdog. Le WATCHDOG gagne -> il a interrompu le contexte du tour ; onWallClockTimeout() FERME le
 			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
 			flushPendingCharges(); // charges de builtins/natifs du tour -> compteur reel, avant le snapshot
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
-			if (!winRace(settled, watchdog)) {
-				throw onWallClockTimeout();
-			}
+			settle(execution);
 		}
 	}
 
@@ -1528,13 +1539,7 @@ public class PolyglotEntityAI extends EntityAI {
 			throw outOfMemory(t);
 		}
 
-		final Context running = context;
-		final AtomicBoolean settled = new AtomicBoolean(false);
-		final ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
-			if (settled.compareAndSet(false, true)) {
-				PolyglotSandbox.interruptAsync(running);
-			}
-		}, turnWallClockLimitMs);
+		final Execution execution = armWatchdog();
 		try {
 			if (!initialized && !preloadEntryForHook()) {
 				return; // chargement jete : l'IA sera chargee au tour 1, comme si le hook n'existait pas
@@ -1561,9 +1566,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// cote guest (compteur de statements, limites du contexte, bases de temps) : le total du hook
 			// passe donc dans le compteur hote, le seul qui survive d'une execution a l'autre.
 			mOperations = turnOperations;
-			if (!winRace(settled, watchdog)) {
-				throw onWallClockTimeout();
-			}
+			settle(execution);
 		}
 	}
 
@@ -1654,7 +1657,45 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
-	 * Resout la course tour/watchdog en fin de tour (appelee depuis le finally de {@link #runIA}). Renvoie
+	 * Une execution gardee (tour, hook ou callback) : sa course avec le watchdog et les bases de sa
+	 * mesure d'attente ({@code startCpuNanos} &lt; 0 : pas de mesure).
+	 */
+	private record Execution(AtomicBoolean settled, ScheduledFuture<?> watchdog, long startNanos, long startCpuNanos) {}
+
+	/**
+	 * Arme le backstop wall-clock d'une execution et pose la base de sa mesure d'attente : APRES la
+	 * construction du contexte, dont les attentes (verrou de l'engine partage) ne sont pas le fait du
+	 * joueur. En isolate externe, le guest tourne dans un autre processus : temps CPU inutilisable.
+	 */
+	private Execution armWatchdog() {
+		final Context running = context;
+		final AtomicBoolean settled = new AtomicBoolean(false);
+		long startCpu = !externalIsolate && CPU_TIME_SUPPORTED ? THREAD_MX.getCurrentThreadCpuTime() : -1L;
+		ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
+			if (settled.compareAndSet(false, true)) {
+				PolyglotSandbox.interruptAsync(running);
+			}
+		}, turnWallClockLimitMs);
+		return new Execution(settled, watchdog, System.nanoTime(), startCpu);
+	}
+
+	/**
+	 * Fin d'une execution, dans son finally : resout la course avec le watchdog (cf {@link #runIA}) puis
+	 * compte le temps bloque. Une IA qui a epuise son budget d'attente est neutralisee.
+	 */
+	private void settle(Execution execution) throws LeekRunException {
+		boolean idleExhausted = chargeIdleTime(execution);
+		if (!winRace(execution.settled(), execution.watchdog())) {
+			throw onWallClockTimeout();
+		}
+		if (idleExhausted) {
+			closeContext();
+			throw new LeekRunException(Error.TOO_MUCH_OPERATIONS);
+		}
+	}
+
+	/**
+	 * Resout la course tour/watchdog en fin d'execution (tour, hook ou callback, cf {@link #settle}). Renvoie
 	 * true si LE TOUR gagne (l'echeance n'a pas encore expire) : on annule alors le watchdog (il ne
 	 * declenchera rien). Renvoie false si le WATCHDOG a deja gagne (echeance expiree, interruption en
 	 * cours) -&gt; l'appelant doit traiter un depassement.
@@ -1679,9 +1720,8 @@ public class PolyglotEntityAI extends EntityAI {
 			PolyglotSandbox.recordWallClockTimeout(languageId, mEntity != null ? mEntity.getFarmer() : 0);
 		}
 		if (++wallClockTimeouts >= MAX_WALL_CLOCK_TIMEOUTS) {
-			disabled = true;
-			Log.w("PolyglotEntityAI", "IA polyglot (" + languageId + ") neutralisee apres " + wallClockTimeouts
-				+ " depassements wall-clock (" + turnWallClockLimitMs + " ms/tour) : probable travail natif non borne par le statement limit");
+			disable("apres " + wallClockTimeouts + " depassements wall-clock (" + turnWallClockLimitMs
+				+ " ms/tour) : probable travail natif non borne par le statement limit");
 		}
 		return new LeekRunException(Error.TOO_MUCH_OPERATIONS);
 	}
@@ -1710,13 +1750,7 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 		markTurnStart();
 
-		final Context running = context;
-		final AtomicBoolean settled = new AtomicBoolean(false);
-		final ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
-			if (settled.compareAndSet(false, true)) {
-				PolyglotSandbox.interruptAsync(running);
-			}
-		}, turnWallClockLimitMs);
+		final Execution execution = armWatchdog();
 		try {
 			// Setup DANS le try, comme runIA : lui aussi peut echouer sur une limite atteinte, et une
 			// annulation qui s'echapperait d'ici planterait le combat au lieu d'etre une erreur joueur.
@@ -1741,9 +1775,7 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 			throw outOfMemory(t);
 		} finally {
-			if (!winRace(settled, watchdog)) {
-				throw onWallClockTimeout();
-			}
+			settle(execution);
 		}
 	}
 
@@ -1818,6 +1850,40 @@ public class PolyglotEntityAI extends EntityAI {
 			statementCounter.execute(0);
 		} catch (Exception e) {
 			statementCounter = null;
+		}
+	}
+
+	/**
+	 * Compte le temps bloque de l'execution qui s'acheve (tour, hook ou callback), cf
+	 * {@link #IDLE_TURN_TOLERANCE_NANOS}. Vrai si l'IA vient d'epuiser son budget : elle est alors
+	 * neutralisee pour le reste du combat. Sans temps CPU fiable, rien n'est mesure (cf {@link #armWatchdog}).
+	 */
+	private boolean chargeIdleTime(Execution execution) {
+		if (execution.startCpuNanos() < 0) {
+			return false;
+		}
+		long nowCpu = THREAD_MX.getCurrentThreadCpuTime();
+		if (nowCpu < 0) {
+			return false; // mesure du temps CPU coupee en cours de route
+		}
+		long wall = System.nanoTime() - execution.startNanos();
+		long idle = wall - (nowCpu - execution.startCpuNanos());
+		if (idle <= IDLE_TURN_TOLERANCE_NANOS || idle * 2 <= wall) {
+			return false;
+		}
+		idleNanos += idle - IDLE_TURN_TOLERANCE_NANOS;
+		if (idleNanos < IDLE_FIGHT_BUDGET_NANOS) {
+			return false;
+		}
+		disable(": " + idleNanos / 1_000_000 + " ms passees a attendre sans calculer (sleep, verrou...)");
+		return true;
+	}
+
+	/** Neutralise l'IA pour le reste du combat (une seule trace, meme si deux limites tombent ensemble). */
+	private void disable(String reason) {
+		if (!disabled) {
+			disabled = true;
+			Log.w("PolyglotEntityAI", "IA polyglot (" + languageId + ") neutralisee " + reason);
 		}
 	}
 
