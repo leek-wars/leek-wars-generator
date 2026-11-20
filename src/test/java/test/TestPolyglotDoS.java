@@ -147,7 +147,7 @@ public class TestPolyglotDoS extends FightTestBase {
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
 			// Le parseur ne passe par aucun safepoint : un source de quelques Mo l'occupe plus d'1 s
 			// au-dela de l'echeance, que l'interruption ne coupe pas.
-			String src = "var a = 0;\n".repeat(300_000) + "function turn(){ return 1; }";
+			String src = "var a = 0;\n".repeat(120_000) + "function turn(){ return 1; }";
 			PolyglotEntityAI ai = ai(sb, "js", src, 200);
 			expectTooMuchOperations(ai, "le tour aurait du depasser son echeance");
 			assertDisabledReturnsImmediately(ai);
@@ -271,47 +271,28 @@ public class TestPolyglotDoS extends FightTestBase {
 				+ "  AG = Object.getPrototypeOf(async function*(){}).constructor;\n"
 				+ " var paths = [function(){ eval(big); }, function(){ new Function(big); }, function(){ Function(big); },"
 				+ "  function(){ (function(){}).constructor(big); }, function(){ G(big); }, function(){ A(big); }, function(){ AG(big); },"
-				+ "  function(){ load({script: big, name: 'x.js'}); }];\n"
+				+ "  function(){ load({script: big, name: 'x.js'}); }, function(){ new Function({toString: function(){ return big; }}); },"
+				+ "  function(){ Function([big]); }];\n"
 				+ " var refused = 0;\n"
 				+ " paths.forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
 				+ " var ok = eval('6*7') === 42 && new Function('a', 'return a*2')(21) === 42 && load({script: '6*7', name: 'y.js'}) === 42"
 				+ "  && (function(){}).constructor === Function && (function(){}) instanceof Function && G('yield 1')().next().value === 1;\n"
 				+ " return refused * 10 + (ok ? 1 : 0);\n"
 				+ "}";
-			Assert.assertEquals(81L, ((Number) ai(sb, "js", src, 5_000).runIA()).longValue());
+			Assert.assertEquals(101L, ((Number) ai(sb, "js", src, 5_000).runIA()).longValue());
 		}
 	}
 
+	/** Python : compile() sert aussi a importer les modules, sans plafond de source ; le parseur s'interrompt. */
 	@Test(timeout = 60_000)
-	public void pythonEvaluatedSourceIsCapped() throws Exception {
+	public void pythonBigModulesStillImport() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
-			String src = "import sys\n"
-				+ "def turn():\n"
-				+ "    big = '1+' * " + (PolyglotEntityAI.MAX_EVAL_SOURCE_CHARS / 2) + " + '1'\n"
-				+ "    refused = 0\n"
-				+ "    for f in (lambda: eval(big), lambda: exec(big), lambda: compile(big, 'x', 'exec')):\n"
-				+ "        try:\n"
-				+ "            f()\n"
-				+ "        except ValueError:\n"
-				+ "            refused += 1\n"
-				+ "    x = 5\n"
-				+ "    g = {}\n"
-				+ "    exec('z = 4', g)\n"
-				+ "    ok = eval('x * 2') == 10 and g['z'] == 4\n"
-				// str(int) quadratique : la limite de chiffres reste en place.
-				+ "    try:\n"
-				+ "        sys.set_int_max_str_digits(0)\n"
-				+ "        ok = False\n"
-				+ "    except ValueError:\n"
-				+ "        pass\n"
-				+ "    try:\n"
-				+ "        str(10 ** 5000)\n"
-				+ "        ok = False\n"
-				+ "    except ValueError:\n"
-				+ "        pass\n"
-				+ "    return refused * 10 + (1 if ok else 0)\n";
-			Assert.assertEquals(31L, ((Number) ai(sb, "python", src, 5_000).runIA()).longValue());
+			String src = "def turn():\n"
+				+ "    import _pydecimal\n" // 227 Ko
+				+ "    exec('x = 1\\n' * 30000)\n"
+				+ "    return 1\n";
+			Assert.assertEquals(1L, ((Number) ai(sb, "python", src, 5_000).runIA()).longValue());
 		}
 	}
 

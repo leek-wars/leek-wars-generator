@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -95,16 +96,19 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static final int MAX_WALL_CLOCK_TIMEOUTS = 3;
 	/**
-	 * Retard sur l'echeance au-dela duquel l'interruption n'a pas pris : le tour etait dans un natif que
-	 * Truffle ne coupe pas (parseur, arithmetique BigInt / grands entiers...) et l'a mene a son terme.
-	 * Un tour interruptible s'arrete en quelques millisecondes ; celui-ci a pu bloquer le worker une
-	 * minute et recommencerait au tour suivant. L'IA est neutralisee des le premier.
+	 * Duree, depuis le tir du watchdog, au-dela de laquelle l'interruption n'a pas pris : le tour etait
+	 * dans un natif que Truffle ne coupe pas (parseur JS...) et l'a mene a son terme. Un tour
+	 * interruptible s'arrete en quelques millisecondes ; celui-ci a pu bloquer le worker longtemps et
+	 * recommencerait au tour suivant. L'IA est neutralisee des le premier. Meme delai que la grace de
+	 * l'interruption (PolyglotSandbox) : au-dela, elle aussi conclut a un echec.
 	 */
-	private static final long NATIVE_OVERSHOOT_MS = 1_000;
+	private static final long NATIVE_OVERSHOOT_MS = 2_000;
 	/**
-	 * Source evaluee a l'execution (eval, constructeurs de fonctions, load, exec, compile) : le parseur
-	 * ne s'interrompt pas, une source de 16 Mo l'occupe ~20 s. Taille bornee par appel, et facturee au
-	 * caractere a peu pres au prix du parseur (~1 us par caractere, ~20 ops LeekScript).
+	 * Source evaluee a l'execution en JS (eval, constructeurs de fonctions, load) : le parseur GraalJS ne
+	 * s'interrompt pas, une source de 16 Mo l'occupe ~20 s. Taille bornee par appel, et facturee au
+	 * caractere a peu pres au prix du parseur (~1 us par caractere, ~20 ops LeekScript). L'image isolate
+	 * borne aussi ces sources (1 Mo), sans contournement possible. Python n'en a pas besoin : son parseur
+	 * s'interrompt, et compile() sert aussi a importer les modules (stdlib comprise, jusqu'a 230 Ko).
 	 */
 	public static final int MAX_EVAL_SOURCE_CHARS = 65_536;
 	private static final int EVAL_OPS_PER_CHAR = 20;
@@ -134,6 +138,8 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final long UNEXPLAINED_TURN_TOLERANCE_NANOS = 250_000_000L;
 	/** Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. */
 	private static final long UNEXPLAINED_FIGHT_BUDGET_NANOS = 1_000_000_000L;
+	/** Temps CPU accorde par appel de l'API de combat : traversee de la frontiere isolate et marshalling. */
+	private static final long CPU_NANOS_PER_HOST_CALL = 5_000;
 
 	private final String languageId;
 	private final String source;
@@ -158,6 +164,8 @@ public class PolyglotEntityAI extends EntityAI {
 	private boolean opsExhausted;              // budget d'ops du tour epuise : le guest a pu attraper l'exception, cf ops(int)
 	private long idleNanos;                    // temps bloque compte sur le combat, cf chargeIdleTime
 	private long unexplainedNanos;             // temps CPU non paye par des ops sur le combat, cf chargeUnexplainedTime
+	private long hostCalls;                    // appels de l'API de combat depuis le debut de l'execution
+	private boolean loadingEntry;              // l'execution charge l'entree (parsing, imports) : hors garde-fou CPU
 
 	/**
 	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
@@ -871,7 +879,8 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "var acc=0;var FLUSH=4096;function ch(n){acc+=n;if(acc>=FLUSH){C(acc);acc=0;}}"
 		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
 		// ramenait {length: 2**32} a 0.
-		+ "function L(o){var n=Number(o.length);return n>0?Math.min(Math.floor(n),9007199254740991):0;}"
+		+ "var N=Number,MF=Math.floor,MM=Math.min,S=String,RC=Reflect.construct;"
+		+ "function L(o){var n=N(o.length);return n>0?MM(MF(n),9007199254740991):0;}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
 		+ "function wrapLen(name){var o=Array.prototype[name];if(!o)return;"
 		+ "Object.defineProperty(Array.prototype,name,{value:function(){ch(L(this));return o.apply(this,arguments);},writable:false,configurable:false});}"
@@ -883,19 +892,24 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "var AF=Array.from;if(AF)Object.defineProperty(Array,'from',{value:function(){var r=AF.apply(Array,arguments);ch((r&&r.length)>>>0);return r;},writable:false,configurable:false});"
 		+ "var RP=String.prototype.repeat;if(RP)Object.defineProperty(String.prototype,'repeat',{value:function(){var r=RP.apply(this,arguments);ch(r.length>>>0);return r;},writable:false,configurable:false});"
 		// Tableaux types : memes parcours natifs que Array, longueur du receveur facturee avant.
-		+ "var TA=Object.getPrototypeOf(Int8Array.prototype);['sort','fill','reverse','join','copyWithin'].forEach(function(n){var o=TA[n];if(!o)return;"
-		+ "Object.defineProperty(TA,n,{value:function(){ch(L(this));return o.apply(this,arguments);},writable:false,configurable:false});});"
+		// Longueur interne ([[ArrayLength]]) par le getter d'origine : this.length se redefinit.
+		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get;"
+		+ "['sort','fill','reverse','join','copyWithin'].forEach(function(n){var o=TA[n];if(!o)return;"
+		+ "Object.defineProperty(TA,n,{value:function(){ch(TL.call(this));return o.apply(this,arguments);},writable:false,configurable:false});});"
 		// Sources evaluees a l'execution, cf MAX_EVAL_SOURCE_CHARS. eval enveloppe devient un eval
 		// indirect (portee globale) ; les 4 constructeurs de fonctions sont remplaces la ou le joueur
 		// peut les atteindre (global et .constructor de leur prototype).
 		+ "var MS=" + MAX_EVAL_SOURCE_CHARS + ",PC=" + EVAL_OPS_PER_CHAR + ";"
-		+ "function src(a){var t=0;for(var i=0;i<a.length;i++){var x=a[i];if(typeof x==='string')t+=x.length;"
-		+ "else if(x!==null&&typeof x==='object'&&typeof x.script==='string')t+=x.script.length;}"
-		+ "if(t>MS)throw new RangeError('Source too long to evaluate ('+t+' > '+MS+' characters)');ch(t*PC);}"
+		// Les arguments sont convertis ICI, une seule fois : le parseur recevrait sinon un objet dont le
+		// toString rendrait une source que ce compte n'a pas vue.
+		+ "function src(a){var t=0;for(var i=0;i<a.length;i++)t+=a[i].length;"
+		+ "if(t>MS)throw new RangeError('Source too long to evaluate ('+t+' > '+MS+' characters)');ch(t*PC);return a;}"
+		+ "function strs(args){var a=[];for(var i=0;i<args.length;i++)a[i]=S(args[i]);return src(a);}"
 		+ "var EV=globalThis.eval;Object.defineProperty(globalThis,'eval',{value:function eval(s){if(typeof s==='string')src([s]);return EV(s);},writable:false,configurable:false});"
-		+ "['load','loadWithNewGlobal'].forEach(function(n){var L=globalThis[n];if(typeof L!=='function')return;"
-		+ "Object.defineProperty(globalThis,n,{value:function(){src(arguments);return L.apply(this,arguments);},writable:false,configurable:false});});"
-		+ "function wc(F,isGlobal){var W=function(){src(arguments);return Reflect.construct(F,arguments,new.target||F);};"
+		+ "['load','loadWithNewGlobal'].forEach(function(n){var LD=globalThis[n];if(typeof LD!=='function')return;"
+		+ "Object.defineProperty(globalThis,n,{value:function(x){if(x!==null&&typeof x==='object'){x={script:S(x.script),name:S(x.name)};src([x.script]);}"
+		+ "else{x=S(x);src([x]);}return LD.call(this,x);},writable:false,configurable:false});});"
+		+ "function wc(F,isGlobal){var W=function(){return RC(F,strs(arguments),new.target||F);};"
 		+ "Object.defineProperty(W,'prototype',{value:F.prototype});Object.defineProperty(W,'name',{value:F.name});"
 		+ "Object.defineProperty(F.prototype,'constructor',{value:W,writable:false,configurable:false});"
 		+ "if(isGlobal)Object.defineProperty(globalThis,F.name,{value:W,writable:false,configurable:false});}"
@@ -985,44 +999,6 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "    gc.collect = lambda generation=2: 0\n"
 		// Hooks consommes (puis retires de builtins) par PY_NATIVE_COSTS, l'override de
 		// System.operations (pending) et l'hote (flush en fin de tour, cf captureChargeFlush).
-		// Sources evaluees a l'execution, cf MAX_EVAL_SOURCE_CHARS. exec/eval sans globals s'executent
-		// dans le cadre de l'APPELANT, comme les originaux (sinon dans celui de ce prelude).
-		+ "    import sys as _sys\n"
-		+ "    def _src(source):\n"
-		+ "        if isinstance(source, (str, bytes, bytearray)):\n"
-		+ "            n = len(source)\n"
-		+ "            if n > " + MAX_EVAL_SOURCE_CHARS + ":\n"
-		+ "                raise ValueError('source too long to evaluate (%d > " + MAX_EVAL_SOURCE_CHARS + " characters)' % n)\n"
-		+ "            _ch(n * " + EVAL_OPS_PER_CHAR + ")\n"
-		+ "    def _wrap_eval(_orig):\n"
-		+ "        def _f(source, globals=None, locals=None, /, *a, **k):\n"
-		+ "            _src(source)\n"
-		+ "            if globals is None:\n"
-		+ "                _fr = _sys._getframe(1)\n"
-		+ "                globals = _fr.f_globals\n"
-		+ "                if locals is None:\n"
-		+ "                    locals = _fr.f_locals\n"
-		+ "            return _orig(source, globals, locals, *a, **k)\n"
-		+ "        _f.__name__ = _f.__qualname__ = _orig.__name__\n"
-		+ "        return _f\n"
-		+ "    def _wrap_compile(_orig):\n"
-		+ "        def compile(source, *a, **k):\n"
-		+ "            _src(source)\n"
-		+ "            return _orig(source, *a, **k)\n"
-		+ "        return compile\n"
-		+ "    _lwb.__lw_eval = _lwb.eval\n" // pour PY_NATIVE_COSTS, qui le retire
-		+ "    _lwb.exec = _wrap_eval(_lwb.exec)\n"
-		+ "    _lwb.eval = _wrap_eval(_lwb.eval)\n"
-		+ "    _lwb.compile = _wrap_compile(_lwb.compile)\n"
-		// str(int) est quadratique : la limite de chiffres (4300 par defaut) ne doit pas se lever.
-		+ "    _set_digits = getattr(_sys, 'set_int_max_str_digits', None)\n"
-		+ "    if _set_digits is not None:\n"
-		+ "        _set_digits(4300)\n"
-		+ "        def set_int_max_str_digits(maxdigits):\n"
-		+ "            if not 640 <= maxdigits <= 4300:\n"
-		+ "                raise ValueError('maxdigits must be between 640 and 4300')\n"
-		+ "            _set_digits(maxdigits)\n"
-		+ "        _sys.set_int_max_str_digits = set_int_max_str_digits\n"
 		+ "    def _flush():\n"
 		+ "        if _acc[0] > 0:\n"
 		+ "            _C(_acc[0]); _acc[0] = 0\n"
@@ -1058,7 +1034,7 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "    _ch = getattr(_lwnb, '__lw_ch', None)\n"
 		+ "    if _ch is None:\n"
 		+ "        return\n"
-		+ "    costs = getattr(_lwnb, '__lw_eval')(__lw_stdcosts_json, {'__builtins__': {}}, {})\n"
+		+ "    costs = eval(__lw_stdcosts_json, {'__builtins__': {}}, {})\n"
 		+ "    def bill(orig, n):\n"
 		+ "        def f(*a, **k):\n"
 		+ "            _ch(n)\n"
@@ -1081,11 +1057,10 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        if c > 1 and orig is not None:\n"
 		+ "            setattr(mod, attr, bill(orig, c))\n"
 		+ "_lw_bill_natives()\n"
-		+ "for _lwn in ('__lw_ch', '__lw_eval'):\n"
-		+ "    try:\n"
-		+ "        delattr(_lwnb, _lwn)\n"
-		+ "    except Exception:\n"
-		+ "        pass\n"
+		+ "try:\n"
+		+ "    delattr(_lwnb, '__lw_ch')\n"
+		+ "except Exception:\n"
+		+ "    pass\n"
 		+ "for _lwn in ('_lw_bill_natives', '_lwnb', '_lwnm', '_lwnr', '__lw_stdcosts_json', '_lwn'):\n"
 		+ "    try:\n"
 		+ "        del globals()[_lwn]\n"
@@ -1278,6 +1253,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * appels le miroir est exact -> les milliers de getOperations() intermediaires lisent une valeur juste.
 	 */
 	void syncRealToGuest() {
+		hostCalls++; // appele apres chaque appel de l'API de combat, cf CPU_NANOS_PER_HOST_CALL
 		if (guestBindings != null && statementCounter != null) {
 			try { guestBindings.putMember("__lw_real", super.getOperations()); } catch (Exception ignore) {}
 		}
@@ -1489,6 +1465,7 @@ public class PolyglotEntityAI extends EntityAI {
 				// On marque initialized tot : meme si le chargement echoue (et leve), on ne recharge pas
 				// (les tours suivants passeront par replayFlatTurn, inertes, plutot que de boucler).
 				initialized = true;
+				loadingEntry = true;
 				Value top = loadEntryFirstTurn();
 				Value turnFn = resolveGuestFunction(TURN_FUNCTION);
 				warnAboutSkippedHooks(turnFn != null); // hook defini mais jamais appele : on le dit
@@ -1548,7 +1525,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
 			flushPendingCharges(); // charges de builtins/natifs du tour -> compteur reel, avant le snapshot
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
-			settle(execution);
+			settle(execution, turnOperations);
 		}
 	}
 
@@ -1644,6 +1621,7 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 			markHookRun(name); // avant l'appel : un hook qui LEVE a bien tourne (l'erreur est rapportee)
 			hook.execute();
+			throwIfOpsExhausted();
 		} catch (PolyglotException e) {
 			throw mapException(e);
 		} catch (RuntimeException e) {
@@ -1660,7 +1638,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// cote guest (compteur de statements, limites du contexte, bases de temps) : le total du hook
 			// passe donc dans le compteur hote, le seul qui survive d'une execution a l'autre.
 			mOperations = turnOperations;
-			settle(execution);
+			settle(execution, turnOperations);
 		}
 	}
 
@@ -1698,6 +1676,7 @@ public class PolyglotEntityAI extends EntityAI {
 		beginHookLoad();    // les actions du top-level sont refusees EN SILENCE, et notees
 		boolean acted;
 		try {
+			loadingEntry = true;
 			loadEntryFirstTurn();
 			entry = resolveGuestFunction(TURN_FUNCTION);
 		} catch (Throwable loadFailed) {
@@ -1754,7 +1733,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Une execution gardee (tour, hook ou callback) : sa course avec le watchdog et les bases de sa
 	 * mesure d'attente ({@code startCpuNanos} &lt; 0 : pas de mesure).
 	 */
-	private record Execution(AtomicBoolean settled, ScheduledFuture<?> watchdog, long startNanos, long startCpuNanos) {}
+	private record Execution(AtomicBoolean settled, ScheduledFuture<?> watchdog, long startNanos, long startCpuNanos, AtomicLong firedNanos) {}
 
 	/**
 	 * Arme le backstop wall-clock d'une execution et pose la base de sa mesure d'attente : APRES la
@@ -1762,24 +1741,28 @@ public class PolyglotEntityAI extends EntityAI {
 	 * joueur. En isolate externe, le guest tourne dans un autre processus : temps CPU inutilisable.
 	 */
 	private Execution armWatchdog() {
+		hostCalls = 0;
+		loadingEntry = false;
 		final Context running = context;
 		final AtomicBoolean settled = new AtomicBoolean(false);
 		long startCpu = !externalIsolate && CPU_TIME_SUPPORTED ? THREAD_MX.getCurrentThreadCpuTime() : -1L;
+		final AtomicLong fired = new AtomicLong();
 		ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
 			if (settled.compareAndSet(false, true)) {
+				fired.set(System.nanoTime());
 				PolyglotSandbox.interruptAsync(running);
 			}
 		}, turnWallClockLimitMs);
-		return new Execution(settled, watchdog, System.nanoTime(), startCpu);
+		return new Execution(settled, watchdog, System.nanoTime(), startCpu, fired);
 	}
 
 	/**
 	 * Fin d'une execution, dans son finally : resout la course avec le watchdog (cf {@link #runIA}) puis
 	 * compte le temps bloque. Une IA qui a epuise son budget d'attente est neutralisee.
 	 */
-	private void settle(Execution execution) throws LeekRunException {
+	private void settle(Execution execution, long ops) throws LeekRunException {
 		boolean idleExhausted = chargeIdleTime(execution);
-		boolean nativeExhausted = chargeUnexplainedTime(execution);
+		boolean nativeExhausted = chargeUnexplainedTime(execution, ops);
 		if (!winRace(execution.settled(), execution.watchdog())) {
 			throw onWallClockTimeout(execution);
 		}
@@ -1808,11 +1791,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 * apres trop de depassements sur le combat, on neutralise l'IA pour borner le cout total.
 	 */
 	private LeekRunException onWallClockTimeout(Execution execution) {
+		// Avant la fermeture du contexte, qui prend son temps : seul compte le retard du tour sur le tir.
+		long overshootMs = (System.nanoTime() - execution.firedNanos().get()) / 1_000_000;
 		closeContext();
-		long overshootMs = (System.nanoTime() - execution.startNanos()) / 1_000_000 - turnWallClockLimitMs;
 		if (overshootMs > NATIVE_OVERSHOOT_MS) {
-			disable("apres un tour fini " + overshootMs + " ms apres son echeance (" + turnWallClockLimitMs
-				+ " ms) : travail natif que l'interruption ne coupe pas");
+			disable("apres un tour fini " + overshootMs + " ms apres l'interruption : travail natif qu'elle ne coupe pas");
 		}
 		// Python seul : GraalPy retient de la memoire dans l'isolate partage a chaque contexte, a
 		// proportion du code execute, jusqu'au redemarrage du processus ; GraalJS non.
@@ -1862,6 +1845,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// HostAccess.NONE ne gene PAS un appel host -> guest d'une Value executable (il ne gate que
 			// l'acces du guest aux objets hote) ; cf entry.execute() de runIA, meme contexte.
 			Value value = (guestArgs == null || guestArgs.length == 0) ? fn.execute() : fn.execute(guestArgs);
+			throwIfOpsExhausted();
 			return TypeMarshaller.toJava(value, this);
 		} catch (PolyglotException e) {
 			throw mapException(e);
@@ -1875,7 +1859,7 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 			throw outOfMemory(t);
 		} finally {
-			settle(execution);
+			settle(execution, operationsOrZero());
 		}
 	}
 
@@ -1985,21 +1969,19 @@ public class PolyglotEntityAI extends EntityAI {
 	 * lente mais qui calcule en code guest est payee par ses ops ; une IA qui remplit ses tours d'ops
 	 * pour masquer du natif reste bornee par son budget d'ops, comme une IA legitime.
 	 */
-	private boolean chargeUnexplainedTime(Execution execution) {
-		if (execution.startCpuNanos() < 0) {
+	private boolean chargeUnexplainedTime(Execution execution, long ops) {
+		// Sans compteur deterministe, getOperations() derive lui-meme du temps CPU : rien a comparer.
+		// Le chargement de l'entree parse les sources et les modules importes (GraalPy : ~10 us par
+		// caractere), sans ops en face : il n'est borne que par le watchdog, une fois par combat.
+		if (execution.startCpuNanos() < 0 || statementCounter == null || loadingEntry) {
 			return false;
 		}
 		long nowCpu = THREAD_MX.getCurrentThreadCpuTime();
 		if (nowCpu < 0) {
 			return false;
 		}
-		long ops;
-		try {
-			ops = Math.max(0, getOperations());
-		} catch (Exception e) {
-			return false;
-		}
-		long unexplained = nowCpu - execution.startCpuNanos() - ops * CPU_NANOS_PER_OP - UNEXPLAINED_TURN_TOLERANCE_NANOS;
+		long paid = Math.max(0, ops) * CPU_NANOS_PER_OP + hostCalls * CPU_NANOS_PER_HOST_CALL;
+		long unexplained = nowCpu - execution.startCpuNanos() - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS;
 		if (unexplained <= 0) {
 			return false;
 		}
@@ -2127,6 +2109,14 @@ public class PolyglotEntityAI extends EntityAI {
 		} catch (LeekRunException e) {
 			opsExhausted = true;
 			throw e;
+		}
+	}
+
+	private long operationsOrZero() {
+		try {
+			return getOperations();
+		} catch (Exception e) {
+			return 0;
 		}
 	}
 
