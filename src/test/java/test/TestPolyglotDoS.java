@@ -145,11 +145,119 @@ public class TestPolyglotDoS extends FightTestBase {
 	public void uninterruptibleNativeDisablesAiAfterOneTurn() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
-			// L'exponentiation BigInt ne passe par aucun safepoint : l'interruption ne la coupe pas (~3 s ici).
-			PolyglotEntityAI ai = ai(sb, "js", "function turn(){ var x = 3n ** 40000000n; return 1; }", 200);
+			// Le parseur ne passe par aucun safepoint : un source de quelques Mo l'occupe plus d'1 s
+			// au-dela de l'echeance, que l'interruption ne coupe pas.
+			String src = "var a = 0;\n".repeat(300_000) + "function turn(){ return 1; }";
+			PolyglotEntityAI ai = ai(sb, "js", src, 200);
 			expectTooMuchOperations(ai, "le tour aurait du depasser son echeance");
 			assertDisabledReturnsImmediately(ai);
 		}
+	}
+
+	/** Natif non paye par les ops, sous le watchdog : neutralise en quelques tours, sans attendre 64. */
+	private void assertUnpaidNativeWorkDisablesAi(String lang, String src) throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
+			PolyglotEntityAI ai = ai(sb, lang, src, 5_000);
+			for (int turn = 0; turn < 6; turn++) {
+				try {
+					ai.runIA();
+				} catch (LeekRunException e) {
+					Assert.assertEquals(Error.TOO_MUCH_OPERATIONS, e.getError());
+					assertDisabledReturnsImmediately(ai);
+					return;
+				}
+			}
+			Assert.fail("l'IA aurait du etre neutralisee pour calcul natif non paye");
+		}
+	}
+
+	@Test(timeout = 120_000)
+	public void jsUnpaidNativeWorkDisablesAi() throws Exception {
+		// 3n ** 40000n : 63 400 bits, sous le plafond ; chaque toString coute ~1 ms pour 1 op.
+		assertUnpaidNativeWorkDisablesAi("js", "var x = 3n ** 40000n;\nfunction turn(){ var n = 0; for (var i = 0; i < 1500; i++) n += x.toString().length; return n; }");
+	}
+
+	@Test(timeout = 120_000)
+	public void pythonUnpaidNativeWorkDisablesAi() throws Exception {
+		assertUnpaidNativeWorkDisablesAi("python", "b = bytes(1 << 26)\ndef turn():\n    n = 0\n    for i in range(40):\n        n += b.find(b'\\x01')\n    return n\n");
+	}
+
+	/** Calcul guest lourd mais paye par ses ops : jamais neutralise. */
+	@Test(timeout = 120_000)
+	public void jsHeavyGuestComputeIsNotDisabled() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI ai = ai(sb, "js", "function turn(){ var a = []; for (var i = 0; i < 300000; i++) a.push((i * 7919) % 300007); a.sort(function(x, y){ return x - y; }); var s = 0; for (var j = 0; j < 3000000; j++) s += j % 7; return 1; }", 5_000);
+			for (int i = 0; i < 8; i++) {
+				Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			}
+		}
+	}
+
+	/** Entiers plafonnes dans l'image isolate (patches graaljs / graalpython) : refus immediat, l'IA continue. */
+	@Test(timeout = 60_000)
+	public void jsBigIntSizeIsCapped() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			String src = "function turn(){ var refused = 0;\n"
+				+ " [function(){ return 3n ** 60000000n; }, function(){ return 1n << 100000000n; }, function(){ return BigInt('9'.repeat(5000000)); },"
+				+ "  function(){ var x = 2n ** 40000n; return x * x; }, function(){ return BigInt.asUintN(1000000, -1n); }]"
+				+ " .forEach(function(f){ try { f(); } catch (e) { if (e instanceof RangeError) refused++; } });\n"
+				+ " var ok = (2n ** 65535n).toString(2).length === 65536 && BigInt.asUintN(64, -1n) === 18446744073709551615n;\n"
+				+ " return refused * 10 + (ok ? 1 : 0); }";
+			PolyglotEntityAI ai = ai(sb, "js", src, 5_000);
+			long start = System.nanoTime();
+			Assert.assertEquals(51L, ((Number) ai.runIA()).longValue());
+			Assert.assertTrue("refus immediats", (System.nanoTime() - start) / 1_000_000 < 3_000);
+		}
+	}
+
+	@Test(timeout = 60_000)
+	public void pythonIntSizeIsCapped() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			String src = "import math, random\n"
+				+ "def turn():\n"
+				+ "    refused = 0\n"
+				+ "    for f in (lambda: 3 ** 60000000, lambda: 1 << 100000000, lambda: (2 ** 40000) * (2 ** 40000),\n"
+				+ "              lambda: math.factorial(10 ** 6), lambda: math.comb(10 ** 6, 300000), lambda: math.perm(10 ** 6, 300000),\n"
+				+ "              lambda: pow(7, 3 ** 20000 + 1, 3 ** 20000 + 1), lambda: int('f' * 4000000, 16), lambda: random.getrandbits(10 ** 9)):\n"
+				+ "        try:\n"
+				+ "            f()\n"
+				+ "        except OverflowError:\n"
+				+ "            refused += 1\n"
+				+ "    ok = (2 ** 65535).bit_length() == 65536 and math.factorial(5000) > 0 and pow(7, 2 ** 64 + 13, 10 ** 9 + 7) == 948541898\n"
+				+ "    return refused * 10 + (1 if ok else 0)\n";
+			PolyglotEntityAI ai = ai(sb, "python", src, 5_000);
+			long start = System.nanoTime();
+			Assert.assertEquals(91L, ((Number) ai.runIA()).longValue());
+			Assert.assertTrue("refus immediats", (System.nanoTime() - start) / 1_000_000 < 3_000);
+		}
+	}
+
+	/** Boucle native sur une taille virtuelle (sans memoire) : l'interruption du watchdog y atterrit. */
+	private void assertNativeLoopInterrupted(String lang, String src) throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
+			PolyglotEntityAI ai = ai(sb, lang, src, 300);
+			long start = System.nanoTime();
+			expectTooMuchOperations(ai, "la boucle native aurait du etre interrompue");
+			long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+			Assert.assertTrue("interrompue vite (etait " + elapsedMs + " ms)", elapsedMs < 1_300);
+		}
+	}
+
+	@Test(timeout = 60_000)
+	public void jsArrayLikeLoopIsInterrupted() throws Exception {
+		assertNativeLoopInterrupted("js", "function turn(){ return Array.prototype.indexOf.call({length: 2**53 - 1}, 1); }");
+		assertNativeLoopInterrupted("js", "function turn(){ return Array.prototype.shift.call({length: 2**53 - 1}); }");
+		assertNativeLoopInterrupted("js", "function turn(){ return Array.prototype.toSorted.call({length: 2**28}).length; }");
+	}
+
+	@Test(timeout = 60_000)
+	public void pythonIteratorLoopIsInterrupted() throws Exception {
+		assertNativeLoopInterrupted("python", "def turn():\n    return max(iter(range(10 ** 10)))\n");
 	}
 
 	/** Source trop longue refusee par chaque chemin d'evaluation ; les petites sources marchent comme avant. */

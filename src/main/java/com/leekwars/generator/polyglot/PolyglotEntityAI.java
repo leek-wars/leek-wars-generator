@@ -123,6 +123,17 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Coupure NON déterministe, comme le backstop wall-clock.
 	 */
 	private static final long IDLE_FIGHT_BUDGET_NANOS = 1_000_000_000L;
+	/**
+	 * Temps CPU accorde par operation comptee. Mesure sur les IA des tests (JS et Python) : 12 a
+	 * 70 ns en regime etabli, 300 au pire au 1er tour (chargement du module). Le temps CPU au-dela
+	 * de ce que les ops payent est du travail natif non facture (BigInt.toString, bytes.find,
+	 * JSON.parse...) : quelques ops qui en occupent des secondes, sous le watchdog.
+	 */
+	private static final long CPU_NANOS_PER_OP = 250;
+	/** Temps CPU inexplique tolere par tour (le 1er tour parse le source). */
+	private static final long UNEXPLAINED_TURN_TOLERANCE_NANOS = 250_000_000L;
+	/** Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. */
+	private static final long UNEXPLAINED_FIGHT_BUDGET_NANOS = 1_000_000_000L;
 
 	private final String languageId;
 	private final String source;
@@ -146,6 +157,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private boolean disabled;                  // IA neutralisee apres trop de depassements wall-clock ou d'attente
 	private boolean opsExhausted;              // budget d'ops du tour epuise : le guest a pu attraper l'exception, cf ops(int)
 	private long idleNanos;                    // temps bloque compte sur le combat, cf chargeIdleTime
+	private long unexplainedNanos;             // temps CPU non paye par des ops sur le combat, cf chargeUnexplainedTime
 
 	/**
 	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
@@ -857,9 +869,12 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String JS_CHARGE_GUARD =
 		"(function(){var C=globalThis.__lw_charge;if(!C)return;"
 		+ "var acc=0;var FLUSH=4096;function ch(n){acc+=n;if(acc>=FLUSH){C(acc);acc=0;}}"
+		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
+		// ramenait {length: 2**32} a 0.
+		+ "function L(o){var n=Number(o.length);return n>0?Math.min(Math.floor(n),9007199254740991):0;}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
 		+ "function wrapLen(name){var o=Array.prototype[name];if(!o)return;"
-		+ "Object.defineProperty(Array.prototype,name,{value:function(){ch(this.length>>>0);return o.apply(this,arguments);},writable:false,configurable:false});}"
+		+ "Object.defineProperty(Array.prototype,name,{value:function(){ch(L(this));return o.apply(this,arguments);},writable:false,configurable:false});}"
 		+ "['sort','fill','reverse','join','copyWithin','splice'].forEach(wrapLen);"
 		// copie -> cout = longueur du RESULTAT (facture APRES, exact)
 		+ "function wrapRes(name){var o=Array.prototype[name];if(!o)return;"
@@ -869,7 +884,7 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "var RP=String.prototype.repeat;if(RP)Object.defineProperty(String.prototype,'repeat',{value:function(){var r=RP.apply(this,arguments);ch(r.length>>>0);return r;},writable:false,configurable:false});"
 		// Tableaux types : memes parcours natifs que Array, longueur du receveur facturee avant.
 		+ "var TA=Object.getPrototypeOf(Int8Array.prototype);['sort','fill','reverse','join','copyWithin'].forEach(function(n){var o=TA[n];if(!o)return;"
-		+ "Object.defineProperty(TA,n,{value:function(){ch(this.length>>>0);return o.apply(this,arguments);},writable:false,configurable:false});});"
+		+ "Object.defineProperty(TA,n,{value:function(){ch(L(this));return o.apply(this,arguments);},writable:false,configurable:false});});"
 		// Sources evaluees a l'execution, cf MAX_EVAL_SOURCE_CHARS. eval enveloppe devient un eval
 		// indirect (portee globale) ; les 4 constructeurs de fonctions sont remplaces la ou le joueur
 		// peut les atteindre (global et .constructor de leur prototype).
@@ -1764,10 +1779,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private void settle(Execution execution) throws LeekRunException {
 		boolean idleExhausted = chargeIdleTime(execution);
+		boolean nativeExhausted = chargeUnexplainedTime(execution);
 		if (!winRace(execution.settled(), execution.watchdog())) {
 			throw onWallClockTimeout(execution);
 		}
-		if (idleExhausted) {
+		if (idleExhausted || nativeExhausted) {
 			closeContext();
 			throw new LeekRunException(Error.TOO_MUCH_OPERATIONS);
 		}
@@ -1960,6 +1976,38 @@ public class PolyglotEntityAI extends EntityAI {
 			return false;
 		}
 		disable(": " + idleNanos / 1_000_000 + " ms passees a attendre sans calculer (sleep, verrou...)");
+		return true;
+	}
+
+	/**
+	 * Compte le temps CPU de l'execution qui s'acheve que ses operations ne payent pas, cf
+	 * {@link #CPU_NANOS_PER_OP}. Vrai si l'IA vient d'epuiser son budget : elle est neutralisee. Une IA
+	 * lente mais qui calcule en code guest est payee par ses ops ; une IA qui remplit ses tours d'ops
+	 * pour masquer du natif reste bornee par son budget d'ops, comme une IA legitime.
+	 */
+	private boolean chargeUnexplainedTime(Execution execution) {
+		if (execution.startCpuNanos() < 0) {
+			return false;
+		}
+		long nowCpu = THREAD_MX.getCurrentThreadCpuTime();
+		if (nowCpu < 0) {
+			return false;
+		}
+		long ops;
+		try {
+			ops = Math.max(0, getOperations());
+		} catch (Exception e) {
+			return false;
+		}
+		long unexplained = nowCpu - execution.startCpuNanos() - ops * CPU_NANOS_PER_OP - UNEXPLAINED_TURN_TOLERANCE_NANOS;
+		if (unexplained <= 0) {
+			return false;
+		}
+		unexplainedNanos += unexplained;
+		if (unexplainedNanos < UNEXPLAINED_FIGHT_BUDGET_NANOS) {
+			return false;
+		}
+		disable(": " + unexplainedNanos / 1_000_000 + " ms de calcul natif que ses operations ne payent pas");
 		return true;
 	}
 
