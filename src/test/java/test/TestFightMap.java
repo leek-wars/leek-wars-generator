@@ -184,7 +184,7 @@ public class TestFightMap {
 		Map map = Map.generateMap(fight.getState(), com.leekwars.generator.state.State.CONTEXT_GARDEN, 18, 18, 60, teams, custom);
 		Assert.assertEquals(9, map.getType());
 		int position = map.getId() - 1000;
-		Assert.assertTrue("Une position de la liste", position >= 0 && position < 10);
+		Assert.assertTrue("Une position de la liste", position >= 0 && position < com.leekwars.generator.maps.ChessMap.POSITIONS.length);
 		int pieces = 0, blocks = 0;
 		for (int i = 0; i < map.getNbCell(); i++) {
 			Cell c = map.getCell(i);
