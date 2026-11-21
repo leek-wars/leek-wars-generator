@@ -85,6 +85,28 @@ public class TestFightFunctionsV5 {
 		return lastFile.getCompiledCode().getJavaCode();
 	}
 
+	// ---- null passé à un paramètre integer : 0 jusqu'à la v4, « rien » en v5 ----
+
+	@Test
+	public void nullIntegerArgumentIsZeroInV4() throws Exception {
+		// null vaut 0 : l'entité 0 (leek1), la case 0
+		Assert.assertEquals("[true, " + leek1.getFId() + "]", eval(4, "[isAlive(null), getEntityOnCell(getCell(null))]"));
+		Assert.assertEquals(eval(4, "getCellDistance(0, 5)"), eval(4, "getCellDistance(null, 5)"));
+	}
+
+	@Test
+	public void nullIntegerArgumentIsNothingInV5() throws Exception {
+		// Sans ennemi (getNearestEnemy() = null en v5) : aucune action, rien n'est visé
+		// useWeapon(null) rend sa valeur par défaut, USE_FAILED (0), sans viser personne
+		var e = leek2.getFId();
+		var ai = compile(5, false, "setWeapon(WEAPON_PISTOL); var before = getLife(" + e + "); return [useWeapon(null), getLife(" + e + ") == before];");
+		Assert.assertEquals("[0, true]", ai.export(ai.runIA()));
+		Assert.assertEquals("0", eval(5, "moveToward(null)"));
+		Assert.assertEquals("false", eval(5, "isAlive(null)"));
+		// Une fonction qui rend un integer rend sa valeur par défaut (0) : plus la distance depuis la case 0
+		Assert.assertEquals("[0, " + eval(4, "getCellDistance(0, 5)") + "]", eval(5, "[getCellDistance(null, 5), getCellDistance(0, 5)]"));
+	}
+
 	// ---- -1 → null pour « aucun » ----
 
 	@Test
