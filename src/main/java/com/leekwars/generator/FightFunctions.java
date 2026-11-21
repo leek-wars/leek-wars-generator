@@ -13,6 +13,10 @@ public class FightFunctions {
 
 	static {
 
+		// `.since(5, …)` : la fonction a d'autres signatures ou un autre comportement pour les
+		// IA en LeekScript 5, implémentés par les méthodes Java `<nom>_v5` (cf LeekFunctions.since).
+		// Les versions 1 à 4 gardent la déclaration et la méthode d'origine.
+
 		method("getLife", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
@@ -207,7 +211,7 @@ public class FightFunctions {
 		method("getSummoner", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("isStatic", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.BOOL),
@@ -246,11 +250,11 @@ public class FightFunctions {
 		method("getWeaponMinRange", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getWeaponMaxRange", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getWeaponLaunchType", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT_OR_NULL),
@@ -258,7 +262,7 @@ public class FightFunctions {
 		method("getWeaponCost", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getWeaponEffects", "Weapon", 125, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT }),
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL)),
@@ -306,7 +310,7 @@ public class FightFunctions {
 		method("getWeaponMaxUses", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 
 		/**
 		 * Chip
@@ -370,7 +374,7 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 		});
 		method("getLeekOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT }).setMaxVersion(3);
-		method("getEntityOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT });
+		method("getEntityOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT }).since(5, Type.INT_OR_NULL);
 		method("getCellContent", "Field", 6, true, Type.INT, new Type[] { Type.INT });
 		method("isEmptyCell", "Field", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("isObstacle", "Field", 10, true, Type.BOOL, new Type[] { Type.INT });
@@ -396,15 +400,15 @@ public class FightFunctions {
 		method("getBulbType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getPlantType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		// Éveil des plantes : entité qui vient d'entrer dans la zone et qui fait jouer la
 		// plante. Même valeur que le premier argument de la fonction confiée au summon(),
 		// pour les IA qui préfèrent la lire que la déclarer. -1 hors d'un réveil.
-		method("getPlantTrigger", "Entity", 15, true, Type.INT, new Type[0]);
+		method("getPlantTrigger", "Entity", 15, true, Type.INT, new Type[0]).since(5, Type.INT_OR_NULL);
 		// Rayon de la zone d'Éveil, en cases. 0 = l'entité joue son tour comme tout le
 		// monde. C'est un cercle au sens LW (distance de cases), donc l'IA refait le test
 		// du moteur avec getCellDistance(case, getCell(plante)) <= getAwakeningZone(plante).
@@ -421,14 +425,14 @@ public class FightFunctions {
 		method("getMobType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getChestType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
-		method("getNearestEnemy", "Fight", 25, true, Type.INT, new Type[0]);
+		}).since(5, Type.INT_OR_NULL);
+		method("getNearestEnemy", "Fight", 25, true, Type.INT, new Type[0]).since(5, Type.INT_OR_NULL);
 		method("getFarestEnemy", "Fight", 31, true, Type.INT, new Type[0]).setMaxVersion(3);
-		method("getFarthestEnemy", "Fight", 31, true, Type.INT, new Type[0]);
+		method("getFarthestEnemy", "Fight", 31, true, Type.INT, new Type[0]).since(5, Type.INT_OR_NULL);
 		method("getTurn", "Fight", 15, true, Type.INT, new Type[0]);
 		method("getAliveEnemies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAliveEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
@@ -440,9 +444,9 @@ public class FightFunctions {
 		method("getEnemies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getEnemiesCount", "Fight", 25, true, Type.INT, new Type[0]);
-		method("getNearestAlly", "Fight", 25, true, Type.INT, new Type[0]);
+		method("getNearestAlly", "Fight", 25, true, Type.INT, new Type[0]).since(5, Type.INT_OR_NULL);
 		method("getFarestAlly", "Fight", 31, true, Type.INT, new Type[0]).setMaxVersion(3);
-		method("getFarthestAlly", "Fight", 31, true, Type.INT, new Type[0]);
+		method("getFarthestAlly", "Fight", 31, true, Type.INT, new Type[0]).since(5, Type.INT_OR_NULL);
 		method("getAliveAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
 		method("getAliveAlliesCount", "Fight", 100, true, Type.INT, new Type[0]);
 		method("getDeadAllies", "Fight", 100, true, Type.ARRAY_INT, new Type[0]);
@@ -460,20 +464,20 @@ public class FightFunctions {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getCellToUseWeaponOnCell", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getCellToUseChip", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getCellToUseChipOnCell", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
-		});
+		}).since(5, Type.INT_OR_NULL);
 		method("getEnemiesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		method("getAlliesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		// keepNull : la cible arrive brute à la surcharge Object de FightClass, null ne vaut pas 0

@@ -1439,4 +1439,62 @@ public class FightClass {
 		ai.getFight().getState().statistics.setLoadout(entity);
 		return true;
 	}
+
+	// ---- LeekScript 5 : null au lieu de -1 pour « aucun » ----
+
+	public static Long getNearestEnemy_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getNearestEnemy(ai));
+	}
+
+	public static Long getFarthestEnemy_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getFarthestEnemy(ai));
+	}
+
+	public static Long getNearestAlly_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getNearestAlly(ai));
+	}
+
+	public static Long getFarthestAlly_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getFarthestAlly(ai));
+	}
+
+	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1) throws LeekRunException {
+		return V5.orNull(getCellToUseWeapon(ai, value1));
+	}
+
+	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return V5.orNull(getCellToUseWeapon(ai, value1, value2));
+	}
+
+	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		return V5.orNull(getCellToUseWeapon(ai, value1, value2, value3));
+	}
+
+	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1) throws LeekRunException {
+		return V5.orNull(getCellToUseWeaponOnCell(ai, value1));
+	}
+
+	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return V5.orNull(getCellToUseWeaponOnCell(ai, value1, value2));
+	}
+
+	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		return V5.orNull(getCellToUseWeaponOnCell(ai, value1, value2, value3));
+	}
+
+	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object t) throws LeekRunException {
+		return V5.orNull(getCellToUseChip(ai, chip, t));
+	}
+
+	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object t, Object value3) throws LeekRunException {
+		return V5.orNull(getCellToUseChip(ai, chip, t, value3));
+	}
+
+	public static Long getCellToUseChipOnCell_v5(EntityAI ai, Object chip, Object cell) throws LeekRunException {
+		return V5.orNull(getCellToUseChipOnCell(ai, chip, cell));
+	}
+
+	public static Long getCellToUseChipOnCell_v5(EntityAI ai, Object chip, Object cell, Object value3) throws LeekRunException {
+		return V5.orNull(getCellToUseChipOnCell(ai, chip, cell, value3));
+	}
 }

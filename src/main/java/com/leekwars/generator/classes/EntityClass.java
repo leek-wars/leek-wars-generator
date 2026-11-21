@@ -1243,4 +1243,50 @@ public class EntityClass {
 		}
 		return l.getItemUses((int) item);
 	}
+
+	// ---- LeekScript 5 : null au lieu de -1 pour « aucun » ----
+
+	public static Long getMobType_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getMobType(ai));
+	}
+
+	public static Long getMobType_v5(EntityAI ai, Object value) throws LeekRunException {
+		return V5.orNull(getMobType(ai, value));
+	}
+
+	public static Long getChestType_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getChestType(ai));
+	}
+
+	public static Long getChestType_v5(EntityAI ai, Object value) throws LeekRunException {
+		return V5.orNull(getChestType(ai, value));
+	}
+
+	public static Long getBulbType_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getBulbType(ai));
+	}
+
+	public static Long getBulbType_v5(EntityAI ai, Object value) throws LeekRunException {
+		return V5.orNull(getBulbType(ai, value));
+	}
+
+	public static Long getPlantType_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getPlantType(ai));
+	}
+
+	public static Long getPlantType_v5(EntityAI ai, Object value) throws LeekRunException {
+		return V5.orNull(getPlantType(ai, value));
+	}
+
+	public static Long getSummoner_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getSummoner(ai));
+	}
+
+	public static Long getSummoner_v5(EntityAI ai, Object value) throws LeekRunException {
+		return V5.orNull(getSummoner(ai, value));
+	}
+
+	public static Long getPlantTrigger_v5(EntityAI ai) throws LeekRunException {
+		return V5.orNull(getPlantTrigger(ai));
+	}
 }

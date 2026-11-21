@@ -507,4 +507,38 @@ public class WeaponClass {
 			return -1l;
 		return (long) template.getAttack().getMaxUses();
 	}
+
+	// ---- LeekScript 5 : null au lieu de -1 pour « aucune arme » ----
+
+	public static Long getWeaponMinRange_v5(EntityAI ai) {
+		return V5.orNull(getWeaponMinRange(ai));
+	}
+
+	public static Long getWeaponMinRange_v5(EntityAI ai, long id) {
+		return V5.orNull(getWeaponMinRange(ai, id));
+	}
+
+	public static Long getWeaponMaxRange_v5(EntityAI ai) {
+		return V5.orNull(getWeaponMaxRange(ai));
+	}
+
+	public static Long getWeaponMaxRange_v5(EntityAI ai, long id) {
+		return V5.orNull(getWeaponMaxRange(ai, id));
+	}
+
+	public static Long getWeaponCost_v5(EntityAI ai) {
+		return V5.orNull(getWeaponCost(ai));
+	}
+
+	public static Long getWeaponCost_v5(EntityAI ai, long id) {
+		return V5.orNull(getWeaponCost(ai, id));
+	}
+
+	public static Long getWeaponMaxUses_v5(EntityAI ai) {
+		return V5.orNull(getWeaponMaxUses(ai));
+	}
+
+	public static Long getWeaponMaxUses_v5(EntityAI ai, long id) {
+		return V5.orNull(getWeaponMaxUses(ai, id));
+	}
 }

@@ -319,4 +319,10 @@ public class FieldClass {
 		// Nexus (the first map) is -1 so it's + 2
 		return ai.getState().getMap().getType() + 2;
 	}
+
+	// ---- LeekScript 5 : null au lieu de -1 pour « aucun » ----
+
+	public static Long getEntityOnCell_v5(EntityAI ai, long c) {
+		return V5.orNull(getEntityOnCell(ai, c));
+	}
 }
