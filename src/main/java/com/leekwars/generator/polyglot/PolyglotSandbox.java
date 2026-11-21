@@ -1,5 +1,6 @@
 package com.leekwars.generator.polyglot;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -349,6 +350,7 @@ public class PolyglotSandbox implements AutoCloseable {
 		Engine.Builder builder = Engine.newBuilder(languageId)
 				.sandbox(SandboxPolicy.ISOLATED)
 				.option("engine.MaxIsolateMemory", memoryOption(isolateMemory(languageId)))
+				.in(InputStream.nullInputStream())
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream());
 		if (externalIsolate) {
@@ -418,6 +420,9 @@ public class PolyglotSandbox implements AutoCloseable {
 				.allowHostClassLoading(false)
 				// La sortie guest (console.log / print) est jetee : sinon une IA pourrait spammer
 				// le stdout/les logs du serveur. (Le logging joueur passera par l'API de combat.)
+				// Entree vide : input() ou sys.stdin.read() finissent aussitot (EOF), quel que soit le stdin
+				// du processus hote, qui pourrait bloquer.
+				.in(InputStream.nullInputStream())
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream())
 				// Cap RAM RETENUE par poireau : le vrai anti-DoS, isole par contexte.

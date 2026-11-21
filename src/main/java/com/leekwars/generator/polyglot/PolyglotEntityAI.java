@@ -107,10 +107,18 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Temps BLOQUE (temps mur moins temps CPU du thread de combat) toléré par tour avant d'être compté.
 	 * Une IA qui attend sans calculer ({@code time.sleep}, {@code Event.wait}, {@code Lock.acquire(timeout)}
 	 * en Python) ne consomme ni statements ni CPU : sous l'échéance wall-clock, elle immobiliserait le
-	 * worker jusqu'à ~5 s par tour sans rien déclencher. Les verrous C de GraalPy sont des types
-	 * immuables : on ne peut pas boucher ces attentes côté guest, d'où la mesure côté hôte.
+	 * worker jusqu'à ~5 s par tour sans rien déclencher. L'image isolate refuse les attentes connues
+	 * ({@link #WAIT_FORBIDDEN_MESSAGE}) : cette mesure reste le filet d'une attente qu'elle ne couvrirait pas.
 	 */
 	private static final long IDLE_TURN_TOLERANCE_NANOS = 100_000_000L;
+	/**
+	 * Message de l'erreur Python levee par toute attente (image isolate : sleep, verrous, files, pipes ;
+	 * prelude : time.sleep), traduite en {@link Error#WAIT_FORBIDDEN}. Identique a celui de LwNoWait
+	 * dans patches/graalpython.patch de graal-isolate.
+	 */
+	private static final String WAIT_FORBIDDEN_MESSAGE = "waiting is not allowed in Leek Wars";
+	/** Message de l'exception guest correspondante, tel que GraalPy le formate. */
+	private static final String WAIT_FORBIDDEN_ERROR = "RuntimeError: " + WAIT_FORBIDDEN_MESSAGE;
 	/**
 	 * Temps bloqué cumulé sur le combat (au-delà de la tolérance par tour) au-delà duquel l'IA est
 	 * neutralisée. Ne compte que les tours qui ont plus attendu que calculé : une IA légitime calcule
@@ -1373,9 +1381,9 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "random.seed(" + seed + ")\n"
 			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
 			+ "time.time_ns = lambda: 0\ntime.monotonic_ns = lambda: 0\ntime.perf_counter_ns = lambda: 0\n"
-			// Attendre est interdit : l'horloge est figee (rien a observer) et une attente immobiliserait
-			// le worker. Les attentes des verrous C (immuables) sont bornees par chargeIdleTime.
-			+ "def sleep(secs):\n    raise RuntimeError('waiting is not allowed in Leek Wars')\n"
+			// Attendre est interdit : l'image isolate refuse deja sleep, verrous, files et pipes avec ce
+			// message (cf WAIT_FORBIDDEN_MESSAGE) ; doublon pour une image qui ne le ferait pas.
+			+ "def sleep(secs):\n    raise RuntimeError('" + WAIT_FORBIDDEN_MESSAGE + "')\n"
 			+ "time.sleep = sleep\ndel sleep\n"
 			+ "time.gmtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
 			+ "time.localtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
@@ -2143,8 +2151,12 @@ public class PolyglotEntityAI extends EntityAI {
 				return unwrapped;
 			}
 		}
+		String message = String.valueOf(e.getMessage());
+		if (message.equals(WAIT_FORBIDDEN_ERROR)) {
+			return new LeekRunException(Error.WAIT_FORBIDDEN);
+		}
 		// Erreur guest (JS/Python) : erreur utilisateur classique.
-		return new LeekRunException(Error.AI_INTERRUPTED, new String[] { String.valueOf(e.getMessage()) });
+		return new LeekRunException(Error.AI_INTERRUPTED, new String[] { message });
 	}
 
 	private static LeekRunException unwrapLeekRunException(Throwable t) {

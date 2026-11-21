@@ -39,13 +39,17 @@ public class TestPolyglotDoS extends FightTestBase {
 		return ai;
 	}
 
-	private static void expectTooMuchOperations(PolyglotEntityAI ai, String message) throws Exception {
+	private static void expectError(PolyglotEntityAI ai, Error error, String message) throws Exception {
 		try {
 			ai.runIA();
 			Assert.fail(message);
 		} catch (LeekRunException e) {
-			Assert.assertEquals(Error.TOO_MUCH_OPERATIONS, e.getError());
+			Assert.assertEquals(error, e.getError());
 		}
+	}
+
+	private static void expectTooMuchOperations(PolyglotEntityAI ai, String message) throws Exception {
+		expectError(ai, Error.TOO_MUCH_OPERATIONS, message);
 	}
 
 	/** Tour suivant d'une IA neutralisee : retour immediat (null), sans attendre le watchdog. */
@@ -83,14 +87,17 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
-	/** Tours qui attendent sans calculer : le 2e epuise le budget d'attente. */
-	private void assertIdleAiDisabled(String src) throws Exception {
+	/** Une attente non rattrapee termine le tour aussitot sur WAIT_FORBIDDEN, sans neutraliser l'IA. */
+	private void assertWaitForbidden(String src) throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
 			PolyglotEntityAI ai = ai(sb, "python", src, 5_000);
-			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue()); // 0,5 s comptees sur 1 s
-			expectTooMuchOperations(ai, "le budget d'attente du combat aurait du etre epuise");
-			assertDisabledReturnsImmediately(ai);
+			for (int i = 0; i < 2; i++) {
+				long start = System.nanoTime();
+				expectError(ai, Error.WAIT_FORBIDDEN, "l'attente aurait du lever WAIT_FORBIDDEN");
+				long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+				Assert.assertTrue("refus immediat attendu (" + elapsedMs + " ms)", i == 0 || elapsedMs < 1_000);
+			}
 		}
 	}
 
@@ -119,15 +126,44 @@ public class TestPolyglotDoS extends FightTestBase {
 			0, "gc.collect ne doit plus forcer de GC");
 	}
 
+	// Les attentes ci-dessous (sauf time.sleep, aussi refuse par le prelude) ne sont refusees que par
+	// l'image isolate (LwNoWait de graal-isolate) : ces tests verrouillent le contrat entre les deux depots.
 	@Test(timeout = 30_000)
-	public void pythonEventWaitDisablesAi() throws Exception {
-		assertIdleAiDisabled("import threading\ndef turn():\n    threading.Event().wait(0.6)\n    return 1\n");
+	public void pythonUncaughtSleepIsWaitForbidden() throws Exception {
+		assertWaitForbidden("import time\ndef turn():\n    time.sleep(3)\n    return 1\n");
 	}
 
 	@Test(timeout = 30_000)
-	public void pythonLockWaitDisablesAi() throws Exception {
-		// Les verrous C de GraalPy sont immuables : seule la mesure hote peut couper cette attente.
-		assertIdleAiDisabled("import _thread\ndef turn():\n    l = _thread.allocate_lock()\n    l.acquire()\n    l.acquire(True, 0.6)\n    return 1\n");
+	public void pythonEventWaitIsForbidden() throws Exception {
+		assertWaitForbidden("import threading\ndef turn():\n    threading.Event().wait(3)\n    return 1\n");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonLockWaitIsForbidden() throws Exception {
+		assertWaitForbidden("import _thread\ndef turn():\n    l = _thread.allocate_lock()\n    l.acquire()\n    l.acquire(True, 3)\n    return 1\n");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonQueueWaitIsForbidden() throws Exception {
+		assertWaitForbidden("import _queue\ndef turn():\n    _queue.SimpleQueue().get(True, 3)\n    return 1\n");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonPipeWaitsAreForbidden() throws Exception {
+		assertWaitForbidden("import os\ndef turn():\n    r, w = os.pipe()\n    os.read(r, 1)\n    return 1\n");
+		assertWaitForbidden("import os\ndef turn():\n    r, w = os.pipe()\n    for _ in range(20):\n        os.write(w, b'x' * 100000)\n    return 1\n");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonStdinIsEmpty() throws Exception {
+		assertFastPythonTurn("import sys\ndef turn():\n    try:\n        input()\n        return 0\n    except EOFError:\n        return len(sys.stdin.read()) + 1\n",
+			1, "input() et sys.stdin.read() doivent finir sur une entree vide");
+	}
+
+	@Test(timeout = 30_000)
+	public void pythonNonWaitingSyncStillWorks() throws Exception {
+		assertFastPythonTurn("import threading, _queue\nl = threading.Lock()\ndef turn():\n    with l:\n        pass\n    e = threading.Event()\n    e.set()\n    q = _queue.SimpleQueue()\n    q.put(4)\n    held = threading.Lock()\n    held.acquire()\n    import os\n    r, w = os.pipe()\n    os.write(w, b'xy')\n    return q.get(True, 3) + e.wait(3) + held.acquire(True, 0) + len(os.read(r, 5))\n",
+			7, "verrou libre, evenement leve, file non vide, acquire(True, 0) et pipe rempli ne doivent pas attendre");
 	}
 
 	@Test(timeout = 60_000)
