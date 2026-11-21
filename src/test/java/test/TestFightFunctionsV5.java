@@ -48,13 +48,17 @@ public class TestFightFunctionsV5 {
 	}
 
 	private EntityAI compile(int version, boolean strict, String code) throws Exception {
+		return compile(version, strict, true, code);
+	}
+
+	private EntityAI compile(int version, boolean strict, boolean operations, String code) throws Exception {
 		long id = COUNTER.incrementAndGet();
 		var file = new AIFile("<v5_" + id + ">", code, System.currentTimeMillis(), version, OWNER, strict);
 		file.setJavaClass("AI_V5_" + id);
 		file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
 		file.setId((int) id);
 		lastFile = file;
-		var ai = (EntityAI) file.compile(new Options(version, strict, false, true, null, true));
+		var ai = (EntityAI) file.compile(new Options(version, strict, false, operations, null, true));
 		Assert.assertEquals(version, ai.getVersion());
 		ai.setEntity(leek1);
 		ai.setLogs(new LeekLog(new FarmerLog(fight, 0), leek1));
@@ -198,5 +202,115 @@ public class TestFightFunctionsV5 {
 		var to = map.getCell(from.getX() + 3, from.getY());
 		if (to == null || !to.available(map)) to = map.getCell(from.getX() - 3, from.getY());
 		map.moveEntity(leek2, to);
+	}
+
+	// ---- getCellToUse* rend une case de getCellsToUse* ----
+
+	/** leek1 emmuré par quatre obstacles, leek2 loin : aucune case de lancement n'est atteignable. */
+	private void wallIn() {
+		var map = fight.getState().getMap();
+		map.clear();
+		var from = leek1.getCell();
+		for (var c : map.getCellsAround(from)) if (c != null) c.setWalkable(false);
+		var far = map.getCell(from.getX() + 12, from.getY());
+		if (far == null) far = map.getCell(from.getX() - 12, from.getY());
+		map.moveEntity(leek2, far);
+	}
+
+	private static final String CELL_FAMILY = "[getCellToUseChip(CHIP_SPARK, e), getCellsToUseChip(CHIP_SPARK, e),"
+		+ " getCellToUseChipOnCell(CHIP_SPARK, getCell(e)), getCellsToUseChipOnCell(CHIP_SPARK, getCell(e)),"
+		+ " getCellToUseWeapon(e), getCellsToUseWeapon(e), getCellToUseWeaponOnCell(getCell(e)), getCellsToUseWeaponOnCell(getCell(e)),"
+		+ " getCellToUseWeapon(WEAPON_MAGNUM, e, []), getCellsToUseWeapon(WEAPON_MAGNUM, e, [])]";
+
+	private String evalCells(int version, String expression) throws Exception {
+		leek1.addWeapon(Weapons.getWeapon("magnum"));
+		leek1.addChip(com.leekwars.generator.chips.Chips.getChip("spark"));
+		var ai = compile(version, false, HOLD_MAGNUM + "return " + expression + ";");
+		return ai.export(ai.runIA());
+	}
+
+	@Test
+	public void walledInSingularAndPluralDisagreeInV4() throws Exception {
+		wallIn();
+		var result = evalCells(4, "[getCellToUseChip(CHIP_SPARK, e), count(getCellsToUseChip(CHIP_SPARK, e)) > 0,"
+			+ " getCellToUseChipOnCell(CHIP_SPARK, getCell(e)), count(getCellsToUseChipOnCell(CHIP_SPARK, getCell(e))) > 0,"
+			+ " getCellToUseWeapon(e), count(getCellsToUseWeapon(e)) > 0, getCellToUseWeaponOnCell(getCell(e)), count(getCellsToUseWeaponOnCell(getCell(e))) > 0]");
+		Assert.assertEquals("[-1, true, -1, true, -1, true, -1, true]", result);
+	}
+
+	@Test
+	public void walledInPluralIsEmptyInV5() throws Exception {
+		wallIn();
+		Assert.assertEquals("[null, [], null, [], null, [], null, [], null, []]", evalCells(5, CELL_FAMILY));
+	}
+
+	@Test
+	public void reachableCellsAreUnchangedInV5() throws Exception {
+		// Carte vide : toutes les cases de lancement sont atteignables, rien ne change
+		fight.getState().getMap().clear();
+		Assert.assertEquals(evalCells(4, CELL_FAMILY), evalCells(5, CELL_FAMILY));
+	}
+
+	/**
+	 * Cases du pluriel que le singulier contredit, sur toutes les cases de la carte du combat
+	 * prises comme cible, pour la puce et pour l'arme : singulier hors du pluriel, ou « aucune »
+	 * alors que le pluriel n'est pas vide (ou l'inverse). Rend aussi si les deux cas (pluriel vide,
+	 * pluriel non vide) ont été vus.
+	 */
+	private String singularOutsidePlural(int version) throws Exception {
+		leek1.addWeapon(Weapons.getWeapon("magnum"));
+		leek1.addChip(com.leekwars.generator.chips.Chips.getChip("spark"));
+		var map = fight.getState().getMap();
+		// Des poches de 3 x 3 cases emmurées (ni chemin ni vue au travers) un peu partout : des
+		// cibles dont aucune case de lancement n'est atteignable
+		for (int id = 20; id < map.getNbCell(); id += 41) {
+			var center = map.getCell(id);
+			if (center == null || !center.available(map)) continue;
+			if (com.leekwars.generator.maps.Pathfinding.getCaseDistance(center, leek1.getCell()) < 6) continue;
+			if (com.leekwars.generator.maps.Pathfinding.getCaseDistance(center, leek2.getCell()) < 6) continue;
+			for (int dx = -2; dx <= 2; dx++) {
+				for (int dy = -2; dy <= 2; dy++) {
+					if (Math.max(Math.abs(dx), Math.abs(dy)) != 2) continue;
+					var c = map.getCell(center.getX() + dx, center.getY() + dy);
+					if (c != null && c.available(map)) c.setWalkable(false);
+				}
+			}
+		}
+		var v5 = version >= 5;
+		var none = v5 ? "null" : "-1";
+		var count = v5 ? "p.count()" : "count(p)";
+		var push = v5 ? "bad.push(c)" : "push(bad, c)";
+		var in = v5 ? "p.inArray(s)" : "inArray(p, s)";
+		var code = HOLD_MAGNUM + "var bad = []; var empty = 0; var some = 0;\n"
+			+ "for (var c = 0; c < " + map.getNbCell() + "; c++) {\n"
+			+ "  for (var k = 0; k < 2; k++) {\n"
+			+ "    var s = k == 0 ? getCellToUseChipOnCell(CHIP_SPARK, c) : getCellToUseWeaponOnCell(c);\n"
+			+ "    var p = k == 0 ? getCellsToUseChipOnCell(CHIP_SPARK, c) : getCellsToUseWeaponOnCell(c);\n"
+			+ "    if (p == null || " + count + " == 0) { empty++; if (s != " + none + ") " + push + "; }\n"
+			+ "    else { some++; if (s == " + none + " || !" + in + ") " + push + "; }\n"
+			+ "  }\n"
+			+ "}\n"
+			+ "return [bad, empty > 0, some > 0];";
+		var ai = compile(version, false, false, code);
+		return ai.export(ai.runIA());
+	}
+
+	@Test
+	public void singularContradictsPluralInV4() throws Exception {
+		var v4 = singularOutsidePlural(4);
+		Assert.assertFalse(v4, v4.startsWith("[[]"));
+	}
+
+	@Test
+	public void singularIsAlwaysInPluralInV5() throws Exception {
+		Assert.assertEquals("[[], true, true]", singularOutsidePlural(5));
+	}
+
+	@Test
+	public void v4CallsTheOriginalCellMethods() throws Exception {
+		var code = "return [getCellsToUseChip(CHIP_SPARK, 1), getCellToUseChipOnCell(CHIP_SPARK, 1), getCellsToUseWeapon(1)];";
+		Assert.assertFalse(javaOf(4, code).contains("_v5"));
+		var v5 = javaOf(5, code);
+		Assert.assertTrue(v5, v5.contains("getCellsToUseChip_v5(") && v5.contains("getCellsToUseWeapon_v5("));
 	}
 }

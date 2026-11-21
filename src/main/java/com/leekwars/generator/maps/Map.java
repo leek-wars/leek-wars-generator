@@ -1178,6 +1178,31 @@ public class Map {
 	}
 
 
+	/**
+	 * Cases que {@link #getAStarPath(Cell, List, List)} peut atteindre depuis `start`, sans limite
+	 * de longueur, avec les mêmes règles : une case praticable, libre, à ignorer ou d'arrivée
+	 * (`ends`). Indexé par id de case.
+	 */
+	public boolean[] getReachableCells(Cell start, List<Cell> cells_to_ignore, List<Cell> ends) {
+		var reached = new boolean[nb_cells];
+		if (start == null) return reached;
+		var passable = new boolean[nb_cells];
+		if (cells_to_ignore != null) for (var c : cells_to_ignore) if (c != null) passable[c.getId()] = true;
+		if (ends != null) for (var c : ends) if (c != null) passable[c.getId()] = true;
+		reached[start.getId()] = true;
+		var queue = new ArrayDeque<Cell>();
+		queue.add(start);
+		while (!queue.isEmpty()) {
+			for (Cell c : getCellsAround(queue.poll())) {
+				if (c == null || reached[c.getId()] || !c.isWalkable()) continue;
+				if (c.getPlayer(this) != null && !passable[c.getId()]) continue;
+				reached[c.getId()] = true;
+				queue.add(c);
+			}
+		}
+		return reached;
+	}
+
 	public List<Cell> getPossibleCastCellsForTarget(Attack attack, Cell target, List<Cell> cells_to_ignore) {
 
 		long start = 0;

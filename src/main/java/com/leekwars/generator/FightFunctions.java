@@ -547,11 +547,11 @@ public class FightFunctions {
 		method("getCellsToUseChip", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
-		});
+		}).since(5);
 		method("getCellsToUseChipOnCell", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
-		});
+		}).since(5);
 		method("getNearestEnemyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getNearestEnemyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 		method("getNearestAllyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
