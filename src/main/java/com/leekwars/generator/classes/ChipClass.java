@@ -458,4 +458,37 @@ public class ChipClass {
 		}
 		return null;
 	}
+
+	// ---- LeekScript 5 : une entité ou une case null est « aucune » ----
+	// Déclarées integer? en v5 : null arrive tel quel au lieu de valoir 0, une vraie entité ou
+	// case. getCooldown sans entité désigne toujours l'entité qui joue.
+
+	public static long getCooldown_v5(EntityAI ai, long chip) throws LeekRunException {
+		return getCooldown(ai, chip);
+	}
+
+	public static Long getCooldown_v5(EntityAI ai, long chip, Object entity) throws LeekRunException {
+		return entity == null ? null : getCooldown(ai, chip, entity);
+	}
+
+	public static boolean canUseChip_v5(EntityAI ai, long chip, Object entity) throws LeekRunException {
+		return entity != null && canUseChip(ai, chip, ai.longint(entity));
+	}
+
+	public static boolean canUseChipOnCell_v5(EntityAI ai, long chip, Object cell) throws LeekRunException {
+		return cell != null && canUseChipOnCell(ai, chip, ai.longint(cell));
+	}
+
+	public static ArrayLeekValue getChipTargets_v5(EntityAI ai, long chip, Object cell) throws LeekRunException {
+		return cell == null ? null : getChipTargets(ai, chip, ai.longint(cell));
+	}
+
+	public static ArrayLeekValue getChipEffectiveArea_v5(EntityAI ai, long chip, Object cell) throws LeekRunException {
+		return cell == null ? null : getChipEffectiveArea(ai, chip, ai.longint(cell));
+	}
+
+	// Une case de départ null est « aucune », pas la case de l'entité : seul l'appel sans elle la désigne
+	public static ArrayLeekValue getChipEffectiveArea_v5(EntityAI ai, long chip, Object cell, Object from) throws LeekRunException {
+		return cell == null || from == null ? null : getChipEffectiveArea(ai, chip, ai.longint(cell), from);
+	}
 }

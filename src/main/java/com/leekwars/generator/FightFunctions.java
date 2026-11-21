@@ -20,91 +20,91 @@ public class FightFunctions {
 		method("getLife", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getForce", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getStrength", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getAgility", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getScience", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getWisdom", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getResistance", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getMagic", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getStat", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
-		});
+		}).since(5);
 		method("getStats", "Entity", 40, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.map(Type.INT, Type.INT), Type.NULL), new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.map(Type.INT, Type.INT)),
-		});
+		}).since(5);
 		method("getCell", "Entity", 5, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL),
-		});
+		}).since(5);
 		method("getWeapon", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL),
-		});
+		}).since(5);
 		method("getName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("getTP", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getMP", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getTotalTP", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getTotalMP", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getTotalLife", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getPower", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getAbsoluteShield", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getRelativeShield", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getDamageReturn", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("setWeapon", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
 		method("say", "Entity", 30, true, Type.BOOL, new Type[] { Type.ANY });
 		method("lama", "Entity", 30, true, Type.VOID, new Type[0]);
@@ -112,102 +112,110 @@ public class FightFunctions {
 		method("getWeapons", "Entity", 50, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
-		});
-		method("isEnemy", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
-		method("isAlly", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
-		method("isAlive", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
-		method("isDead", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT });
+		}).since(5);
+		method("isEnemy", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }));
+		method("isAlly", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }));
+		method("isAlive", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }));
+		method("isDead", "Entity", 15, true, Type.BOOL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }));
 		method("getLeek", "Entity", 5, true, Type.INT, new Type[0]).setMaxVersion(3);
 		method("getEntity", "Entity", 5, true, Type.INT, new Type[0]);
 		method("getChips", "Entity", 40, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
-		});
+		}).since(5);
 		// Composants équipés, désignés par leur id d'objet (COMPONENT_*), comme dans getInventory().
 		method("getComponents", "Entity", 40, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
-		});
+		}).since(5);
 		method("getEffects", "Entity", 25, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_BOOL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_BOOL))),
-		});
+		}).since(5);
 		method("getLaunchedEffects", "Entity", 25, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_BOOL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_BOOL))),
-		});
+		}).since(5);
 		method("getPassiveEffects", "Entity", 125, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
-		});
+		}).since(5);
 		method("getStates", "Entity", 25, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.set(Type.INT), Type.NULL), new Type[] { Type.INT }),
 			new CallableVersion(Type.set(Type.INT)),
-		});
+		}).since(5,
+			new CallableVersion(Type.compound(Type.set(Type.INT), Type.NULL), new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.set(Type.INT)));
 		method("getLevel", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getFrequency", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getCores", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getRAM", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getTeamName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("getCompositionName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("getFarmerName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("getFarmerCountry", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("getTeamID", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getFarmerID", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getAIName", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("getAIPath", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.STRING_OR_NULL),
-		});
+		}).since(5);
 		method("getAIID", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getSummons", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
-		});
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT));
 		method("getType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("isSummon", "Entity", 10, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.BOOL),
-		});
+		}).since(5);
 		method("getSummoner", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
@@ -215,23 +223,23 @@ public class FightFunctions {
 		method("isStatic", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.BOOL),
-		});
+		}).since(5);
 		method("getBirthTurn", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getEntityTurnOrder", "Entity", 30, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getLeekID", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getSide", "Entity", 5, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getItemUses", "Entity", 15, true, Type.INT, new Type[] { Type.INT });
 
 		/**
@@ -294,7 +302,9 @@ public class FightFunctions {
 		method("getWeaponTargets", "Weapon", 40, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		}).since(5);
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getWeaponFailure", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { }),
@@ -305,7 +315,10 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		}).since(5);
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getAllWeapons", "Weapon", 200, true, Type.ARRAY_INT, new Type[0]);
 		method("getWeaponMaxUses", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
@@ -322,7 +335,7 @@ public class FightFunctions {
 		method("getCooldown", "Chip", 30, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
-		});
+		}).since(5);
 		method("useChip", "Chip", 3000, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
@@ -338,9 +351,12 @@ public class FightFunctions {
 		method("isInlineChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("chipNeedLos", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("getChipCooldown", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
-		method("canUseChip", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
-		method("canUseChipOnCell", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT });
-		method("getChipTargets", "Chip", 40, true, Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT });
+		method("canUseChip", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT }).since(5,
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT, Type.INT_OR_NULL }));
+		method("canUseChipOnCell", "Chip", 45, true, Type.BOOL, new Type[] { Type.INT, Type.INT }).since(5,
+			new CallableVersion(Type.BOOL, new Type[] { Type.INT, Type.INT_OR_NULL }));
+		method("getChipTargets", "Chip", 40, true, Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }));
 		method("getChipFailure", "Chip", 15, true, Type.INT, new Type[] { Type.INT });
 		method("isChip", "Chip", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("getChipLaunchType", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
@@ -356,7 +372,9 @@ public class FightFunctions {
 		method("getChipEffectiveArea", "Chip", 78, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
-		});
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }));
 		method("getAllChips", "Chip", 200, true, Type.ARRAY_INT, new Type[0]);
 		method("getChipMaxUses", "Chip", 15, true, Type.INT_OR_NULL, new Type[] { Type.INT });
 
@@ -374,7 +392,8 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 		});
 		method("getLeekOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT }).setMaxVersion(3);
-		method("getEntityOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT }).since(5, Type.INT_OR_NULL);
+		method("getEntityOnCell", "Field", 15, true, Type.INT, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getCellContent", "Field", 6, true, Type.INT, new Type[] { Type.INT });
 		method("isEmptyCell", "Field", 10, true, Type.BOOL, new Type[] { Type.INT });
 		method("isObstacle", "Field", 10, true, Type.BOOL, new Type[] { Type.INT });
@@ -407,7 +426,7 @@ public class FightFunctions {
 		}).since(5, Type.INT_OR_NULL);
 		// Éveil des plantes : entité qui vient d'entrer dans la zone et qui fait jouer la
 		// plante. Même valeur que le premier argument de la fonction confiée au summon(),
-		// pour les IA qui préfèrent la lire que la déclarer. -1 hors d'un réveil.
+		// pour les IA qui préfèrent la lire que la déclarer. -1 hors d'un réveil (null en v5).
 		method("getPlantTrigger", "Entity", 15, true, Type.INT, new Type[0]).since(5, Type.INT_OR_NULL);
 		// Rayon de la zone d'Éveil, en cases. 0 = l'entité joue son tour comme tout le
 		// monde. C'est un cercle au sens LW (distance de cases), donc l'IA refait le test
@@ -415,13 +434,13 @@ public class FightFunctions {
 		method("getAwakeningZone", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		// Entités qui ont déjà réveillé la plante depuis le début de leur dernier tour : y
 		// entrer de nouveau ne la réveillera pas avant leur prochain tour.
 		method("getPlantTriggers", "Entity", 25, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT),
-		});
+		}).since(5);
 		method("getMobType", "Entity", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
@@ -455,21 +474,27 @@ public class FightFunctions {
 		method("getNextPlayer", "Fight", 20, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getPreviousPlayer", "Fight", 20, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
-		});
+		}).since(5);
 		method("getCellToUseWeapon", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
-		}).since(5, Type.INT_OR_NULL);
+		}).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getCellToUseWeaponOnCell", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
-		}).since(5, Type.INT_OR_NULL);
+		}).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getCellToUseChip", "Fight", 38080, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
@@ -538,24 +563,38 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		}).since(5);
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getCellsToUseWeaponOnCell", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		}).since(5);
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 		method("getCellsToUseChip", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
-		}).since(5);
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }));
 		method("getCellsToUseChipOnCell", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
-		}).since(5);
-		method("getNearestEnemyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
-		method("getNearestEnemyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
-		method("getNearestAllyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
-		method("getNearestAllyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT });
+		}).since(5,
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
+			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }));
+		method("getNearestEnemyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
+		method("getNearestEnemyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
+		method("getNearestAllyToCell", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
+		method("getNearestAllyTo", "Fight", 35, true, Type.INT_OR_NULL, new Type[] { Type.INT }).since(5,
+			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
 
 		// Hooks beforeFight() / afterFight()
 		// Nom d'un ensemble enregistré, ou équipement construit en code (format de getLoadout).

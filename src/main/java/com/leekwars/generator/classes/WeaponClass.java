@@ -510,60 +510,45 @@ public class WeaponClass {
 
 	// ---- LeekScript 5 ----
 	// Seul l'appel sans l'argument arme désigne l'arme tenue : un id -1 ou null est une arme
-	// inconnue (null converti en entier vaut 0, qui n'en est pas une), et un null à la place
-	// de la cible ne fait plus prendre le premier argument pour la cible. « Aucune arme » rend
-	// null au lieu de -1.
+	// inconnue. Une cible (entité, case) null est « aucune » : en 2e argument, elle ne fait
+	// plus prendre l'arme pour la cible avec l'arme tenue, et seule, elle ne vaut plus 0 (une
+	// vraie entité ou case). « Aucune arme » rend null au lieu de -1.
 
-	private static Weapon heldWeapon(EntityAI ai) {
-		return ai.getEntity().getWeapon();
+	/** Caractéristique `value` de `weapon`, null s'il n'y a pas d'arme. */
+	private static Long ofWeapon(Weapon weapon, java.util.function.ToLongFunction<Weapon> value) {
+		return weapon == null ? null : value.applyAsLong(weapon);
 	}
 
 	public static Long getWeaponMinRange_v5(EntityAI ai) {
-		return minRange(heldWeapon(ai));
+		return ofWeapon(V5.heldWeapon(ai), w -> w.getAttack().getMinRange());
 	}
 
 	public static Long getWeaponMinRange_v5(EntityAI ai, long id) {
-		return minRange(Weapons.getWeapon((int) id));
-	}
-
-	private static Long minRange(Weapon weapon) {
-		return weapon == null ? null : (long) weapon.getAttack().getMinRange();
+		return ofWeapon(Weapons.getWeapon((int) id), w -> w.getAttack().getMinRange());
 	}
 
 	public static Long getWeaponMaxRange_v5(EntityAI ai) {
-		return maxRange(heldWeapon(ai));
+		return ofWeapon(V5.heldWeapon(ai), w -> w.getAttack().getMaxRange());
 	}
 
 	public static Long getWeaponMaxRange_v5(EntityAI ai, long id) {
-		return maxRange(Weapons.getWeapon((int) id));
-	}
-
-	private static Long maxRange(Weapon weapon) {
-		return weapon == null ? null : (long) weapon.getAttack().getMaxRange();
+		return ofWeapon(Weapons.getWeapon((int) id), w -> w.getAttack().getMaxRange());
 	}
 
 	public static Long getWeaponCost_v5(EntityAI ai) {
-		return cost(heldWeapon(ai));
+		return ofWeapon(V5.heldWeapon(ai), Weapon::getCost);
 	}
 
 	public static Long getWeaponCost_v5(EntityAI ai, long id) {
-		return cost(Weapons.getWeapon((int) id));
-	}
-
-	private static Long cost(Weapon weapon) {
-		return weapon == null ? null : (long) weapon.getCost();
+		return ofWeapon(Weapons.getWeapon((int) id), Weapon::getCost);
 	}
 
 	public static Long getWeaponMaxUses_v5(EntityAI ai) {
-		return maxUses(heldWeapon(ai));
+		return ofWeapon(V5.heldWeapon(ai), w -> w.getAttack().getMaxUses());
 	}
 
 	public static Long getWeaponMaxUses_v5(EntityAI ai, long id) {
-		return maxUses(Weapons.getWeapon((int) id));
-	}
-
-	private static Long maxUses(Weapon weapon) {
-		return weapon == null ? null : (long) weapon.getAttack().getMaxUses();
+		return ofWeapon(Weapons.getWeapon((int) id), w -> w.getAttack().getMaxUses());
 	}
 
 	public static Long getWeaponLaunchType_v5(EntityAI ai) throws LeekRunException {
@@ -571,8 +556,7 @@ public class WeaponClass {
 	}
 
 	public static Long getWeaponLaunchType_v5(EntityAI ai, long id) throws LeekRunException {
-		var weapon = Weapons.getWeapon((int) id);
-		return weapon == null ? null : (long) weapon.getAttack().getLaunchType();
+		return ofWeapon(Weapons.getWeapon((int) id), w -> w.getAttack().getLaunchType());
 	}
 
 	public static boolean isInlineWeapon_v5(EntityAI ai) {
@@ -597,6 +581,8 @@ public class WeaponClass {
 		return getWeaponName(ai);
 	}
 
+	// "" et non null pour une arme inconnue, comme dans les versions précédentes : le nom est
+	// toujours une chaîne (string, pas string?), contrairement aux autres caractéristiques.
 	public static String getWeaponName_v5(EntityAI ai, long id) {
 		var weapon = Weapons.getWeapon((int) id);
 		return weapon == null ? "" : weapon.getName();
@@ -619,39 +605,41 @@ public class WeaponClass {
 		return id == -1 ? null : getWeaponPassiveEffects(ai, id);
 	}
 
-	public static boolean canUseWeapon_v5(EntityAI ai, Object value1) throws LeekRunException {
-		return canUseWeapon(ai, value1);
+	public static boolean canUseWeapon_v5(EntityAI ai, Object target) throws LeekRunException {
+		return target != null && canUseWeapon(ai, target);
 	}
 
-	public static boolean canUseWeapon_v5(EntityAI ai, Object value1, Object value2) throws LeekRunException {
-		return value2 != null && canUseWeapon(ai, value1, value2);
+	public static boolean canUseWeapon_v5(EntityAI ai, Object weapon, Object target) throws LeekRunException {
+		return target != null && canUseWeapon(ai, weapon, target);
 	}
 
-	public static boolean canUseWeaponOnCell_v5(EntityAI ai, Object value1) throws LeekRunException {
-		return canUseWeaponOnCell(ai, value1);
+	public static boolean canUseWeaponOnCell_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cell != null && canUseWeaponOnCell(ai, cell);
 	}
 
-	public static boolean canUseWeaponOnCell_v5(EntityAI ai, Object value1, Object value2) throws LeekRunException {
-		return value2 != null && canUseWeaponOnCell(ai, value1, value2);
+	public static boolean canUseWeaponOnCell_v5(EntityAI ai, Object weapon, Object cell) throws LeekRunException {
+		return cell != null && canUseWeaponOnCell(ai, weapon, cell);
 	}
 
-	public static ArrayLeekValue getWeaponTargets_v5(EntityAI ai, long value1) throws LeekRunException {
-		return getWeaponTargets(ai, value1);
+	// Cible déclarée integer? en v5 à toutes les arités
+	public static ArrayLeekValue getWeaponTargets_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cell == null ? null : getWeaponTargets(ai, ai.longint(cell));
 	}
 
-	public static ArrayLeekValue getWeaponTargets_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return value2 == null ? null : getWeaponTargets(ai, value1, value2);
+	public static ArrayLeekValue getWeaponTargets_v5(EntityAI ai, long weapon, Object cell) throws LeekRunException {
+		return cell == null ? null : getWeaponTargets(ai, weapon, cell);
 	}
 
-	public static ArrayLeekValue getWeaponEffectiveArea_v5(EntityAI ai, long value1) throws LeekRunException {
-		return getWeaponEffectiveArea(ai, value1);
+	public static ArrayLeekValue getWeaponEffectiveArea_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cell == null ? null : getWeaponEffectiveArea(ai, ai.longint(cell));
 	}
 
-	public static ArrayLeekValue getWeaponEffectiveArea_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return value2 == null ? null : getWeaponEffectiveArea(ai, value1, value2);
+	public static ArrayLeekValue getWeaponEffectiveArea_v5(EntityAI ai, long weapon, Object cell) throws LeekRunException {
+		return cell == null ? null : getWeaponEffectiveArea(ai, weapon, cell);
 	}
 
-	public static ArrayLeekValue getWeaponEffectiveArea_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		return value2 == null ? null : getWeaponEffectiveArea(ai, value1, value2, value3);
+	// Une case de départ null est « aucune », pas la case de l'entité : seul l'appel sans elle la désigne
+	public static ArrayLeekValue getWeaponEffectiveArea_v5(EntityAI ai, long weapon, Object cell, Object from) throws LeekRunException {
+		return cell == null || from == null ? null : getWeaponEffectiveArea(ai, weapon, cell, from);
 	}
 }

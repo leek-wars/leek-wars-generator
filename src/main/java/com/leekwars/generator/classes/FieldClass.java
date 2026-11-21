@@ -322,7 +322,8 @@ public class FieldClass {
 
 	// ---- LeekScript 5 : null au lieu de -1 pour « aucun » ----
 
-	public static Long getEntityOnCell_v5(EntityAI ai, long c) {
-		return V5.orNull(getEntityOnCell(ai, c));
+	// Case déclarée integer? en v5 : null arrive tel quel au lieu de valoir 0, une vraie case
+	public static Long getEntityOnCell_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cell == null ? null : V5.orNull(getEntityOnCell(ai, ai.longint(cell)));
 	}
 }

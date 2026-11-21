@@ -313,4 +313,61 @@ public class TestFightFunctionsV5 {
 		var v5 = javaOf(5, code);
 		Assert.assertTrue(v5, v5.contains("getCellsToUseChip_v5(") && v5.contains("getCellsToUseWeapon_v5("));
 	}
+
+	// ---- Une entité, une case ou une cible null est « aucune » ----
+
+	private static final String NULL_ARGUMENTS = "[getLife(n) == getLife(), getCell(n) == getCell(), getName(n), getWeapon(n), getWeapons(n),"
+		+ " getEffects(n), getStats(n) != null, getStat(n, STAT_LIFE) != null, getTeamID(n) == getTeamID(), isSummon(n), isStatic(n), getSummons(n),"
+		+ " getCooldown(CHIP_SPARK, n), getNextPlayer(n) != null, isAlly(n), isEnemy(n), isAlive(n), getStates(n) != null,"
+		+ " getNearestEnemyTo(n) != null, getNearestAllyToCell(n) != null, getEntityOnCell(n),"
+		+ " getCellToUseWeapon(n) != null, getCellsToUseWeapon(n) != null, getCellToUseChip(CHIP_SPARK, n) != null, getCellsToUseChip(CHIP_SPARK, n) != null,"
+		+ " getCellsToUseChipOnCell(CHIP_SPARK, n) != null, canUseWeapon(n), canUseWeaponOnCell(n), canUseChip(CHIP_SPARK, n),"
+		+ " getWeaponTargets(n) != null, getChipTargets(CHIP_SPARK, n) != null, getWeaponEffectiveArea(WEAPON_MAGNUM, getCell(e), n) != null,"
+		+ " getLife() == getLife(getEntity()), getCell() == getCell(getEntity())]";
+
+	@Test
+	public void nullEntityIsMeOrEntityZeroInV4() throws Exception {
+		fight.getState().getMap().clear();
+		moveNextTo();
+		// null vaut soi-même (argument entité optionnel) ou 0, la première entité : leek1 lui-même
+		Assert.assertEquals(0, leek1.getFId());
+		var result = evalCells(4, NULL_ARGUMENTS);
+		Assert.assertEquals("[true, true, \"Test\", 45, [45], [], true, true, true, false, false, [],"
+			+ " 0, true, true, false, true, true, true, false, -1,"
+			+ " true, true, true, true, true, false, false, false, true, true, true, true, true]", result);
+	}
+
+	@Test
+	public void nullEntityIsNoneInV5() throws Exception {
+		fight.getState().getMap().clear();
+		moveNextTo();
+		var result = evalCells(5, NULL_ARGUMENTS);
+		Assert.assertEquals("[false, false, null, null, null, null, false, false, false, null, false, null,"
+			+ " null, false, false, false, false, false, false, false, null,"
+			+ " false, false, false, false, false, false, false, false, false, false, false, true, true]", result);
+	}
+
+	@Test
+	public void nullEntityTypesAreNullableInV5Only() throws Exception {
+		var code = "var a = getNearestAlly(); return [isAlly(a), getStates(a), getEntityOnCell(getCellToUseChip(CHIP_SPARK, a)), getNearestEnemyTo(a)];";
+		Assert.assertEquals(List.of(), strictErrors(5, code));
+		Assert.assertTrue(strictErrors(4, "integer? a = null; return [isAlly(a), getStates(a)];").contains("WARNING DANGEROUS_CONVERSION"));
+	}
+
+	@Test
+	public void reachableCellsKeepOrderAndStop() throws Exception {
+		var map = fight.getState().getMap();
+		map.clear();
+		var from = leek1.getCell();
+		var around = java.util.Arrays.stream(map.getCellsAround(from)).filter(c -> c != null).toList();
+		var c1 = around.get(0);
+		var c2 = around.get(1);
+		Assert.assertEquals(List.of(), map.getReachableCells(from, List.of(), List.of(from)));
+		Assert.assertEquals(List.of(c2, from, c1), map.getReachableCells(from, List.of(c2, from, c1), List.of(from)));
+		// Une case emmurée n'est pas atteinte, les autres gardent leur ordre
+		var walled = map.getCells().stream().filter(c -> com.leekwars.generator.maps.Pathfinding.getCaseDistance(c, from) >= 4
+			&& c.available(map) && java.util.Arrays.stream(map.getCellsAround(c)).allMatch(n -> n != null && n.available(map))).findFirst().get();
+		for (var c : map.getCellsAround(walled)) c.setWalkable(false);
+		Assert.assertEquals(List.of(c1, c2), map.getReachableCells(from, List.of(c1, walled, c2), List.of(from)));
+	}
 }

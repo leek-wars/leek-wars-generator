@@ -1244,6 +1244,445 @@ public class EntityClass {
 		return l.getItemUses((int) item);
 	}
 
+	// ---- LeekScript 5 : une entité null est « aucune » ----
+	// L'appel sans l'argument entité désigne toujours l'entité qui joue ; une entité null (un
+	// getNearestAlly() sans allié, par exemple) n'est plus elle : le résultat vaut celui d'une
+	// entité inconnue, null ou false.
+
+	public static long getLife_v5(EntityAI ai) {
+		return getLife(ai);
+	}
+
+	public static Long getLife_v5(EntityAI ai, Object value) {
+		return value == null ? null : getLife(ai, value);
+	}
+
+	public static long getForce_v5(EntityAI ai) {
+		return getForce(ai);
+	}
+
+	public static Long getForce_v5(EntityAI ai, Object value) {
+		return value == null ? null : getForce(ai, value);
+	}
+
+	public static long getStrength_v5(EntityAI ai) {
+		return getStrength(ai);
+	}
+
+	public static Long getStrength_v5(EntityAI ai, Object value) {
+		return value == null ? null : getStrength(ai, value);
+	}
+
+	public static long getWisdom_v5(EntityAI ai) {
+		return getWisdom(ai);
+	}
+
+	public static Long getWisdom_v5(EntityAI ai, Object value) {
+		return value == null ? null : getWisdom(ai, value);
+	}
+
+	public static long getResistance_v5(EntityAI ai) {
+		return getResistance(ai);
+	}
+
+	public static Long getResistance_v5(EntityAI ai, Object value) {
+		return value == null ? null : getResistance(ai, value);
+	}
+
+	public static long getAgility_v5(EntityAI ai) {
+		return getAgility(ai);
+	}
+
+	public static Long getAgility_v5(EntityAI ai, Object value) {
+		return value == null ? null : getAgility(ai, value);
+	}
+
+	public static long getScience_v5(EntityAI ai) {
+		return getScience(ai);
+	}
+
+	public static Long getScience_v5(EntityAI ai, Object value) {
+		return value == null ? null : getScience(ai, value);
+	}
+
+	public static long getMagic_v5(EntityAI ai) {
+		return getMagic(ai);
+	}
+
+	public static Long getMagic_v5(EntityAI ai, Object value) {
+		return value == null ? null : getMagic(ai, value);
+	}
+
+	public static long getAbsoluteShield_v5(EntityAI ai) {
+		return getAbsoluteShield(ai);
+	}
+
+	public static Long getAbsoluteShield_v5(EntityAI ai, Object value) {
+		return value == null ? null : getAbsoluteShield(ai, value);
+	}
+
+	public static long getRelativeShield_v5(EntityAI ai) {
+		return getRelativeShield(ai);
+	}
+
+	public static Long getRelativeShield_v5(EntityAI ai, Object value) {
+		return value == null ? null : getRelativeShield(ai, value);
+	}
+
+	public static long getDamageReturn_v5(EntityAI ai) {
+		return getDamageReturn(ai);
+	}
+
+	public static Long getDamageReturn_v5(EntityAI ai, Object value) {
+		return value == null ? null : getDamageReturn(ai, value);
+	}
+
+	public static long getFrequency_v5(EntityAI ai) {
+		return getFrequency(ai);
+	}
+
+	public static Long getFrequency_v5(EntityAI ai, Object value) {
+		return value == null ? null : getFrequency(ai, value);
+	}
+
+	public static long getCores_v5(EntityAI ai) {
+		return getCores(ai);
+	}
+
+	public static Long getCores_v5(EntityAI ai, Object value) {
+		return value == null ? null : getCores(ai, value);
+	}
+
+	public static long getRAM_v5(EntityAI ai) {
+		return getRAM(ai);
+	}
+
+	public static Long getRAM_v5(EntityAI ai, Object value) {
+		return value == null ? null : getRAM(ai, value);
+	}
+
+	public static MapLeekValue getStats_v5(EntityAI ai) throws LeekRunException {
+		return getStats(ai);
+	}
+
+	public static MapLeekValue getStats_v5(EntityAI ai, Object entity) throws LeekRunException {
+		return entity == null ? null : getStats(ai, entity);
+	}
+
+	public static Long getCell_v5(EntityAI ai) throws LeekRunException {
+		return getCell(ai);
+	}
+
+	public static Long getCell_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getCell(ai, value);
+	}
+
+	public static Long getWeapon_v5(EntityAI ai) throws LeekRunException {
+		return getWeapon(ai);
+	}
+
+	public static Long getWeapon_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getWeapon(ai, value);
+	}
+
+	public static String getName_v5(EntityAI ai) throws LeekRunException {
+		return getName(ai);
+	}
+
+	public static String getName_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getName(ai, value);
+	}
+
+	public static long getMP_v5(EntityAI ai) {
+		return getMP(ai);
+	}
+
+	public static Long getMP_v5(EntityAI ai, Object value) {
+		return value == null ? null : getMP(ai, value);
+	}
+
+	public static long getTP_v5(EntityAI ai) {
+		return getTP(ai);
+	}
+
+	public static Long getTP_v5(EntityAI ai, Object value) {
+		return value == null ? null : getTP(ai, value);
+	}
+
+	public static long getTotalMP_v5(EntityAI ai) throws LeekRunException {
+		return getTotalMP(ai);
+	}
+
+	public static Long getTotalMP_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getTotalMP(ai, value);
+	}
+
+	public static long getTotalTP_v5(EntityAI ai) throws LeekRunException {
+		return getTotalTP(ai);
+	}
+
+	public static Long getTotalTP_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getTotalTP(ai, value);
+	}
+
+	public static long getPower_v5(EntityAI ai) throws LeekRunException {
+		return getPower(ai);
+	}
+
+	public static Long getPower_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getPower(ai, value);
+	}
+
+	public static ArrayLeekValue getWeapons_v5(EntityAI ai) throws LeekRunException {
+		return getWeapons(ai);
+	}
+
+	public static ArrayLeekValue getWeapons_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getWeapons(ai, value);
+	}
+
+	public static ArrayLeekValue getChips_v5(EntityAI ai) throws LeekRunException {
+		return getChips(ai);
+	}
+
+	public static ArrayLeekValue getChips_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getChips(ai, value);
+	}
+
+	public static ArrayLeekValue getComponents_v5(EntityAI ai) throws LeekRunException {
+		return getComponents(ai);
+	}
+
+	public static ArrayLeekValue getComponents_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getComponents(ai, value);
+	}
+
+	public static ArrayLeekValue getEffects_v5(EntityAI ai) throws LeekRunException {
+		return getEffects(ai);
+	}
+
+	public static ArrayLeekValue getEffects_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getEffects(ai, value);
+	}
+
+	public static ArrayLeekValue getLaunchedEffects_v5(EntityAI ai) throws LeekRunException {
+		return getLaunchedEffects(ai);
+	}
+
+	public static ArrayLeekValue getLaunchedEffects_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getLaunchedEffects(ai, value);
+	}
+
+	public static ArrayLeekValue getPassiveEffects_v5(EntityAI ai) throws LeekRunException {
+		return getPassiveEffects(ai);
+	}
+
+	public static ArrayLeekValue getPassiveEffects_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getPassiveEffects(ai, value);
+	}
+
+	public static String getAIName_v5(EntityAI ai) throws LeekRunException {
+		return getAIName(ai);
+	}
+
+	public static String getAIName_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getAIName(ai, value);
+	}
+
+	public static String getAIPath_v5(EntityAI ai) throws LeekRunException {
+		return getAIPath(ai);
+	}
+
+	public static String getAIPath_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getAIPath(ai, value);
+	}
+
+	public static String getTeamName_v5(EntityAI ai) throws LeekRunException {
+		return getTeamName(ai);
+	}
+
+	public static String getTeamName_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getTeamName(ai, value);
+	}
+
+	public static String getCompositionName_v5(EntityAI ai) throws LeekRunException {
+		return getCompositionName(ai);
+	}
+
+	public static String getCompositionName_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getCompositionName(ai, value);
+	}
+
+	public static String getFarmerName_v5(EntityAI ai) throws LeekRunException {
+		return getFarmerName(ai);
+	}
+
+	public static String getFarmerName_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getFarmerName(ai, value);
+	}
+
+	public static String getFarmerCountry_v5(EntityAI ai) throws LeekRunException {
+		return getFarmerCountry(ai);
+	}
+
+	public static String getFarmerCountry_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getFarmerCountry(ai, value);
+	}
+
+	public static long getFarmerID_v5(EntityAI ai) throws LeekRunException {
+		return getFarmerID(ai);
+	}
+
+	public static Long getFarmerID_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getFarmerID(ai, value);
+	}
+
+	public static long getTeamID_v5(EntityAI ai) throws LeekRunException {
+		return getTeamID(ai);
+	}
+
+	public static Long getTeamID_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getTeamID(ai, value);
+	}
+
+	public static ArrayLeekValue getSummons_v5(EntityAI ai) throws LeekRunException {
+		return getSummons(ai);
+	}
+
+	public static ArrayLeekValue getSummons_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getSummons(ai, value);
+	}
+
+	public static long getType_v5(EntityAI ai) throws LeekRunException {
+		return getType(ai);
+	}
+
+	public static Long getType_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getType(ai, value);
+	}
+
+	public static boolean isSummon_v5(EntityAI ai) throws LeekRunException {
+		return isSummon(ai);
+	}
+
+	public static Boolean isSummon_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : isSummon(ai, value);
+	}
+
+	public static boolean isStatic_v5(EntityAI ai) throws LeekRunException {
+		return isStatic(ai);
+	}
+
+	public static boolean isStatic_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? false : isStatic(ai, value);
+	}
+
+	public static long getBirthTurn_v5(EntityAI ai) throws LeekRunException {
+		return getBirthTurn(ai);
+	}
+
+	public static Long getBirthTurn_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getBirthTurn(ai, value);
+	}
+
+	public static long getAwakeningZone_v5(EntityAI ai) throws LeekRunException {
+		return getAwakeningZone(ai);
+	}
+
+	public static Long getAwakeningZone_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getAwakeningZone(ai, value);
+	}
+
+	public static ArrayLeekValue getPlantTriggers_v5(EntityAI ai) throws LeekRunException {
+		return getPlantTriggers(ai);
+	}
+
+	public static ArrayLeekValue getPlantTriggers_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getPlantTriggers(ai, value);
+	}
+
+	public static long getLeekID_v5(EntityAI ai) throws LeekRunException {
+		return getLeekID(ai);
+	}
+
+	public static Long getLeekID_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getLeekID(ai, value);
+	}
+
+	public static long getSide_v5(EntityAI ai) throws LeekRunException {
+		return getSide(ai);
+	}
+
+	public static Long getSide_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getSide(ai, value);
+	}
+
+	public static long getTotalLife_v5(EntityAI ai) throws LeekRunException {
+		return getTotalLife(ai);
+	}
+
+	public static Long getTotalLife_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getTotalLife(ai, value);
+	}
+
+	public static long getLevel_v5(EntityAI ai) throws LeekRunException {
+		return getLevel(ai);
+	}
+
+	public static Long getLevel_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getLevel(ai, value);
+	}
+
+	public static long getEntityTurnOrder_v5(EntityAI ai) throws LeekRunException {
+		return getEntityTurnOrder(ai);
+	}
+
+	public static Long getEntityTurnOrder_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getEntityTurnOrder(ai, value);
+	}
+
+	public static long getAIID_v5(EntityAI ai) throws LeekRunException {
+		return getAIID(ai);
+	}
+
+	public static Long getAIID_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getAIID(ai, value);
+	}
+
+	public static long getStat_v5(EntityAI ai, long stat) {
+		return getStat(ai, stat);
+	}
+
+	public static Long getStat_v5(EntityAI ai, Object entity, long stat) {
+		return entity == null ? null : getStat(ai, entity, stat);
+	}
+
+	public static SetLeekValue getStates_v5(EntityAI ai) throws LeekRunException {
+		return getStates(ai);
+	}
+
+	// getStates, isEnemy, isAlly, isAlive et isDead déclarent leur entité integer? en v5 : null
+	// leur arrive tel quel au lieu de valoir 0, qui est une vraie entité
+	public static SetLeekValue getStates_v5(EntityAI ai, Object value) throws LeekRunException {
+		return value == null ? null : getStates(ai, ai.longint(value));
+	}
+
+	public static boolean isEnemy_v5(EntityAI ai, Object id) throws LeekRunException {
+		return id != null && isEnemy(ai, ai.longint(id));
+	}
+
+	public static boolean isAlly_v5(EntityAI ai, Object id) throws LeekRunException {
+		return id != null && isAlly(ai, ai.longint(id));
+	}
+
+	public static boolean isAlive_v5(EntityAI ai, Object id) throws LeekRunException {
+		return id != null && isAlive(ai, ai.longint(id));
+	}
+
+	public static boolean isDead_v5(EntityAI ai, Object id) throws LeekRunException {
+		return id != null && isDead(ai, ai.longint(id));
+	}
+
 	// ---- LeekScript 5 : null au lieu de -1 pour « aucun » ----
 
 	public static Long getMobType_v5(EntityAI ai) throws LeekRunException {
@@ -1251,7 +1690,7 @@ public class EntityClass {
 	}
 
 	public static Long getMobType_v5(EntityAI ai, Object value) throws LeekRunException {
-		return V5.orNull(getMobType(ai, value));
+		return value == null ? null : V5.orNull(getMobType(ai, value));
 	}
 
 	public static Long getChestType_v5(EntityAI ai) throws LeekRunException {
@@ -1259,7 +1698,7 @@ public class EntityClass {
 	}
 
 	public static Long getChestType_v5(EntityAI ai, Object value) throws LeekRunException {
-		return V5.orNull(getChestType(ai, value));
+		return value == null ? null : V5.orNull(getChestType(ai, value));
 	}
 
 	public static Long getBulbType_v5(EntityAI ai) throws LeekRunException {
@@ -1267,7 +1706,7 @@ public class EntityClass {
 	}
 
 	public static Long getBulbType_v5(EntityAI ai, Object value) throws LeekRunException {
-		return V5.orNull(getBulbType(ai, value));
+		return value == null ? null : V5.orNull(getBulbType(ai, value));
 	}
 
 	public static Long getPlantType_v5(EntityAI ai) throws LeekRunException {
@@ -1275,7 +1714,7 @@ public class EntityClass {
 	}
 
 	public static Long getPlantType_v5(EntityAI ai, Object value) throws LeekRunException {
-		return V5.orNull(getPlantType(ai, value));
+		return value == null ? null : V5.orNull(getPlantType(ai, value));
 	}
 
 	public static Long getSummoner_v5(EntityAI ai) throws LeekRunException {
@@ -1283,7 +1722,7 @@ public class EntityClass {
 	}
 
 	public static Long getSummoner_v5(EntityAI ai, Object value) throws LeekRunException {
-		return V5.orNull(getSummoner(ai, value));
+		return value == null ? null : V5.orNull(getSummoner(ai, value));
 	}
 
 	public static Long getPlantTrigger_v5(EntityAI ai) throws LeekRunException {

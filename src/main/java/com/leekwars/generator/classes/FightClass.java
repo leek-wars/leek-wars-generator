@@ -1459,90 +1459,88 @@ public class FightClass {
 		return V5.orNull(getFarthestAlly(ai));
 	}
 
-	// Un null à la place de la cible est une cible inconnue : les versions précédentes prenaient
-	// alors l'arme pour la cible, avec l'arme tenue.
-	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1) throws LeekRunException {
-		return cellToUse(ai, heldAttack(ai), entityCell(ai, value1), null);
+	// Une cible null est « aucune » : les versions précédentes la convertissaient en 0, une
+	// vraie entité ou case, ou, en 2e argument, prenaient l'arme pour la cible avec l'arme tenue.
+	// En v5 la cible est déclarée integer? à toutes les arités, et seul l'appel sans l'arme
+	// désigne l'arme tenue.
+	public static Long getCellToUseWeapon_v5(EntityAI ai, Object target) throws LeekRunException {
+		return cellToUse(ai, heldAttack(ai), entityCell(ai, target), null);
 	}
 
-	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return getCellToUseWeapon_v5(ai, value1, value2, null);
+	public static Long getCellToUseWeapon_v5(EntityAI ai, long weapon, Object target) throws LeekRunException {
+		return getCellToUseWeapon_v5(ai, weapon, target, null);
 	}
 
-	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		if (value2 == null) return null;
-		return cellToUse(ai, weaponAttack(ai, value1), entityCell(ai, value2), value3);
+	public static Long getCellToUseWeapon_v5(EntityAI ai, long weapon, Object target, Object ignored) throws LeekRunException {
+		return cellToUse(ai, weaponAttack(ai, weapon), entityCell(ai, target), ignored);
 	}
 
-	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1) throws LeekRunException {
-		return cellToUse(ai, heldAttack(ai), ai.getState().getMap().getCell((int) value1), null);
+	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cellToUse(ai, heldAttack(ai), cellOf(ai, cell), null);
 	}
 
-	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return getCellToUseWeaponOnCell_v5(ai, value1, value2, null);
+	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long weapon, Object cell) throws LeekRunException {
+		return getCellToUseWeaponOnCell_v5(ai, weapon, cell, null);
 	}
 
-	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		if (value2 == null) return null;
-		return cellToUse(ai, weaponAttack(ai, value1), ai.getState().getMap().getCell(ai.integer(value2)), value3);
+	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long weapon, Object cell, Object ignored) throws LeekRunException {
+		return cellToUse(ai, weaponAttack(ai, weapon), cellOf(ai, cell), ignored);
 	}
 
-	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object t) throws LeekRunException {
-		return getCellToUseChip_v5(ai, chip, t, null);
+	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object target) throws LeekRunException {
+		return getCellToUseChip_v5(ai, chip, target, null);
 	}
 
-	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object t, Object value3) throws LeekRunException {
-		return cellToUse(ai, chipAttack(ai, chip), entityCell(ai, t), value3);
+	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object target, Object ignored) throws LeekRunException {
+		return cellToUse(ai, chipAttack(ai, chip), entityCell(ai, target), ignored);
 	}
 
 	public static Long getCellToUseChipOnCell_v5(EntityAI ai, Object chip, Object cell) throws LeekRunException {
 		return getCellToUseChipOnCell_v5(ai, chip, cell, null);
 	}
 
-	public static Long getCellToUseChipOnCell_v5(EntityAI ai, Object chip, Object cell, Object value3) throws LeekRunException {
-		return cellToUse(ai, chipAttack(ai, chip), ai.getState().getMap().getCell(ai.integer(cell)), value3);
+	public static Long getCellToUseChipOnCell_v5(EntityAI ai, Object chip, Object cell, Object ignored) throws LeekRunException {
+		return cellToUse(ai, chipAttack(ai, chip), cellOf(ai, cell), ignored);
 	}
 
-	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long value1) throws LeekRunException {
-		return cellsToUse(ai, heldAttack(ai), entityCell(ai, value1), null);
+	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, Object target) throws LeekRunException {
+		return cellsToUse(ai, heldAttack(ai), entityCell(ai, target), null);
 	}
 
-	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return getCellsToUseWeapon_v5(ai, value1, value2, null);
+	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long weapon, Object target) throws LeekRunException {
+		return getCellsToUseWeapon_v5(ai, weapon, target, null);
 	}
 
-	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		if (value2 == null) return null;
-		return cellsToUse(ai, weaponAttack(ai, value1), entityCell(ai, value2), value3);
+	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long weapon, Object target, Object ignored) throws LeekRunException {
+		return cellsToUse(ai, weaponAttack(ai, weapon), entityCell(ai, target), ignored);
 	}
 
-	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long value1) throws LeekRunException {
-		return cellsToUse(ai, heldAttack(ai), ai.getState().getMap().getCell(ai.integer(value1)), null);
+	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cellsToUse(ai, heldAttack(ai), cellOf(ai, cell), null);
 	}
 
-	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return getCellsToUseWeaponOnCell_v5(ai, value1, value2, null);
+	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long weapon, Object cell) throws LeekRunException {
+		return getCellsToUseWeaponOnCell_v5(ai, weapon, cell, null);
 	}
 
-	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		if (value2 == null) return null;
-		return cellsToUse(ai, weaponAttack(ai, value1), ai.getState().getMap().getCell(ai.integer(value2)), value3);
+	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long weapon, Object cell, Object ignored) throws LeekRunException {
+		return cellsToUse(ai, weaponAttack(ai, weapon), cellOf(ai, cell), ignored);
 	}
 
-	public static ArrayLeekValue getCellsToUseChip_v5(EntityAI ai, long chip_id, long target_leek_id) throws LeekRunException {
-		return getCellsToUseChip_v5(ai, chip_id, target_leek_id, null);
+	public static ArrayLeekValue getCellsToUseChip_v5(EntityAI ai, long chip, Object target) throws LeekRunException {
+		return getCellsToUseChip_v5(ai, chip, target, null);
 	}
 
-	public static ArrayLeekValue getCellsToUseChip_v5(EntityAI ai, long chip_id, long target_leek_id, Object value3) throws LeekRunException {
-		return cellsToUse(ai, chipAttack(ai, chip_id), entityCell(ai, target_leek_id), value3);
+	public static ArrayLeekValue getCellsToUseChip_v5(EntityAI ai, long chip, Object target, Object ignored) throws LeekRunException {
+		return cellsToUse(ai, chipAttack(ai, chip), entityCell(ai, target), ignored);
 	}
 
-	public static ArrayLeekValue getCellsToUseChipOnCell_v5(EntityAI ai, long chip_id, long target_cell_id) throws LeekRunException {
-		return getCellsToUseChipOnCell_v5(ai, chip_id, target_cell_id, null);
+	public static ArrayLeekValue getCellsToUseChipOnCell_v5(EntityAI ai, long chip, Object cell) throws LeekRunException {
+		return getCellsToUseChipOnCell_v5(ai, chip, cell, null);
 	}
 
-	public static ArrayLeekValue getCellsToUseChipOnCell_v5(EntityAI ai, long chip_id, long target_cell_id, Object value3) throws LeekRunException {
-		return cellsToUse(ai, chipAttack(ai, chip_id), ai.getState().getMap().getCell(ai.integer(target_cell_id)), value3);
+	public static ArrayLeekValue getCellsToUseChipOnCell_v5(EntityAI ai, long chip, Object cell, Object ignored) throws LeekRunException {
+		return cellsToUse(ai, chipAttack(ai, chip), cellOf(ai, cell), ignored);
 	}
 
 	// getCellToUse* va vers la case de lancement la plus proche par un chemin, sans limite de
@@ -1551,12 +1549,12 @@ public class FightClass {
 	// null exactement quand le pluriel est vide ou null.
 
 	private static Attack heldAttack(EntityAI ai) {
-		var weapon = ai.getEntity().getWeapon();
+		var weapon = V5.heldWeapon(ai);
 		return weapon == null ? null : weapon.getAttack();
 	}
 
-	private static Attack weaponAttack(EntityAI ai, Object weapon) throws LeekRunException {
-		var template = Weapons.getWeapon(ai.integer(weapon));
+	private static Attack weaponAttack(EntityAI ai, long weapon) {
+		var template = Weapons.getWeapon((int) weapon);
 		return template == null ? null : template.getAttack();
 	}
 
@@ -1565,9 +1563,16 @@ public class FightClass {
 		return template == null ? null : template.getAttack();
 	}
 
+	/** Case de l'entité `entity`, null si elle est null, inconnue ou hors de la carte. */
 	private static Cell entityCell(EntityAI ai, Object entity) throws LeekRunException {
+		if (entity == null) return null;
 		var target = ai.getFight().getEntity(ai.integer(entity));
 		return target == null ? null : target.getCell();
+	}
+
+	/** Case `cell`, null si elle est null ou inconnue. */
+	private static Cell cellOf(EntityAI ai, Object cell) throws LeekRunException {
+		return cell == null ? null : ai.getState().getMap().getCell(ai.integer(cell));
 	}
 
 	private static List<Cell> ignoredCells(EntityAI ai, Object value3) throws LeekRunException {
@@ -1600,11 +1605,45 @@ public class FightClass {
 		var ignored = ignoredCells(ai, value3);
 		var possible = castCells(ai, attack, target, ignored);
 		if (possible == null) return null;
-		var reachable = ai.getState().getMap().getReachableCells(ai.getEntity().getCell(), ignored, possible);
-		var result = new ArrayLeekValue(ai);
-		for (var cell : possible) {
-			if (reachable[cell.getId()]) result.push(ai, (long) cell.getId());
-		}
+		var reachable = ai.getState().getMap().getReachableCells(ai.getEntity().getCell(), possible, ignored);
+		var result = new ArrayLeekValue(ai, reachable.size());
+		for (var cell : reachable) result.push(ai, (long) cell.getId());
 		return result;
+	}
+
+	// ---- LeekScript 5 : une entité ou une case null est « aucune » ----
+	// Déclarées integer? en v5 : null arrive tel quel au lieu de valoir 0, une vraie entité ou
+	// case. L'appel sans argument de getNextPlayer et getPreviousPlayer désigne toujours soi.
+
+	public static long getNextPlayer_v5(EntityAI ai) {
+		return getNextPlayer(ai);
+	}
+
+	public static Long getNextPlayer_v5(EntityAI ai, Object value) {
+		return value == null ? null : getNextPlayer(ai, value);
+	}
+
+	public static long getPreviousPlayer_v5(EntityAI ai) {
+		return getPreviousPlayer(ai);
+	}
+
+	public static Long getPreviousPlayer_v5(EntityAI ai, Object value) {
+		return value == null ? null : getPreviousPlayer(ai, value);
+	}
+
+	public static Long getNearestEnemyTo_v5(EntityAI ai, Object entity) throws LeekRunException {
+		return entity == null ? null : getNearestEnemyTo(ai, ai.longint(entity));
+	}
+
+	public static Long getNearestEnemyToCell_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cell == null ? null : getNearestEnemyToCell(ai, ai.longint(cell));
+	}
+
+	public static Long getNearestAllyTo_v5(EntityAI ai, Object entity) throws LeekRunException {
+		return entity == null ? null : getNearestAllyTo(ai, ai.longint(entity));
+	}
+
+	public static Long getNearestAllyToCell_v5(EntityAI ai, Object cell) throws LeekRunException {
+		return cell == null ? null : getNearestAllyToCell(ai, ai.longint(cell));
 	}
 }

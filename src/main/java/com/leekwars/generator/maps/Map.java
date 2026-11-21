@@ -1179,28 +1179,36 @@ public class Map {
 
 
 	/**
-	 * Cases que {@link #getAStarPath(Cell, List, List)} peut atteindre depuis `start`, sans limite
-	 * de longueur, avec les mêmes règles : une case praticable, libre, à ignorer ou d'arrivée
-	 * (`ends`). Indexé par id de case.
+	 * Cases de `cells` que {@link #getAStarPath(Cell, List, List)} peut atteindre depuis `start`,
+	 * sans limite de longueur, dans leur ordre : par des cases praticables, libres ou à ignorer.
+	 * Les cases d'arrivée qu'admet aussi l'A* sont de celles-là pour des cases de lancement
+	 * (getPossibleCastCellsForTarget ne garde que des cases libres ou à ignorer). Le parcours
+	 * s'arrête dès que toutes les cases de `cells` sont atteintes.
 	 */
-	public boolean[] getReachableCells(Cell start, List<Cell> cells_to_ignore, List<Cell> ends) {
-		var reached = new boolean[nb_cells];
-		if (start == null) return reached;
+	public List<Cell> getReachableCells(Cell start, List<Cell> cells, List<Cell> cells_to_ignore) {
+		var result = new ArrayList<Cell>();
+		if (start == null || cells.isEmpty()) return result;
+		var wanted = new boolean[nb_cells];
+		int remaining = 0;
+		for (var c : cells) if (!wanted[c.getId()]) { wanted[c.getId()] = true; remaining++; }
 		var passable = new boolean[nb_cells];
 		if (cells_to_ignore != null) for (var c : cells_to_ignore) if (c != null) passable[c.getId()] = true;
-		if (ends != null) for (var c : ends) if (c != null) passable[c.getId()] = true;
+		var reached = new boolean[nb_cells];
 		reached[start.getId()] = true;
+		if (wanted[start.getId()]) remaining--;
 		var queue = new ArrayDeque<Cell>();
 		queue.add(start);
-		while (!queue.isEmpty()) {
+		while (remaining > 0 && !queue.isEmpty()) {
 			for (Cell c : getCellsAround(queue.poll())) {
 				if (c == null || reached[c.getId()] || !c.isWalkable()) continue;
 				if (c.getPlayer(this) != null && !passable[c.getId()]) continue;
 				reached[c.getId()] = true;
+				if (wanted[c.getId()]) remaining--;
 				queue.add(c);
 			}
 		}
-		return reached;
+		for (var c : cells) if (reached[c.getId()]) result.add(c);
+		return result;
 	}
 
 	public List<Cell> getPossibleCastCellsForTarget(Attack attack, Cell target, List<Cell> cells_to_ignore) {

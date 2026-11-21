@@ -1,5 +1,8 @@
 package com.leekwars.generator.classes;
 
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.weapons.Weapon;
+
 /**
  * Outils des variantes LeekScript 5 des fonctions de combat (méthodes `<nom>_v5`, déclarées par
  * `since(5, …)` dans FightFunctions).
@@ -15,5 +18,10 @@ final class V5 {
 
 	static Long orNull(Long value) {
 		return value == null || value == -1 ? null : value;
+	}
+
+	/** Arme tenue par l'entité qui joue, null si elle n'en tient aucune. */
+	static Weapon heldWeapon(EntityAI ai) {
+		return ai.getEntity().getWeapon();
 	}
 }
