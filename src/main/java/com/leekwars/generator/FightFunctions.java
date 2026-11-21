@@ -258,7 +258,7 @@ public class FightFunctions {
 		method("getWeaponLaunchType", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT_OR_NULL),
-		});
+		}).since(5);
 		method("getWeaponCost", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT),
@@ -266,35 +266,35 @@ public class FightFunctions {
 		method("getWeaponEffects", "Weapon", 125, true, new CallableVersion[] {
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL), new Type[] { Type.INT }),
 			new CallableVersion(Type.compound(Type.array(Type.array(Type.INT_OR_REAL)), Type.NULL)),
-		});
+		}).since(5);
 		method("getWeaponPassiveEffects", "Weapon", 125, true, new CallableVersion[] {
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL)), new Type[] { Type.INT }),
 			new CallableVersion(Type.array(Type.array(Type.INT_OR_REAL))),
-		});
+		}).since(5);
 		method("getWeaponName", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.STRING, new Type[] { Type.INT }),
 			new CallableVersion(Type.STRING),
-		});
+		}).since(5);
 		method("isInlineWeapon", "Weapon", 10, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT }),
 			new CallableVersion(Type.BOOL),
-		});
+		}).since(5);
 		method("weaponNeedLos", "Weapon", 10, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT }),
 			new CallableVersion(Type.BOOL),
-		});
+		}).since(5);
 		method("canUseWeapon", "Weapon", 45, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL, Type.INT_OR_NULL }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }),
-		});
+		}).since(5);
 		method("canUseWeaponOnCell", "Weapon", 45, true, new CallableVersion[] {
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL, Type.INT_OR_NULL }),
 			new CallableVersion(Type.BOOL, new Type[] { Type.INT_OR_NULL }),
-		});
+		}).since(5);
 		method("getWeaponTargets", "Weapon", 40, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		});
+		}).since(5);
 		method("getWeaponFailure", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { }),
@@ -305,7 +305,7 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		});
+		}).since(5);
 		method("getAllWeapons", "Weapon", 200, true, Type.ARRAY_INT, new Type[0]);
 		method("getWeaponMaxUses", "Weapon", 15, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
@@ -538,12 +538,12 @@ public class FightFunctions {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		});
+		}).since(5);
 		method("getCellsToUseWeaponOnCell", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT }),
-		});
+		}).since(5);
 		method("getCellsToUseChip", "Fight", 25834, true, new CallableVersion[] {
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.ARRAY_INT_OR_NULL, new Type[] { Type.INT, Type.INT }),

@@ -15,6 +15,7 @@ import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.test.LocalTrophyManager;
+import com.leekwars.generator.weapons.Weapons;
 
 import leekscript.compiler.AIFile;
 import leekscript.compiler.Options;
@@ -132,5 +133,70 @@ public class TestFightFunctionsV5 {
 		var v5 = javaOf(5, code);
 		Assert.assertTrue(v5, v5.contains("FightClass.getNearestAlly_v5(") && v5.contains("FieldClass.getEntityOnCell_v5(")
 			&& v5.contains("WeaponClass.getWeaponCost_v5(") && v5.contains("EntityClass.getSummoner_v5("));
+	}
+
+	// ---- getWeaponName(null) et sœurs : seul l'appel sans arme désigne l'arme tenue ----
+
+	/** leek1 tient le magnum et a aussi le pistolet. */
+	private static final String HOLD_MAGNUM = "setWeapon(WEAPON_MAGNUM); var n = null; var e = getNearestEnemy(); ";
+
+	private String evalHolding(int version, String expression) throws Exception {
+		leek1.addWeapon(Weapons.getWeapon("pistol"));
+		leek1.addWeapon(Weapons.getWeapon("magnum"));
+		var ai = compile(version, false, HOLD_MAGNUM + "return " + expression + ";");
+		return ai.export(ai.runIA());
+	}
+
+	private static final String WEAPON_IDS = "[getWeaponName(-1), getWeaponName(n), getWeaponName(),"
+		+ " getWeaponCost(-1), getWeaponMinRange(-1), getWeaponMaxRange(-1), getWeaponMaxUses(-1), getWeaponLaunchType(-1),"
+		+ " isInlineWeapon(-1), weaponNeedLos(-1), getWeaponEffects(-1) != null, getWeaponPassiveEffects(-1) != null,"
+		+ " getWeaponName(WEAPON_PISTOL), getWeaponCost()]";
+
+	@Test
+	public void minusOneIsTheHeldWeaponInV4() throws Exception {
+		// null vaut 0 une fois converti en entier : une arme inconnue, déjà en v4
+		Assert.assertEquals("[\"magnum\", \"\", \"magnum\", 5, 1, 8, 2, 7, false, true, true, true, \"pistol\", 5]", evalHolding(4, WEAPON_IDS));
+	}
+
+	@Test
+	public void minusOneIsAnUnknownWeaponInV5() throws Exception {
+		Assert.assertEquals("[\"\", \"\", \"magnum\", null, null, null, null, null, false, false, false, false, \"pistol\", 5]", evalHolding(5, WEAPON_IDS));
+	}
+
+	private final String nullTargets() {
+		return "[getWeaponTargets(getCell(e), n), getWeaponTargets(WEAPON_PISTOL, n), getWeaponEffectiveArea(getCell(e), n),"
+			+ " getWeaponEffectiveArea(getCell(e), n, getCell()), getCellToUseWeapon(e, n) != null, getCellToUseWeapon(e, n, []) != null,"
+			+ " getCellToUseWeaponOnCell(getCell(e), n) != null, getCellsToUseWeapon(e, n) != null, getCellsToUseWeaponOnCell(getCell(e), n, []) != null,"
+			+ " getWeaponTargets(getCell(e)), getWeaponTargets(WEAPON_MAGNUM, getCell(e))]";
+	}
+
+	@Test
+	public void nullTargetUsesTheHeldWeaponInV4() throws Exception {
+		// 1 contre 1 sur une carte vide, l'ennemi à portée du magnum
+		fight.getState().getMap().clear();
+		moveNextTo();
+		var area = "[" + leek2.getCell().getId() + "]";
+		var target = "[" + leek2.getFId() + "]";
+		// getCellsToUseWeaponOnCell déclare sa cible integer : null y vaut 0, et la cellule passe pour l'arme (inconnue)
+		Assert.assertEquals("[" + target + ", [], " + area + ", " + area + ", true, true, true, true, false, " + target + ", " + target + "]", evalHolding(4, nullTargets()));
+	}
+
+	@Test
+	public void nullTargetIsAnUnknownTargetInV5() throws Exception {
+		fight.getState().getMap().clear();
+		moveNextTo();
+		var target = "[" + leek2.getFId() + "]";
+		Assert.assertEquals("[null, null, null, null, false, false, false, false, false, " + target + ", " + target + "]", evalHolding(5, nullTargets()));
+		Assert.assertEquals("[false, false, true, true]", evalHolding(5,
+			"[canUseWeapon(e, n), canUseWeaponOnCell(getCell(e), n), canUseWeapon(e), canUseWeapon(WEAPON_MAGNUM, e)]"));
+	}
+
+	/** leek2 à trois cases de leek1, sur la même ligne. */
+	private void moveNextTo() {
+		var map = fight.getState().getMap();
+		var from = leek1.getCell();
+		var to = map.getCell(from.getX() + 3, from.getY());
+		if (to == null || !to.available(map)) to = map.getCell(from.getX() - 3, from.getY());
+		map.moveEntity(leek2, to);
 	}
 }

@@ -1462,12 +1462,14 @@ public class FightClass {
 		return V5.orNull(getCellToUseWeapon(ai, value1));
 	}
 
+	// Un null à la place de la cible est une cible inconnue : il ne fait plus prendre l'arme
+	// pour la cible (et l'arme tenue pour l'arme), comme dans les versions précédentes.
 	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return V5.orNull(getCellToUseWeapon(ai, value1, value2));
+		return value2 == null ? null : V5.orNull(getCellToUseWeapon(ai, value1, value2));
 	}
 
 	public static Long getCellToUseWeapon_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		return V5.orNull(getCellToUseWeapon(ai, value1, value2, value3));
+		return value2 == null ? null : V5.orNull(getCellToUseWeapon(ai, value1, value2, value3));
 	}
 
 	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1) throws LeekRunException {
@@ -1475,11 +1477,11 @@ public class FightClass {
 	}
 
 	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
-		return V5.orNull(getCellToUseWeaponOnCell(ai, value1, value2));
+		return value2 == null ? null : V5.orNull(getCellToUseWeaponOnCell(ai, value1, value2));
 	}
 
 	public static Long getCellToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
-		return V5.orNull(getCellToUseWeaponOnCell(ai, value1, value2, value3));
+		return value2 == null ? null : V5.orNull(getCellToUseWeaponOnCell(ai, value1, value2, value3));
 	}
 
 	public static Long getCellToUseChip_v5(EntityAI ai, Object chip, Object t) throws LeekRunException {
@@ -1496,5 +1498,31 @@ public class FightClass {
 
 	public static Long getCellToUseChipOnCell_v5(EntityAI ai, Object chip, Object cell, Object value3) throws LeekRunException {
 		return V5.orNull(getCellToUseChipOnCell(ai, chip, cell, value3));
+	}
+
+	// ---- LeekScript 5 : un null à la place de la cible est une cible inconnue ----
+
+	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long value1) throws LeekRunException {
+		return getCellsToUseWeapon(ai, value1);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return value2 == null ? null : getCellsToUseWeapon(ai, value1, value2);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeapon_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		return value2 == null ? null : getCellsToUseWeapon(ai, value1, value2, value3);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long value1) throws LeekRunException {
+		return getCellsToUseWeaponOnCell(ai, value1);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2) throws LeekRunException {
+		return value2 == null ? null : getCellsToUseWeaponOnCell(ai, value1, value2);
+	}
+
+	public static ArrayLeekValue getCellsToUseWeaponOnCell_v5(EntityAI ai, long value1, Object value2, Object value3) throws LeekRunException {
+		return value2 == null ? null : getCellsToUseWeaponOnCell(ai, value1, value2, value3);
 	}
 }
