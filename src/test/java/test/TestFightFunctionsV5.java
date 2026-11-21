@@ -103,6 +103,14 @@ public class TestFightFunctionsV5 {
 		Assert.assertEquals("[0, true]", ai.export(ai.runIA()));
 		Assert.assertEquals("0", eval(5, "moveToward(null)"));
 		Assert.assertEquals("false", eval(5, "isAlive(null)"));
+		// En strict : une erreur (isAlive, lui, déclare integer? : null y veut dire « aucune »)
+		var strict = compile(5, true, "integer? x = getNearestAlly(); return getCellDistance(x, 5);");
+		try {
+			strict.runIA();
+			Assert.fail("getCellDistance(null, 5) en strict v5 aurait dû échouer");
+		} catch (leekscript.runner.LeekRunException ex) {
+			Assert.assertEquals(leekscript.common.Error.WRONG_ARGUMENT_TYPE, ex.getError());
+		}
 		// Une fonction qui rend un integer rend sa valeur par défaut (0) : plus la distance depuis la case 0
 		Assert.assertEquals("[0, " + eval(4, "getCellDistance(0, 5)") + "]", eval(5, "[getCellDistance(null, 5), getCellDistance(0, 5)]"));
 	}
