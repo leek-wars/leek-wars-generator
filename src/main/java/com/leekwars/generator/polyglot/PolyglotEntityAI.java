@@ -795,7 +795,7 @@ public class PolyglotEntityAI extends EntityAI {
 	/**
 	 * Chargement de l'entree, selon le mode (module ES / script) : au 1er tour, au prechargement d'un hook,
 	 * et a chaque reconstruction du contexte (apres le watchdog, le cap RAM...). Ouvre la tolerance de
-	 * l'execution au garde-fou CPU, cf LOAD_TOLERANCE_BASE_NANOS.
+	 * l'execution au garde-fou CPU, sauf apres un depassement du watchdog, cf LOAD_TOLERANCE_BASE_NANOS.
 	 */
 	private Value loadEntryFirstTurn() throws LeekRunException {
 		loadToleranceNanos = reloadAfterWatchdog ? 0 : LOAD_TOLERANCE_BASE_NANOS
