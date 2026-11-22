@@ -136,14 +136,17 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Temps CPU inexplique tolere par tour. */
 	private static final long UNEXPLAINED_TURN_TOLERANCE_NANOS = 250_000_000L;
 	/**
-	 * Tolerance d'une execution qui charge l'entree (1er tour, ou rechargement apres une fermeture du
-	 * contexte) : parsing des sources et des modules importes, sans ops en face. Une base (modules de la
-	 * stdlib importes) plus le prix du parsing au caractere de source du joueur (GraalPy ~10 us, GraalJS
-	 * ~1 us). Proportionnelle et non forfaitaire : une petite IA dont le chargement brule ses 5 s de watchdog
-	 * en natif est neutralisee des le 1er depassement, une grosse IA honnete garde de quoi se parser.
+	 * Tolerance d'une execution qui charge l'entree (1er tour, prechargement d'un hook, reconstruction du
+	 * contexte apres le cap RAM...) : parsing et imports, sans ops en face. Une base (modules importes,
+	 * stdlib comprise) plus le parsing de l'entree au caractere (mesure : ~10 us en GraalPy en comptant
+	 * l'execution, ~1 us en GraalJS ; marges incluses). Seule l'entree compte : les autres fichiers du
+	 * compte ne sont pas forcement importes, et le joueur les choisit. Proportionnelle et non forfaitaire :
+	 * une petite IA dont le chargement brule ses 5 s de watchdog en natif est neutralisee des le 1er
+	 * depassement. Le rechargement qui suit un depassement du watchdog n'y a pas droit : sinon chaque tour
+	 * coupe rechargeait l'entree et echappait au garde-fou, trois depassements par combat.
 	 */
 	private static final long LOAD_TOLERANCE_BASE_NANOS = 1_000_000_000L;
-	private static final long LOAD_NANOS_PER_SOURCE_CHAR_PYTHON = 10_000;
+	private static final long LOAD_NANOS_PER_SOURCE_CHAR_PYTHON = 5_000;
 	private static final long LOAD_NANOS_PER_SOURCE_CHAR_JS = 2_000;
 	/** Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. */
 	private static final long UNEXPLAINED_FIGHT_BUDGET_NANOS = 1_000_000_000L;
@@ -175,7 +178,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private long unexplainedNanos;             // temps CPU non paye par des ops sur le combat, cf chargeUnexplainedTime
 	private long hostCalls;                    // appels de l'API de combat depuis le debut de l'execution
 	private long loadToleranceNanos;           // tolerance du chargement de l'entree dans l'execution, cf LOAD_TOLERANCE_BASE_NANOS
-	private long sourceChars = -1;             // caracteres de source du joueur (entree + fichiers), calcule au 1er chargement
+	private boolean reloadAfterWatchdog;       // contexte ferme par le watchdog : le prochain chargement n'a pas de tolerance
 
 	/**
 	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
@@ -795,17 +798,9 @@ public class PolyglotEntityAI extends EntityAI {
 	 * l'execution au garde-fou CPU, cf LOAD_TOLERANCE_BASE_NANOS.
 	 */
 	private Value loadEntryFirstTurn() throws LeekRunException {
-		if (sourceChars < 0) {
-			sourceChars = source.length();
-			if (fileSystem != null) {
-				for (String path : fileSystem.filePaths()) {
-					String content = fileSystem.readFile(path);
-					sourceChars += content != null ? content.length() : 0;
-				}
-			}
-		}
-		loadToleranceNanos = LOAD_TOLERANCE_BASE_NANOS
-			+ sourceChars * (isPython() ? LOAD_NANOS_PER_SOURCE_CHAR_PYTHON : LOAD_NANOS_PER_SOURCE_CHAR_JS);
+		loadToleranceNanos = reloadAfterWatchdog ? 0 : LOAD_TOLERANCE_BASE_NANOS
+			+ source.length() * (isPython() ? LOAD_NANOS_PER_SOURCE_CHAR_PYTHON : LOAD_NANOS_PER_SOURCE_CHAR_JS);
+		reloadAfterWatchdog = false;
 		if (jsModule) {
 			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
 			// resolvent contre /ai. Un `function turn()` de premier niveau y est module-scoped : l'epilogue
@@ -1807,6 +1802,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Avant la fermeture du contexte, qui prend son temps : seul compte le retard du tour sur le tir.
 		long overshootMs = (System.nanoTime() - execution.firedNanos().get()) / 1_000_000;
 		closeContext();
+		reloadAfterWatchdog = true; // cf LOAD_TOLERANCE_BASE_NANOS
 		if (overshootMs > NATIVE_OVERSHOOT_MS) {
 			disable("apres un tour fini " + overshootMs + " ms apres l'interruption : travail natif qu'elle ne coupe pas");
 		}
