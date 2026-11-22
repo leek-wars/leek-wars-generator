@@ -133,8 +133,15 @@ public class PolyglotEntityAI extends EntityAI {
 	 * JSON.parse...) : quelques ops qui en occupent des secondes, sous le watchdog.
 	 */
 	private static final long CPU_NANOS_PER_OP = 250;
-	/** Temps CPU inexplique tolere par tour (le 1er tour parse le source). */
+	/** Temps CPU inexplique tolere par tour. */
 	private static final long UNEXPLAINED_TURN_TOLERANCE_NANOS = 250_000_000L;
+	/**
+	 * Tolerance en plus pour l'execution qui charge l'entree pour la premiere fois du combat : parsing des
+	 * sources et des modules importes, sans ops en face (GraalPy : ~10 us par caractere, 2 s pour 200 Ko).
+	 * Les rechargements apres une fermeture du contexte (watchdog, RAM) n'y ont pas droit : sans cela,
+	 * chaque tour coupe par le watchdog rechargeait l'entree et echappait au garde-fou.
+	 */
+	private static final long FIRST_LOAD_TOLERANCE_NANOS = 3_000_000_000L;
 	/** Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. */
 	private static final long UNEXPLAINED_FIGHT_BUDGET_NANOS = 1_000_000_000L;
 	/** Temps CPU accorde par appel de l'API de combat : traversee de la frontiere isolate et marshalling. */
@@ -164,7 +171,8 @@ public class PolyglotEntityAI extends EntityAI {
 	private long idleNanos;                    // temps bloque compte sur le combat, cf chargeIdleTime
 	private long unexplainedNanos;             // temps CPU non paye par des ops sur le combat, cf chargeUnexplainedTime
 	private long hostCalls;                    // appels de l'API de combat depuis le debut de l'execution
-	private boolean loadingEntry;              // l'execution charge l'entree (parsing, imports) : hors garde-fou CPU
+	private long loadToleranceNanos;           // tolerance du 1er chargement de l'entree dans l'execution, cf FIRST_LOAD_TOLERANCE_NANOS
+	private boolean entryLoaded;               // l'entree a deja ete chargee une fois sur ce combat
 
 	/**
 	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
@@ -780,7 +788,10 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/** Chargement de l'entree au 1er tour, selon le mode (module ES / script). */
 	private Value loadEntryFirstTurn() throws LeekRunException {
-		loadingEntry = true; // execution hors garde-fou CPU, cf chargeUnexplainedTime
+		if (!entryLoaded) {
+			entryLoaded = true;
+			loadToleranceNanos = FIRST_LOAD_TOLERANCE_NANOS; // cf chargeUnexplainedTime
+		}
 		if (jsModule) {
 			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
 			// resolvent contre /ai. Un `function turn()` de premier niveau y est module-scoped : l'epilogue
@@ -1727,7 +1738,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private Execution armWatchdog() {
 		hostCalls = 0;
-		loadingEntry = false;
+		loadToleranceNanos = 0;
 		final Context running = context;
 		final AtomicBoolean settled = new AtomicBoolean(false);
 		long startCpu = !externalIsolate && CPU_TIME_SUPPORTED ? THREAD_MX.getCurrentThreadCpuTime() : -1L;
@@ -1952,13 +1963,11 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private boolean chargeUnexplainedTime(long cpu, long ops) {
 		// Sans compteur deterministe, getOperations() derive lui-meme du temps CPU : rien a comparer.
-		// Le chargement de l'entree parse les sources et les modules importes (GraalPy : ~10 us par
-		// caractere), sans ops en face : il n'est borne que par le watchdog, une fois par combat.
-		if (statementCounter == null || loadingEntry) {
+		if (statementCounter == null) {
 			return false;
 		}
 		long paid = Math.max(0, ops) * CPU_NANOS_PER_OP + hostCalls * CPU_NANOS_PER_HOST_CALL;
-		long unexplained = cpu - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS;
+		long unexplained = cpu - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS - loadToleranceNanos;
 		if (unexplained <= 0) {
 			return false;
 		}

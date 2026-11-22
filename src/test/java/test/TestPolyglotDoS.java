@@ -219,6 +219,31 @@ public class TestPolyglotDoS extends FightTestBase {
 		assertUnpaidNativeWorkDisablesAi("python", "b = bytes(1 << 26)\ndef turn():\n    n = 0\n    for i in range(40):\n        n += b.find(b'\\x01')\n    return n\n");
 	}
 
+	/**
+	 * Natif interruptible qui occupe tout le tour (watchdog de prod, 5 s) : neutralise des le 1er
+	 * depassement, pas au 3e. Le contexte ferme par le watchdog recharge l'entree au tour suivant : ce
+	 * rechargement ne doit pas exempter le tour du garde-fou CPU.
+	 */
+	private void assertNativeTimeoutDisablesAtOnce(String lang, String src) throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
+			PolyglotEntityAI ai = ai(sb, lang, src, 5_000);
+			expectTooMuchOperations(ai, "le tour aurait du etre coupe par le watchdog");
+			assertDisabledReturnsImmediately(ai);
+		}
+	}
+
+	@Test(timeout = 60_000)
+	public void jsInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
+		assertNativeTimeoutDisablesAtOnce("js", "var x = 3n ** 40000n;\nfunction turn(){ var n = 0; while (true) n += x.toString().length; }");
+		assertNativeTimeoutDisablesAtOnce("js", "Array.prototype.indexOf.call({length: 2**53 - 1}, 1);");
+	}
+
+	@Test(timeout = 60_000)
+	public void pythonInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
+		assertNativeTimeoutDisablesAtOnce("python", "def turn():\n    return max(iter(range(10 ** 10)))\n");
+	}
+
 	/** Calcul guest lourd mais paye par ses ops : jamais neutralise. */
 	@Test(timeout = 120_000)
 	public void jsHeavyGuestComputeIsNotDisabled() throws Exception {
