@@ -15,7 +15,6 @@ import com.leekwars.generator.leek.RegisterManager;
 import com.leekwars.generator.util.Json;
 
 import leekscript.compiler.AIFile;
-import leekscript.compiler.Options;
 import leekscript.testing.TestCase;
 import leekscript.testing.TestResult;
 import leekscript.testing.TestRun;
@@ -131,12 +130,12 @@ public class FightTestRunner {
 
 	/**
 	 * Compile le module de test et rend sa table (vide s'il n'est pas un module de test). En mode
-	 * test (Options#tests), comme dans le combat de chaque test (Fight#setTest).
+	 * test (Options#tests), comme l'entité testée du combat de chaque test (Fight#startFight).
 	 */
 	private static List<TestCase> compile(Generator generator, AIFile module) throws Exception {
 		synchronized (module) {
 			module.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-			return TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), generator.use_leekscript_cache, true, null, true).forTests()));
+			return TestCase.table(module.compile(EntityAI.options(generator, module, true)));
 		}
 	}
 
@@ -146,35 +145,9 @@ public class FightTestRunner {
 		var fight = new Fight(generator);
 		Leek tester = null;
 		try {
-			final var registers = new HashMap<Integer, String>();
-			fight.getState().setRegisterManager(new RegisterManager() {
-				@Override public String getRegisters(int leek) { return registers.get(leek); }
-				@Override public void saveRegisters(int leek, String value, boolean is_new) { registers.put(leek, value); }
-			});
-			fight.setStatisticsManager(new LocalTrophyManager());
-			fight.setMaxTurns(1);
-			var farmerLog = new FarmerLog(fight, 0);
-
 			var scenario = test.options().get("scenario") instanceof String path ? TestScenario.read(module, path) : TestScenario.standard();
 			tester = scenario.tester();
-			for (int t = 0; t < scenario.teams().size(); t++) {
-				for (var leek : scenario.teams().get(t)) {
-					fight.getState().addEntity(t, leek);
-					leek.setFight(fight);
-					leek.setBirthTurn(1);
-					// Le journal du testeur est recopié dans le résultat ; les autres n'ont pas d'IA
-					leek.setLogs(leek == tester ? new CapturingLog(farmerLog, leek, run.logs()) : new LeekLog(farmerLog, leek));
-					leek.setAIEquipped(leek == tester);
-				}
-			}
-			// Un cœur = un million d'opérations par tour : assez de cœurs pour le plafond du test, que
-			// l'IA applique ensuite à l'unité près
-			tester.setCores(Math.max(1, (test.maxOperations() + 999_999) / 1_000_000));
-			tester.setAIFile(module);
-			fight.getState().setCustomMap(scenario.map());
-			fight.getState().seed(scenario.seed());
-
-			fight.setTest(tester, run);
+			prepare(fight, scenario, module, run);
 			fight.startFight(false);
 
 			var result = result(tester);
@@ -190,6 +163,39 @@ public class FightTestRunner {
 		} finally {
 			fight.closePolyglotSandbox();
 		}
+	}
+
+	/**
+	 * Monte le combat du test `run` sur le plateau de `scenario`, prêt à lancer : `module` est l'IA
+	 * du testeur, la seule équipée.
+	 */
+	public static void prepare(Fight fight, TestScenario scenario, AIFile module, TestRun run) {
+		final var registers = new HashMap<Integer, String>();
+		fight.getState().setRegisterManager(new RegisterManager() {
+			@Override public String getRegisters(int leek) { return registers.get(leek); }
+			@Override public void saveRegisters(int leek, String value, boolean is_new) { registers.put(leek, value); }
+		});
+		fight.setStatisticsManager(new LocalTrophyManager());
+		fight.setMaxTurns(1);
+		var farmerLog = new FarmerLog(fight, 0);
+		var tester = scenario.tester();
+		for (int t = 0; t < scenario.teams().size(); t++) {
+			for (var leek : scenario.teams().get(t)) {
+				fight.getState().addEntity(t, leek);
+				leek.setFight(fight);
+				leek.setBirthTurn(1);
+				// Le journal du testeur est recopié dans le résultat ; les autres n'ont pas d'IA
+				leek.setLogs(leek == tester ? new CapturingLog(farmerLog, leek, run.logs()) : new LeekLog(farmerLog, leek));
+				leek.setAIEquipped(leek == tester);
+			}
+		}
+		// Un cœur = un million d'opérations par tour : assez de cœurs pour le plafond du test, que
+		// l'IA applique ensuite à l'unité près
+		tester.setCores(Math.max(1, (run.test().maxOperations() + 999_999) / 1_000_000));
+		tester.setAIFile(module);
+		fight.getState().setCustomMap(scenario.map());
+		fight.getState().seed(scenario.seed());
+		fight.setTest(tester, run);
 	}
 
 	private static TestResult result(Leek tester) {

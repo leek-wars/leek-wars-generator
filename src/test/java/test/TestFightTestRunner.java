@@ -18,15 +18,12 @@ import org.junit.Test;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.fight.Fight;
 import com.leekwars.generator.fight.entity.EntityAI;
-import com.leekwars.generator.leek.FarmerLog;
-import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.test.FightTestRunner;
-import com.leekwars.generator.test.LocalTrophyManager;
 import com.leekwars.generator.test.TestScenario;
 
 import leekscript.common.Error;
 import leekscript.compiler.LeekScript;
-import leekscript.compiler.Options;
+import leekscript.compiler.exceptions.LeekCompilerException;
 import leekscript.compiler.resolver.FileSystem;
 import leekscript.compiler.resolver.NativeFileSystem;
 import leekscript.testing.TestCase;
@@ -73,50 +70,49 @@ public class TestFightTestRunner {
 		assertEquals(results.toString(), TestResult.Status.PASSED, results.get("scores").status());
 	}
 
-	@Test
-	public void opponentIsNotCompiledInTestMode() throws Exception {
-		// Dans un combat de test, seule l'entité testée est compilée en mode test : un adversaire dont
-		// l'IA (du dossier test/ de scoring) importe une dépendance de test est refusé
+	/** fixtures, dépendance de test de scoring ; deux modules du dossier test/ de scoring l'importent. */
+	private void writeTestDependency() throws Exception {
 		write("scoring/package.leek", "// @version:5\npackage scoring\ndepends test fixtures from \"../fixtures\"\nexport function score(integer n) -> integer { return n + 1 }");
 		write("fixtures/package.leek", "// @version:5\npackage fixtures\nexport function two() -> integer { return 2 }");
 		write("scoring/test/s.test.leek", "// @version:5\nimport { two } from \"@fixtures\"\n@test function t() { assertEquals(2, two()) }");
 		write("scoring/test/adversaire.leek", "// @version:5\nimport { two } from \"@fixtures\"\ndebug(two())");
-		var fs = LeekScript.getFileSystem().getRoot();
-		var module = fs.resolve("scoring/test/s.test.leek");
-		var opponentFile = fs.resolve("scoring/test/adversaire.leek");
+	}
+
+	@Test
+	public void fightAIIsNotCompiledInTestMode() throws Exception {
+		writeTestDependency();
+		var file = LeekScript.getFileSystem().getRoot().resolve("scoring/test/adversaire.leek");
+		file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
+		try {
+			file.compile(EntityAI.options(new Generator(), file, false));
+		} catch (LeekCompilerException e) {
+			// erreurs d'analyse : relevées sur le fichier
+		}
+		assertTrue(file.getErrors().stream().anyMatch(e -> e.error == Error.TEST_DEPENDENCY_OUTSIDE_TESTS));
+	}
+
+	@Test
+	public void onlyTheTesterIsCompiledInTestMode() throws Exception {
+		// Fight.startFight : seule l'entité testée compile en mode test, pas l'adversaire du même dossier
+		writeTestDependency();
+		var root = LeekScript.getFileSystem().getRoot();
+		var module = root.resolve("scoring/test/s.test.leek");
 		var generator = new Generator();
 		module.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-		var table = TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), false, true, null, true).forTests()));
-		var test = table.stream().filter(TestCase::isTest).findFirst().get();
+		var table = TestCase.table(module.compile(EntityAI.options(generator, module, true)));
 		var fight = new Fight(generator);
-		fight.setStatisticsManager(new LocalTrophyManager());
-		fight.setMaxTurns(1);
-		var farmerLog = new FarmerLog(fight, 0);
 		var scenario = TestScenario.standard();
-		var tester = scenario.tester();
+		FightTestRunner.prepare(fight, scenario, module, new TestRun("scoring/test/s.test.leek", table, table.get(0), new ArrayList<>()));
 		var opponent = scenario.teams().get(1).get(0);
-		for (int t = 0; t < scenario.teams().size(); t++) {
-			for (var leek : scenario.teams().get(t)) {
-				fight.getState().addEntity(t, leek);
-				leek.setFight(fight);
-				leek.setBirthTurn(1);
-				leek.setLogs(new LeekLog(farmerLog, leek));
-				leek.setAIEquipped(true);
-			}
-		}
-		tester.setAIFile(module);
-		opponent.setAIFile(opponentFile);
-		fight.getState().setCustomMap(scenario.map());
-		fight.getState().seed(scenario.seed());
-		fight.setTest(tester, new TestRun("scoring/test/s.test.leek", table, test, new ArrayList<>()));
+		opponent.setAIFile(root.resolve("scoring/test/adversaire.leek"));
+		opponent.setAIEquipped(true);
 		try {
 			fight.startFight(false);
 		} finally {
 			fight.closePolyglotSandbox();
 		}
-		assertTrue(((EntityAI) tester.getAI()).isValid());
+		assertTrue(((EntityAI) scenario.tester().getAI()).isValid());
 		assertFalse(((EntityAI) opponent.getAI()).isValid());
-		assertTrue(opponentFile.getErrors().stream().anyMatch(e -> e.error == Error.TEST_DEPENDENCY_OUTSIDE_TESTS));
 	}
 
 	@Test

@@ -300,10 +300,17 @@ public class EntityAI extends AI {
 	}
 
 	/**
-	 * `tests` : l'IA est le module de test d'un combat de test (cf FightTestRunner), compilée en mode
-	 * test (Options#tests) : les dépendances de test de son package (`depends test`) lui sont ouvertes.
-	 * Jamais pour une IA de combat.
+	 * Options de compilation d'une IA. `tests` : le module de test d'un combat de test (cf
+	 * FightTestRunner), compilé en mode test (Options#tests) : les dépendances de test de son
+	 * package (`depends test`) lui sont ouvertes. Jamais pour une IA de combat. La table des tests
+	 * et le combat de chaque test compilent avec les mêmes options : une seule compilation en cache.
 	 */
+	public static Options options(Generator generator, AIFile file, boolean tests) {
+		var options = new Options(file.getVersion(), file.isStrict(), generator.use_leekscript_cache, true, null, true);
+		return tests ? options.forTests() : options;
+	}
+
+	/** `tests` : cf {@link #options}. */
 	public static EntityAI build(Generator generator, AIFile file, Entity entity, boolean tests) {
 
 		if (file == null) {
@@ -323,8 +330,7 @@ public class EntityAI extends AI {
 			// Synchro sur le fichier pour ne pas compiler deux fois la même IA en parallèle
 			synchronized (file) {
 				file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-				var options = new Options(file.getVersion(), file.isStrict(), generator.use_leekscript_cache, true, null, true);
-				ai = (EntityAI) file.compile(tests ? options.forTests() : options);
+				ai = (EntityAI) file.compile(options(generator, file, tests));
 			}
 
 			Log.i(TAG, "AI " + file.getPath() + " compiled!");
