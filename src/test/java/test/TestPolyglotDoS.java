@@ -239,6 +239,18 @@ public class TestPolyglotDoS extends FightTestBase {
 		assertNativeTimeoutDisablesAtOnce("js", "Array.prototype.indexOf.call({length: 2**53 - 1}, 1);");
 	}
 
+	/** Cas de prod : tour 1 bon marche, puis un tour qui brule le watchdog en natif : neutralise aussitot. */
+	@Test(timeout = 60_000)
+	public void laterInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI ai = ai(sb, "js", "var n = 0;\nfunction turn(){ if (n++ > 0) Array.prototype.indexOf.call({length: 2**53 - 1}, 1); return 1; }", 5_000);
+			Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			expectTooMuchOperations(ai, "le 2e tour aurait du etre coupe par le watchdog");
+			assertDisabledReturnsImmediately(ai);
+		}
+	}
+
 	@Test(timeout = 60_000)
 	public void pythonInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
 		assertNativeTimeoutDisablesAtOnce("python", "def turn():\n    return max(iter(range(10 ** 10)))\n");

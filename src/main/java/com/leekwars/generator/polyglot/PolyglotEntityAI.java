@@ -136,12 +136,15 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Temps CPU inexplique tolere par tour. */
 	private static final long UNEXPLAINED_TURN_TOLERANCE_NANOS = 250_000_000L;
 	/**
-	 * Tolerance en plus pour l'execution qui charge l'entree pour la premiere fois du combat : parsing des
-	 * sources et des modules importes, sans ops en face (GraalPy : ~10 us par caractere, 2 s pour 200 Ko).
-	 * Les rechargements apres une fermeture du contexte (watchdog, RAM) n'y ont pas droit : sans cela,
-	 * chaque tour coupe par le watchdog rechargeait l'entree et echappait au garde-fou.
+	 * Tolerance d'une execution qui charge l'entree (1er tour, ou rechargement apres une fermeture du
+	 * contexte) : parsing des sources et des modules importes, sans ops en face. Une base (modules de la
+	 * stdlib importes) plus le prix du parsing au caractere de source du joueur (GraalPy ~10 us, GraalJS
+	 * ~1 us). Proportionnelle et non forfaitaire : une petite IA dont le chargement brule ses 5 s de watchdog
+	 * en natif est neutralisee des le 1er depassement, une grosse IA honnete garde de quoi se parser.
 	 */
-	private static final long FIRST_LOAD_TOLERANCE_NANOS = 3_000_000_000L;
+	private static final long LOAD_TOLERANCE_BASE_NANOS = 1_000_000_000L;
+	private static final long LOAD_NANOS_PER_SOURCE_CHAR_PYTHON = 10_000;
+	private static final long LOAD_NANOS_PER_SOURCE_CHAR_JS = 2_000;
 	/** Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. */
 	private static final long UNEXPLAINED_FIGHT_BUDGET_NANOS = 1_000_000_000L;
 	/** Temps CPU accorde par appel de l'API de combat : traversee de la frontiere isolate et marshalling. */
@@ -171,8 +174,8 @@ public class PolyglotEntityAI extends EntityAI {
 	private long idleNanos;                    // temps bloque compte sur le combat, cf chargeIdleTime
 	private long unexplainedNanos;             // temps CPU non paye par des ops sur le combat, cf chargeUnexplainedTime
 	private long hostCalls;                    // appels de l'API de combat depuis le debut de l'execution
-	private long loadToleranceNanos;           // tolerance du 1er chargement de l'entree dans l'execution, cf FIRST_LOAD_TOLERANCE_NANOS
-	private boolean entryLoaded;               // l'entree a deja ete chargee une fois sur ce combat
+	private long loadToleranceNanos;           // tolerance du chargement de l'entree dans l'execution, cf LOAD_TOLERANCE_BASE_NANOS
+	private long sourceChars = -1;             // caracteres de source du joueur (entree + fichiers), calcule au 1er chargement
 
 	/**
 	 * Fraction du budget wall-clock du tour a laquelle le compteur d'operations synthetique atteint
@@ -786,12 +789,23 @@ public class PolyglotEntityAI extends EntityAI {
 		return context.eval(Source.newBuilder(languageId, code, "lw:" + name).buildLiteral());
 	}
 
-	/** Chargement de l'entree au 1er tour, selon le mode (module ES / script). */
+	/**
+	 * Chargement de l'entree, selon le mode (module ES / script) : au 1er tour, au prechargement d'un hook,
+	 * et a chaque reconstruction du contexte (apres le watchdog, le cap RAM...). Ouvre la tolerance de
+	 * l'execution au garde-fou CPU, cf LOAD_TOLERANCE_BASE_NANOS.
+	 */
 	private Value loadEntryFirstTurn() throws LeekRunException {
-		if (!entryLoaded) {
-			entryLoaded = true;
-			loadToleranceNanos = FIRST_LOAD_TOLERANCE_NANOS; // cf chargeUnexplainedTime
+		if (sourceChars < 0) {
+			sourceChars = source.length();
+			if (fileSystem != null) {
+				for (String path : fileSystem.filePaths()) {
+					String content = fileSystem.readFile(path);
+					sourceChars += content != null ? content.length() : 0;
+				}
+			}
 		}
+		loadToleranceNanos = LOAD_TOLERANCE_BASE_NANOS
+			+ sourceChars * (isPython() ? LOAD_NANOS_PER_SOURCE_CHAR_PYTHON : LOAD_NANOS_PER_SOURCE_CHAR_JS);
 		if (jsModule) {
 			// Module ES charge via le FS (import d'un chemin absolu) -> ses imports relatifs
 			// resolvent contre /ai. Un `function turn()` de premier niveau y est module-scoped : l'epilogue
