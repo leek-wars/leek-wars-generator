@@ -198,7 +198,8 @@ public class Fight {
 		for (var entity : state.getEntities().values()) {
 
 			// Build AI after the fight is ready (static init)
-			var ai = EntityAI.build(this.generator, (AIFile) entity.getAIFile(), entity);
+			// Le module de test d'un combat de test se compile en mode test, comme pour lire sa table
+			var ai = EntityAI.build(this.generator, (AIFile) entity.getAIFile(), entity, entity == testEntity);
 			entity.setAI(ai);
 			if (entity == testEntity) ((EntityAI) ai).setTest(testRun);
 			((EntityAI) ai).setFight(this);

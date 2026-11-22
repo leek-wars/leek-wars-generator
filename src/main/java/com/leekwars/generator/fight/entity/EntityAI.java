@@ -296,6 +296,15 @@ public class EntityAI extends AI {
 	 * Add the correct errors in farmer logs
 	 */
 	public static EntityAI build(Generator generator, AIFile file, Entity entity) {
+		return build(generator, file, entity, false);
+	}
+
+	/**
+	 * `tests` : l'IA est le module de test d'un combat de test (cf FightTestRunner), compilée en mode
+	 * test (Options#tests) : les dépendances de test de son package (`depends test`) lui sont ouvertes.
+	 * Jamais pour une IA de combat.
+	 */
+	public static EntityAI build(Generator generator, AIFile file, Entity entity, boolean tests) {
 
 		if (file == null) {
 			return new EntityAI(entity, (LeekLog) entity.getLogs());
@@ -315,7 +324,7 @@ public class EntityAI extends AI {
 			synchronized (file) {
 				file.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
 				var options = new Options(file.getVersion(), file.isStrict(), generator.use_leekscript_cache, true, null, true);
-				ai = (EntityAI) file.compile(options);
+				ai = (EntityAI) file.compile(tests ? options.forTests() : options);
 			}
 
 			Log.i(TAG, "AI " + file.getPath() + " compiled!");

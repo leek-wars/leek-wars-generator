@@ -129,11 +129,14 @@ public class FightTestRunner {
 		return results;
 	}
 
-	/** Compile le module de test et rend sa table (vide s'il n'est pas un module de test). */
+	/**
+	 * Compile le module de test et rend sa table (vide s'il n'est pas un module de test). En mode
+	 * test (Options#tests), comme dans le combat de chaque test (Fight#setTest).
+	 */
 	private static List<TestCase> compile(Generator generator, AIFile module) throws Exception {
 		synchronized (module) {
 			module.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
-			return TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), generator.use_leekscript_cache, true, null, true)));
+			return TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), generator.use_leekscript_cache, true, null, true).forTests()));
 		}
 	}
 

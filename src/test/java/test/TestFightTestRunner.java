@@ -52,6 +52,16 @@ public class TestFightTestRunner {
 	}
 
 	@Test
+	public void testDependencyOfAPackage() throws Exception {
+		// `depends test` : le module de test de scoring importe fixtures, qui dépend de scoring
+		write("scoring/package.leek", "// @version:5\npackage scoring\ndepends test fixtures from \"../fixtures\"\nexport function score(integer n) -> integer { return n + 1 }");
+		write("fixtures/package.leek", "// @version:5\npackage fixtures\ndepends scoring from \"../scoring\"\nimport { score } from \"@scoring\"\nexport function expected() -> integer { return score(2) }");
+		write("scoring/test/s.test.leek", "// @version:5\nimport { score } from \"../package.leek\"\nimport { expected } from \"@fixtures\"\n@test function scores() { assertEquals(expected(), score(2)) }");
+		var results = run("scoring/test/s.test.leek");
+		assertEquals(results.toString(), TestResult.Status.PASSED, results.get("scores").status());
+	}
+
+	@Test
 	public void scenarioFileBuildsTheBoard() throws Exception {
 		write("sc/plateau.json", """
 			{"type": "leek-wars-scenario", "version": 1, "seed": 7,
