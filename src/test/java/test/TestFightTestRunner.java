@@ -1,10 +1,12 @@
 package test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,12 +16,22 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.leekwars.generator.Generator;
+import com.leekwars.generator.fight.Fight;
+import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.FarmerLog;
+import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.test.FightTestRunner;
+import com.leekwars.generator.test.LocalTrophyManager;
+import com.leekwars.generator.test.TestScenario;
 
+import leekscript.common.Error;
 import leekscript.compiler.LeekScript;
+import leekscript.compiler.Options;
 import leekscript.compiler.resolver.FileSystem;
 import leekscript.compiler.resolver.NativeFileSystem;
+import leekscript.testing.TestCase;
 import leekscript.testing.TestResult;
+import leekscript.testing.TestRun;
 
 /** Le lanceur de tests en combat : le bac à sable, et le plateau d'un fichier de scénario. */
 public class TestFightTestRunner {
@@ -59,6 +71,52 @@ public class TestFightTestRunner {
 		write("scoring/test/s.test.leek", "// @version:5\nimport { score } from \"../package.leek\"\nimport { expected } from \"@fixtures\"\n@test function scores() { assertEquals(expected(), score(2)) }");
 		var results = run("scoring/test/s.test.leek");
 		assertEquals(results.toString(), TestResult.Status.PASSED, results.get("scores").status());
+	}
+
+	@Test
+	public void opponentIsNotCompiledInTestMode() throws Exception {
+		// Dans un combat de test, seule l'entité testée est compilée en mode test : un adversaire dont
+		// l'IA (du dossier test/ de scoring) importe une dépendance de test est refusé
+		write("scoring/package.leek", "// @version:5\npackage scoring\ndepends test fixtures from \"../fixtures\"\nexport function score(integer n) -> integer { return n + 1 }");
+		write("fixtures/package.leek", "// @version:5\npackage fixtures\nexport function two() -> integer { return 2 }");
+		write("scoring/test/s.test.leek", "// @version:5\nimport { two } from \"@fixtures\"\n@test function t() { assertEquals(2, two()) }");
+		write("scoring/test/adversaire.leek", "// @version:5\nimport { two } from \"@fixtures\"\ndebug(two())");
+		var fs = LeekScript.getFileSystem().getRoot();
+		var module = fs.resolve("scoring/test/s.test.leek");
+		var opponentFile = fs.resolve("scoring/test/adversaire.leek");
+		var generator = new Generator();
+		module.setRootClass("com.leekwars.generator.fight.entity.EntityAI");
+		var table = TestCase.table(module.compile(new Options(module.getVersion(), module.isStrict(), false, true, null, true).forTests()));
+		var test = table.stream().filter(TestCase::isTest).findFirst().get();
+		var fight = new Fight(generator);
+		fight.setStatisticsManager(new LocalTrophyManager());
+		fight.setMaxTurns(1);
+		var farmerLog = new FarmerLog(fight, 0);
+		var scenario = TestScenario.standard();
+		var tester = scenario.tester();
+		var opponent = scenario.teams().get(1).get(0);
+		for (int t = 0; t < scenario.teams().size(); t++) {
+			for (var leek : scenario.teams().get(t)) {
+				fight.getState().addEntity(t, leek);
+				leek.setFight(fight);
+				leek.setBirthTurn(1);
+				leek.setLogs(new LeekLog(farmerLog, leek));
+				leek.setAIEquipped(true);
+			}
+		}
+		tester.setAIFile(module);
+		opponent.setAIFile(opponentFile);
+		fight.getState().setCustomMap(scenario.map());
+		fight.getState().seed(scenario.seed());
+		fight.setTest(tester, new TestRun("scoring/test/s.test.leek", table, test, new ArrayList<>()));
+		try {
+			fight.startFight(false);
+		} finally {
+			fight.closePolyglotSandbox();
+		}
+		assertTrue(((EntityAI) tester.getAI()).isValid());
+		assertFalse(((EntityAI) opponent.getAI()).isValid());
+		assertTrue(opponentFile.getErrors().stream().anyMatch(e -> e.error == Error.TEST_DEPENDENCY_OUTSIDE_TESTS));
 	}
 
 	@Test
