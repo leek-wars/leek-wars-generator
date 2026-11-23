@@ -689,8 +689,9 @@ public class EntityClass {
 	public static String getAIName(EntityAI ai, Object value) throws LeekRunException {
 		var l = resolveEntity(ai, value);
 		if (l == null) return null;
-		// Sans éleveur (tourelle, mob) : rien à cacher.
-		return canReadIdentity(ai, l) || l.getFarmer() <= 0 ? l.getAIName() : Pseudonyms.aiName(ai.getState(), l);
+		if (canReadIdentity(ai, l)) return l.getAIName();
+		// Sans éleveur (tourelle d'un inscrit) : caché comme avant, pas de pseudonyme à lui donner.
+		return l.getFarmer() > 0 ? Pseudonyms.aiName(ai.getState(), l) : null;
 	}
 
 	/** Chemin de l'IA d'une entité, si son fichier appartient au même éleveur que celui de l'appelant ; sinon privé (getAIName en donne le nom de fichier). */
@@ -758,7 +759,8 @@ public class EntityClass {
 	public static String getFarmerName(EntityAI ai, Object value) throws LeekRunException {
 		var l = resolveEntity(ai, value);
 		if (l == null) return null;
-		return canReadIdentity(ai, l) || l.getFarmer() <= 0 ? l.getFarmerName() : Pseudonyms.farmerName(ai.getState(), l);
+		if (canReadIdentity(ai, l)) return l.getFarmerName();
+		return l.getFarmer() > 0 ? Pseudonyms.farmerName(ai.getState(), l) : null;
 	}
 
 	public static String getFarmerCountry(EntityAI ai) throws LeekRunException {

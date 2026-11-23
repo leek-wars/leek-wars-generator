@@ -41,7 +41,13 @@ public class Pseudonyms {
 	};
 
 	public static String leekName(State state, Entity entity) {
-		return pick(LEEKS, state, 0x4c45454bL, entity.getFId());
+		var name = pick(LEEKS, state, 0x4c45454bL, entity.getFId());
+		// Jamais le vrai nom d'une entité du combat (un poireau « Radis », un mob « Potiron ») : une
+		// IA qui reconnaît une entité à son nom la confondrait avec une autre.
+		for (var e : state.getAllEntities(true)) {
+			if (name.equals(e.getName())) return name + " ?";
+		}
+		return name;
 	}
 
 	public static String farmerName(State state, Entity entity) {
