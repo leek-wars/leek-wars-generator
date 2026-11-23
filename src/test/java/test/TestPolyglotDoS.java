@@ -222,7 +222,8 @@ public class TestPolyglotDoS extends FightTestBase {
 
 	@Test(timeout = 120_000)
 	public void pythonUnpaidNativeWorkDisablesAi() throws Exception {
-		assertUnpaidNativeWorkDisablesAi("python", "b = bytes(1 << 26)\ndef turn():\n    n = 0\n    for i in range(40):\n        n += b.find(b'\\x01')\n    return n\n");
+		// Une copie de liste ne compte pas (elle ne calcule rien) : du natif que les ops ne payent pas
+		assertUnpaidNativeWorkDisablesAi("python", "b = [0] * (1 << 22)\ndef turn():\n    n = 0\n    for i in range(300):\n        n += len(b * 2)\n    return n\n");
 	}
 
 	/**
@@ -257,10 +258,10 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
-	/** Natif Python NON compte (bytes.find) jusqu'a l'echeance : neutralise des le 1er depassement. */
+	/** Natif Python NON compte (copie de liste) jusqu'a l'echeance : neutralise des le 1er depassement. */
 	@Test(timeout = 60_000)
 	public void pythonInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
-		assertNativeTimeoutDisablesAtOnce("python", "b = bytes(1 << 26)\ndef turn():\n    while True:\n        b.find(b'\\x01')\n");
+		assertNativeTimeoutDisablesAtOnce("python", "b = [0] * (1 << 22)\ndef turn():\n    while True:\n        b * 2\n");
 	}
 
 	/**

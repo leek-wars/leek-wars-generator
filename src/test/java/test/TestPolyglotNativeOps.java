@@ -70,6 +70,31 @@ public class TestPolyglotNativeOps extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Recherches, comparaisons et fonctions de chaine au tarif de LeekScript : 1 par element parcouru
+	 * (inArray), 1 + 1 par 10 caracteres cherches (indexOf), 1 par caractere decoupe ou remplace, 1 par
+	 * element joint ou converti.
+	 */
+	@Test
+	public void searchesAndStringFunctionsAreCounted() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			String setup = "l = list(range(10000))\nl2 = list(range(10000))\ns = 'a' * 100000\nb = bytes(100000)\nss = [str(i) for i in range(10000)]";
+			String loop = "    for k in range(10):\n        ";
+			assertTrue("x in l", ops(sb, setup, loop + "9999 in l") >= 100_000);
+			assertTrue("l.index", ops(sb, setup, loop + "l.index(9999)") >= 100_000);
+			assertTrue("l.count", ops(sb, setup, loop + "l.count(9999)") >= 100_000);
+			assertTrue("l == l2", ops(sb, setup, loop + "l == l2") >= 100_000);
+			assertTrue("s.find", ops(sb, setup, loop + "s.find('b')") >= 100_000);
+			assertTrue("'b' in s", ops(sb, setup, loop + "'b' in s") >= 100_000);
+			assertTrue("b.find", ops(sb, setup, loop + "b.find(b'x')") >= 100_000);
+			assertTrue("s.split", ops(sb, setup, loop + "s.split('b')") >= 1_000_000);
+			assertTrue("s.replace", ops(sb, setup, loop + "s.replace('a', 'b')") >= 1_000_000);
+			assertTrue("join", ops(sb, setup, loop + "','.join(ss)") >= 100_000);
+			assertTrue("repr", ops(sb, setup, loop + "str(l)") >= 100_000);
+		}
+	}
+
 	/** Une boucle for est deja comptee par l'instrument : parcourir un dict ne coute pas plus qu'une liste. */
 	@Test
 	public void forLoopIsNotCountedTwice() throws Exception {
