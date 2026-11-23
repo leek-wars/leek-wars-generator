@@ -1380,6 +1380,11 @@ public class FightClass {
 			ai.addSystemLog(leekscript.AILog.WARNING, com.leekwars.generator.leek.FarmerLog.SET_LOADOUT_OUT_OF_HOOK, new String[0]);
 			return false;
 		}
+		// Poireaux imposés (tournoi d'IA) : ni ensemble ni équipement en code, rien ne change.
+		if (!ai.getState().allowsLoadouts()) {
+			ai.getLogs().addLog(leekscript.AILog.WARNING, "setLoadout : un équipement n'est pas disponible dans ce combat");
+			return false;
+		}
 		boolean changeStats = ai.bool(changeStatsObject);
 		var entity = ai.getEntity();
 		FightLoadout loadout;

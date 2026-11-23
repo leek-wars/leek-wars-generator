@@ -238,6 +238,7 @@ public class State {
 			this.mFreeComponents.put(entry.getKey(), new ArrayList<>(entry.getValue()));
 		}
 		this.mFarmerItems = state.mFarmerItems;
+		this.loadouts = state.loadouts;
 	}
 
 	// Potions de restat disponibles / consommées par farmer pendant le combat.
@@ -282,6 +283,17 @@ public class State {
 	// c'est l'inventaire des éleveurs, il ne change pas pendant le combat.
 	private java.util.Map<Integer, java.util.Map<Integer, Integer>> mFarmerItems = new HashMap<>();
 
+	// false : combat aux poireaux imposés (Scenario#loadouts), sans équipement en code ni inventaire.
+	private boolean loadouts = true;
+
+	public void setLoadouts(boolean loadouts) {
+		this.loadouts = loadouts;
+	}
+
+	public boolean allowsLoadouts() {
+		return loadouts;
+	}
+
 	/** Inventaire connu d'avance (tests), sans passer par les règles. */
 	public void setFarmerItems(int farmer, java.util.Map<Integer, Integer> items) {
 		mFarmerItems.put(farmer, items);
@@ -310,6 +322,8 @@ public class State {
 	 * {@link #wornByOthers}) — un exemplaire par poireau. null si la possession est inconnue.
 	 */
 	public java.util.Map<Integer, Integer> availableCopies(Entity entity, java.util.Map<Integer, Integer> worn) {
+		// Poireaux imposés : l'inventaire de l'éleveur n'est même pas demandé aux règles.
+		if (!loadouts) return null;
 		int farmer = entity.getFarmer();
 		if (!mFarmerItems.containsKey(farmer)) loadFarmerItems(farmer);
 		var items = mFarmerItems.get(farmer);

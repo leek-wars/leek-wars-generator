@@ -29,6 +29,12 @@ public class Scenario {
 	public int context = 0;
 	/** Combat lancé dans un lot (#4779) : le type et le contexte ne le disent pas. */
 	public boolean batch = false;
+	/**
+	 * false : combat aux poireaux imposés (tournoi d'IA). Aucun équipement en code ni inventaire :
+	 * setLoadout() est refusé et getInventory() rend null, l'inventaire réel des éleveurs n'est
+	 * jamais lu.
+	 */
+	public boolean loadouts = true;
 	public int fightID = 0;
 	public int boss = 0;
 	public Map<Integer, FarmerInfo> farmers = new HashMap<Integer, FarmerInfo>();
@@ -59,6 +65,9 @@ public class Scenario {
 		}
 		if (json.has("batch")) {
 			scenario.batch = json.get("batch").booleanValue();
+		}
+		if (json.has("loadouts")) {
+			scenario.loadouts = json.get("loadouts").booleanValue();
 		}
 		for (var farmerJson : (ArrayNode) json.get("farmers")) {
 			FarmerInfo farmer = new FarmerInfo();

@@ -194,7 +194,10 @@ public class Generator {
 		fight.getState().setBatch(scenario.batch);
 		fight.getState().setCustomMap(scenario.map);
 		fight.getState().seed(scenario.seed);
+		fight.getState().setLoadouts(scenario.loadouts);
 		for (var farmer : scenario.farmers.values()) {
+			// Poireaux imposés : ni potion, ni pot de pièces, l'inventaire de l'éleveur reste hors du combat.
+			if (!scenario.loadouts) continue;
 			fight.getState().setRestatPotionsAvailable(farmer.id, farmer.restatPotions);
 			// Pot commun des pièces améliorées libres : les setLoadout() de ses poireaux s'y
 			// servent, premier arrivé premier servi, le temps du combat.
