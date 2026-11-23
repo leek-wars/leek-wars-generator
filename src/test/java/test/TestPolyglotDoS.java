@@ -79,6 +79,7 @@ public class TestPolyglotDoS extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox(Long.MAX_VALUE, "js")) {
 			PolyglotEntityAI ai = ai(sb, "js", "while (true) {}", 300);
+			leek1.setCores(1000); // le budget couperait avant le watchdog
 			// 3 depassements -> l'IA est neutralisee (borne le cout total au lieu de payer la limite chaque tour).
 			for (int i = 0; i < 3; i++) {
 				expectTooMuchOperations(ai, "depassement attendu au tour " + i);
@@ -171,6 +172,7 @@ public class TestPolyglotDoS extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
 			PolyglotEntityAI ai = ai(sb, "python", "def turn():\n    s = 0\n    for i in range(2000000):\n        s += i\n    return 1\n", 5_000);
+			leek1.setCores(1000); // calcul au-dela du budget du poireau de test
 			for (int i = 0; i < 8; i++) {
 				Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
 			}
@@ -271,7 +273,7 @@ public class TestPolyglotDoS extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
 			PolyglotEntityAI ai = ai(sb, "python", "def turn():\n    return max(iter(range(10 ** 10)))\n", 5_000);
-			ai.setMaxOperations(1_000_000);
+			leek1.setCores(1); // un million d'operations
 			long start = System.nanoTime();
 			expectTooMuchOperations(ai, "le budget du tour aurait du couper la boucle native");
 			long elapsedMs = (System.nanoTime() - start) / 1_000_000;
@@ -285,6 +287,7 @@ public class TestPolyglotDoS extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
 			PolyglotEntityAI ai = ai(sb, "js", "function turn(){ var a = []; for (var i = 0; i < 300000; i++) a.push((i * 7919) % 300007); a.sort(function(x, y){ return x - y; }); var s = 0; for (var j = 0; j < 3000000; j++) s += j % 7; return 1; }", 5_000);
+			leek1.setCores(1000); // calcul au-dela du budget du poireau de test
 			for (int i = 0; i < 8; i++) {
 				Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
 			}

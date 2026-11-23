@@ -3,6 +3,7 @@ package test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.leekwars.generator.leek.Leek;
@@ -10,10 +11,13 @@ import com.leekwars.generator.leek.LeekLog;
 import com.leekwars.generator.polyglot.PolyglotEntityAI;
 import com.leekwars.generator.polyglot.PolyglotSandbox;
 
+import leekscript.common.Error;
+import leekscript.runner.LeekRunException;
+
 /**
- * Operations NATIVES Python (image combined-10, PythonContext.lwCharge) : les elements parcourus par
- * les boucles Java des builtins (map, sum, list, ensembles, dict...) comptent dans System.operations,
- * sans compter deux fois une boucle for, que l'instrument compte deja.
+ * Un seul compteur d'operations par contexte (image combined-11) : les statements et expressions de
+ * l'instrument, et en Python les elements parcourus par les boucles Java des builtins (map, sum,
+ * ensembles, dict...), sans compter deux fois une boucle for. Sa limite est le budget du tour.
  */
 public class TestPolyglotNativeOps extends FightTestBase {
 
@@ -28,7 +32,11 @@ public class TestPolyglotNativeOps extends FightTestBase {
 	}
 
 	private PolyglotEntityAI ai(PolyglotSandbox sb, String src) {
-		PolyglotEntityAI ai = new PolyglotEntityAI("python", src, sb);
+		return ai(sb, "python", src);
+	}
+
+	private PolyglotEntityAI ai(PolyglotSandbox sb, String lang, String src) {
+		PolyglotEntityAI ai = new PolyglotEntityAI(lang, src, sb);
 		ai.setEntity(leek1);
 		ai.setLogs(new LeekLog(farmerLog, leek1));
 		ai.setFight(fight);
@@ -80,6 +88,42 @@ public class TestPolyglotNativeOps extends FightTestBase {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
 			assertEquals(0L, ((Number) ai(sb, "import __graalpython__ as g\nint(hasattr(g, 'lw_native_ops')) + int(hasattr(g, 'time_millis')) + int('__lw_native' in globals())").runIA()).longValue());
+		}
+	}
+
+	/** Tour qui doit finir en depassement du budget (un million d'operations), bien avant les 20M de statements. */
+	private void expectBudgetEndsTurn(PolyglotSandbox sb, String lang, String src) throws Exception {
+		PolyglotEntityAI ai = ai(sb, lang, src);
+		leek1.setCores(1); // un million d'operations
+		long start = System.nanoTime();
+		try {
+			ai.runIA();
+			Assert.fail("le budget aurait du finir le tour : " + src);
+		} catch (LeekRunException e) {
+			assertEquals(Error.TOO_MUCH_OPERATIONS, e.getError());
+		}
+		long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+		assertTrue("coupe au budget (" + elapsedMs + " ms)", elapsedMs < 3_000);
+		assertTrue("ops du tour bornees au budget (" + ai.operations() + ")", ai.operations() <= ai.getMaxOperations());
+	}
+
+	@Test(timeout = 60_000)
+	public void statementsStopAtBudget() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			expectBudgetEndsTurn(sb, "python", "def turn():\n    while True:\n        pass\n");
+			expectBudgetEndsTurn(sb, "python", "def turn():\n    try:\n        while True:\n            pass\n    except BaseException:\n        pass\n    return 1\n");
+			expectBudgetEndsTurn(sb, "js", "function turn() { for (;;) {} }");
+			expectBudgetEndsTurn(sb, "js", "function turn() { try { for (;;) {} } catch (e) {} return 1; }");
+		}
+	}
+
+	/** Natif (~800 000) et statements (~600 000) passent chacun sous le budget d'un million : ensemble, ils le depassent. */
+	@Test(timeout = 60_000)
+	public void statementsAndNativeShareTheBudget() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			expectBudgetEndsTurn(sb, "python", "l = list(range(10000))\ndef turn():\n    for k in range(40):\n        sum(map(abs, l))\n    for i in range(150000):\n        x = i + 1\n    return 1\n");
 		}
 	}
 }

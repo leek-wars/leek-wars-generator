@@ -119,8 +119,11 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String WAIT_FORBIDDEN_MESSAGE = "waiting is not allowed in Leek Wars";
 	/** Message de l'exception guest correspondante, tel que GraalPy le formate. */
 	private static final String WAIT_FORBIDDEN_ERROR = "RuntimeError: " + WAIT_FORBIDDEN_MESSAGE;
-	/** Budget du tour epuise par les operations natives Python (PythonContext.lwCharge, patches/graalpython.patch). */
-	private static final String NATIVE_OPS_EXHAUSTED_ERROR = "RuntimeError: operation limit reached in Leek Wars";
+	/**
+	 * Erreur de la limite d'operations du tour (StatementCounter.LIMIT_MESSAGE de l'image combined-11),
+	 * levee par l'instrument (statements, expressions) ou par GraalPy (PythonContext.lwCharge, natif).
+	 */
+	private static final String OPERATION_LIMIT_MESSAGE = "operation limit reached in Leek Wars";
 	/**
 	 * Temps bloqué cumulé sur le combat (au-delà de la tolérance par tour) au-delà duquel l'IA est
 	 * neutralisée. Ne compte que les tours qui ont plus attendu que calculé : une IA légitime calcule
@@ -224,10 +227,8 @@ public class PolyglotEntityAI extends EntityAI {
 	// execute(x) = reset). Refetche a chaque (re)construction de contexte par ensureContext ; null si
 	// l'image ne l'embarque pas (ex Python officiel) -> fallback temps CPU (non reproductible).
 	private Value statementCounter;
-	// Python : operations NATIVES du tour (elements parcourus par les boucles Java des builtins : map,
-	// sum, ensembles, dict...), que l'instrument ne voit pas. __graalpython__.lw_native_ops de l'image
-	// (combined-10), retire du module par captureNativeOps ; null avant, ou hors Python.
-	private Value nativeOps;
+	// Limite du compteur pour le tour en cours (budget restant / opsFactor), cf operationLimit.
+	private long counterLimit = Long.MAX_VALUE;
 	// Memoire retenue par le contexte (System.usedRAM), publiee par le meme instrument ; null sans
 	// l'image qui la publie. Refetchee avec le contexte, derniere mesure gardee (cf getUsedRAM).
 	private Value heapSize;
@@ -786,7 +787,9 @@ public class PolyglotEntityAI extends EntityAI {
 			// IA de recherche). Seulement avec l'instrument deterministe ; sinon le getOperations HOTE
 			// (fallback temps CPU) reste en place.
 			guestBindings = context.getBindings(languageId);
-			nativeOps = statementCounter != null && isPython() ? captureNativeOps() : null;
+			if (statementCounter != null && isPython()) {
+				connectNativeOps();
+			}
 			if (statementCounter != null) {
 				installGuestGetOperations();
 			} else {
@@ -943,7 +946,7 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * FACTURATION DU TRAVAIL NATIF (Python). Les elements que les builtins parcourent ou trient en Java
-	 * sont comptes par l'image depuis combined-10 (cf {@link #nativeOps}). Ce prelude ne fait plus que
+	 * sont comptes par l'image depuis combined-10 (cf {@link #connectNativeOps}). Ce prelude ne fait plus que
 	 * poser l'accumulateur PRIVE de {@code __lw_charge} (+ flush) dont se servent PY_NATIVE_COSTS (math,
 	 * random) et l'override de System.operations (charges en attente), et neutralise gc.collect.
 	 * Contournable par reflexion.
@@ -1159,21 +1162,21 @@ public class PolyglotEntityAI extends EntityAI {
 		// le RETIRER du scope guest ensuite : sinon un joueur pouvait faire __lw_counter(x) pour remettre
 		// a zero le compteur partage hote/guest et sous-evaluer ses ops. __lw_real reste lu au call (mis a
 		// jour par l'hote chaque sync). L'hote garde son handle instrument (polyglot bindings) pour reset.
-		+ "def _lw_make_getops(_counter, _native, _factor, _pending):\n"
+		+ "def _lw_make_getops(_counter, _factor, _pending):\n"
 		+ "    def _lw_ops():\n"
 		// int() : meme troncature que l'hote, cf JS_GETOPS_OVERRIDE ; _pending = charges accumulees non flushees
-		+ "        return __lw_real + int((_counter() + _native()) * _factor) + _pending()\n"
+		+ "        return __lw_real + int(_counter() * _factor) + _pending()\n"
 		+ "    return _lw_ops\n"
 		// Branche l'implementation guest sur System.operations via le hook one-shot pose par
 		// objects.py sur builtins (le hook se retire de builtins une fois consomme).
 		+ "_lw_setter = getattr(_lw_ops_b, '__lw_set_ops', None)\n"
 		+ "if _lw_setter is not None:\n"
-		+ "    _lw_setter(_lw_make_getops(__lw_counter, globals().get('__lw_native') or (lambda: 0), $F, getattr(_lw_ops_b, '__lw_pending', lambda: 0)))\n"
+		+ "    _lw_setter(_lw_make_getops(__lw_counter, $F, getattr(_lw_ops_b, '__lw_pending', lambda: 0)))\n"
 		+ "try:\n"
 		+ "    delattr(_lw_ops_b, '__lw_pending')\n"
 		+ "except Exception:\n"
 		+ "    pass\n"
-		+ "for _lw_n in ('__lw_counter', '__lw_native', '_lw_make_getops', '_lw_setter', '_lw_ops_b', '_lw_n'):\n"
+		+ "for _lw_n in ('__lw_counter', '_lw_make_getops', '_lw_setter', '_lw_ops_b', '_lw_n'):\n"
 		+ "    try:\n"
 		+ "        del globals()[_lw_n]\n"
 		+ "    except Exception:\n"
@@ -1200,9 +1203,6 @@ public class PolyglotEntityAI extends EntityAI {
 	private void installGuestGetOperations() {
 		try {
 			guestBindings.putMember("__lw_counter", statementCounter);
-			if (nativeOps != null) {
-				guestBindings.putMember("__lw_native", nativeOps);
-			}
 			guestBindings.putMember("__lw_real", super.getOperations());
 			String src = ("js".equals(languageId) ? JS_GETOPS_OVERRIDE : PY_GETOPS_OVERRIDE)
 					.replace("$F", String.valueOf(opsFactor));
@@ -1228,8 +1228,18 @@ public class PolyglotEntityAI extends EntityAI {
 
 	void syncRealToGuest() {
 		if (guestBindings != null && statementCounter != null) {
-			try { guestBindings.putMember("__lw_real", super.getOperations()); } catch (Exception ignore) {}
+			try {
+				guestBindings.putMember("__lw_real", super.getOperations());
+				// Le budget restant au guest baisse avec les operations hote
+				counterLimit = operationLimit();
+				statementCounter.execute(-1, counterLimit);
+			} catch (Exception ignore) {}
 		}
+	}
+
+	/** Operations guest permises au compteur (statements, expressions, natif) : le budget restant apres l'hote, en unites du compteur. */
+	private long operationLimit() {
+		return (long) (Math.max(0, getMaxOperations() - super.getOperations()) / opsFactor);
 	}
 
 	/**
@@ -1915,53 +1925,43 @@ public class PolyglotEntityAI extends EntityAI {
 			return;
 		}
 		try {
-			statementCounter.execute(0);
-			if (nativeOps != null) {
-				nativeOps.execute(0, getMaxOperations());
-			}
+			counterLimit = operationLimit();
+			statementCounter.execute(0, counterLimit);
 		} catch (Exception e) {
 			statementCounter = null;
-			nativeOps = null;
 		}
 	}
 
 	/**
-	 * Capture {@code __graalpython__.lw_native_ops} (cf {@link #nativeOps}) et la retire du module : avec
-	 * elle, le joueur remettrait ses operations a zero. null si l'image ne l'a pas.
+	 * Confie a GraalPy le compteur de l'instrument (combined-11) : il y ajoute les elements que ses
+	 * builtins parcourent ou trient en Java, et leve l'erreur de la limite au-dela. La fonction est
+	 * retiree du module : avec elle, le joueur debrancherait son compteur. Sans elle (image anterieure),
+	 * le natif n'est pas compte.
 	 */
-	private Value captureNativeOps() {
+	private void connectNativeOps() {
 		try {
-			Value f = evalPrelude("native-ops", PY_NATIVE_OPS_CAPTURE);
-			return f != null && f.canExecute() ? f : null;
-		} catch (Exception e) {
-			return null;
-		}
+			Value connect = evalPrelude("native-ops", PY_NATIVE_OPS_CAPTURE);
+			if (connect != null && connect.canExecute()) {
+				connect.execute(statementCounter);
+			}
+		} catch (Exception ignore) {}
 	}
 
 	private static final String PY_NATIVE_OPS_CAPTURE =
 		"def _lw_take(g):\n"
-		+ "    f = getattr(g, 'lw_native_ops', None)\n"
+		+ "    f = getattr(g, 'lw_set_operations', None)\n"
 		+ "    if f is not None:\n"
-		+ "        delattr(g, 'lw_native_ops')\n"
+		+ "        delattr(g, 'lw_set_operations')\n"
 		+ "    return f\n"
 		+ "(_lw_take(__import__('__graalpython__')), globals().pop('_lw_take'))[0]\n";
 
-	/** Plafond des operations natives du tour depasse, meme si le guest a attrape l'erreur (cf PythonContext.lwCharge). */
-	private boolean nativeOpsExhausted() {
+	/** Limite du compteur depassee, meme si le guest a attrape l'erreur (cf StatementCounter). */
+	private boolean counterExhausted() {
 		try {
-			return nativeOpsCount() > getMaxOperations();
+			return statementCounter != null && statementCounter.execute().asLong() > counterLimit;
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	private long nativeOpsCount() {
-		return nativeOps != null ? nativeOps.execute().asLong() : 0;
-	}
-
-	/** Statements guest et operations natives du tour, cf {@link #nativeOps}. */
-	private long guestOperations() {
-		return statementCounter.execute().asLong() + nativeOpsCount();
 	}
 
 	/**
@@ -2041,11 +2041,10 @@ public class PolyglotEntityAI extends EntityAI {
 			try {
 				// Terme guest * facteur de calibration par langage (cf opsFactor) : rend getOperations()
 				// comparable a LeekScript pour la fairness arene.
-				return real + (long) (guestOperations() * opsFactor);
+				return real + (long) (statementCounter.execute().asLong() * opsFactor);
 			} catch (Exception e) {
 				// Contexte annule/ferme en cours de tour : repli temps CPU pour le reste du tour.
 				statementCounter = null;
-				nativeOps = null;
 			}
 		}
 		// Fallback sous isolate : terme proportionnel au TEMPS CPU du thread de combat passe dans ce tour
@@ -2141,7 +2140,7 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/** Tour fini apres un budget epuise puis attrape par le guest : l'erreur du tour reste un depassement. */
 	private void throwIfOpsExhausted() throws LeekRunException {
-		if (!opsExhausted && nativeOpsExhausted()) {
+		if (!opsExhausted && counterExhausted()) {
 			opsExhausted = true; // le total du tour est plafonne au budget, cf snapshotTurnOperations
 		}
 		if (opsExhausted) {
@@ -2203,7 +2202,7 @@ public class PolyglotEntityAI extends EntityAI {
 		if (message.equals(WAIT_FORBIDDEN_ERROR)) {
 			return new LeekRunException(Error.WAIT_FORBIDDEN);
 		}
-		if (message.equals(NATIVE_OPS_EXHAUSTED_ERROR)) {
+		if (message.contains(OPERATION_LIMIT_MESSAGE)) {
 			opsExhausted = true;
 			return new LeekRunException(Error.TOO_MUCH_OPERATIONS);
 		}
@@ -2235,7 +2234,6 @@ public class PolyglotEntityAI extends EntityAI {
 			context = null;
 			contextGeneration++; // toute Value capturee sur ce contexte (callback de bulbe) est desormais perimee
 			statementCounter = null; // binding lie au contexte ferme ; refetche par ensureContext
-			nativeOps = null;
 			heapSize = null;
 			guestBindings = null;
 		}
