@@ -261,10 +261,22 @@ public class TestPolyglotDoS extends FightTestBase {
 		assertNativeTimeoutDisablesAtOnce("python", "b = bytes(1 << 26)\ndef turn():\n    while True:\n        b.find(b'\\x01')\n");
 	}
 
-	/** Boucle native Python sans fin : comptee element par element (image combined-10), le budget du tour la coupe avant le watchdog. */
+	/**
+	 * Boucle native Python sans fin : comptee element par element (image combined-10), le budget du tour
+	 * la coupe avant le watchdog. Budget d'un million d'operations : atteint en quelques dizaines de ms,
+	 * meme sur une CI lente.
+	 */
 	@Test(timeout = 60_000)
 	public void pythonNativeLoopIsBoundedByOperations() throws Exception {
-		assertNativeLoopInterrupted("python", "def turn():\n    return max(iter(range(10 ** 10)))\n", 5_000);
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			PolyglotEntityAI ai = ai(sb, "python", "def turn():\n    return max(iter(range(10 ** 10)))\n", 5_000);
+			ai.setMaxOperations(1_000_000);
+			long start = System.nanoTime();
+			expectTooMuchOperations(ai, "le budget du tour aurait du couper la boucle native");
+			long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+			Assert.assertTrue("coupee par le budget, avant le watchdog (etait " + elapsedMs + " ms)", elapsedMs < 4_000);
+		}
 	}
 
 	/** Calcul guest lourd mais paye par ses ops : jamais neutralise. */
@@ -339,14 +351,9 @@ public class TestPolyglotDoS extends FightTestBase {
 
 	/** Boucle native sur une taille virtuelle (sans memoire) : l'interruption du watchdog y atterrit. */
 	private void assertNativeLoopInterrupted(String lang, String src) throws Exception {
-		assertNativeLoopInterrupted(lang, src, 300);
-	}
-
-	/** Avec {@code limitMs} au-dela de 3 s, seul le budget d'operations peut couper la boucle a temps. */
-	private void assertNativeLoopInterrupted(String lang, String src, long limitMs) throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
-			PolyglotEntityAI ai = ai(sb, lang, src, limitMs);
+			PolyglotEntityAI ai = ai(sb, lang, src, 300);
 			long start = System.nanoTime();
 			expectTooMuchOperations(ai, "la boucle native aurait du etre interrompue");
 			long elapsedMs = (System.nanoTime() - start) / 1_000_000;
