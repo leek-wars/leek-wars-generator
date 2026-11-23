@@ -142,14 +142,26 @@ public class PolyglotEntityAI extends EntityAI {
 	 * l'execution, ~1 us en GraalJS ; marges incluses). Seule l'entree compte : les autres fichiers du
 	 * compte ne sont pas forcement importes, et le joueur les choisit. Proportionnelle et non forfaitaire :
 	 * une petite IA dont le chargement brule ses 5 s de watchdog en natif est neutralisee des le 1er
-	 * depassement. Le rechargement qui suit un depassement du watchdog n'y a pas droit : sinon chaque tour
+	 * depassement (cf WATCHDOG_UNEXPLAINED_NANOS). Le rechargement qui suit un depassement du watchdog n'y a pas droit : sinon chaque tour
 	 * coupe rechargeait l'entree et echappait au garde-fou, trois depassements par combat.
 	 */
 	private static final long LOAD_TOLERANCE_BASE_NANOS = 1_000_000_000L;
 	private static final long LOAD_NANOS_PER_SOURCE_CHAR_PYTHON = 5_000;
 	private static final long LOAD_NANOS_PER_SOURCE_CHAR_JS = 2_000;
-	/** Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. */
-	private static final long UNEXPLAINED_FIGHT_BUDGET_NANOS = 1_000_000_000L;
+	/**
+	 * Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. Une IA legitime en
+	 * accumule aussi : les operateurs natifs des conteneurs ne sont pas factures (Python : {@code a & b}
+	 * sur des ensembles, {@code dict.update}, 5 a 10 us par operation comptee) et le code froid des
+	 * premiers tours d'un contexte coute 1 a 16 us par operation. Le budget reste loin de ce qu'une IA
+	 * peut bruler en calcul compte (64 tours d'un budget d'ops entier a CPU_NANOS_PER_OP, plusieurs
+	 * minutes) : il borne l'abus sans couper une recherche qui s'appuie sur ces natifs.
+	 */
+	private static final long DEFAULT_UNEXPLAINED_FIGHT_BUDGET_NANOS = 15_000_000_000L;
+	/**
+	 * Un tour coupe par le watchdog dont au moins ce temps est du calcul inexplique neutralise l'IA aussitot,
+	 * quel que soit le budget du combat : il a brule l'echeance en natif et recommencerait a chaque tour.
+	 */
+	private static final long WATCHDOG_UNEXPLAINED_NANOS = 1_000_000_000L;
 	/** Temps CPU accorde par appel de l'API de combat : traversee de la frontiere isolate et marshalling. */
 	private static final long CPU_NANOS_PER_HOST_CALL = 5_000;
 
@@ -176,6 +188,7 @@ public class PolyglotEntityAI extends EntityAI {
 	private boolean opsExhausted;              // budget d'ops du tour epuise : le guest a pu attraper l'exception, cf ops(int)
 	private long idleNanos;                    // temps bloque compte sur le combat, cf chargeIdleTime
 	private long unexplainedNanos;             // temps CPU non paye par des ops sur le combat, cf chargeUnexplainedTime
+	private long unexplainedFightBudgetNanos = DEFAULT_UNEXPLAINED_FIGHT_BUDGET_NANOS;
 	private long hostCalls;                    // appels de l'API de combat depuis le debut de l'execution
 	private long loadToleranceNanos;           // tolerance du chargement de l'entree dans l'execution, cf LOAD_TOLERANCE_BASE_NANOS
 	private boolean reloadAfterWatchdog;       // contexte ferme par le watchdog : le prochain chargement n'a pas de tolerance
@@ -1770,9 +1783,10 @@ public class PolyglotEntityAI extends EntityAI {
 		long nowCpu = execution.startCpuNanos() < 0 ? -1L : THREAD_MX.getCurrentThreadCpuTime();
 		long cpu = nowCpu < 0 ? -1L : nowCpu - execution.startCpuNanos();
 		boolean idleExhausted = cpu >= 0 && chargeIdleTime(execution, cpu);
-		boolean nativeExhausted = cpu >= 0 && chargeUnexplainedTime(cpu, ops);
+		long unexplained = unexplainedTime(cpu, ops);
+		boolean nativeExhausted = chargeUnexplainedTime(unexplained);
 		if (!winRace(execution.settled(), execution.watchdog())) {
-			throw onWallClockTimeout(execution);
+			throw onWallClockTimeout(execution, unexplained);
 		}
 		if (idleExhausted || nativeExhausted) {
 			closeContext();
@@ -1796,9 +1810,10 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * Tour coupe par le watchdog wall-clock. On ferme le contexte (repart neuf au prochain tour) et,
-	 * apres trop de depassements sur le combat, on neutralise l'IA pour borner le cout total.
+	 * apres trop de depassements sur le combat, on neutralise l'IA pour borner le cout total ; des le 1er
+	 * si le tour a brule l'echeance en natif (NATIVE_OVERSHOOT_MS, WATCHDOG_UNEXPLAINED_NANOS).
 	 */
-	private LeekRunException onWallClockTimeout(Execution execution) {
+	private LeekRunException onWallClockTimeout(Execution execution, long unexplained) {
 		// Avant la fermeture du contexte, qui prend son temps : seul compte le retard du tour sur le tir.
 		long overshootMs = (System.nanoTime() - execution.firedNanos().get()) / 1_000_000;
 		closeContext();
@@ -1806,10 +1821,13 @@ public class PolyglotEntityAI extends EntityAI {
 		if (overshootMs > NATIVE_OVERSHOOT_MS) {
 			disable("apres un tour fini " + overshootMs + " ms apres l'interruption : travail natif qu'elle ne coupe pas");
 		}
+		if (unexplained >= WATCHDOG_UNEXPLAINED_NANOS) {
+			disable("apres un tour coupe par le watchdog avec " + unexplained / 1_000_000 + " ms de calcul natif que ses operations ne payent pas");
+		}
 		// Python seul : GraalPy retient de la memoire dans l'isolate partage a chaque contexte, a
 		// proportion du code execute, jusqu'au redemarrage du processus ; GraalJS non.
 		if (isPython()) {
-			PolyglotSandbox.recordWallClockTimeout(languageId, mEntity != null ? mEntity.getFarmer() : 0);
+			PolyglotSandbox.recordWallClockTimeout(languageId, farmerId());
 		}
 		if (++wallClockTimeouts >= MAX_WALL_CLOCK_TIMEOUTS) {
 			disable("apres " + wallClockTimeouts + " depassements wall-clock (" + turnWallClockLimitMs
@@ -1904,6 +1922,11 @@ public class PolyglotEntityAI extends EntityAI {
 		return contextGeneration;
 	}
 
+	/** Regle le budget de temps CPU inexplique du combat (defaut {@value #DEFAULT_UNEXPLAINED_FIGHT_BUDGET_NANOS} ns). */
+	public void setUnexplainedFightBudgetNanos(long nanos) {
+		this.unexplainedFightBudgetNanos = nanos;
+	}
+
 	/** Regle le backstop wall-clock par tour (defaut {@value #DEFAULT_TURN_WALL_CLOCK_LIMIT_MS} ms). */
 	public void setTurnWallClockLimitMs(long ms) {
 		this.turnWallClockLimitMs = ms;
@@ -1966,34 +1989,41 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
-	 * Compte le temps CPU de l'execution qui s'acheve que ses operations ne payent pas, cf
-	 * {@link #CPU_NANOS_PER_OP}. Vrai si l'IA vient d'epuiser son budget : elle est neutralisee. Une IA
-	 * lente mais qui calcule en code guest est payee par ses ops ; une IA qui remplit ses tours d'ops
-	 * pour masquer du natif reste bornee par son budget d'ops, comme une IA legitime.
+	 * Temps CPU de l'execution qui s'acheve que ses operations et ses tolerances ne payent pas, cf
+	 * {@link #CPU_NANOS_PER_OP} (0 sans mesure). Une IA lente mais qui calcule en code guest est payee par
+	 * ses ops ; une IA qui remplit ses tours d'ops pour masquer du natif reste bornee par son budget d'ops,
+	 * comme une IA legitime.
 	 */
-	private boolean chargeUnexplainedTime(long cpu, long ops) {
+	private long unexplainedTime(long cpu, long ops) {
 		// Sans compteur deterministe, getOperations() derive lui-meme du temps CPU : rien a comparer.
-		if (statementCounter == null) {
-			return false;
+		if (cpu < 0 || statementCounter == null) {
+			return 0;
 		}
 		long paid = Math.max(0, ops) * CPU_NANOS_PER_OP + hostCalls * CPU_NANOS_PER_HOST_CALL;
-		long unexplained = cpu - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS - loadToleranceNanos;
-		if (unexplained <= 0) {
-			return false;
-		}
+		return Math.max(0, cpu - paid - UNEXPLAINED_TURN_TOLERANCE_NANOS - loadToleranceNanos);
+	}
+
+	/** Cumule le temps inexplique de l'execution sur le combat. Vrai si le budget est epuise : l'IA est neutralisee. */
+	private boolean chargeUnexplainedTime(long unexplained) {
 		unexplainedNanos += unexplained;
-		if (unexplainedNanos < UNEXPLAINED_FIGHT_BUDGET_NANOS) {
+		if (unexplainedNanos < unexplainedFightBudgetNanos) {
 			return false;
 		}
 		disable(": " + unexplainedNanos / 1_000_000 + " ms de calcul natif que ses operations ne payent pas");
 		return true;
 	}
 
+	private int farmerId() {
+		return mEntity != null ? mEntity.getFarmer() : 0;
+	}
+
 	/** Neutralise l'IA pour le reste du combat (une seule trace, meme si deux limites tombent ensemble). */
 	private void disable(String reason) {
 		if (!disabled) {
 			disabled = true;
-			Log.w("PolyglotEntityAI", "IA polyglot (" + languageId + ") neutralisee " + reason);
+			// Hors Log (coupe dans le worker) : une neutralisation est rare et doit se voir dans les journaux.
+			System.out.println("[PolyglotEntityAI] IA polyglot (" + languageId + ") de l'eleveur "
+				+ (farmerId()) + " neutralisee " + reason);
 		}
 	}
 
@@ -2136,7 +2166,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Joueur trop gourmand, ou isolate a bout (#4631, #4999) ? La sonde tranche, et son verdict est
 		// lu par le worker pour se recycler : sans elle, un isolate sature ne produit que des erreurs
 		// joueur et le processus reste empoisonne jusqu'au prochain seuil RSS.
-		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, cause, mEntity != null ? mEntity.getFarmer() : 0);
+		PolyglotSandbox.probeIsolateAfterOutOfMemory(languageId, cause, farmerId());
 		return new LeekRunException(Error.OUT_OF_MEMORY);
 	}
 

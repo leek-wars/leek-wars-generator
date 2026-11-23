@@ -190,11 +190,15 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
-	/** Natif non paye par les ops, sous le watchdog : neutralise en quelques tours, sans attendre 64. */
+	/**
+	 * Natif non paye par les ops, sous le watchdog : neutralise en quelques tours, sans attendre 64. Budget
+	 * du combat ramene a 1 s : le defaut (15 s) demanderait une dizaine de tours a chaque test.
+	 */
 	private void assertUnpaidNativeWorkDisablesAi(String lang, String src) throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
 			PolyglotEntityAI ai = ai(sb, lang, src, 5_000);
+			ai.setUnexplainedFightBudgetNanos(1_000_000_000L);
 			for (int turn = 0; turn < 6; turn++) {
 				try {
 					ai.runIA();
@@ -264,6 +268,24 @@ public class TestPolyglotDoS extends FightTestBase {
 			PolyglotEntityAI ai = ai(sb, "js", "function turn(){ var a = []; for (var i = 0; i < 300000; i++) a.push((i * 7919) % 300007); a.sort(function(x, y){ return x - y; }); var s = 0; for (var j = 0; j < 3000000; j++) s += j % 7; return 1; }", 5_000);
 			for (int i = 0; i < 8; i++) {
 				Assert.assertEquals(1L, ((Number) ai.runIA()).longValue());
+			}
+		}
+	}
+
+	/**
+	 * Recherche Python appuyee sur les operateurs natifs des ensembles, que les ops ne facturent pas (~5 us
+	 * de CPU par op comptee) : ~0,7 s de CPU par tour, dont ~0,5 s inexpliquee, sur 5 tours. Le budget par
+	 * defaut du combat ne la coupe pas (a 1 s, elle l'etait au 3e ou 4e tour), avec de la marge pour une
+	 * machine deux fois plus lente.
+	 */
+	@Test(timeout = 120_000)
+	public void pythonNativeSetSearchIsNotDisabled() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			PolyglotEntityAI ai = ai(sb, "python", "a = set(range(5000))\nb = set(range(2500, 7500))\n"
+				+ "def turn():\n    n = 0\n    for i in range(12000):\n        n += len(a & b)\n    return 1\n", 5_000);
+			for (int turn = 1; turn <= 5; turn++) {
+				Assert.assertNotNull("IA neutralisee au tour " + turn, ai.runIA());
 			}
 		}
 	}
