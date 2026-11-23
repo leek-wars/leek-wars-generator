@@ -255,9 +255,16 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
+	/** Boucle native Python sans fin : comptee element par element (image combined-10), le budget du tour la coupe avant le watchdog. */
 	@Test(timeout = 60_000)
-	public void pythonInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
-		assertNativeTimeoutDisablesAtOnce("python", "def turn():\n    return max(iter(range(10 ** 10)))\n");
+	public void pythonNativeLoopIsBoundedByOperations() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			PolyglotEntityAI ai = ai(sb, "python", "def turn():\n    return max(iter(range(10 ** 10)))\n", 5_000);
+			long start = System.nanoTime();
+			expectTooMuchOperations(ai, "le budget du tour aurait du couper la boucle native");
+			Assert.assertTrue("coupe par le budget, avant le watchdog", (System.nanoTime() - start) / 1_000_000 < 5_000);
+		}
 	}
 
 	/** Calcul guest lourd mais paye par ses ops : jamais neutralise. */
@@ -273,17 +280,17 @@ public class TestPolyglotDoS extends FightTestBase {
 	}
 
 	/**
-	 * Recherche Python appuyee sur les operateurs natifs des ensembles, que les ops ne facturent pas (~5 us
-	 * de CPU par op comptee) : ~0,7 s de CPU par tour, dont ~0,5 s inexpliquee, sur 5 tours. Le budget par
-	 * defaut du combat ne la coupe pas (a 1 s, elle l'etait au 3e ou 4e tour), avec de la marge pour une
-	 * machine deux fois plus lente.
+	 * Recherche Python appuyee sur les operateurs natifs des ensembles : comptes element par element depuis
+	 * l'image combined-10, ils payent leur temps CPU. Avant, ~5 us de CPU par op comptee : le garde-fou du
+	 * calcul inexplique la coupait au 3e ou 4e tour (budget d'1 s).
 	 */
 	@Test(timeout = 120_000)
 	public void pythonNativeSetSearchIsNotDisabled() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
 			PolyglotEntityAI ai = ai(sb, "python", "a = set(range(5000))\nb = set(range(2500, 7500))\n"
-				+ "def turn():\n    n = 0\n    for i in range(12000):\n        n += len(a & b)\n    return 1\n", 5_000);
+				+ "def turn():\n    n = 0\n    for i in range(1000):\n        n += len(a & b)\n    return 1\n", 5_000);
+			ai.setUnexplainedFightBudgetNanos(1_000_000_000L);
 			for (int turn = 1; turn <= 5; turn++) {
 				Assert.assertNotNull("IA neutralisee au tour " + turn, ai.runIA());
 			}
