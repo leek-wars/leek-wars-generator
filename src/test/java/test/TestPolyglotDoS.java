@@ -255,6 +255,12 @@ public class TestPolyglotDoS extends FightTestBase {
 		}
 	}
 
+	/** Natif Python NON compte (bytes.find) jusqu'a l'echeance : neutralise des le 1er depassement. */
+	@Test(timeout = 60_000)
+	public void pythonInterruptibleNativeTimeoutDisablesAtOnce() throws Exception {
+		assertNativeTimeoutDisablesAtOnce("python", "b = bytes(1 << 26)\ndef turn():\n    while True:\n        b.find(b'\\x01')\n");
+	}
+
 	/** Boucle native Python sans fin : comptee element par element (image combined-10), le budget du tour la coupe avant le watchdog. */
 	@Test(timeout = 60_000)
 	public void pythonNativeLoopIsBoundedByOperations() throws Exception {

@@ -943,24 +943,12 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "})();";
 
 	/**
-	 * FACTURATION DU TRAVAIL NATIF (Python). Enveloppe les builtins qui PARCOURENT tout leur argument
-	 * pour facturer via {@code __lw_charge} au prorata de {@code len} (le facteur de calibration est
-	 * applique cote hote, cf {@link #chargeProxy}). On ne facture que la FORME iterable (1 argument
-	 * positionnel dont on peut prendre len) : la forme multi-args (min(a,b)) est O(1). On N'enveloppe PAS
-	 * all/any (court-circuit : facturer len sur-penaliserait). Un generateur sans len n'est pas facture
-	 * ici mais son corps est deja compte par l'instrument.
-	 *
-	 * <p>DEUX FAMILLES. (1) Les FONCTIONS (sum/sorted/min/max) : simple wrapper fonction. (2) Les
-	 * CONSTRUCTEURS DE TYPE (list/tuple/set/frozenset/dict) : on NE PEUT PAS les remplacer par une
-	 * fonction, ca les rend non-type et {@code isinstance(x, list)} leve « arg 2 must be a type or tuple
-	 * of types » (cassait Debug.mark et tout code joueur faisant isinstance sur ces types, #4540). On
-	 * met donc a la place un PROXY A METACLASSE : un vrai type dont {@code __call__} facture puis delegue
-	 * la construction au type original, et dont {@code __instancecheck__ / __subclasscheck__ / __getattr__}
-	 * deleguent au type original -> isinstance/issubclass/list.fromkeys marchent, la facturation est
-	 * conservee. LIMITE ASSUMEE : {@code type(x) is list} renvoie False (le type reel des litteraux reste
-	 * le type C, non substituable) et sous-classer ces types est degrade ; usages rares, isinstance
-	 * (idiome courant) est prioritaire. Cote JS, {@link #JS_CHARGE_GUARD} enveloppe des METHODES de
-	 * prototype (pas les types) -> pas ce probleme. Accumulateur PRIVE + flush. Contournable par reflexion.
+	 * FACTURATION DU TRAVAIL NATIF (Python). Depuis l'image combined-10, les elements que les builtins
+	 * parcourent en Java (iterateurs natifs, sum, ensembles, dict) sont comptes par l'image (cf
+	 * {@link #nativeOps}). Reste {@code sorted}, dont le tri ne parcourt pas d'iterateur : facture au
+	 * prorata de {@code len} via {@code __lw_charge} (le facteur de calibration est applique cote hote, cf
+	 * {@link #chargeProxy}), forme a un argument seulement. Les copies natives (list(l), tuple(l)) ne
+	 * calculent rien et ne sont plus facturees. Accumulateur PRIVE + flush. Contournable par reflexion.
 	 */
 	private static final String PY_CHARGE_GUARD =
 		"import builtins as _lwb\n"
@@ -972,51 +960,15 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        _acc[0] += n\n"
 		+ "        if _acc[0] >= _FLUSH:\n"
 		+ "            _C(_acc[0]); _acc[0] = 0\n"
-		// Fonctions : wrapper fonction simple.
-		+ "    def _wrap(_orig):\n"
-		+ "        def _f(*a, **k):\n"
-		+ "            if len(a) == 1:\n"
-		+ "                try:\n"
-		+ "                    _ch(len(a[0]))\n"
-		+ "                except TypeError:\n"
-		+ "                    pass\n"
-		+ "            return _orig(*a, **k)\n"
-		+ "        return _f\n"
-		// sum/min/max : comptes element par element par l'image (combined-10, PythonContext.lwCharge).
-		+ "    for _n in ('sorted',):\n"
-		+ "        try:\n"
-		+ "            setattr(_lwb, _n, _wrap(getattr(_lwb, _n)))\n"
-		+ "        except Exception:\n"
-		+ "            pass\n"
-		// Constructeurs de type : proxy a metaclasse (facture + reste un type pour isinstance, #4540).
-		// Le proxy HERITE du vrai type (bases (_orig,)) : une sous-classe joueur ou stdlib
-		// (`class _EnumDict(dict)` dans enum, donc `import re`/`import json`) se construit alors
-		// normalement (type.__call__) avec de vraies instances du type ; seul le proxy lui-meme
-		// facture puis delegue au type d'origine. Avant, __call__ renvoyait un dict NU pour toute
-		// sous-classe : `import json` plantait en AttributeError _member_names.
-		+ "    def _wrap_type(_orig):\n"
-		+ "        class _M(type):\n"
-		+ "            def __call__(cls, *a, **k):\n"
-		+ "                if cls is not _M._lw_proxy:\n"
-		+ "                    return type.__call__(cls, *a, **k)\n"
-		+ "                if len(a) == 1:\n"
-		+ "                    try:\n"
-		+ "                        _ch(len(a[0]))\n"
-		+ "                    except TypeError:\n"
-		+ "                        pass\n"
-		+ "                return _orig(*a, **k)\n"
-		+ "            def __instancecheck__(cls, x):\n"
-		+ "                return isinstance(x, _orig) if cls is _M._lw_proxy else type.__instancecheck__(cls, x)\n"
-		+ "            def __subclasscheck__(cls, c):\n"
-		+ "                return issubclass(c, _orig) if cls is _M._lw_proxy else type.__subclasscheck__(cls, c)\n"
-		+ "        _M._lw_proxy = _M(_orig.__name__, (_orig,), {})\n"
-		+ "        return _M._lw_proxy\n"
-		// set/frozenset/dict : leur construction parcourt l'argument en natif, comptee par l'image.
-		+ "    for _n in ('list','tuple'):\n"
-		+ "        try:\n"
-		+ "            setattr(_lwb, _n, _wrap_type(getattr(_lwb, _n)))\n"
-		+ "        except Exception:\n"
-		+ "            pass\n"
+		+ "    _sorted = _lwb.sorted\n"
+		+ "    def sorted(*a, **k):\n"
+		+ "        if len(a) == 1:\n"
+		+ "            try:\n"
+		+ "                _ch(len(a[0]))\n"
+		+ "            except TypeError:\n"
+		+ "                pass\n"
+		+ "        return _sorted(*a, **k)\n"
+		+ "    _lwb.sorted = sorted\n"
 		// gc.collect() force un GC complet de l'isolate partage (~40 ms de CPU, plus 15 ms de pause) pour
 		// une dizaine d'operations : en boucle, il occupe le worker et gele les autres combats Python.
 		+ "    import gc\n"
@@ -2103,6 +2055,7 @@ public class PolyglotEntityAI extends EntityAI {
 			} catch (Exception e) {
 				// Contexte annule/ferme en cours de tour : repli temps CPU pour le reste du tour.
 				statementCounter = null;
+				nativeOps = null;
 			}
 		}
 		// Fallback sous isolate : terme proportionnel au TEMPS CPU du thread de combat passe dans ce tour

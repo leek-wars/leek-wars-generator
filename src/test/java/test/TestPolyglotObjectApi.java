@@ -246,8 +246,8 @@ public class TestPolyglotObjectApi extends FightTestBase {
 	 * #4540 : Debug.mark(Cell) plantait au combat avec « isinstance() arg 2 must be a type or tuple of
 	 * types ». Cause : le prelude de facturation (PY_CHARGE_GUARD) remplacait builtins.list par une
 	 * FONCTION -> `isinstance(x, list)` (dans objects.py _cidlist/_unwrap ET dans le code joueur) cassait.
-	 * Fix : proxy a metaclasse (les types restent des types pour isinstance ET la construction reste
-	 * facturee). On verifie les DEUX : semantique de type correcte + facturation conservee.
+	 * Les types ne sont plus remplaces depuis l'image combined-10 : le parcours natif de leur argument
+	 * est compte par l'image. On verifie les DEUX : semantique de type correcte + facturation.
 	 */
 	@Test
 	public void debugMarkIsinstanceAndBillingOnBuiltinTypes() throws Exception {
@@ -266,10 +266,10 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			Assert.assertEquals(Boolean.FALSE, evalPy(sb, "isinstance([], dict)"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "dict.fromkeys([1, 2]) == {1: None, 2: None}"));
 			Assert.assertEquals(Boolean.TRUE, evalPy(sb, "list(range(3)) == [0, 1, 2] and set([1, 1, 2]) == {1, 2}"));
-			// FACTURATION CONSERVEE : construire une grande collection doit couter ~N ops (le proxy facture
-			// via __call__). Un simple no-op coute une poignee d'ops -> le delta prouve le comptage.
-			long ops = ((Number) evalPy(sb, "(list(range(50000)), System.operations)[1]")).longValue();
-			Assert.assertTrue("list(range(50000)) doit etre facture (proxy), ops=" + ops, ops > 20000);
+			// FACTURATION : construire une collection depuis un iterateur natif coute ~N ops (compte par
+			// l'image). Un simple no-op coute une poignee d'ops -> le delta prouve le comptage.
+			long ops = ((Number) evalPy(sb, "(list(map(abs, range(50000))), System.operations)[1]")).longValue();
+			Assert.assertTrue("list(map(...)) doit etre facture, ops=" + ops, ops > 20000);
 		}
 	}
 
