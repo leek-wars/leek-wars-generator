@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -104,7 +105,8 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static final long NATIVE_OVERSHOOT_MS = PolyglotSandbox.INTERRUPT_GRACE_MS;
 	/**
-	 * Temps BLOQUE (temps mur moins temps CPU du thread de combat) toléré par tour avant d'être compté.
+	 * Temps BLOQUE (temps mur moins temps CPU du thread de combat, moins son attente d'un CPU libre, cf
+	 * {@link #runQueueNanos}) toléré par tour avant d'être compté.
 	 * Une IA qui attend sans calculer ({@code time.sleep}, {@code Event.wait}, {@code Lock.acquire(timeout)}
 	 * en Python) ne consomme ni statements ni CPU : sous l'échéance wall-clock, elle immobiliserait le
 	 * worker jusqu'à ~5 s par tour sans rien déclencher. L'image isolate refuse les attentes connues
@@ -126,11 +128,13 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String OPERATION_LIMIT_ERROR = "RuntimeError: " + StatementCounter.LIMIT_MESSAGE;
 	/**
 	 * Temps bloqué cumulé sur le combat (au-delà de la tolérance par tour) au-delà duquel l'IA est
-	 * neutralisée. Ne compte que les tours qui ont plus attendu que calculé : une IA légitime calcule
-	 * presque tout son tour, seule une machine très surchargée (préemption) pourrait l'approcher.
-	 * Coupure NON déterministe, comme le backstop wall-clock.
+	 * neutralisée. Ne compte que les tours qui ont plus attendu que calculé. Budget large : la préemption
+	 * est retirée de la mesure, pas les arrêts de l'isolate partagé (GC, safepoints) que provoquent les
+	 * autres combats. Coupure NON déterministe, comme le backstop wall-clock.
 	 */
-	private static final long IDLE_FIGHT_BUDGET_NANOS = 1_000_000_000L;
+	private static final long IDLE_FIGHT_BUDGET_NANOS = PolyglotEntityAI.DEFAULT_UNEXPLAINED_FIGHT_BUDGET_NANOS;
+	/** Statistiques d'ordonnancement du thread courant (Linux) : temps sur CPU, temps d'attente d'un CPU, en ns. */
+	private static final Path SCHEDSTAT = Path.of("/proc/thread-self/schedstat");
 	/**
 	 * Temps CPU accorde par operation comptee. Mesure sur les IA des tests (JS et Python) : 12 a
 	 * 70 ns en regime etabli, 300 au pire au 1er tour (chargement du module). Le temps CPU au-dela
@@ -1687,7 +1691,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Une execution gardee (tour, hook ou callback) : sa course avec le watchdog et les bases de sa
 	 * mesure d'attente ({@code startCpuNanos} &lt; 0 : pas de mesure).
 	 */
-	private record Execution(AtomicBoolean settled, ScheduledFuture<?> watchdog, long startNanos, long startCpuNanos, AtomicLong firedNanos) {}
+	private record Execution(AtomicBoolean settled, ScheduledFuture<?> watchdog, long startNanos, long startCpuNanos, long startRunQueueNanos, AtomicLong firedNanos) {}
 
 	/**
 	 * Arme le backstop wall-clock d'une execution et pose la base de sa mesure d'attente : APRES la
@@ -1700,6 +1704,7 @@ public class PolyglotEntityAI extends EntityAI {
 		final Context running = context;
 		final AtomicBoolean settled = new AtomicBoolean(false);
 		long startCpu = !externalIsolate && CPU_TIME_SUPPORTED ? THREAD_MX.getCurrentThreadCpuTime() : -1L;
+		long startRunQueue = runQueueNanos();
 		final AtomicLong fired = new AtomicLong();
 		ScheduledFuture<?> watchdog = PolyglotSandbox.scheduleDeadline(() -> {
 			if (settled.compareAndSet(false, true)) {
@@ -1707,7 +1712,7 @@ public class PolyglotEntityAI extends EntityAI {
 				PolyglotSandbox.interruptAsync(running);
 			}
 		}, turnWallClockLimitMs);
-		return new Execution(settled, watchdog, System.nanoTime(), startCpu, fired);
+		return new Execution(settled, watchdog, System.nanoTime(), startCpu, startRunQueue, fired);
 	}
 
 	/**
@@ -1947,12 +1952,32 @@ public class PolyglotEntityAI extends EntityAI {
 		if (idle <= IDLE_TURN_TOLERANCE_NANOS || idle * 2 <= wall) {
 			return false;
 		}
+		// Lu seulement ici, cas rare : retirer la preemption ne peut que baisser l'attente.
+		long nowRunQueue = runQueueNanos();
+		if (nowRunQueue >= 0 && execution.startRunQueueNanos() >= 0) {
+			idle -= nowRunQueue - execution.startRunQueueNanos();
+		}
+		if (idle <= IDLE_TURN_TOLERANCE_NANOS || idle * 2 <= wall) {
+			return false;
+		}
 		idleNanos += idle - IDLE_TURN_TOLERANCE_NANOS;
 		if (idleNanos < IDLE_FIGHT_BUDGET_NANOS) {
 			return false;
 		}
 		disable(": " + idleNanos / 1_000_000 + " ms passees a attendre sans calculer (sleep, verrou...)");
 		return true;
+	}
+
+	/**
+	 * Temps cumule du thread courant a attendre un CPU libre (pret mais preempte), en ns, ou -1 hors Linux.
+	 * Une rafale de combats sur le worker en ajoute des secondes a un tour qui ne fait que calculer.
+	 */
+	private static long runQueueNanos() {
+		try {
+			return Long.parseLong(Files.readString(SCHEDSTAT).split(" ")[1]);
+		} catch (Exception e) {
+			return -1L;
+		}
 	}
 
 	/**
