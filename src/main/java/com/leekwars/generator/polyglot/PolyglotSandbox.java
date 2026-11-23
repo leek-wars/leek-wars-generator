@@ -277,6 +277,11 @@ public class PolyglotSandbox implements AutoCloseable {
 		return executableBinding(context, StatementCounter.BINDING_NAME);
 	}
 
+	/** Total d'operations du tour en lecture seule, pour le guest (cf StatementCounter.ReaderObject), ou null avant combined-11. */
+	public static Value operationsReaderBinding(Context context) {
+		return executableBinding(context, StatementCounter.READER_BINDING_NAME);
+	}
+
 	/** Memoire retenue par le contexte (cf StatementCounter.HeapSizeObject), ou null avant v25.1.3-combined-6. */
 	public static Value heapSizeBinding(Context context) {
 		return executableBinding(context, StatementCounter.HEAP_BINDING_NAME);

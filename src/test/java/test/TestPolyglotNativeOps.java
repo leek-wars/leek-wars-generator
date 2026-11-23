@@ -126,4 +126,39 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			expectBudgetEndsTurn(sb, "python", "l = list(range(10000))\ndef turn():\n    for k in range(40):\n        sum(map(abs, l))\n    for i in range(150000):\n        x = i + 1\n    return 1\n");
 		}
 	}
+
+	/**
+	 * Le guest ne voit qu'un lecteur du compteur : retrouve par introspection des closures de System,
+	 * il ne remet pas le compte a zero et ne leve pas la limite.
+	 */
+	@Test(timeout = 60_000)
+	public void guestCannotResetOrLiftTheCounter() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			expectBudgetEndsTurn(sb, "python", ""
+				+ "def walk(f, seen):\n"
+				+ "    for cell in (getattr(f, '__closure__', None) or ()):\n"
+				+ "        try:\n"
+				+ "            v = cell.cell_contents\n"
+				+ "        except ValueError:\n"
+				+ "            continue\n"
+				+ "        if callable(v) and id(v) not in seen:\n"
+				+ "            seen.add(id(v))\n"
+				+ "            for args in (('reset',), ('turn', 10 ** 15, 1.0, 0), ('host', -10 ** 15)):\n"
+				+ "                try:\n"
+				+ "                    v(*args)\n"
+				+ "                except BaseException:\n"
+				+ "                    pass\n"
+				+ "            walk(v, seen)\n"
+				+ "def turn():\n"
+				+ "    seen = set()\n"
+				+ "    for name in dir(type(System)):\n"
+				+ "        a = getattr(type(System), name, None)\n"
+				+ "        for fn in (getattr(a, 'fget', None), a):\n"
+				+ "            if fn is not None:\n"
+				+ "                walk(fn, seen)\n"
+				+ "    while True:\n"
+				+ "        pass\n");
+		}
+	}
 }
