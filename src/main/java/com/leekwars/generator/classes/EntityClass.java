@@ -261,8 +261,10 @@ public class EntityClass {
 	}
 
 	public static String getName(EntityAI ai, Object value) throws LeekRunException {
-		var l = identityTarget(ai, value);
-		return l == null ? null : l.getName();
+		// Seul un poireau porte le nom d'un joueur : invocations et tourelles gardent le leur
+		var l = resolveEntity(ai, value);
+		if (l == null || l.getType() != Entity.TYPE_LEEK) return l == null ? null : l.getName();
+		return identityTarget(ai, value) == null ? null : l.getName();
 	}
 
 	public static long getMP(EntityAI ai) {

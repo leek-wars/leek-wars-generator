@@ -28,15 +28,16 @@ import leekscript.compiler.resolver.FileSystem;
 public class TestScenarioAnonymous {
 
 	private static final int FARMER = 7, ALLY = 8, OPPONENT = 9;
-	private static final String AI_PATH = "scenario-anonymous-identities.leek";
+	private static final String AI_PATH = "scenario-anonymous-leek-names.leek";
 	private static final String AI = "function who(e) {\n"
 		+ "	return jsonEncode([getName(e), getFarmerName(e), getFarmerCountry(e), getFarmerID(e), getAIName(e), getAIID(e)])\n"
 		+ "}\n"
 		+ "var allies = []\n"
 		+ "for (var a in getAllies()) if (a != getEntity()) push(allies, who(a))\n"
-		+ "setRegister('enemy', who(getNearestEnemy()))\n"
+		+ "for (var e in getEnemies()) if (getType(e) == ENTITY_LEEK) setRegister('enemy', who(e))\n"
 		+ "setRegister('allies', jsonEncode(allies))\n"
-		+ "setRegister('self', jsonEncode([getName(), getFarmerName(), getFarmerID()]))\n";
+		+ "setRegister('self', jsonEncode([getName(), getFarmerName(), getFarmerID()]))\n"
+		+ "for (var e in getEnemies()) if (getType(e) == ENTITY_TURRET) setRegister('turret', getName(e))\n";
 
 	private final Map<Integer, String> registers = new HashMap<>();
 	private FileSystem previousFileSystem;
@@ -86,6 +87,11 @@ public class TestScenarioAnonymous {
 		scenario.addEntity(0, leek(2, "second", FARMER));
 		scenario.addEntity(0, leek(3, "allie", ALLY));
 		scenario.addEntity(1, leek(4, "adversaire", OPPONENT));
+		// Tourelle adverse, sans éleveur : son nom n'est celui de personne
+		var turret = leek(5, "turret", 0);
+		turret.type = Entity.TYPE_TURRET;
+		turret.ai_path = null;
+		scenario.addEntity(1, turret);
 		var manager = new RegisterManager() {
 			@Override public String getRegisters(int leek) { return null; }
 			@Override public void saveRegisters(int leek, String json, boolean isNew) { registers.put(leek, json); }
@@ -107,6 +113,7 @@ public class TestScenarioAnonymous {
 		Assert.assertTrue("son propre poireau reste lisible : " + allies, allies.contains("second") && allies.contains(String.valueOf(FARMER)));
 		Assert.assertFalse(allies, allies.contains("allie") || allies.contains("F" + ALLY));
 		Assert.assertEquals("[\"joueur\",\"F" + FARMER + "\"," + FARMER + "]", r.get("self"));
+		Assert.assertEquals("le nom d'une tourelle reste lisible", "turret", r.get("turret"));
 	}
 
 	@Test
