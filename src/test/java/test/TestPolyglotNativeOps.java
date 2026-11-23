@@ -92,6 +92,12 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			assertTrue("s.replace", ops(sb, setup, loop + "s.replace('a', 'b')") >= 1_000_000);
 			assertTrue("join", ops(sb, setup, loop + "','.join(ss)") >= 100_000);
 			assertTrue("repr", ops(sb, setup, loop + "str(l)") >= 100_000);
+			assertTrue("l.remove", ops(sb, setup, loop + "l.remove(9999)\n        l.append(9999)") >= 100_000);
+			assertTrue("partition", ops(sb, setup, loop + "s.partition('b')") >= 100_000);
+			assertTrue("deque", ops(sb, setup + "\nimport collections\nd = collections.deque(l)", loop + "9999 in d\n        d.count(1)") >= 200_000);
+			assertTrue("array", ops(sb, setup + "\nimport array\na = array.array('i', l)", loop + "9999 in a\n        a.count(1)") >= 200_000);
+			// Une plage inversee ne rend pas d'operations
+			assertTrue("count, plage inversee", ops(sb, setup, loop + "s.count('x', len(s) - 1, 0)") >= 0);
 		}
 	}
 
