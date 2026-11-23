@@ -55,12 +55,16 @@ public class EntityClass {
 	 *
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
-	 * getFarmerCountry, getFarmerID, getTeamID (but see identityTarget in anonymous fights), getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
+	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
 	 * getAwakeningZone, getPlantTriggers,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
 	 * the lobby or fixed at fight init regardless of loadout. getAIPath only answers for
 	 * AIs owned by the caller's farmer.
+	 *
+	 * In an anonymous fight (AI tournament, Scenario#anonymous), getName (leeks only),
+	 * getAIName, getFarmerName, getFarmerCountry, getFarmerID and getAIID return null for
+	 * entities of another farmer (canReadIdentity).
 	 */
 	private static Entity resolveStatTarget(EntityAI ai, Object value) {
 		Entity l = resolveEntity(ai, value);
@@ -263,8 +267,8 @@ public class EntityClass {
 	public static String getName(EntityAI ai, Object value) throws LeekRunException {
 		// Seul un poireau porte le nom d'un joueur : invocations et tourelles gardent le leur
 		var l = resolveEntity(ai, value);
-		if (l == null || l.getType() != Entity.TYPE_LEEK) return l == null ? null : l.getName();
-		return identityTarget(ai, value) == null ? null : l.getName();
+		if (l == null || (l.getType() == Entity.TYPE_LEEK && !canReadIdentity(ai, l))) return null;
+		return l.getName();
 	}
 
 	public static long getMP(EntityAI ai) {
@@ -1050,14 +1054,18 @@ public class EntityClass {
 	}
 
 	/**
-	 * Entité dont l'IA peut lire l'identité (nom, éleveur, pays, IA) : en combat anonyme (tournoi
-	 * d'IA, Scenario#anonymous), seulement celles de son propre éleveur. Une IA ne reconnaît pas ses
-	 * alliés d'un autre compte.
+	 * L'IA peut-elle lire l'identité (nom, éleveur, pays, IA) de `l` : toujours, sauf en combat
+	 * anonyme (tournoi d'IA, Scenario#anonymous) pour une entité d'un autre éleveur. Une IA ne
+	 * reconnaît pas ses alliés d'un autre compte.
 	 */
+	private static boolean canReadIdentity(EntityAI ai, Entity l) {
+		return !ai.getState().isAnonymous() || l.getFarmer() == ai.getEntity().getFarmer();
+	}
+
+	/** L'entité désignée, si l'IA peut lire son identité (canReadIdentity), sinon null. */
 	private static Entity identityTarget(EntityAI ai, Object value) {
 		var l = resolveEntity(ai, value);
-		if (l == null || !ai.getState().isAnonymous()) return l;
-		return l.getFarmer() == ai.getEntity().getFarmer() ? l : null;
+		return l != null && canReadIdentity(ai, l) ? l : null;
 	}
 
 	public static long getSummoner(EntityAI ai) throws LeekRunException {
