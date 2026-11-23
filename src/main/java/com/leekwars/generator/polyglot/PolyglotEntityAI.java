@@ -888,14 +888,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// pointaient encore sur le Date d'origine, permettant de recuperer l'horloge reelle via .constructor.now().
 		+ "Object.defineProperty(D.prototype,'constructor',{value:L,writable:false,configurable:false});"
 		+ "globalThis.Date=L;})();"
-		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}"
-		// Intl.DateTimeFormat sans date formate l'horloge figee, comme new Date() ; format reste la meme
-		// fonction a chaque lecture, comme dans la spec.
-		+ "if(typeof Intl!=='undefined'){(function(){var P=Intl.DateTimeFormat.prototype;"
-		+ "var g=Object.getOwnPropertyDescriptor(P,'format').get;var p=P.formatToParts;var W=new WeakMap();"
-		+ "Object.defineProperty(P,'format',{get:function(){var f=W.get(this);if(!f){var o=g.call(this);"
-		+ "f=function(d){return o(d===undefined?0:d);};W.set(this,f);}return f;},configurable:false});"
-		+ "Object.defineProperty(P,'formatToParts',{value:function(d){return p.call(this,d===undefined?0:d);},writable:false,configurable:false});})();}";
+		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}";
 
 	/**
 	 * FACTURATION DU TRAVAIL NATIF (JS). Les methodes natives de Array/String (sort, fill, repeat...)
@@ -1397,7 +1390,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 */
 	private static String pythonDeterminismGuard(long seed) {
 		return
-			// On importe+patche ICI les modules sensibles (random/os/time/datetime) AVANT tout
+			// On importe+patche ICI les modules sensibles (random/os/time ; datetime en Python pur) AVANT tout
 			// montage des fichiers du joueur : une fois en cache dans sys.modules, un `import random`
 			// renverra la version seedee meme si le joueur a un fichier random.py (Python consulte
 			// sys.modules avant sys.path). Le montage de /ai se fait ensuite en TETE de path (PY_MOUNT_AI,
@@ -1441,18 +1434,10 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "    time.ctime = lambda secs=None: asctime(frozen)\n"
 			+ "_lw_freeze_clock(time)\n"
 			+ "del _lw_freeze_clock\n"
-			// datetime en Python pur : ses classes (et toutes leurs instances) lisent l'heure par le module
-			// time fige ci-dessus ; l'implementation native lirait l'horloge de la machine. Charge a la
-			// premiere lecture d'un nom du module : l'importer ici coute ~50 ms a chaque contexte.
-			+ "import types\n"
-			+ "class _LWDatetime(types.ModuleType):\n"
-			+ "    def __getattr__(self, name):\n"
-			+ "        import _pydatetime\n"
-			+ "        sys.modules['datetime'] = sys.modules['_datetime'] = _pydatetime\n"
-			+ "        self.__dict__.update(_pydatetime.__dict__)\n"
-			+ "        return getattr(_pydatetime, name)\n"
-			+ "datetime = sys.modules['datetime'] = sys.modules['_datetime'] = _LWDatetime('datetime')\n"
-			+ "del _LWDatetime, types\n";
+			// datetime en Python pur : sans _datetime, datetime.py charge _pydatetime a son premier import
+			// (pas ici : ~50 ms par contexte), dont les classes lisent l'heure par le module time fige.
+			+ "sys.modules.pop('datetime', None)\n"
+			+ "sys.modules['_datetime'] = None\n";
 	}
 
 	@Override

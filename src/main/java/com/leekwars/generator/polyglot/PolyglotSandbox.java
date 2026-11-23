@@ -230,7 +230,9 @@ public class PolyglotSandbox implements AutoCloseable {
 	}
 
 	private final long statementLimit;
-	private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
+	/** Plus grand que l'heure courante en nanosecondes (an 2255) : toute heure JS est arrondie a 0. */
+	private static final String JS_FROZEN_TIMER_RESOLUTION = "9000000000000000000";
+		private final String statementLimitOption; // = String.valueOf(statementLimit), reutilise par createContext
 	/**
 	 * Un Engine (= un isolate) PAR LANGAGE, partage par TOUS les combats de la JVM (statique).
 	 *
@@ -441,6 +443,8 @@ public class PolyglotSandbox implements AutoCloseable {
 				.option("sandbox.MaxOutputStreamSize", MAX_STREAM_SIZE)
 				.option("sandbox.MaxErrorStreamSize", MAX_STREAM_SIZE);
 
+		// Horloges JS (Date, performance, Intl) arrondies a l'epoque : le moteur les fige toutes
+		if ("js".equals(languageId)) builder.option("js.timer-resolution", JS_FROZEN_TIMER_RESOLUTION);
 		if (fileSystem != null) {
 			// NB : PAS d'option python.PythonPath ici — elle est TRUSTED-only, la policy ISOLATED
 			// la rejette. Le montage /ai est ajoute a sys.path COTE GUEST par le garde de
