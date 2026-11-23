@@ -1414,6 +1414,10 @@ public class PolyglotEntityAI extends EntityAI {
 			+ "random.seed(" + seed + ")\n"
 			+ "time.time = lambda: 0.0\ntime.monotonic = lambda: 0.0\ntime.perf_counter = lambda: 0.0\n"
 			+ "time.time_ns = lambda: 0\ntime.monotonic_ns = lambda: 0\ntime.perf_counter_ns = lambda: 0\n"
+			// Temps processeur : il depend de la charge du worker, comme l'horloge murale (GraalPy n'a ni
+			// clock_gettime ni os.times).
+			+ "time.process_time = lambda: 0.0\ntime.thread_time = lambda: 0.0\n"
+			+ "time.process_time_ns = lambda: 0\ntime.thread_time_ns = lambda: 0\n"
 			// Attendre est interdit : l'image isolate refuse deja sleep, verrous, files et pipes avec ce
 			// message (cf WAIT_FORBIDDEN_MESSAGE) ; doublon pour une image qui ne le ferait pas.
 			+ "def sleep(secs):\n    raise RuntimeError('" + WAIT_FORBIDDEN_MESSAGE + "')\n"

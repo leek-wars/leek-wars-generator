@@ -137,6 +137,10 @@ public class TestPolyglotSecurity extends FightTestBase {
 			Assert.assertEquals(0L, ((Number) ai(sb, "python", "import time\ntime.monotonic_ns()", 1).runIA()).longValue());
 			Assert.assertEquals(2020L, ((Number) ai(sb, "python", "import time\ntime.gmtime().tm_year", 1).runIA()).longValue());
 			Assert.assertEquals(2020L, ((Number) ai(sb, "python", "import time\ntime.localtime().tm_year", 1).runIA()).longValue());
+			// Le temps processeur depend de la charge du worker : fige aussi.
+			for (String clock : new String[] { "time.process_time_ns()", "time.thread_time_ns()", "int(time.process_time() + time.thread_time())" }) {
+				Assert.assertEquals(clock, 0L, ((Number) ai(sb, "python", "import time\nfor i in range(100000): pass\n" + clock, 1).runIA()).longValue());
+			}
 		}
 	}
 }
