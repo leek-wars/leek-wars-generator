@@ -152,9 +152,8 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final long LOAD_NANOS_PER_SOURCE_CHAR_JS = 2_000;
 	/**
 	 * Au-dela de ce temps CPU inexplique cumule sur le combat, l'IA est neutralisee. Une IA legitime en
-	 * accumule aussi : les operateurs natifs des conteneurs ne sont pas factures (Python : {@code a & b}
-	 * sur des ensembles, {@code dict.update}, 5 a 10 us par operation comptee) et le code froid des
-	 * premiers tours d'un contexte coute 1 a 16 us par operation. Le budget reste loin de ce qu'une IA
+	 * accumule aussi : le code froid des premiers tours d'un contexte coute 1 a 16 us par operation, et
+	 * les natifs que l'image ne compte pas (copies, recherches lineaires) ne payent rien. Le budget reste loin de ce qu'une IA
 	 * peut bruler en calcul compte (64 tours d'un budget d'ops entier a CPU_NANOS_PER_OP, plusieurs
 	 * minutes) : il borne l'abus sans couper une recherche qui s'appuie sur ces natifs.
 	 */
@@ -277,7 +276,7 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 	private final double opsFactor;
-	// Facteur applique par chargeProxy a la facturation des builtins natifs (sort, fill, sum...),
+	// Facteur applique par chargeProxy a la facturation des builtins natifs (JS : sort, fill...),
 	// cf le commentaire dans chargeProxy : 1.0 (parite boucle explicite/LeekScript sous la
 	// granularite expression, en JS comme en Python).
 	private final double builtinOpsFactor;
@@ -943,12 +942,11 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "})();";
 
 	/**
-	 * FACTURATION DU TRAVAIL NATIF (Python). Depuis l'image combined-10, les elements que les builtins
-	 * parcourent en Java (iterateurs natifs, sum, ensembles, dict) sont comptes par l'image (cf
-	 * {@link #nativeOps}). Reste {@code sorted}, dont le tri ne parcourt pas d'iterateur : facture au
-	 * prorata de {@code len} via {@code __lw_charge} (le facteur de calibration est applique cote hote, cf
-	 * {@link #chargeProxy}), forme a un argument seulement. Les copies natives (list(l), tuple(l)) ne
-	 * calculent rien et ne sont plus facturees. Accumulateur PRIVE + flush. Contournable par reflexion.
+	 * FACTURATION DU TRAVAIL NATIF (Python). Les elements que les builtins parcourent ou trient en Java
+	 * sont comptes par l'image depuis combined-10 (cf {@link #nativeOps}). Ce prelude ne fait plus que
+	 * poser l'accumulateur PRIVE de {@code __lw_charge} (+ flush) dont se servent PY_NATIVE_COSTS (math,
+	 * random) et l'override de System.operations (charges en attente), et neutralise gc.collect.
+	 * Contournable par reflexion.
 	 */
 	private static final String PY_CHARGE_GUARD =
 		"import builtins as _lwb\n"
@@ -960,15 +958,6 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "        _acc[0] += n\n"
 		+ "        if _acc[0] >= _FLUSH:\n"
 		+ "            _C(_acc[0]); _acc[0] = 0\n"
-		+ "    _sorted = _lwb.sorted\n"
-		+ "    def sorted(*a, **k):\n"
-		+ "        if len(a) == 1:\n"
-		+ "            try:\n"
-		+ "                _ch(len(a[0]))\n"
-		+ "            except TypeError:\n"
-		+ "                pass\n"
-		+ "        return _sorted(*a, **k)\n"
-		+ "    _lwb.sorted = sorted\n"
 		// gc.collect() force un GC complet de l'isolate partage (~40 ms de CPU, plus 15 ms de pause) pour
 		// une dizaine d'operations : en boucle, il occupe le worker et gele les autres combats Python.
 		+ "    import gc\n"
@@ -1247,8 +1236,8 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Fonction hote {@code __lw_charge(n)} exposee au guest : facture {@code n} operations sur le
 	 * compteur reel (via {@link leekscript.runner.AI#ops(int)}, qui jette {@code TOO_MUCH_OPERATIONS}
 	 * au dela du budget). Sert au comptage du travail NATIF/builtin que l'instrument (granularite
-	 * statement) ne voit pas : les preludes JS_CHARGE_GUARD / PY_CHARGE_GUARD enveloppent les builtins
-	 * couteux (sort, fill, sum, sorted, list...) pour facturer au prorata de la taille d'entree, comme
+	 * statement) ne voit pas : JS_CHARGE_GUARD enveloppe les builtins couteux (sort, fill...) et
+	 * PY_NATIVE_COSTS les fonctions de math et random, pour facturer au prorata de la taille d'entree, comme
 	 * LeekScript facture ses propres builtins. Deterministe (la taille l'est). L'exception d'ops est
 	 * emballee en RuntimeException -> deballee par runIA via {@link #unwrapLeekRunException}.
 	 */
@@ -1382,8 +1371,6 @@ public class PolyglotEntityAI extends EntityAI {
 			// clock_gettime ni os.times).
 			+ "time.process_time = lambda: 0.0\ntime.thread_time = lambda: 0.0\n"
 			+ "time.process_time_ns = lambda: 0\ntime.thread_time_ns = lambda: 0\n"
-			// __graalpython__.time_millis() : heure reelle en millisecondes, module interne importable.
-			+ "import __graalpython__\ntry:\n    del __graalpython__.time_millis\nexcept AttributeError:\n    pass\ndel __graalpython__\n"
 			// Attendre est interdit : l'image isolate refuse deja sleep, verrous, files et pipes avec ce
 			// message (cf WAIT_FORBIDDEN_MESSAGE) ; doublon pour une image qui ne le ferait pas.
 			+ "def sleep(secs):\n    raise RuntimeError('" + WAIT_FORBIDDEN_MESSAGE + "')\n"
@@ -1962,16 +1949,19 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Plafond des operations natives du tour depasse, meme si le guest a attrape l'erreur (cf PythonContext.lwCharge). */
 	private boolean nativeOpsExhausted() {
 		try {
-			return nativeOps != null && nativeOps.execute().asLong() > getMaxOperations();
+			return nativeOpsCount() > getMaxOperations();
 		} catch (Exception e) {
 			return false;
 		}
 	}
 
+	private long nativeOpsCount() {
+		return nativeOps != null ? nativeOps.execute().asLong() : 0;
+	}
+
 	/** Statements guest et operations natives du tour, cf {@link #nativeOps}. */
 	private long guestOperations() {
-		long native_ = nativeOps != null ? nativeOps.execute().asLong() : 0;
-		return statementCounter.execute().asLong() + native_;
+		return statementCounter.execute().asLong() + nativeOpsCount();
 	}
 
 	/**

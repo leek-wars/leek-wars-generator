@@ -201,14 +201,6 @@ public class TestPythonSetupPressure extends FightTestBase {
 		if (STEPS.contains("chargeguard")) {
 			c.eval(LANG, (String) privateStatic("PY_CHARGE_GUARD"));
 		}
-		// Sous-bissection de la garde de facturation : sans le wrap des TYPES (list/dict... par
-		// metaclasse), ou sans le wrap des FONCTIONS (sum/sorted/min/max).
-		if (STEPS.contains("chargeguard-notype")) {
-			c.eval(LANG, ((String) privateStatic("PY_CHARGE_GUARD")).replace("for _n in ('list','tuple','set','frozenset','dict'):", "for _n in ():"));
-		}
-		if (STEPS.contains("chargeguard-nofn")) {
-			c.eval(LANG, ((String) privateStatic("PY_CHARGE_GUARD")).replace("for _n in ('sum','sorted','min','max'):", "for _n in ():"));
-		}
 		if (STEPS.contains("console")) {
 			c.eval(LANG, (String) privateStatic("PY_CONSOLE_SETUP"));
 		}

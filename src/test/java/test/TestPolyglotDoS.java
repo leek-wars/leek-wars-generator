@@ -264,13 +264,7 @@ public class TestPolyglotDoS extends FightTestBase {
 	/** Boucle native Python sans fin : comptee element par element (image combined-10), le budget du tour la coupe avant le watchdog. */
 	@Test(timeout = 60_000)
 	public void pythonNativeLoopIsBoundedByOperations() throws Exception {
-		initFightOnly();
-		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
-			PolyglotEntityAI ai = ai(sb, "python", "def turn():\n    return max(iter(range(10 ** 10)))\n", 5_000);
-			long start = System.nanoTime();
-			expectTooMuchOperations(ai, "le budget du tour aurait du couper la boucle native");
-			Assert.assertTrue("coupe par le budget, avant le watchdog", (System.nanoTime() - start) / 1_000_000 < 5_000);
-		}
+		assertNativeLoopInterrupted("python", "def turn():\n    return max(iter(range(10 ** 10)))\n", 5_000);
 	}
 
 	/** Calcul guest lourd mais paye par ses ops : jamais neutralise. */
@@ -345,9 +339,14 @@ public class TestPolyglotDoS extends FightTestBase {
 
 	/** Boucle native sur une taille virtuelle (sans memoire) : l'interruption du watchdog y atterrit. */
 	private void assertNativeLoopInterrupted(String lang, String src) throws Exception {
+		assertNativeLoopInterrupted(lang, src, 300);
+	}
+
+	/** Avec {@code limitMs} au-dela de 3 s, seul le budget d'operations peut couper la boucle a temps. */
+	private void assertNativeLoopInterrupted(String lang, String src, long limitMs) throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox(lang)) {
-			PolyglotEntityAI ai = ai(sb, lang, src, 300);
+			PolyglotEntityAI ai = ai(sb, lang, src, limitMs);
 			long start = System.nanoTime();
 			expectTooMuchOperations(ai, "la boucle native aurait du etre interrompue");
 			long elapsedMs = (System.nanoTime() - start) / 1_000_000;
