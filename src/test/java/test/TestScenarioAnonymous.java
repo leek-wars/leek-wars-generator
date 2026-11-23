@@ -22,8 +22,9 @@ import leekscript.compiler.resolver.FileSystem;
 
 /**
  * Scenario#anonymous (tournoi d'IA) : une IA ne lit ni le nom, ni l'éleveur, ni le pays, ni l'IA des
- * entités d'un autre éleveur, allié compris ; les siennes restent lisibles. Sans le drapeau, tout
- * se lit comme avant.
+ * entités d'un autre éleveur, allié compris ; les siennes restent lisibles. Nom du poireau, de son
+ * éleveur et de son IA : un pseudonyme (Pseudonyms), jamais null ; pays et ids : null. Sans le
+ * drapeau, tout se lit comme avant.
  */
 public class TestScenarioAnonymous {
 
@@ -76,10 +77,14 @@ public class TestScenarioAnonymous {
 
 	/** Registres écrits par le poireau 1 (éleveur FARMER). */
 	private Map<String, String> run(boolean anonymous) {
+		return run(anonymous, 1);
+	}
+
+	private Map<String, String> run(boolean anonymous, int seed) {
 		previousFileSystem = LeekScript.getFileSystem();
 		LeekScript.setFileSystem(new TestPolyglotMultiFile.MemFileSystem(FARMER, Map.of(AI_PATH, AI)));
 		var scenario = new Scenario();
-		scenario.seed = 1;
+		scenario.seed = seed;
 		scenario.maxTurns = 1;
 		scenario.anonymous = anonymous;
 		for (int f : new int[] { FARMER, ALLY, OPPONENT }) scenario.farmers.put(f, farmer(f));
@@ -104,16 +109,51 @@ public class TestScenarioAnonymous {
 		return out;
 	}
 
+	/** [nom, éleveur, pays, id d'éleveur, IA, id d'IA] d'une entité, tels que l'IA les lit. */
+	private static java.util.List<String> who(String json) {
+		var out = new java.util.ArrayList<String>();
+		for (var v : Json.parseArray(json)) out.add(v.isNull() ? null : v.asString());
+		return out;
+	}
+
 	@Test
 	public void otherFarmersAreHidden() {
 		var r = run(true);
-		Assert.assertEquals("[null,null,null,null,null,null]", r.get("enemy"));
+		var enemy = who(r.get("enemy"));
+		Assert.assertNotNull("un pseudonyme, pas null : " + enemy, enemy.get(0));
+		Assert.assertNotEquals("adversaire", enemy.get(0));
+		Assert.assertNotNull(enemy.get(1));
+		Assert.assertNotEquals("F" + OPPONENT, enemy.get(1));
+		Assert.assertNull("pays caché", enemy.get(2));
+		Assert.assertNull("id d'éleveur caché", enemy.get(3));
+		Assert.assertNotNull("nom d'IA : un pseudonyme", enemy.get(4));
+		Assert.assertNull("id d'IA caché", enemy.get(5));
 		var allies = r.get("allies");
-		Assert.assertTrue(allies, allies.contains("[null,null,null,null,null,null]"));
 		Assert.assertTrue("son propre poireau reste lisible : " + allies, allies.contains("second") && allies.contains(String.valueOf(FARMER)));
 		Assert.assertFalse(allies, allies.contains("allie") || allies.contains("F" + ALLY));
 		Assert.assertEquals("[\"joueur\",\"F" + FARMER + "\"," + FARMER + "]", r.get("self"));
 		Assert.assertEquals("le nom d'une tourelle reste lisible", "turret", r.get("turret"));
+		// L'allié d'un autre éleveur a son propre pseudonyme, distinct de celui de l'adversaire
+		var autre = Json.parseArray(allies);
+		java.util.List<String> allie = null;
+		for (var a : autre) {
+			var w = who(a.asString());
+			if (w.get(3) == null) allie = w;
+		}
+		Assert.assertNotNull(allies, allie);
+		Assert.assertNotEquals("deux poireaux, deux noms", enemy.get(0), allie.get(0));
+		Assert.assertNotEquals("deux éleveurs, deux noms", enemy.get(1), allie.get(1));
+	}
+
+	/** Même graine, mêmes pseudonymes (rejeu identique) ; une autre graine les change. */
+	@Test
+	public void pseudonymsFollowTheSeed() {
+		var a = who(run(true, 1).get("enemy"));
+		var b = who(run(true, 1).get("enemy"));
+		Assert.assertEquals(a, b);
+		boolean change = false;
+		for (int seed = 2; seed < 6 && !change; seed++) change = !who(run(true, seed).get("enemy")).get(0).equals(a.get(0));
+		Assert.assertTrue("le pseudonyme dépend de la graine", change);
 	}
 
 	@Test

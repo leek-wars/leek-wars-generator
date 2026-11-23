@@ -62,9 +62,10 @@ public class EntityClass {
 	 * the lobby or fixed at fight init regardless of loadout. getAIPath only answers for
 	 * AIs owned by the caller's farmer.
 	 *
-	 * In an anonymous fight (AI tournament, Scenario#anonymous), getName (leeks only),
-	 * getAIName, getFarmerName, getFarmerCountry, getFarmerID and getAIID return null for
-	 * entities of another farmer (canReadIdentity).
+	 * In an anonymous fight (AI tournament, Scenario#anonymous), for entities of another farmer
+	 * (canReadIdentity): getName (leeks only), getAIName and getFarmerName return a pseudonym
+	 * (Pseudonyms : stable for the fight, never null), getFarmerCountry, getFarmerID and getAIID
+	 * return null.
 	 */
 	private static Entity resolveStatTarget(EntityAI ai, Object value) {
 		Entity l = resolveEntity(ai, value);
@@ -267,7 +268,8 @@ public class EntityClass {
 	public static String getName(EntityAI ai, Object value) throws LeekRunException {
 		// Seul un poireau porte le nom d'un joueur : invocations et tourelles gardent le leur
 		var l = resolveEntity(ai, value);
-		if (l == null || (l.getType() == Entity.TYPE_LEEK && !canReadIdentity(ai, l))) return null;
+		if (l == null) return null;
+		if (l.getType() == Entity.TYPE_LEEK && !canReadIdentity(ai, l)) return Pseudonyms.leekName(ai.getState(), l);
 		return l.getName();
 	}
 
@@ -685,8 +687,10 @@ public class EntityClass {
 	}
 
 	public static String getAIName(EntityAI ai, Object value) throws LeekRunException {
-		var l = identityTarget(ai, value);
-		return l == null ? null : l.getAIName();
+		var l = resolveEntity(ai, value);
+		if (l == null) return null;
+		// Sans éleveur (tourelle, mob) : rien à cacher.
+		return canReadIdentity(ai, l) || l.getFarmer() <= 0 ? l.getAIName() : Pseudonyms.aiName(ai.getState(), l);
 	}
 
 	/** Chemin de l'IA d'une entité, si son fichier appartient au même éleveur que celui de l'appelant ; sinon privé (getAIName en donne le nom de fichier). */
@@ -752,8 +756,9 @@ public class EntityClass {
 	}
 
 	public static String getFarmerName(EntityAI ai, Object value) throws LeekRunException {
-		var l = identityTarget(ai, value);
-		return l == null ? null : l.getFarmerName();
+		var l = resolveEntity(ai, value);
+		if (l == null) return null;
+		return canReadIdentity(ai, l) || l.getFarmer() <= 0 ? l.getFarmerName() : Pseudonyms.farmerName(ai.getState(), l);
 	}
 
 	public static String getFarmerCountry(EntityAI ai) throws LeekRunException {
