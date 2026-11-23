@@ -209,7 +209,7 @@ public class PolyglotAPIBridge {
 		Object call() throws LeekRunException;
 	}
 
-	/** Un appel hôte facturé : 1 opération (plus ce que l'appel facture lui-même), puis le miroir guest rafraîchi. */
+	/** Un appel hôte facturé : 1 opération (plus ce que l'appel facture lui-même), puis ses ops transmises au compteur. */
 	private static Object charged(PolyglotEntityAI ai, HostCall call) {
 		try {
 			ai.ops(1);
@@ -260,7 +260,7 @@ public class PolyglotAPIBridge {
 					}
 				}
 				Object result = TypeMarshaller.toGuest(m.invoke(null, callArgs), python);
-				// La fonction de combat a pu charger des ops (ai.ops) : rafraichir le miroir __lw_real
+				// La fonction de combat a pu charger des ops (ai.ops) : les transmettre au compteur
 				// pour le getOperations() cote guest (cf PolyglotEntityAI.installGuestGetOperations).
 				if (ai instanceof PolyglotEntityAI) ((PolyglotEntityAI) ai).afterHostCall();
 				return result;

@@ -113,15 +113,16 @@ public final class StatementCounter extends TruffleInstrument {
 			return host + (long) (count * factor);
 		}
 
-		/** Limite du compte : ce qui reste du budget apres l'hote, en operations comptees. */
+		/** Limite du compte : ce qui reste du budget apres l'hote, en operations comptees (0 si l'hote l'a deja epuise). */
 		private void updateLimit() {
-			limit = budget == Long.MAX_VALUE ? Long.MAX_VALUE : (long) Math.floor((budget - host) / factor);
+			limit = budget == Long.MAX_VALUE ? Long.MAX_VALUE : (long) Math.floor(Math.max(0, budget - host) / factor);
 		}
 
 		@ExportMessage boolean isExecutable() { return true; }
 		@ExportMessage @TruffleBoundary Object execute(Object[] args) throws UnsupportedMessageException {
 			if (args.length > 0) {
 				InteropLibrary interop = InteropLibrary.getUncached();
+				// Un argument non textuel : l'ancienne remise a zero execute(x), gardee pour les harnais
 				String command = interop.isString(args[0]) ? interop.asString(args[0]) : "reset";
 				if (command.equals("turn") && args.length == 4) {
 					count = 0L;
@@ -132,10 +133,13 @@ public final class StatementCounter extends TruffleInstrument {
 				} else if (command.equals("host") && args.length == 2) {
 					host = interop.asLong(args[1]);
 					updateLimit();
-				} else if (command.equals("exceeded")) {
+				} else if (command.equals("exceeded") && args.length == 1) {
 					return count > limit;
-				} else {
+				} else if (command.equals("reset") && args.length == 1) {
 					count = 0L;
+				} else {
+					// Une commande mal formee ne doit pas rendre un budget neuf en silence
+					throw UnsupportedMessageException.create();
 				}
 			}
 			return count;
