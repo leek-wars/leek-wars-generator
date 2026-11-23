@@ -183,6 +183,17 @@ public class TestFightConfig extends FightTestBase {
 		Assert.assertEquals("" + Fight.CONTEXT_TOURNAMENT, leek1.getRegister("ctx"));
 	}
 
+	// Un combat de tournoi d'IA est lance avec le contexte 4 : la constante doit valoir cette valeur.
+	@Test
+	public void aiTournamentContextHasItsConstant() throws Exception {
+		fight.getState().setContext(Fight.CONTEXT_AI_TOURNAMENT);
+		attachAI(leek1, "setRegister('ctx', '' + getFightContext()); setRegister('is', '' + (getFightContext() == FIGHT_CONTEXT_AI_TOURNAMENT));");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("4", leek1.getRegister("ctx"));
+		Assert.assertEquals("true", leek1.getRegister("is"));
+	}
+
 	// #4779 : le drapeau de lot ne se deduit ni du type ni du contexte, il doit se lire tel quel.
 	@Test
 	public void setBatchIsReflectedInIsBatchFight() throws Exception {

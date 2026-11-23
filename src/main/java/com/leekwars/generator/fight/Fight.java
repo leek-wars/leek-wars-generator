@@ -51,6 +51,7 @@ public class Fight {
 	public final static int CONTEXT_CHALLENGE = State.CONTEXT_CHALLENGE;
 	public final static int CONTEXT_GARDEN = State.CONTEXT_GARDEN;
 	public final static int CONTEXT_TOURNAMENT = State.CONTEXT_TOURNAMENT;
+	public final static int CONTEXT_AI_TOURNAMENT = State.CONTEXT_AI_TOURNAMENT;
 	public final static int CONTEXT_BATTLE_ROYALE = State.CONTEXT_BATTLE_ROYALE;
 	public final static int TYPE_SOLO = State.TYPE_SOLO;
 	public final static int TYPE_FARMER = State.TYPE_FARMER;

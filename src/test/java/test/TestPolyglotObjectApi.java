@@ -656,6 +656,7 @@ public class TestPolyglotObjectApi extends FightTestBase {
 			// Sous-conteneurs de Fight.
 			Assert.assertEquals(fc("FIGHT_TYPE_SOLO"), ((Number) eval(sb, "Fight.Type.SOLO;")).longValue());
 			Assert.assertEquals(fc("FIGHT_CONTEXT_GARDEN"), ((Number) eval(sb, "Fight.Context.GARDEN;")).longValue());
+			Assert.assertEquals(4L, ((Number) eval(sb, "Fight.Context.AI_TOURNAMENT;")).longValue());
 			Assert.assertEquals(fc("BOSS_FENNEL_KING"), ((Number) eval(sb, "Fight.Boss.FENNEL_KING;")).longValue());
 			Assert.assertEquals(fc("EROSION_DAMAGE"), ((Number) eval(sb, "Fight.Erosion.DAMAGE;")).longValue());
 			Assert.assertEquals(fc("USE_SUCCESS"), ((Number) eval(sb, "Fight.Use.SUCCESS;")).longValue());

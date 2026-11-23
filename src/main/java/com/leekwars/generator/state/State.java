@@ -80,6 +80,7 @@ public class State {
 	public final static int CONTEXT_CHALLENGE = 1;
 	public final static int CONTEXT_GARDEN = 2;
 	public final static int CONTEXT_TOURNAMENT = 3;
+	public final static int CONTEXT_AI_TOURNAMENT = 4;
 	public final static int CONTEXT_BATTLE_ROYALE = 5;
 
 	// Fight types
