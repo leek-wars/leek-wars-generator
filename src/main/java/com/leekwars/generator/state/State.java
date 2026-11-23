@@ -239,6 +239,7 @@ public class State {
 		}
 		this.mFarmerItems = state.mFarmerItems;
 		this.loadouts = state.loadouts;
+		this.anonymous = state.anonymous;
 	}
 
 	// Potions de restat disponibles / consommées par farmer pendant le combat.
@@ -292,6 +293,17 @@ public class State {
 
 	public boolean allowsLoadouts() {
 		return loadouts;
+	}
+
+	// true : identités des autres éleveurs cachées aux IA (Scenario#anonymous).
+	private boolean anonymous = false;
+
+	public void setAnonymous(boolean anonymous) {
+		this.anonymous = anonymous;
+	}
+
+	public boolean isAnonymous() {
+		return anonymous;
 	}
 
 	/** Inventaire connu d'avance (tests), sans passer par les règles. */

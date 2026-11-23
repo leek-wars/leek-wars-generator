@@ -55,7 +55,7 @@ public class EntityClass {
 	 *
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
-	 * getFarmerCountry, getFarmerID, getTeamID, getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
+	 * getFarmerCountry, getFarmerID, getTeamID (but see identityTarget in anonymous fights), getType, getMobType, getBulbType, getPlantType, getPlantTrigger,
 	 * getAwakeningZone, getPlantTriggers,
 	 * getSummons, isSummon, getBirthTurn, getSummoner, isStatic, getLeekID, getSide,
 	 * getLevel, getEntityTurnOrder, getAIID. These return info already visible in
@@ -261,14 +261,8 @@ public class EntityClass {
 	}
 
 	public static String getName(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return ai.getEntity().getName();
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(n.intValue());
-			if (l != null)
-				return l.getName();
-		}
-		return null;
+		var l = identityTarget(ai, value);
+		return l == null ? null : l.getName();
 	}
 
 	public static long getMP(EntityAI ai) {
@@ -685,15 +679,8 @@ public class EntityClass {
 	}
 
 	public static String getAIName(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null) {
-			return ai.getEntity().getAIName();
-		}
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(ai.integer(value));
-			if (l != null)
-				return l.getAIName();
-		}
-		return null;
+		var l = identityTarget(ai, value);
+		return l == null ? null : l.getAIName();
 	}
 
 	/** Chemin de l'IA d'une entité, si son fichier appartient au même éleveur que celui de l'appelant ; sinon privé (getAIName en donne le nom de fichier). */
@@ -759,14 +746,8 @@ public class EntityClass {
 	}
 
 	public static String getFarmerName(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return ai.getEntity().getFarmerName();
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(ai.integer(value));
-			if (l != null)
-				return l.getFarmerName();
-		}
-		return null;
+		var l = identityTarget(ai, value);
+		return l == null ? null : l.getFarmerName();
 	}
 
 	public static String getFarmerCountry(EntityAI ai) throws LeekRunException {
@@ -774,15 +755,8 @@ public class EntityClass {
 	}
 
 	public static String getFarmerCountry(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null) {
-			return ai.getEntity().getFarmerCountry();
-		}
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(n.intValue());
-			if (l != null)
-				return l.getFarmerCountry();
-		}
-		return null;
+		var l = identityTarget(ai, value);
+		return l == null ? null : l.getFarmerCountry();
 	}
 
 	public static long getFarmerID(EntityAI ai) throws LeekRunException {
@@ -790,14 +764,8 @@ public class EntityClass {
 	}
 
 	public static Long getFarmerID(EntityAI ai, Object value) throws LeekRunException {
-		if (value == null)
-			return (long) ai.getEntity().getFarmer();
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(n.intValue());
-			if (l != null)
-				return (long) l.getFarmer();
-		}
-		return null;
+		var l = identityTarget(ai, value);
+		return l == null ? null : (long) l.getFarmer();
 	}
 
 	public static long getTeamID(EntityAI ai) throws LeekRunException {
@@ -1079,6 +1047,17 @@ public class EntityClass {
 		return ai.getFight().getEntity(n.intValue());
 	}
 
+	/**
+	 * Entité dont l'IA peut lire l'identité (nom, éleveur, pays, IA) : en combat anonyme (tournoi
+	 * d'IA, Scenario#anonymous), seulement celles de son propre éleveur. Une IA ne reconnaît pas ses
+	 * alliés d'un autre compte.
+	 */
+	private static Entity identityTarget(EntityAI ai, Object value) {
+		var l = resolveEntity(ai, value);
+		if (l == null || !ai.getState().isAnonymous()) return l;
+		return l.getFarmer() == ai.getEntity().getFarmer() ? l : null;
+	}
+
 	public static long getSummoner(EntityAI ai) throws LeekRunException {
 		return ai.getEntity().isSummon() ? (long) ai.getEntity().getSummoner().getFId(): -1l;
 	}
@@ -1185,12 +1164,8 @@ public class EntityClass {
 	public static Long getAIID(EntityAI ai, Object value) throws LeekRunException {
 		if (value == null)
 			return (long) ai.getId();
-		if (value instanceof Number n) {
-			var l = ai.getFight().getEntity(n.intValue());
-			if (l != null)
-				return (long) ((EntityAI) l.getAI()).getId();
-		}
-		return null;
+		var l = identityTarget(ai, value);
+		return l == null ? null : (long) ((EntityAI) l.getAI()).getId();
 	}
 
 

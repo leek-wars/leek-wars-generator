@@ -35,6 +35,11 @@ public class Scenario {
 	 * jamais lu.
 	 */
 	public boolean loadouts = true;
+	/**
+	 * true : les IA ne lisent ni le nom, ni l'éleveur, ni l'IA des entités des autres éleveurs (tournoi
+	 * d'IA), pour qu'une IA ne puisse pas reconnaître ses alliés et s'entendre avec eux.
+	 */
+	public boolean anonymous = false;
 	public int fightID = 0;
 	public int boss = 0;
 	public Map<Integer, FarmerInfo> farmers = new HashMap<Integer, FarmerInfo>();
@@ -68,6 +73,9 @@ public class Scenario {
 		}
 		if (json.has("loadouts")) {
 			scenario.loadouts = json.get("loadouts").booleanValue();
+		}
+		if (json.has("anonymous")) {
+			scenario.anonymous = json.get("anonymous").booleanValue();
 		}
 		for (var farmerJson : (ArrayNode) json.get("farmers")) {
 			FarmerInfo farmer = new FarmerInfo();

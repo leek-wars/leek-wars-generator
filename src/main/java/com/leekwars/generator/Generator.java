@@ -195,6 +195,7 @@ public class Generator {
 		fight.getState().setCustomMap(scenario.map);
 		fight.getState().seed(scenario.seed);
 		fight.getState().setLoadouts(scenario.loadouts);
+		fight.getState().setAnonymous(scenario.anonymous);
 		for (var farmer : scenario.farmers.values()) {
 			// Poireaux imposés : ni potion, ni pot de pièces, l'inventaire de l'éleveur reste hors du combat.
 			if (!scenario.loadouts) continue;
