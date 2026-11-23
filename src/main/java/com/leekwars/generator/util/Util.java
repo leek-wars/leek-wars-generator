@@ -21,6 +21,14 @@ import tools.jackson.databind.JsonNode;
 
 public class Util {
 
+	/** Finaliseur de SplitMix64 : mélange un entier 64 bits (graines dérivées de celle du combat). */
+	public static long mix64(long z) {
+		z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+		z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+		return z ^ (z >>> 31);
+	}
+
+
 	private static HashSet<Integer> primes = null;
 	public static String BLUE = "\033[1;34m";
 	public static String GREEN = "\033[1;32m";

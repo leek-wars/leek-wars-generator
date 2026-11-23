@@ -1,6 +1,8 @@
 package test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
@@ -110,8 +112,8 @@ public class TestScenarioAnonymous {
 	}
 
 	/** [nom, éleveur, pays, id d'éleveur, IA, id d'IA] d'une entité, tels que l'IA les lit. */
-	private static java.util.List<String> who(String json) {
-		var out = new java.util.ArrayList<String>();
+	private static List<String> who(String json) {
+		var out = new ArrayList<String>();
 		for (var v : Json.parseArray(json)) out.add(v.isNull() ? null : v.asString());
 		return out;
 	}
@@ -135,7 +137,7 @@ public class TestScenarioAnonymous {
 		Assert.assertEquals("le nom d'une tourelle reste lisible", "turret", r.get("turret"));
 		// L'allié d'un autre éleveur a son propre pseudonyme, distinct de celui de l'adversaire
 		var autre = Json.parseArray(allies);
-		java.util.List<String> allie = null;
+		List<String> allie = null;
 		for (var a : autre) {
 			var w = who(a.asString());
 			if (w.get(3) == null) allie = w;

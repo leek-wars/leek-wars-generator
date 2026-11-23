@@ -171,10 +171,7 @@ public class Fight {
 	 * poireaux à la même IA obtenaient les mêmes rand() au même appel.
 	 */
 	private static long aiSeed(long fightSeed, int fid) {
-		long z = fightSeed * 0x9E3779B97F4A7C15L + fid;
-		z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
-		z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
-		return z ^ (z >>> 31);
+		return com.leekwars.generator.util.Util.mix64(fightSeed * 0x9E3779B97F4A7C15L + fid);
 	}
 
 	private boolean canStartFight() {
