@@ -96,6 +96,13 @@ public class TestPolyglotSecurity extends FightTestBase {
 			Assert.assertEquals(0L, ((Number) ai(sb, "js", "new Date().constructor.now()", 1).runIA()).longValue());
 			Assert.assertEquals(0L, ((Number) ai(sb, "js", "Date.prototype.constructor.now()", 1).runIA()).longValue());
 			Assert.assertEquals(0L, ((Number) ai(sb, "js", "new (new Date().constructor)().getTime()", 1).runIA()).longValue());
+			// Intl formate l'instant courant quand on ne lui donne pas de date : horloge figee aussi.
+			Assert.assertEquals("1970", ai(sb, "js", "new Intl.DateTimeFormat('en', {year: 'numeric', timeZone: 'UTC'}).format()", 1).runIA());
+			Assert.assertEquals("1970", ai(sb, "js", "Intl.DateTimeFormat('en', {year: 'numeric', timeZone: 'UTC'}).format()", 1).runIA());
+			Assert.assertEquals("1970", ai(sb, "js", "new Intl.DateTimeFormat('en', {year: 'numeric', timeZone: 'UTC'}).formatToParts()[0].value", 1).runIA());
+			Assert.assertEquals("1970", ai(sb, "js", "var f = new Intl.DateTimeFormat('en', {year: 'numeric', timeZone: 'UTC'}).format; f()", 1).runIA());
+			// Une date donnee reste formatee telle quelle
+			Assert.assertEquals("2001", ai(sb, "js", "new Intl.DateTimeFormat('en', {year: 'numeric', timeZone: 'UTC'}).format(new Date(Date.UTC(2001, 5, 1)))", 1).runIA());
 		}
 	}
 
@@ -142,6 +149,17 @@ public class TestPolyglotSecurity extends FightTestBase {
 			Assert.assertEquals(0L, ((Number) ai(sb, "python", "import time\ntime.thread_time_ns()", 1).runIA()).longValue());
 			Assert.assertEquals(0.0, ((Number) ai(sb, "python", "import time\ntime.process_time()", 1).runIA()).doubleValue(), 0.0);
 			Assert.assertEquals(0.0, ((Number) ai(sb, "python", "import time\ntime.thread_time()", 1).runIA()).doubleValue(), 0.0);
+			// Fonctions qui lisent l'heure courante sans passer par time.time()
+			Assert.assertEquals("2020", ai(sb, "python", "import time\ntime.strftime('%Y')", 1).runIA());
+			Assert.assertEquals("2001", ai(sb, "python", "import time\ntime.strftime('%Y', (2001, 1, 1, 0, 0, 0, 0, 1, 0))", 1).runIA());
+			Assert.assertTrue(((String) ai(sb, "python", "import time\ntime.ctime()", 1).runIA()).endsWith("2020"));
+			Assert.assertTrue(((String) ai(sb, "python", "import time\ntime.asctime()", 1).runIA()).endsWith("2020"));
+			Assert.assertTrue(((String) ai(sb, "python", "import time\ntime.ctime(0)", 1).runIA()).endsWith("1970"));
+			Assert.assertEquals("2020-01-01", ai(sb, "python", "import datetime\nstr(datetime.date.today())", 1).runIA());
+			Assert.assertEquals(true, ai(sb, "python", "import datetime\nisinstance(datetime.datetime.now(), datetime.date)", 1).runIA());
+			Assert.assertEquals(true, ai(sb, "python", "import datetime\nisinstance(datetime.datetime.now(), datetime.datetime)", 1).runIA());
+			Assert.assertEquals(true, ai(sb, "python", "import datetime\nissubclass(datetime.datetime, datetime.date)", 1).runIA());
+			Assert.assertEquals("2001-02-03", ai(sb, "python", "import datetime\nstr(datetime.date(2001, 2, 3))", 1).runIA());
 		}
 	}
 }
