@@ -227,8 +227,6 @@ public class PolyglotEntityAI extends EntityAI {
 	// Refetche a chaque (re)construction de contexte par ensureContext ; null si l'image ne l'embarque
 	// pas, ou sans son lecteur (image anterieure a combined-11) -> fallback temps CPU (non reproductible).
 	private Value statementCounter;
-	// Lecture seule du total du tour, la seule facade du compteur que voit le guest (cf StatementCounter).
-	private Value operationsReader;
 	// Memoire retenue par le contexte (System.usedRAM), publiee par le meme instrument ; null sans
 	// l'image qui la publie. Refetchee avec le contexte, derniere mesure gardee (cf getUsedRAM).
 	private Value heapSize;
@@ -239,8 +237,6 @@ public class PolyglotEntityAI extends EntityAI {
 	private long ownNanos;                     // temps de calcul de l'IA dans ses tours et hooks finis
 	/** Image isolate sans la mesure du tas, signalee une fois par processus (cf ensureContext). */
 	private static final AtomicBoolean HEAP_BINDING_MISSING_LOGGED = new AtomicBoolean();
-	// Bindings globaux du guest (cache), cf installGuestGetOperations. null si l'override guest n'est pas actif.
-	private Value guestBindings;
 	// Fonction guest __lw_flush (accumulateur de facturation des builtins/natifs), capturee a la
 	// construction du contexte et retiree du scope guest : l'hote la joue en fin de tour.
 	private Value chargeFlush;
@@ -772,11 +768,11 @@ public class PolyglotEntityAI extends EntityAI {
 		try {
 			PolyglotAPIBridge.install(context, languageId, this);
 			installDeterminismGuards();
-			// Compteur de statements deterministe de l'image custom, lie a CE contexte (refetche
-			// apres chaque reconstruction). null si l'image ne l'embarque pas -> temps CPU.
-			operationsReader = PolyglotSandbox.operationsReaderBinding(context);
-			// Sans lecteur, le compteur ne connait pas les commandes du generateur : repli temps CPU
-			statementCounter = operationsReader != null ? PolyglotSandbox.statementCounterBinding(context) : null;
+			// Compteur d'operations de l'image custom et son lecteur pour le guest, lies a CE contexte
+			// (refetches apres chaque reconstruction). Sans lecteur (image anterieure a combined-11), le
+			// compteur ne connait pas les commandes du generateur : repli temps CPU.
+			Value reader = PolyglotSandbox.operationsReaderBinding(context);
+			statementCounter = reader != null ? PolyglotSandbox.statementCounterBinding(context) : null;
 			heapSize = PolyglotSandbox.heapSizeBinding(context);
 			heapMeasured = false;
 			if (heapSize == null && statementCounter != null && HEAP_BINDING_MISSING_LOGGED.compareAndSet(false, true)) {
@@ -787,14 +783,12 @@ public class PolyglotEntityAI extends EntityAI {
 			// Redirige getOperations() cote guest (perf : evite ~100k+ aller-retours hote/tour sur une
 			// IA de recherche). Seulement avec l'instrument deterministe ; sinon le getOperations HOTE
 			// (fallback temps CPU) reste en place.
-			guestBindings = context.getBindings(languageId);
 			if (statementCounter != null && isPython()) {
-				connectNativeOps();
+				handOperationsToPython();
 			}
 			if (statementCounter != null) {
-				installGuestGetOperations();
+				installGuestGetOperations(reader);
 			} else {
-				guestBindings = null;
 				removeUnusedOpsHook();
 			}
 		} catch (Throwable t) {
@@ -947,7 +941,7 @@ public class PolyglotEntityAI extends EntityAI {
 
 	/**
 	 * FACTURATION DU TRAVAIL NATIF (Python). Les elements que les builtins parcourent ou trient en Java
-	 * sont comptes par l'image depuis combined-10 (cf {@link #connectNativeOps}). Ce prelude ne fait plus que
+	 * sont comptes par l'image depuis combined-10 (cf {@link #handOperationsToPython}). Ce prelude ne fait plus que
 	 * poser l'accumulateur PRIVE de {@code __lw_charge} (+ flush) dont se servent PY_NATIVE_COSTS (math,
 	 * random) et l'override de System.operations (charges en attente), et neutralise gc.collect.
 	 * Contournable par reflexion.
@@ -1137,7 +1131,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * {@code __lw_counter()}, le total du tour lu LOCALEMENT (il vit dans l'isolate, cote guest -> pas
 	 * d'aller-retour) sur la facade en lecture seule du compteur (StatementCounter.ReaderObject) : ops
 	 * HOTE (mOperations, transmises apres chaque appel de fonction de combat / facturation, cf
-	 * {@link #syncRealToGuest}) + compteur x facteur. Deterministe et identique a l'implementation hote
+	 * {@link #syncHostOperations}) + compteur x facteur. Deterministe et identique a l'implementation hote
 	 * (meme formule) -> replays preserves. Actif seulement si l'instrument est la.
 	 */
 	private static final String JS_GETOPS_OVERRIDE =
@@ -1194,13 +1188,12 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/** Fetch les bindings guest + branche System.operations cote guest (si l'instrument deterministe est la). */
-	private void installGuestGetOperations() {
+	private void installGuestGetOperations(Value reader) {
 		try {
-			guestBindings.putMember("__lw_counter", operationsReader);
+			context.getBindings(languageId).putMember("__lw_counter", reader);
 			evalPrelude("ops-override", "js".equals(languageId) ? JS_GETOPS_OVERRIDE : PY_GETOPS_OVERRIDE);
 		} catch (Exception e) {
 			// Best effort : si l'override echoue, le getOperations HOTE (bridge) reste en place.
-			guestBindings = null;
 			Log.w("PolyglotEntityAI", "getOperations guest-side indisponible (" + languageId + ") : " + e.getMessage());
 		}
 	}
@@ -1208,7 +1201,7 @@ public class PolyglotEntityAI extends EntityAI {
 	/** Apres un appel de l'API de combat : compte pour le garde-fou CPU (CPU_NANOS_PER_HOST_CALL) et transmet les ops hote au compteur. */
 	void afterHostCall() {
 		hostCalls++;
-		syncRealToGuest();
+		syncHostOperations();
 	}
 
 	/**
@@ -1216,7 +1209,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * (cf PolyglotAPIBridge) et de facturation, et en debut de tour : mOperations ne change QUE dans
 	 * {@code ops()}, donc entre deux tels appels le total lu par le guest et la limite sont exacts.
 	 */
-	void syncRealToGuest() {
+	void syncHostOperations() {
 		if (statementCounter != null) {
 			// Le total lu par le guest et la limite du compteur suivent les operations de l'hote
 			try { statementCounter.execute("host", super.getOperations()); } catch (Exception ignore) {}
@@ -1248,7 +1241,7 @@ public class PolyglotEntityAI extends EntityAI {
 					if (scaled > 0) {
 						try {
 							ops((int) scaled);
-							syncRealToGuest(); // la charge a bouge mOperations -> la transmettre au compteur
+							syncHostOperations(); // la charge a bouge mOperations -> la transmettre au compteur
 						} catch (LeekRunException e) {
 							throw new RuntimeException(e);
 						}
@@ -1399,7 +1392,7 @@ public class PolyglotEntityAI extends EntityAI {
 			ensureContext();
 			// Compteur remis a zero a chaque tour, avec le budget et les ops hote : 0 (reset par runTurn), ou ce
 			// qu'a consomme beforeFight() au tour 1
-			resetStatementCounter();
+			beginCounterTurn();
 			// Budget de statements par tour : le contexte est reutilise entre tours (etat statique
 			// guest persistant) mais le statement limit GraalVM est cumulatif sur la vie du contexte.
 			context.resetLimits();
@@ -1561,7 +1554,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Setup faillible (construction du contexte, cf runIA) : une saturation RAM ici appartient au joueur.
 		try {
 			ensureContext();
-			resetStatementCounter();
+			beginCounterTurn();
 			context.resetLimits();
 		} catch (PolyglotException e) {
 			throw mapException(e);
@@ -1807,7 +1800,7 @@ public class PolyglotEntityAI extends EntityAI {
 		try {
 			// Setup DANS le try, comme runIA : lui aussi peut echouer sur une limite atteinte, et une
 			// annulation qui s'echapperait d'ici planterait le combat au lieu d'etre une erreur joueur.
-			resetStatementCounter();
+			beginCounterTurn();
 			// Contexte reutilise entre tours (statement limit cumulatif) : on remet le budget a zero pour le
 			// tour du bulbe, exactement comme runIA pour un tour normal.
 			context.resetLimits();
@@ -1900,7 +1893,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Si le contexte est mort (annule/ferme), on abandonne le compteur pour ce contexte : repli sur le
 	 * terme temps CPU (ensureContext refetchera un binding neuf avec le prochain contexte).
 	 */
-	private void resetStatementCounter() {
+	private void beginCounterTurn() {
 		if (statementCounter == null) {
 			return;
 		}
@@ -1917,16 +1910,16 @@ public class PolyglotEntityAI extends EntityAI {
 	 * retiree du module : avec elle, le joueur debrancherait son compteur. Sans elle (image anterieure),
 	 * le natif n'est pas compte.
 	 */
-	private void connectNativeOps() {
+	private void handOperationsToPython() {
 		try {
-			Value connect = evalPrelude("native-ops", PY_NATIVE_OPS_CAPTURE);
+			Value connect = evalPrelude("operations-handover", PY_OPERATIONS_HANDOVER);
 			if (connect != null && connect.canExecute()) {
 				connect.execute(statementCounter);
 			}
 		} catch (Exception ignore) {}
 	}
 
-	private static final String PY_NATIVE_OPS_CAPTURE =
+	private static final String PY_OPERATIONS_HANDOVER =
 		"def _lw_take(g):\n"
 		+ "    f = getattr(g, 'lw_set_operations', None)\n"
 		+ "    if f is not None:\n"
@@ -2213,9 +2206,7 @@ public class PolyglotEntityAI extends EntityAI {
 			context = null;
 			contextGeneration++; // toute Value capturee sur ce contexte (callback de bulbe) est desormais perimee
 			statementCounter = null; // binding lie au contexte ferme ; refetche par ensureContext
-			operationsReader = null;
 			heapSize = null;
-			guestBindings = null;
 		}
 		// Le prochain ensureContext reconstruira un contexte neuf : on re-evaluera le source
 		// (entry et le namespace du module pointaient vers l'ancien contexte ferme ; garder ce dernier

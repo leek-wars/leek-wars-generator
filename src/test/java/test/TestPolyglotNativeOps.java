@@ -87,7 +87,7 @@ public class TestPolyglotNativeOps extends FightTestBase {
 	public void internalsAreHidden() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
-			assertEquals(0L, ((Number) ai(sb, "import __graalpython__ as g\nint(hasattr(g, 'lw_native_ops')) + int(hasattr(g, 'time_millis')) + int('__lw_native' in globals())").runIA()).longValue());
+			assertEquals(0L, ((Number) ai(sb, "import __graalpython__ as g\nint(hasattr(g, 'lw_set_operations')) + int(hasattr(g, 'time_millis'))").runIA()).longValue());
 		}
 	}
 

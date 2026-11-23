@@ -1,7 +1,7 @@
 package com.leekwars.generator.polyglot;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.LongUnaryOperator;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -90,32 +90,31 @@ public final class StatementCounter extends TruffleInstrument {
 	 * voit que {@link ReaderObject} : avec cet objet, il remettrait son compte a zero ou leverait la limite.
 	 *
 	 * <p>Un langage y ajoute les operations qu'il fait hors de ses noeuds instrumentes (boucles natives
-	 * de ses builtins) par {@link LongUnaryOperator#applyAsLong}, interface du JDK qu'il connait sans
-	 * dependre de cet instrument : GraalPy recoit l'objet du generateur (cf patches/graalpython.patch).
+	 * de ses builtins) dans {@link #cell}, qu'il obtient une fois par {@link Supplier#get}, interface du
+	 * JDK qu'il connait sans dependre de cet instrument : GraalPy recoit l'objet du generateur (cf
+	 * patches/graalpython.patch), puis compte par une addition et une comparaison, sans appel.
 	 */
 	@ExportLibrary(InteropLibrary.class)
-	static final class CounterObject implements TruffleObject, LongUnaryOperator {
-		long count;
-		long limit = Long.MAX_VALUE;
+	static final class CounterObject implements TruffleObject, Supplier<long[]> {
+		/** {compte, limite} : partage avec le langage qui y ajoute ses operations natives. */
+		final long[] cell = { 0L, Long.MAX_VALUE };
 		long budget = Long.MAX_VALUE;
 		double factor = 1;
 		long host;
 
-		/** Ajoute n operations, rend le reste avant la limite (negatif : depassee). */
 		@Override
-		public long applyAsLong(long n) {
-			count += n;
-			return limit - count;
+		public long[] get() {
+			return cell;
 		}
 
 		/** Total du tour, dans l'unite du budget. */
 		long total() {
-			return host + (long) (count * factor);
+			return host + (long) (cell[0] * factor);
 		}
 
 		/** Limite du compte : ce qui reste du budget apres l'hote, en operations comptees (0 si l'hote l'a deja epuise). */
 		private void updateLimit() {
-			limit = budget == Long.MAX_VALUE ? Long.MAX_VALUE : (long) Math.floor(Math.max(0, budget - host) / factor);
+			cell[1] = budget == Long.MAX_VALUE ? Long.MAX_VALUE : (long) Math.floor(Math.max(0, budget - host) / factor);
 		}
 
 		@ExportMessage boolean isExecutable() { return true; }
@@ -125,7 +124,7 @@ public final class StatementCounter extends TruffleInstrument {
 				// Un argument non textuel : l'ancienne remise a zero execute(x), gardee pour les harnais
 				String command = interop.isString(args[0]) ? interop.asString(args[0]) : "reset";
 				if (command.equals("turn") && args.length == 4) {
-					count = 0L;
+					cell[0] = 0L;
 					budget = interop.asLong(args[1]);
 					factor = interop.asDouble(args[2]);
 					host = interop.asLong(args[3]);
@@ -134,15 +133,15 @@ public final class StatementCounter extends TruffleInstrument {
 					host = interop.asLong(args[1]);
 					updateLimit();
 				} else if (command.equals("exceeded") && args.length == 1) {
-					return count > limit;
+					return cell[0] > cell[1];
 				} else if (command.equals("reset") && args.length == 1) {
-					count = 0L;
+					cell[0] = 0L;
 				} else {
 					// Une commande mal formee ne doit pas rendre un budget neuf en silence
 					throw UnsupportedMessageException.create();
 				}
 			}
-			return count;
+			return cell[0];
 		}
 	}
 
@@ -194,8 +193,8 @@ public final class StatementCounter extends TruffleInstrument {
 	protected void onCreate(Env env) {
 		ExecutionEventListener listener = new ExecutionEventListener() {
 			@Override public void onEnter(EventContext context, VirtualFrame frame) {
-				CounterObject counter = counters.get();
-				if (++counter.count > counter.limit) {
+				long[] cell = counters.get().cell;
+				if (++cell[0] > cell[1]) {
 					throw limitReached(context.getInstrumentedNode());
 				}
 			}

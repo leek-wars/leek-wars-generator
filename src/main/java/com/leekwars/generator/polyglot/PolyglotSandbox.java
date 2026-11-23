@@ -266,12 +266,11 @@ public class PolyglotSandbox implements AutoCloseable {
 	}
 
 	/**
-	 * Compteur de statements DETERMINISTE de l'image isolate JS custom (repo graal-isolate), publie par
+	 * Compteur d'operations DETERMINISTE de l'image isolate custom (repo graal-isolate), publie par
 	 * l'instrument {@link StatementCounter} dans les polyglot bindings de chaque contexte : un compteur
 	 * propre au contexte, l'engine etant partage par les combats paralleles du worker. Renvoie
-	 * l'executable (execute() = lire, execute(x) = remise a zero), ou null si l'image
-	 * ne l'embarque pas (image officielle, ex Python) -&gt; {@code getOperations()} retombe sur le terme
-	 * temps CPU (non deterministe).
+	 * l'executable (commandes : cf StatementCounter.CounterObject), ou null si l'image ne l'embarque pas
+	 * (image officielle) -&gt; {@code getOperations()} retombe sur le terme temps CPU (non deterministe).
 	 */
 	public static Value statementCounterBinding(Context context) {
 		return executableBinding(context, StatementCounter.BINDING_NAME);
@@ -409,9 +408,9 @@ public class PolyglotSandbox implements AutoCloseable {
 	 * les temporaires ne penalisent pas -> honnete, comme le {@code mRAM} LeekScript. {@code maxHeapBytes}
 	 * = budget RAM de l'entite (cf {@link PolyglotEntityAI#ensureContext}).
 	 *
-	 * <p>Note (determinisme) : l'image isolate JS custom embarque l'instrument StatementCounter (ops
-	 * deterministes, lus via {@link #statementCounterBinding}) ; Python (image officielle) reste sur le
-	 * terme temps CPU. Sous ISOLATED, le statement limit passe par {@code sandbox.MaxStatements} (les
+	 * <p>Note (determinisme) : l'image isolate custom (JS et Python) embarque l'instrument StatementCounter
+	 * (ops deterministes, lues via {@link #statementCounterBinding}, limitees au budget du tour). Sous
+	 * ISOLATED, {@code sandbox.MaxStatements} reste un plafond de secours (les
 	 * autres {@code sandbox.Max*} sont exiges par la policy et poses genereusement ; le vrai backstop
 	 * reste le watchdog wall-clock de PolyglotEntityAI + le cap RAM).
 	 *
