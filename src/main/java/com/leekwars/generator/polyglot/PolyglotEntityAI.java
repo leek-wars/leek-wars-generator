@@ -889,11 +889,12 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "Object.defineProperty(D.prototype,'constructor',{value:L,writable:false,configurable:false});"
 		+ "globalThis.Date=L;})();"
 		+ "if(typeof performance!=='undefined'){performance.now=function(){return 0;};}"
-		// Intl formate l'instant courant quand on ne lui donne pas de date : on lui passe l'horloge figee.
-		// Le getter et la methode d'origine restent dans la fermeture, hors de portee de l'IA.
+		// Intl.DateTimeFormat sans date formate l'horloge figee, comme new Date() ; format reste la meme
+		// fonction a chaque lecture, comme dans la spec.
 		+ "if(typeof Intl!=='undefined'){(function(){var P=Intl.DateTimeFormat.prototype;"
-		+ "var g=Object.getOwnPropertyDescriptor(P,'format').get;var p=P.formatToParts;"
-		+ "Object.defineProperty(P,'format',{get:function(){var f=g.call(this);return function(d){return f(d===undefined?0:d);};},configurable:false});"
+		+ "var g=Object.getOwnPropertyDescriptor(P,'format').get;var p=P.formatToParts;var W=new WeakMap();"
+		+ "Object.defineProperty(P,'format',{get:function(){var f=W.get(this);if(!f){var o=g.call(this);"
+		+ "f=function(d){return o(d===undefined?0:d);};W.set(this,f);}return f;},configurable:false});"
 		+ "Object.defineProperty(P,'formatToParts',{value:function(d){return p.call(this,d===undefined?0:d);},writable:false,configurable:false});})();}";
 
 	/**
@@ -1410,7 +1411,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// etapes du setup) : sans cet import, 300 contextes ne fuient plus rien. uuid4 reste
 			// deterministe sans patch : il tire ses 16 octets de os.urandom, patche ci-dessous.
 			"import sys\n"
-			+ "import os, random, time, datetime\n"
+			+ "import os, random, time\n"
 			+ "_lw_r = random.Random(" + seed + ")\n"
 			+ "os.urandom = lambda n: bytes(_lw_r.getrandbits(8) for _ in range(n))\n"
 			+ "random.SystemRandom = random.Random\n"
@@ -1428,45 +1429,30 @@ public class PolyglotEntityAI extends EntityAI {
 			// message (cf WAIT_FORBIDDEN_MESSAGE) ; doublon pour une image qui ne le ferait pas.
 			+ "def sleep(secs):\n    raise RuntimeError('" + WAIT_FORBIDDEN_MESSAGE + "')\n"
 			+ "time.sleep = sleep\ndel sleep\n"
-			+ "time.gmtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
-			+ "time.localtime = lambda secs=None: time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
-			// strftime, asctime et ctime sans argument lisent l'heure courante en natif : on leur passe
-			// l'heure figee (originaux dans une fermeture, pas dans les globales de l'IA)
-			+ "def _lw_freeze_formatters(strftime, asctime, ctime):\n"
-			+ "    time.strftime = lambda format, t=None: strftime(format, time.localtime() if t is None else t)\n"
-			+ "    time.asctime = lambda t=None: asctime(time.localtime() if t is None else t)\n"
-			+ "    time.ctime = lambda secs=None: asctime(time.localtime()) if secs is None else ctime(secs)\n"
-			+ "_lw_freeze_formatters(time.strftime, time.asctime, time.ctime)\n"
-			+ "del _lw_freeze_formatters\n"
-			+ "try:\n"
-			+ "    datetime.datetime.now = classmethod(lambda cls, tz=None: datetime.datetime(2020, 1, 1))\n"
-			+ "    datetime.datetime.today = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
-			+ "    datetime.datetime.utcnow = classmethod(lambda cls: datetime.datetime(2020, 1, 1))\n"
-			+ "    datetime.date.today = classmethod(lambda cls: datetime.date(2020, 1, 1))\n"
-			+ "except TypeError:\n"
-			// Image avec accelerateur natif _datetime : la classe est IMMUABLE ("cannot set 'now'
-			// attribute of immutable type") -> on la REMPLACE par une sous-classe figee, et on
-			// redirige le module _datetime vers le module patche (sinon `import _datetime`
-			// re-exposerait l'horloge reelle). Meme chose pour date.today. Le metaclasse garde
-			// isinstance et issubclass vrais pour les objets de la classe d'origine (now() en rend un).
-			+ "    class _LWFrozen(type):\n"
-			+ "        def __instancecheck__(cls, o):\n            return isinstance(o, cls.__bases__[0])\n"
-			+ "        def __subclasscheck__(cls, c):\n            return issubclass(c, cls.__bases__[0])\n"
-			+ "    _lw_d = datetime.date\n"
-			+ "    class _LWDate(_lw_d, metaclass=_LWFrozen):\n"
-			+ "        @classmethod\n"
-			+ "        def today(cls):\n            return _lw_d(2020, 1, 1)\n"
-			+ "    datetime.date = _LWDate\n"
-			+ "    _lw_dt = datetime.datetime\n"
-			+ "    class _LWDateTime(_lw_dt, metaclass=_LWFrozen):\n"
-			+ "        @classmethod\n"
-			+ "        def now(cls, tz=None):\n            return _lw_dt(2020, 1, 1)\n"
-			+ "        @classmethod\n"
-			+ "        def today(cls):\n            return _lw_dt(2020, 1, 1)\n"
-			+ "        @classmethod\n"
-			+ "        def utcnow(cls):\n            return _lw_dt(2020, 1, 1)\n"
-			+ "    datetime.datetime = _LWDateTime\n"
-			+ "    sys.modules['_datetime'] = sys.modules['datetime']\n";
+			// Heure locale et UTC figees, et ce qui les formate sans date (le module est passe en
+			// parametre : les fonctions ne dependent pas des globales, que l'IA partage)
+			+ "def _lw_freeze_clock(time):\n"
+			+ "    frozen = time.struct_time((2020, 1, 1, 0, 0, 0, 2, 1, 0))\n"
+			+ "    strftime, asctime = time.strftime, time.asctime\n"
+			+ "    time.gmtime = lambda secs=None: frozen\n"
+			+ "    time.localtime = lambda secs=None: frozen\n"
+			+ "    time.strftime = lambda format, t=None: strftime(format, frozen if t is None else t)\n"
+			+ "    time.asctime = lambda t=None: asctime(frozen if t is None else t)\n"
+			+ "    time.ctime = lambda secs=None: asctime(frozen)\n"
+			+ "_lw_freeze_clock(time)\n"
+			+ "del _lw_freeze_clock\n"
+			// datetime en Python pur : ses classes (et toutes leurs instances) lisent l'heure par le module
+			// time fige ci-dessus ; l'implementation native lirait l'horloge de la machine. Charge a la
+			// premiere lecture d'un nom du module : l'importer ici coute ~50 ms a chaque contexte.
+			+ "import types\n"
+			+ "class _LWDatetime(types.ModuleType):\n"
+			+ "    def __getattr__(self, name):\n"
+			+ "        import _pydatetime\n"
+			+ "        sys.modules['datetime'] = sys.modules['_datetime'] = _pydatetime\n"
+			+ "        self.__dict__.update(_pydatetime.__dict__)\n"
+			+ "        return getattr(_pydatetime, name)\n"
+			+ "datetime = sys.modules['datetime'] = sys.modules['_datetime'] = _LWDatetime('datetime')\n"
+			+ "del _LWDatetime, types\n";
 	}
 
 	@Override

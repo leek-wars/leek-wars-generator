@@ -7,6 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -425,6 +426,8 @@ public class PolyglotSandbox implements AutoCloseable {
 				.in(InputStream.nullInputStream())
 				.out(OutputStream.nullOutputStream())
 				.err(OutputStream.nullOutputStream())
+				// Fuseau fixe : une date formatee ne depend pas de la machine qui joue le combat
+				.timeZone(ZoneOffset.UTC)
 				// Cap RAM RETENUE par poireau : le vrai anti-DoS, isole par contexte.
 				.option("sandbox.MaxHeapMemory", memoryOption(maxHeapBytes))
 				// Ops guest (borne les boucles pures ; non deterministe sous isolate).
