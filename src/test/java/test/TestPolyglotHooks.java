@@ -63,6 +63,41 @@ public class TestPolyglotHooks extends FightTestBase {
 
 	// ---- Detection ----
 
+	@Test(timeout = 60_000)
+	public void hasHookNeverRunsGuestCodeOutsideTheWatchdog() throws Exception {
+		// Un getter sur afterFight lu par hasHook (hors chien de garde) bloquait le fil du combat
+		// jusqu'au MaxCPUTime du contexte : il n'est plus execute qu'en fin de tour, sous le chien de garde
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI ai = buildAI(sb, "js", "var armed = false;\n"
+				+ "Object.defineProperty(globalThis, 'afterFight', {get: function(){ if (armed) Array.prototype.indexOf.call({length: 3e8}, 1); return function(){}; }});\n"
+				+ "function turn(){ armed = true; return 1; }");
+			ai.setTurnWallClockLimitMs(300);
+			try {
+				ai.runIA();
+			} catch (leekscript.runner.LeekRunException expected) {
+				// le getter, lu en fin de tour, depasse le chien de garde du tour
+			}
+			long start = System.nanoTime();
+			ai.hasHook("afterFight");
+			Assert.assertTrue("hasHook ne doit plus executer de code joueur", (System.nanoTime() - start) / 1_000_000 < 100);
+		}
+	}
+
+	@Test
+	public void afterFightStillFoundWhenTheTurnRunsOutOfOperations() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI ai = buildAI(sb, "js", "function afterFight(){}\nfunction turn(){ for(;;){} }");
+			try {
+				ai.runIA();
+			} catch (leekscript.runner.LeekRunException expected) {
+				// limite d'operations du tour
+			}
+			Assert.assertTrue(ai.hasHook("afterFight"));
+		}
+	}
+
 	@Test
 	public void hasHookFalseWhenSourceIgnoresHooks() throws Exception {
 		initFightOnly();

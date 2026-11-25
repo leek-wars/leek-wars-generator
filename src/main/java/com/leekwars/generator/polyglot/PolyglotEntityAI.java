@@ -1483,6 +1483,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
+			refreshHooks(); // meme apres une erreur du tour (limite d'ops...) : afterFight reste connu
 			flushPendingCharges(); // charges de builtins/natifs du tour -> compteur reel, avant le snapshot
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
 			settle(execution, turnOperations);
@@ -1505,13 +1506,34 @@ public class PolyglotEntityAI extends EntityAI {
 	 * commentaire), sans consequence : le chargement speculatif de {@link #invokeHook} est jete des qu'il
 	 * ne trouve pas de {@code turn()}.
 	 */
+	/**
+	 * Hooks resolus a la fin de la derniere execution gardee (tour, hook). Lire un membre guest peut
+	 * executer du code joueur (getter sur {@code afterFight}) : {@link #hasHook}, appele HORS chien de
+	 * garde (Fight.runHooks, EntityAI.runHook), ne lit plus que ce cache.
+	 */
+	private final Map<String, Value> hooks = new HashMap<>();
+
+	/** A appeler sous le chien de garde, apres l'execution de code joueur qui a pu (re)definir un hook. */
+	private void refreshHooks() {
+		hooks.clear();
+		try {
+			for (String name : HOOK_NAMES) {
+				Value fn = resolveGuestFunction(name);
+				if (fn != null) hooks.put(name, fn);
+			}
+		} catch (Throwable unusable) {
+			// Appele dans des finally : ne doit pas masquer l'issue de l'execution (RAM, pile...)
+			hooks.clear();
+		}
+	}
+
 	@Override
 	public boolean hasHook(String name) {
 		if (disabled || !HOOK_NAMES.contains(name)) {
 			return false;
 		}
 		if (initialized) {
-			return resolveGuestFunction(name) != null; // source deja evalue : reponse exacte
+			return hooks.containsKey(name);
 		}
 		return sourceMentionsIdentifier(name) && sourceMentionsIdentifier(TURN_FUNCTION);
 	}
@@ -1571,15 +1593,22 @@ public class PolyglotEntityAI extends EntityAI {
 
 		final Execution execution = armWatchdog();
 		try {
-			if (!initialized && !preloadEntryForHook()) {
-				return; // chargement jete : l'IA sera chargee au tour 1, comme si le hook n'existait pas
+			if (!initialized) {
+				if (!preloadEntryForHook()) {
+					return; // chargement jete : l'IA sera chargee au tour 1, comme si le hook n'existait pas
+				}
+				refreshHooks();
 			}
-			Value hook = resolveGuestFunction(name);
+			Value hook = hooks.get(name);
 			if (hook == null) {
 				return; // hook cite dans le source mais pas defini : rien a faire
 			}
 			markHookRun(name); // avant l'appel : un hook qui LEVE a bien tourne (l'erreur est rapportee)
-			hook.execute();
+			try {
+				hook.execute();
+			} finally {
+				refreshHooks(); // beforeFight peut definir ou retirer afterFight
+			}
 			throwIfOpsExhausted();
 		} catch (PolyglotException e) {
 			throw mapException(e);
@@ -2239,6 +2268,7 @@ public class PolyglotEntityAI extends EntityAI {
 		initialized = false;
 		entry = null;
 		jsModuleNamespace = null;
+		hooks.clear();
 	}
 
 	/** A appeler en fin de combat pour liberer le contexte (sinon ferme par PolyglotSandbox.close). */
