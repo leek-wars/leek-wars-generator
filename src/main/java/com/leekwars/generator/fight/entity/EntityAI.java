@@ -538,7 +538,7 @@ public class EntityAI extends AI {
 				}
 				return;
 			}
-			runIA(null);
+			runTurnIA();
 
 		} catch (StackOverflowError e) { // On suppose que c'est normal, ça vient de l'utilisateur
 
@@ -794,6 +794,11 @@ public class EntityAI extends AI {
 
 	public boolean isTest() {
 		return mEntity.getId() < 0;
+	}
+
+	/** Tour de combat : sa valeur de retour n'est pas lue. */
+	protected void runTurnIA() throws LeekRunException {
+		runIA(null);
 	}
 
 	@Override

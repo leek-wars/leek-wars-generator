@@ -90,6 +90,23 @@ public class TestPolyglotNativeOps extends FightTestBase {
 	}
 
 	@Test
+	public void turnReturnValueIsNotCopiedToTheHostInAFight() throws Exception {
+		// Le retour de turn(), ignore en combat, etait converti : une chaine de 20 M caracteres
+		// allouait ~200 Mo sur le tas de la JVM pour trois operations
+		initFightOnly();
+		var mx = (com.sun.management.ThreadMXBean) java.lang.management.ManagementFactory.getThreadMXBean();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI ai = ai(sb, "js", "var s = 'x'.repeat(20000000);\nfunction turn(){ return s; }");
+			leek1.setCores(200);
+			ai.runTurn(1); // chargement, hors mesure
+			long before = mx.getCurrentThreadAllocatedBytes();
+			ai.runTurn(2);
+			long allocated = mx.getCurrentThreadAllocatedBytes() - before;
+			assertTrue("alloue cote hote : " + allocated / 1_000_000 + " Mo", allocated < 20_000_000);
+		}
+	}
+
+	@Test
 	public void jsHugeBufferIsRefusedBeforeItIsAllocated() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {

@@ -244,6 +244,8 @@ public class PolyglotEntityAI extends EntityAI {
 	// Fonction guest __lw_flush (accumulateur de facturation des builtins/natifs), capturee a la
 	// construction du contexte et retiree du scope guest : l'hote la joue en fin de tour.
 	private Value chargeFlush;
+	// Appelle turn() et jette son resultat COTE GUEST : une valeur qui sort de l'isolate y est copiee
+	private Value discardCall;
 	// Engine en isolate processus EXTERNE (repli une-lib-par-JVM, cf PolyglotSandbox.engineFor) :
 	// le guest tourne dans un AUTRE process, le temps CPU du thread de combat ne mesure plus son
 	// travail -> le terme d'ops synthetique doit passer au temps MUR (sinon la garde getOperations()
@@ -1348,6 +1350,12 @@ public class PolyglotEntityAI extends EntityAI {
 		} catch (Exception e) {
 			chargeFlush = null;
 		}
+		try {
+			discardCall = evalPrelude("discard-call", "js".equals(languageId) ? "(function(f){f();})" : "lambda f: (f(), None)[1]");
+			if (!discardCall.canExecute()) discardCall = null;
+		} catch (Exception e) {
+			discardCall = null;
+		}
 	}
 
 	/** Fin de tour : pousse les charges accumulees vers le compteur hote (best effort, contexte peut etre ferme). */
@@ -1470,14 +1478,14 @@ public class PolyglotEntityAI extends EntityAI {
 					// IA avec etat : le top-level (classes + statics) n'etait que du setup execute
 					// une fois ; turn() est rejouee chaque tour (les statics de classe persistent).
 					entry = turnFn;
-					value = entry.execute();
+					value = executeTurn();
 				} else {
 					// IA "plate" (sans turn()) : le source EST la logique de tour, et vient de
 					// s'executer. turn() est donc OPTIONNELLE.
 					value = top;
 				}
 			} else if (entry != null) {
-				value = entry.execute(); // IA avec etat : turn() rejouee chaque tour
+				value = executeTurn(); // IA avec etat : turn() rejouee chaque tour
 			} else {
 				value = replayFlatTurn(); // IA plate sans turn() : tours suivants
 			}
@@ -1489,7 +1497,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// Un echec de marshalling du RETOUR ne doit donc PAS interrompre l'IA (l'eval, lui, a deja
 			// reussi ; une vraie recursion du code joueur leve pendant l'eval, hors de ce try).
 			try {
-				return TypeMarshaller.toJava(value, this);
+				return discardReturn ? null : TypeMarshaller.toJava(value, this);
 			} catch (LeekRunException | RuntimeException marshallingIgnored) {
 				return null;
 			} finally {
@@ -1561,6 +1569,27 @@ public class PolyglotEntityAI extends EntityAI {
 		} catch (Throwable unusable) {
 			// Appele dans des finally : ne doit pas masquer l'issue de l'execution (RAM, pile...)
 			hooks.clear();
+		}
+	}
+
+	private Value executeTurn() {
+		return discardReturn && discardCall != null ? discardCall.execute(entry) : entry.execute();
+	}
+
+	/** Tour de combat en cours : sa valeur de retour, ignoree, n'est pas copiee cote hote. */
+	private boolean discardReturn = false;
+
+	/**
+	 * En combat, le retour de turn() n'est pas lu : le convertir copiait une chaine du joueur (jusqu'a la
+	 * taille de son tas guest) sur le tas de la JVM, pour quelques operations, a chaque tour.
+	 */
+	@Override
+	protected void runTurnIA() throws LeekRunException {
+		discardReturn = true;
+		try {
+			runIA(null);
+		} finally {
+			discardReturn = false;
 		}
 	}
 
@@ -2285,6 +2314,7 @@ public class PolyglotEntityAI extends EntityAI {
 
 	private void closeContext() {
 		chargeFlush = null;
+		discardCall = null;
 		if (context != null) {
 			try {
 				context.close(true); // cancelIfExecuting : ferme sans relancer
