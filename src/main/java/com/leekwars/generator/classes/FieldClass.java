@@ -41,8 +41,11 @@ public class FieldClass {
 	 * injoignable (obstacle, case encerclée) lui fait parcourir toute la zone accessible :
 	 * le surplus est facturé après coup, au même tarif de 20 par case.
 	 */
-	private static void pathOps(EntityAI ai, int distance) throws LeekRunException {
-		ai.ops(Math.max(0, ai.getState().getMap().getLastAStarClosed() - distance * distance) * 20);
+	private static List<Cell> findPath(EntityAI ai, Cell cell1, Cell cell2, List<Cell> ignore, int distance) throws LeekRunException {
+		var map = ai.getState().getMap();
+		var path = map.getPathBetween(cell1, cell2, ignore);
+		ai.ops(Math.max(0, map.getLastAStarClosed() - distance * distance) * 20);
+		return path;
 	}
 
 	public static Long getPathLength(EntityAI ai, long c1, long c2) throws LeekRunException {
@@ -75,8 +78,7 @@ public class FieldClass {
 			ai.putCells(ignore, (GenericArrayLeekValue) leeks_to_ignore);
 		}
 
-		var path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
-		pathOps(ai, distance);
+		var path = findPath(ai, cell1, cell2, ignore, distance);
 		if (path == null) {
 			return null;
 		}
@@ -119,8 +121,7 @@ public class FieldClass {
 				ignore.add(l.getCell());
 			}
 		}
-		List<Cell> path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
-		pathOps(ai, distance);
+		List<Cell> path = findPath(ai, cell1, cell2, ignore, distance);
 		if (path == null)
 			return null;
 		var retour = new LegacyArrayLeekValue(ai);
@@ -158,8 +159,7 @@ public class FieldClass {
 				ignore.add(l.getCell());
 			}
 		}
-		List<Cell> path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
-		pathOps(ai, distance);
+		List<Cell> path = findPath(ai, cell1, cell2, ignore, distance);
 		if (path == null)
 			return null;
 		var retour = new ArrayLeekValue(ai, path.size());
