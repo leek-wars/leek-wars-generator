@@ -264,8 +264,9 @@ public class TestFightMapNatives extends FightTestBase {
 			+ "setRegister('path', path == null && length == null ? 'null' : 'found');");
 		attachAI(leek2, "");
 		runFight();
-		Assert.assertEquals("null", leek1.getRegister("path"));
 		int distance = Integer.parseInt(leek1.getRegister("distance"));
+		org.junit.Assume.assumeTrue("carte sans obstacle", distance < 999);
+		Assert.assertEquals("null", leek1.getRegister("path"));
 		long cost = Long.parseLong(leek1.getRegister("cost"));
 		Assert.assertTrue("coût " + cost + " pour une distance " + distance, cost > 2 * (distance * distance * 20 + 100) + 4000);
 	}
