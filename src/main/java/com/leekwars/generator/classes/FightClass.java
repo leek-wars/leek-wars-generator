@@ -189,6 +189,8 @@ public class FightClass {
 	}
 
 	public static long getEnemiesLife(EntityAI ai) {
+		// Masque de beforeFight (EntityClass.resolveStatTarget) : la vie d'autrui n'y est pas lisible
+		if (ai.isInBeforeFightHook()) return 0;
 		int life = 0;
 		for (var e : ai.getState().getEnemiesEntities(ai.getEntity().getTeam())) {
 			life += e.getLife();
@@ -340,6 +342,7 @@ public class FightClass {
 	}
 
 	public static long getAlliesLife(EntityAI ai) {
+		if (ai.isInBeforeFightHook()) return ai.getEntity().getLife();
 		int life = 0;
 		for (var l : ai.getState().getTeamEntities(ai.getEntity().getTeam())) {
 			life += l.getLife();

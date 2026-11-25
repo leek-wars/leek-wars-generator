@@ -51,7 +51,8 @@ public class EntityClass {
 	 * getAgility, getScience, getMagic, getAbsoluteShield, getRelativeShield,
 	 * getDamageReturn, getFrequency, getCores, getRAM, getStat, getStats, getMP, getTP,
 	 * getTotalMP, getTotalTP, getPower, getTotalLife, getWeapon, getWeapons,
-	 * getChips, getComponents, getEffects, getLaunchedEffects, getPassiveEffects.
+	 * getChips, getComponents, getEffects, getLaunchedEffects, getPassiveEffects, getStates.
+	 * Same mask in FightClass for getEnemiesLife / getAlliesLife (sums over other entities).
 	 *
 	 * Intentionally NOT masked (public lobby info, not loadout-dependent): getCell,
 	 * getName, getAIName, getTeamName, getCompositionName, getFarmerName,
@@ -1196,7 +1197,7 @@ public class EntityClass {
 	}
 
 	public static LegacyArrayLeekValue getStates_v1_3(EntityAI ai, long value) throws LeekRunException {
-		Entity l = ai.getFight().getEntity(value);
+		Entity l = resolveStatTarget(ai, value);
 		if (l == null) {
 			return null;
 		}
@@ -1217,7 +1218,7 @@ public class EntityClass {
 	}
 
 	public static SetLeekValue getStates(EntityAI ai, long value) throws LeekRunException {
-		Entity l = ai.getFight().getEntity(value);
+		Entity l = resolveStatTarget(ai, value);
 		if (l == null) {
 			return null;
 		}

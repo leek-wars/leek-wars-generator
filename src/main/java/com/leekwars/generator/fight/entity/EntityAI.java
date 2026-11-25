@@ -776,6 +776,7 @@ public class EntityAI extends AI {
 	}
 
 	public void putCells(List<Cell> ignore, GenericArrayLeekValue leeks_to_ignore) throws LeekRunException {
+		ops(leeks_to_ignore.size());
 		if (leeks_to_ignore instanceof ArrayLeekValue) {
 			for (var value : (ArrayLeekValue) leeks_to_ignore) {
 				var l = getState().getMap().getCell(integer(value));

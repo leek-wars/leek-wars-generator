@@ -250,6 +250,27 @@ public class TestFightMapNatives extends FightTestBase {
 	}
 
 	@Test
+	public void getPathToObstacleBillsTheWholeSearch() throws Exception {
+		// Vers un obstacle, l'A* parcourt toute la zone accessible avant de rendre null : facturé
+		// au nombre de cases fermées, pas à la seule distance à vol d'oiseau (20 ops à distance 1)
+		attachAI(leek1, ""
+			+ "var me = getCell(); var best = null; var bd = 999;"
+			+ "for (var o in getObstacles()) { var d = getCellDistance(me, o); if (d < bd) { bd = d; best = o; } }"
+			+ "var before = getOperations();"
+			+ "var path = getPath(me, best);"
+			+ "var length = getPathLength(me, best);"
+			+ "setRegister('cost', '' + (getOperations() - before));"
+			+ "setRegister('distance', '' + bd);"
+			+ "setRegister('path', path == null && length == null ? 'null' : 'found');");
+		attachAI(leek2, "");
+		runFight();
+		Assert.assertEquals("null", leek1.getRegister("path"));
+		int distance = Integer.parseInt(leek1.getRegister("distance"));
+		long cost = Long.parseLong(leek1.getRegister("cost"));
+		Assert.assertTrue("coût " + cost + " pour une distance " + distance, cost > 2 * (distance * distance * 20 + 100) + 4000);
+	}
+
+	@Test
 	public void getPathToSelfReturnsEmpty() throws Exception {
 		attachAI(leek1, ""
 			+ "var path = getPath(getCell(), getCell());"

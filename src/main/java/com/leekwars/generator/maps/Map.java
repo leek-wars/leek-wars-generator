@@ -61,6 +61,8 @@ public class Map {
 	private ArrayNode pattern;
 	private State state;
 	private int astarRun = 0;
+	// Cases fermées par le dernier getAStarPath : son travail réel, pour la facturation des IA
+	private int astarClosed = 0;
 
 	// Entrée de la file ouverte de l'A*. Son poids f est figé à la construction :
 	// la clé de tri ne doit JAMAIS être mutée tant que l'entrée est dans le tas.
@@ -1104,6 +1106,10 @@ public class Map {
 		return false;
 	}
 
+	public int getLastAStarClosed() {
+		return astarClosed;
+	}
+
 	public List<Cell> getAStarPath(Cell c1, Cell[] cell, List<Cell> cells_to_ignore) {
 		return getAStarPath(c1, Arrays.asList(cell), cells_to_ignore);
 	}
@@ -1117,6 +1123,7 @@ public class Map {
 	}
 
 	public List<Cell> getAStarPath(Cell c1, List<Cell> endCells, List<Cell> cells_to_ignore) {
+		astarClosed = 0;
 		if (c1 == null || endCells == null || endCells.isEmpty())
 			return null;
 		if (endCells.contains(c1))
@@ -1154,6 +1161,7 @@ public class Map {
 			// ignorées ici.
 			if (u.astarClosedRun == run) continue;
 			u.astarClosedRun = run;
+			astarClosed++;
 
 			if (smallEnd ? endCells.contains(u) : endSet.contains(u)) {
 				List<Cell> result = new ArrayList<>(u.cost);

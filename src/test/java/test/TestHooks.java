@@ -188,6 +188,22 @@ public class TestHooks {
 	}
 
 	@Test
+	public void beforeFightMasksOpponentLifeSumsAndStates() throws Exception {
+		String code = "function beforeFight() {"
+				+ "  setRegister('enemies', '' + getEnemiesLife());"
+				+ "  setRegister('allies', getAlliesLife() == getLife() ? 'self' : 'others');"
+				+ "  setRegister('states', getStates(" + leek2.getFId() + ") == null ? 'null' : 'visible');"
+				+ "  setRegister('self_states', getStates(" + leek1.getFId() + ") == null ? 'null' : 'visible');"
+				+ "}";
+		EntityAI ai = compile(code, leek1);
+		ai.runHook("beforeFight", EntityAI.HookPhase.BEFORE_FIGHT);
+		Assert.assertEquals("0", leek1.getRegister("enemies"));
+		Assert.assertEquals("self", leek1.getRegister("allies"));
+		Assert.assertEquals("null", leek1.getRegister("states"));
+		Assert.assertEquals("visible", leek1.getRegister("self_states"));
+	}
+
+	@Test
 	public void beforeFightDoesNotMaskSelfStats() throws Exception {
 		String code = "function beforeFight() { setRegister('self_force', getForce(" + leek1.getFId() + ") == null ? 'null' : 'visible'); }";
 		EntityAI ai = compile(code, leek1);

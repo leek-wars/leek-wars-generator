@@ -36,6 +36,15 @@ public class FieldClass {
 		return Pathfinding.getCaseDistance(cell1, cell2);
 	}
 
+	/**
+	 * Le coût d'avance (distance² × 20) suppose un A* qui ferme ~distance² cases. Une cible
+	 * injoignable (obstacle, case encerclée) lui fait parcourir toute la zone accessible :
+	 * le surplus est facturé après coup, au même tarif de 20 par case.
+	 */
+	private static void pathOps(EntityAI ai, int distance) throws LeekRunException {
+		ai.ops(Math.max(0, ai.getState().getMap().getLastAStarClosed() - distance * distance) * 20);
+	}
+
 	public static Long getPathLength(EntityAI ai, long c1, long c2) throws LeekRunException {
 		return getPathLength(ai, c1, c2, null);
 	}
@@ -67,6 +76,7 @@ public class FieldClass {
 		}
 
 		var path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
+		pathOps(ai, distance);
 		if (path == null) {
 			return null;
 		}
@@ -110,6 +120,7 @@ public class FieldClass {
 			}
 		}
 		List<Cell> path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
+		pathOps(ai, distance);
 		if (path == null)
 			return null;
 		var retour = new LegacyArrayLeekValue(ai);
@@ -148,6 +159,7 @@ public class FieldClass {
 			}
 		}
 		List<Cell> path = ai.getState().getMap().getPathBetween(cell1, cell2, ignore);
+		pathOps(ai, distance);
 		if (path == null)
 			return null;
 		var retour = new ArrayLeekValue(ai, path.size());
