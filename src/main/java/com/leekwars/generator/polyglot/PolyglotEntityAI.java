@@ -920,25 +920,60 @@ public class PolyglotEntityAI extends EntityAI {
 	private static final String JS_CHARGE_GUARD =
 		"(function(){var C=globalThis.__lw_charge;if(!C)return;"
 		+ "var acc=0;var FLUSH=4096;function ch(n){acc+=n;if(acc>=FLUSH){C(acc);acc=0;}}"
+		// Appels par Reflect.apply/construct CAPTURES ici : o.apply se resolvait sur Function.prototype au
+		// moment de l'appel, et un apply redefini par le joueur sautait la facturation des copies.
+		+ "var RA=Reflect.apply,RC=Reflect.construct,DP=Object.defineProperty;"
+		+ "function seal(o,n,v){DP(o,n,{value:v,writable:false,configurable:false});}"
 		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
 		// ramenait {length: 2**32} a 0.
 		+ "var N=Number,MF=Math.floor,MM=Math.min;"
-		+ "function L(o){var n=o.length;if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),9007199254740991):0;}"
+		+ "function len(n){if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),9007199254740991):0;}"
+		+ "function L(o){return len(o.length);}"
+		// Chaine traitee par une methode de String : celle que le natif verra (ToString), pas un length menteur
+		+ "function S(o){return (typeof o==='string'?o:String(o)).length;}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
-		+ "function wrapLen(name){var o=Array.prototype[name];if(!o)return;"
-		+ "Object.defineProperty(Array.prototype,name,{value:function(){ch(L(this));return o.apply(this,arguments);},writable:false,configurable:false});}"
-		+ "['sort','fill','reverse','join','copyWithin','splice'].forEach(wrapLen);"
+		+ "function wrapLen(P,name,size){var o=P[name];if(!o)return;"
+		+ "seal(P,name,function(){ch(size(this,arguments));return RA(o,this,arguments);});}"
 		// copie -> cout = longueur du RESULTAT (facture APRES, exact)
-		+ "function wrapRes(name){var o=Array.prototype[name];if(!o)return;"
-		+ "Object.defineProperty(Array.prototype,name,{value:function(){var r=o.apply(this,arguments);ch((r&&r.length)>>>0);return r;},writable:false,configurable:false});}"
-		+ "['slice','concat','flat'].forEach(wrapRes);"
-		+ "var AF=Array.from;if(AF)Object.defineProperty(Array,'from',{value:function(){var r=AF.apply(Array,arguments);ch((r&&r.length)>>>0);return r;},writable:false,configurable:false});"
-		+ "var RP=String.prototype.repeat;if(RP)Object.defineProperty(String.prototype,'repeat',{value:function(){var r=RP.apply(this,arguments);ch(r.length>>>0);return r;},writable:false,configurable:false});"
+		+ "function wrapRes(P,name){var o=P[name];if(!o)return;"
+		+ "seal(P,name,function(){var r=RA(o,this,arguments);ch(r==null?0:L(r));return r;});}"
+		+ "function self(o){return L(o);}"
+		+ "var AP=Array.prototype;"
+		+ "['sort','fill','reverse','join','copyWithin','splice','toSorted','toReversed','toSpliced','with'].forEach(function(n){wrapLen(AP,n,self);});"
+		+ "['slice','concat','flat'].forEach(function(n){wrapRes(AP,n);});"
+		+ "wrapRes(Array,'from');"
+		+ "var SP=String.prototype;"
+		+ "['repeat','padStart','padEnd','concat'].forEach(function(n){wrapRes(SP,n);});"
+		+ "['split','replace','replaceAll','toUpperCase','toLowerCase','normalize','trim'].forEach(function(n){wrapLen(SP,n,S);});"
+		+ "wrapRes(JSON,'stringify');wrapLen(JSON,'parse',function(o,a){return S(a[0]);});"
 		// Tableaux types : memes parcours natifs que Array, longueur du receveur facturee avant.
 		// Longueur interne ([[ArrayLength]]) par le getter d'origine : this.length se redefinit.
 		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get;"
-		+ "['sort','fill','reverse','join','copyWithin'].forEach(function(n){var o=TA[n];if(!o)return;"
-		+ "Object.defineProperty(TA,n,{value:function(){ch(TL.call(this));return o.apply(this,arguments);},writable:false,configurable:false});});"
+		+ "function tl(o){return RA(TL,o,[]);}"
+		+ "function wrapTyped(P,name){var o=P[name];if(!o)return;seal(P,name,function(){var r=RA(o,this,arguments);ch(tl(r));return r;});}"
+		+ "['sort','fill','reverse','join','copyWithin','toSorted','toReversed','with'].forEach(function(n){wrapLen(TA,n,tl);});"
+		+ "wrapLen(TA,'set',tl);wrapTyped(TA,'slice');"
+		+ "var TC=Object.getPrototypeOf(Int8Array);wrapTyped(TC,'from');wrapTyped(TC,'of');"
+		// Allocations de tampons : 1 unite par 8 octets (le quad LeekScript), facturee AVANT d'allouer
+		// pour qu'un budget epuise refuse l'allocation ; une copie d'un tableau source, apres.
+		// Taille ARRONDIE une seule fois ici (valueOf du joueur appele une fois) et passee telle quelle.
+		+ "function wrapCtor(name,construct){var K=globalThis[name];if(!K)return;"
+		+ "var P=new Proxy(K,{construct:construct});seal(K.prototype,'constructor',P);seal(globalThis,name,P);}"
+		// Taille invalide (negative, NaN) rendue telle quelle : le natif leve comme sans l'enveloppe.
+		+ "function bytes(n){n=N(n);return n>0?MM(MF(n),9007199254740991):n;}function q(n){return n>0?MF(n/8):0;}"
+		+ "['ArrayBuffer','SharedArrayBuffer'].forEach(function(name){wrapCtor(name,function(t,a,nt){"
+		+ "var n=bytes(a[0]);var o=a[1];var m=o!=null&&typeof o==='object'?o.maxByteLength:undefined;"
+		+ "if(m===undefined){ch(q(n));return RC(t,[n],nt);}"
+		+ "m=bytes(m);ch(q(m>n?m:n));return RC(t,[n,{maxByteLength:m}],nt);});});"
+		// Tableau type : longueur primitive facturee avant ; vue sur un tampon existant, rien ; copie
+		// d'une source (tableau, iterable), ses elements apres.
+		+ "['Int8Array','Uint8Array','Uint8ClampedArray','Int16Array','Uint16Array','Int32Array','Uint32Array','Float32Array','Float64Array','BigInt64Array','BigUint64Array','Float16Array']"
+		+ ".forEach(function(name){var K=globalThis[name];if(!K)return;var B=K.BYTES_PER_ELEMENT;wrapCtor(name,function(t,a,nt){var x=a[0];"
+		+ "if(typeof x!=='object'&&typeof x!=='function'&&x!==undefined){var n=bytes(x);ch(q(n*B));return RC(t,[n],nt);}"
+		+ "var r=RC(t,a,nt);if(r.buffer!==x)ch(tl(r));return r;});});"
+		+ "var ABP=ArrayBuffer.prototype,BL=Object.getOwnPropertyDescriptor(ABP,'byteLength').get;"
+		+ "['resize','transfer','transferToFixedLength'].forEach(function(n){wrapLen(ABP,n,function(o,a){return q(bytes(a[0]===undefined?RA(BL,o,[]):a[0]));});});"
+		+ "(function(){var o=ABP.slice;if(o)seal(ABP,'slice',function(){var r=RA(o,this,arguments);ch(MF(RA(BL,r,[])/8));return r;});})();"
 		// Hooks consommes (puis retires du global) par JS_NATIVE_COSTS, l'override de System.operations
 		// (pending : charges accumulees pas encore flushees, pour un compteur exact a la lecture) et
 		// l'hote (flush en fin de tour, cf captureChargeFlush).

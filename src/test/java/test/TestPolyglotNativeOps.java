@@ -48,6 +48,62 @@ public class TestPolyglotNativeOps extends FightTestBase {
 		return ((Number) ai(sb, setup + "\ndef turn():\n    o = System.operations\n" + body + "\n    return System.operations - o\n").runIA()).longValue();
 	}
 
+	/** System.operations consommees par {@code body} dans un tour JS. */
+	private long jsOps(PolyglotSandbox sb, String setup, String body) throws Exception {
+		leek1.setCores(200);
+		return ((Number) ai(sb, "js", setup + "\nfunction turn(){ var o = System.operations; " + body + "; return System.operations - o; }").runIA()).longValue();
+	}
+
+	@Test
+	public void jsNativeCopiesStayChargedWhenApplyIsRedefined() throws Exception {
+		// Les enveloppes appelaient o.apply, resolu sur Function.prototype a chaque appel : un apply
+		// redefini par le joueur sautait la facturation des copies (repeat, slice, Array.from)
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			String hijack = "var A = Function.prototype.apply; Function.prototype.apply = function(t, a){ return 0; };";
+			String body = "var s = 'x'.repeat(1000000); var b = new Array(1000000).fill(0).slice(); var c = Array.from(b)";
+			assertTrue("copies facturees", jsOps(sb, "", body) >= 3_000_000);
+			assertTrue("copies facturees malgre apply", jsOps(sb, hijack, body) >= 3_000_000);
+		}
+	}
+
+	@Test
+	public void jsNativesThatCopyOrAllocateAreCharged() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			String setup = "var a = new Array(1000000).fill(1);";
+			assertTrue("toSorted", jsOps(sb, setup, "a.toSorted()") >= 1_000_000);
+			assertTrue("toReversed", jsOps(sb, setup, "a.toReversed()") >= 1_000_000);
+			assertTrue("JSON.stringify", jsOps(sb, setup, "JSON.stringify(a)") >= 1_000_000);
+			assertTrue("padStart", jsOps(sb, "", "'x'.padStart(1000000)") >= 1_000_000);
+			assertTrue("split", jsOps(sb, "var s = 'x,'.repeat(500000);", "s.split(',')") >= 1_000_000);
+			assertTrue("ArrayBuffer", jsOps(sb, "", "new ArrayBuffer(8000000)") >= 1_000_000);
+			assertTrue("ArrayBuffer (taille en chaine)", jsOps(sb, "", "new ArrayBuffer('8000000')") >= 1_000_000);
+			assertTrue("Float64Array", jsOps(sb, "", "new Float64Array(1000000)") >= 1_000_000);
+			assertTrue("Float64Array.from", jsOps(sb, setup, "Float64Array.from(a)") >= 1_000_000);
+			assertTrue("TypedArray.slice", jsOps(sb, "var f = new Float64Array(1000000);", "f.slice()") >= 1_000_000);
+			// Le constructeur d'origine n'est pas rejoignable par une instance
+			assertTrue("constructor", jsOps(sb, "", "new (new ArrayBuffer(8).constructor)(8000000)") >= 1_000_000);
+			// Semantique inchangee : instanceof, erreurs du natif, vue sur un tampon (gratuite)
+			Assert.assertEquals(1L, jsOps(sb, "", "return (new ArrayBuffer(8) instanceof ArrayBuffer) && (new Uint8Array(4) instanceof Uint8Array) ? 1 : 0"));
+		}
+	}
+
+	@Test
+	public void jsHugeBufferIsRefusedBeforeItIsAllocated() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI ai = ai(sb, "js", "function turn(){ return new ArrayBuffer(2000000000).byteLength; }");
+			leek1.setCores(1);
+			try {
+				ai.runIA();
+				Assert.fail("un tampon de 2 Go depasse un budget d'un million d'operations");
+			} catch (leekscript.runner.LeekRunException e) {
+				Assert.assertEquals(leekscript.common.Error.TOO_MUCH_OPERATIONS, e.getError());
+			}
+		}
+	}
+
 	@Test
 	public void nativeIterationIsCounted() throws Exception {
 		initFightOnly();
