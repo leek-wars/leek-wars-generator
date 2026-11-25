@@ -189,6 +189,12 @@ public final class StatementCounter extends TruffleInstrument {
 
 	private final ContextLocal<CounterObject> counters = locals.createContextLocal(context -> new CounterObject());
 
+	static boolean isPrelude(com.oracle.truffle.api.source.Source source) {
+		String name = source.getName();
+		java.net.URI uri = source.getURI();
+		return name != null && name.startsWith("lw:") && uri != null && "lwprelude".equals(uri.getScheme());
+	}
+
 	@Override
 	protected void onCreate(Env env) {
 		ExecutionEventListener listener = new ExecutionEventListener() {
@@ -215,8 +221,12 @@ public final class StatementCounter extends TruffleInstrument {
 		// LeekScript, builtins natifs au prorata via __lw_charge). Sans ce filtre, `min(a, b)`
 		// coutait ~13 et `me.cell` ~40 rien qu'en expressions du prelude. Le code du joueur et la
 		// bibliotheque standard (sources nommees autrement) restent comptes.
+		// Le nom seul ne suffit pas : le joueur nomme ses propres sources (load({name: 'lw:x'}) et
+		// //# sourceURL=lw:x en JS, compile(src, 'lw:x', 'exec') en Python) et son code n'etait plus
+		// compte. L'hote donne en plus a ses preludes une URI lwprelude:, que le joueur ne fixe pas.
+		// (Une source interne ne convient pas : GraalPy l'execute hors de __main__.)
 		SourceSectionFilter filter = SourceSectionFilter.newBuilder()
-				.sourceIs(source -> source.getName() == null || !source.getName().startsWith("lw:"))
+				.sourceIs(source -> !isPrelude(source))
 				.tagIs(StandardTags.StatementTag.class, StandardTags.ExpressionTag.class)
 				.build();
 		env.getInstrumenter().attachExecutionEventListener(filter, listener);

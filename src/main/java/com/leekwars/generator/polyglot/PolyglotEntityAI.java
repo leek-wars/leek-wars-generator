@@ -808,13 +808,24 @@ public class PolyglotEntityAI extends EntityAI {
 	/**
 	 * Evalue du code de CONFIANCE du generator (preludes : API objet, gardes, enveloppes de
 	 * facturation, override de System.operations, glue de chargement) sous une source nommee
-	 * {@code lw:<nom>}. L'instrument StatementCounter (image isolate combined-4) ne compte PAS les
-	 * sources de ce prefixe : le joueur ne paie que son code, la stdlib, le cout LeekScript des
+	 * {@code lw:<nom>} et d'URI {@code lwprelude:<nom>} (cf {@link #preludeSource}). L'instrument
+	 * StatementCounter ne compte PAS ces sources : le joueur ne paie que son code, la stdlib, le cout LeekScript des
 	 * fonctions de combat et la facturation au prorata des builtins. Le code du joueur, lui, est
 	 * evalue par {@code context.eval(languageId, source)} sous un nom par defaut, donc compte.
 	 */
+	/**
+	 * Source de confiance de l'hote : nom {@code lw:<nom>} ET URI {@code lwprelude:<nom>}. Le joueur
+	 * choisit le NOM de ses sources (load({name}), //# sourceURL en JS, compile() en Python), pas leur
+	 * URI : l'instrument n'exempte que les deux ensemble (image combined-13).
+	 */
+	public static Source preludeSource(String languageId, String name, String code) {
+		return Source.newBuilder(languageId, code, "lw:" + name).uri(java.net.URI.create(PRELUDE_URI_SCHEME + ":" + name)).buildLiteral();
+	}
+
+	public static final String PRELUDE_URI_SCHEME = "lwprelude";
+
 	private Value evalPrelude(String name, String code) {
-		return context.eval(Source.newBuilder(languageId, code, "lw:" + name).buildLiteral());
+		return context.eval(preludeSource(languageId, name, code));
 	}
 
 	/**
