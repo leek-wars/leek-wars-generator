@@ -43,8 +43,9 @@ public class FieldClass {
 	 */
 	private static List<Cell> findPath(EntityAI ai, Cell cell1, Cell cell2, List<Cell> ignore, int distance) throws LeekRunException {
 		var map = ai.getState().getMap();
+		long before = map.getSearchedCells();
 		var path = map.getPathBetween(cell1, cell2, ignore);
-		ai.ops(Math.max(0, map.getLastAStarClosed() - distance * distance) * 20);
+		ai.ops(Math.max(0, map.getSearchedCells() - before - (long) distance * distance) * 20);
 		return path;
 	}
 

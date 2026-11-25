@@ -272,6 +272,26 @@ public class TestFightMapNatives extends FightTestBase {
 	}
 
 	@Test
+	public void moveTowardAnObstacleBillsTheWholeSearch() throws Exception {
+		// Sans PM depense, l'appel se repetait a son prix fixe de 500 en parcourant toute la carte
+		attachAI(leek1, ""
+			+ "var me = getCell(); var best = null; var bd = 999;"
+			+ "for (var o in getObstacles()) { var d = getCellDistance(me, o); if (d < bd) { bd = d; best = o; } }"
+			+ "var before = getOperations();"
+			+ "var moved = moveTowardCells([best]);"
+			+ "setRegister('cost', '' + (getOperations() - before));"
+			+ "setRegister('distance', '' + bd);"
+			+ "setRegister('moved', '' + moved);");
+		attachAI(leek2, "");
+		runFight();
+		int distance = Integer.parseInt(leek1.getRegister("distance"));
+		org.junit.Assume.assumeTrue("carte sans obstacle", distance < 999);
+		Assert.assertEquals("0", leek1.getRegister("moved"));
+		long cost = Long.parseLong(leek1.getRegister("cost"));
+		Assert.assertTrue("coût " + cost, cost > 4000);
+	}
+
+	@Test
 	public void getPathToSelfReturnsEmpty() throws Exception {
 		attachAI(leek1, ""
 			+ "var path = getPath(getCell(), getCell());"

@@ -61,8 +61,9 @@ public class Map {
 	private ArrayNode pattern;
 	private State state;
 	private int astarRun = 0;
-	// Cases fermées par le dernier getAStarPath : son travail réel, pour la facturation des IA
-	private int astarClosed = 0;
+	// Cases parcourues par les recherches de chemin (A*, parcours en largeur) depuis la création de la
+	// carte : leur travail réel, que les fonctions de combat facturent par différence
+	private long searchedCells = 0;
 
 	// Entrée de la file ouverte de l'A*. Son poids f est figé à la construction :
 	// la clé de tri ne doit JAMAIS être mutée tant que l'entrée est dans le tas.
@@ -1106,8 +1107,8 @@ public class Map {
 		return false;
 	}
 
-	public int getLastAStarClosed() {
-		return astarClosed;
+	public long getSearchedCells() {
+		return searchedCells;
 	}
 
 	public List<Cell> getAStarPath(Cell c1, Cell[] cell, List<Cell> cells_to_ignore) {
@@ -1123,7 +1124,6 @@ public class Map {
 	}
 
 	public List<Cell> getAStarPath(Cell c1, List<Cell> endCells, List<Cell> cells_to_ignore) {
-		astarClosed = 0;
 		if (c1 == null || endCells == null || endCells.isEmpty())
 			return null;
 		if (endCells.contains(c1))
@@ -1161,7 +1161,7 @@ public class Map {
 			// ignorées ici.
 			if (u.astarClosedRun == run) continue;
 			u.astarClosedRun = run;
-			astarClosed++;
+			searchedCells++;
 
 			if (smallEnd ? endCells.contains(u) : endSet.contains(u)) {
 				List<Cell> result = new ArrayList<>(u.cost);
@@ -1423,6 +1423,7 @@ public class Map {
 		Cell goal = null;
 		while (!queue.isEmpty() && best > floor) {
 			Cell u = queue.poll();
+			searchedCells++;
 			for (Cell c : getCellsAround(u)) {
 				if (c == null || parent[c.getId()] != null || !c.available(this)) continue;
 				parent[c.getId()] = u;

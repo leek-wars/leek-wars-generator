@@ -547,6 +547,18 @@ public class FightClass {
 		return retour;
 	}
 
+	/**
+	 * Recherches de chemin d'un deplacement (A*, une par case candidate pour moveAwayFrom*) : au-dela de
+	 * son cout fixe de 500, facturees 20 par case parcourue, le tarif de getPath. Sinon un deplacement
+	 * vers une case injoignable, qui ne depense aucun PM, faisait parcourir toute la carte a prix fixe,
+	 * et autant de fois que voulu.
+	 */
+	private static long chargeSearch(EntityAI ai, long searchedBefore, long result) throws LeekRunException {
+		long cells = ai.getState().getMap().getSearchedCells() - searchedBefore;
+		ai.ops(Math.max(0, cells * 20 - 500));
+		return result;
+	}
+
 	public static long moveToward(EntityAI ai, long leek_id) throws LeekRunException {
 		return moveToward(ai, leek_id, -1);
 	}
@@ -569,10 +581,11 @@ public class FightClass {
 
 	public static long moveToward(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveToward")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 
 		ai.ops(2000);
 
-		return ai.getState().moveToward(ai.getEntity(), leek_id, pm_to_use);
+		return chargeSearch(ai, searched, ai.getState().moveToward(ai.getEntity(), leek_id, pm_to_use));
 	}
 
 	public static long moveTowardCell(EntityAI ai, long cell_id) throws LeekRunException {
@@ -589,7 +602,8 @@ public class FightClass {
 
 	public static long moveTowardCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveTowardCell")) return 0;
-		return ai.getState().moveTowardCell(ai.getEntity(), cell_id, pm_to_use);
+		long searched = ai.getState().getMap().getSearchedCells();
+		return chargeSearch(ai, searched, ai.getState().moveTowardCell(ai.getEntity(), cell_id, pm_to_use));
 	}
 
 	public static long moveTowardEntities(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
@@ -606,6 +620,7 @@ public class FightClass {
 
 	public static long moveTowardLeeks(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveTowardLeeks")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -625,7 +640,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveTowardCells(EntityAI ai, GenericArrayLeekValue cells) throws LeekRunException {
@@ -634,6 +649,7 @@ public class FightClass {
 
 	public static long moveTowardCells(EntityAI ai, GenericArrayLeekValue cells, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveTowardCells")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -653,7 +669,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveAwayFrom(EntityAI ai, long leek_id) throws LeekRunException {
@@ -670,6 +686,7 @@ public class FightClass {
 
 	public static long moveAwayFrom(EntityAI ai, long leek_id, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveAwayFrom")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -685,7 +702,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveAwayFromCell(EntityAI ai, long cell_id) throws LeekRunException {
@@ -702,6 +719,7 @@ public class FightClass {
 
 	public static long moveAwayFromCell(EntityAI ai, long cell_id, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveAwayFromCell")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -717,7 +735,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveAwayFromLeeks(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
@@ -734,6 +752,7 @@ public class FightClass {
 
 	public static long moveAwayFromEntities(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveAwayFromEntities")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -753,7 +772,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveAwayFromCells(EntityAI ai, GenericArrayLeekValue leeks) throws LeekRunException {
@@ -762,6 +781,7 @@ public class FightClass {
 
 	public static long moveAwayFromCells(EntityAI ai, GenericArrayLeekValue leeks, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveAwayFromCells")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
 			pm = ai.getEntity().getMP();
@@ -781,7 +801,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveAwayFromLine(EntityAI ai, long cell1, long cell2) throws LeekRunException {
@@ -790,6 +810,7 @@ public class FightClass {
 
 	public static long moveAwayFromLine(EntityAI ai, long cell1, long cell2, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveAwayFromLine")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		// Nombre de PM à utiliser au max pour fuir comme un lache
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
@@ -815,7 +836,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static long moveTowardLine(EntityAI ai, long cell1, long cell2) throws LeekRunException {
@@ -824,6 +845,7 @@ public class FightClass {
 
 	public static long moveTowardLine(EntityAI ai, long cell1, long cell2, long pm_to_use) throws LeekRunException {
 		if (denyDuringHook(ai, "moveTowardLine")) return 0;
+		long searched = ai.getState().getMap().getSearchedCells();
 		// Nombre de PM à utiliser au max
 		int pm = pm_to_use == -1 ? ai.getEntity().getMP() : (int) pm_to_use;
 		if (pm > ai.getEntity().getMP())
@@ -845,7 +867,7 @@ public class FightClass {
 				}
 			}
 		}
-		return used_pm;
+		return chargeSearch(ai, searched, used_pm);
 	}
 
 	public static LegacyArrayLeekValue getBulbChips_v1_3(EntityAI ai, long id) throws LeekRunException {
