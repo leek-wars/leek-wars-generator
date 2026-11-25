@@ -82,10 +82,24 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			assertTrue("Float64Array", jsOps(sb, "", "new Float64Array(1000000)") >= 1_000_000);
 			assertTrue("Float64Array.from", jsOps(sb, setup, "Float64Array.from(a)") >= 1_000_000);
 			assertTrue("TypedArray.slice", jsOps(sb, "var f = new Float64Array(1000000);", "f.slice()") >= 1_000_000);
+			assertTrue("toLocaleUpperCase", jsOps(sb, "var s = 'x'.repeat(1000000);", "s.toLocaleUpperCase()") >= 1_000_000);
+			assertTrue("replaceAll facture sa copie", jsOps(sb, "var s = 'a'.repeat(1000);", "s.replaceAll('a', 'b'.repeat(1000))") >= 1_000_000);
+			assertTrue("RegExp Symbol.replace", jsOps(sb, "var s = 'a'.repeat(1000);", "/a/g[Symbol.replace](s, 'b'.repeat(1000))") >= 1_000_000);
+			// Un toString qui repond court a la facture et long au travail : converti une seule fois
+			Assert.assertEquals("toString menteur : le natif traite la chaine facturee", 0L, jsOps(sb, "var big = 'a'.repeat(1000000); var k = 0;",
+				"return String.prototype.toUpperCase.call({toString: function(){ return (k++ & 1) ? big : ''; }}).length"));
+			assertTrue("transfer, taille lue une fois", jsOps(sb, "var b = new ArrayBuffer(8); var k = 0;",
+				"b.transfer({valueOf: function(){ return k++ ? 0 : 8000000; }})") >= 1_000_000);
+			// Copies par constructeur d'espece : facturees une fois, pas deux
+			long slice = jsOps(sb, "var f = new Float64Array(1000000);", "f.slice()");
+			assertTrue("slice facture une fois (" + slice + ")", slice >= 1_000_000 && slice < 1_500_000);
 			// Le constructeur d'origine n'est pas rejoignable par une instance
 			assertTrue("constructor", jsOps(sb, "", "new (new ArrayBuffer(8).constructor)(8000000)") >= 1_000_000);
 			// Semantique inchangee : instanceof, erreurs du natif, vue sur un tampon (gratuite)
 			Assert.assertEquals(1L, jsOps(sb, "", "return (new ArrayBuffer(8) instanceof ArrayBuffer) && (new Uint8Array(4) instanceof Uint8Array) ? 1 : 0"));
+			// Tailles hors bornes : l'erreur du natif, rattrapable, pas une facture qui tue le tour
+			Assert.assertEquals(1L, jsOps(sb, "", "try { new ArrayBuffer(Infinity); return 0; } catch (e) { return e instanceof RangeError ? 1 : 0; }"));
+			Assert.assertEquals(1L, jsOps(sb, "", "try { new Uint8Array(10n); return 0; } catch (e) { return e instanceof TypeError ? 1 : 0; }"));
 		}
 	}
 

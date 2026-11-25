@@ -806,14 +806,6 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
-	 * Evalue du code de CONFIANCE du generator (preludes : API objet, gardes, enveloppes de
-	 * facturation, override de System.operations, glue de chargement) sous une source nommee
-	 * {@code lw:<nom>} et d'URI {@code lwprelude:<nom>} (cf {@link #preludeSource}). L'instrument
-	 * StatementCounter ne compte PAS ces sources : le joueur ne paie que son code, la stdlib, le cout LeekScript des
-	 * fonctions de combat et la facturation au prorata des builtins. Le code du joueur, lui, est
-	 * evalue par {@code context.eval(languageId, source)} sous un nom par defaut, donc compte.
-	 */
-	/**
 	 * Source de confiance de l'hote : nom {@code lw:<nom>} ET URI {@code lwprelude:<nom>}. Le joueur
 	 * choisit le NOM de ses sources (load({name}), //# sourceURL en JS, compile() en Python), pas leur
 	 * URI : l'instrument n'exempte que les deux ensemble (image combined-13).
@@ -824,6 +816,14 @@ public class PolyglotEntityAI extends EntityAI {
 
 	public static final String PRELUDE_URI_SCHEME = "lwprelude";
 
+	/**
+	 * Evalue du code de CONFIANCE du generator (preludes : API objet, gardes, enveloppes de
+	 * facturation, override de System.operations, glue de chargement) sous une source nommee
+	 * {@code lw:<nom>} et d'URI {@code lwprelude:<nom>} (cf {@link #preludeSource}). L'instrument
+	 * StatementCounter ne compte PAS ces sources : le joueur ne paie que son code, la stdlib, le cout LeekScript des
+	 * fonctions de combat et la facturation au prorata des builtins. Le code du joueur, lui, est
+	 * evalue par {@code context.eval(languageId, source)} sous un nom par defaut, donc compte.
+	 */
 	private Value evalPrelude(String name, String code) {
 		return context.eval(preludeSource(languageId, name, code));
 	}
@@ -861,7 +861,7 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 			return null; // un module ne renvoie pas de valeur (turn() resolue via global ou namespace)
 		}
-		return context.eval(languageId, source); // JS script / Python : eval direct
+		return context.eval(languageId, flatSource(source)); // JS script / Python : eval direct
 	}
 
 	/**
@@ -889,6 +889,15 @@ public class PolyglotEntityAI extends EntityAI {
 		return null;
 	}
 
+	/**
+	 * Source evaluee telle quelle : en combat, sa derniere expression (valeur de l'eval, ignoree) est
+	 * remplacee par une valeur vide, pour ne pas etre copiee hors de l'isolate a chaque tour.
+	 */
+	private String flatSource(String code) {
+		if (!discardReturn) return code;
+		return code + ("js".equals(languageId) ? "\n;void 0;" : "\nNone\n");
+	}
+
 	/** Tours suivants d'une IA plate (sans turn()). */
 	private Value replayFlatTurn() {
 		if (jsModule) {
@@ -896,9 +905,9 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 		if ("js".equals(languageId)) {
 			// IIFE anonyme (scope frais) : evite la collision "already declared" d'une re-eval top-level.
-			return context.eval(languageId, "(function(){" + source + "\n})()");
+			return context.eval(languageId, (discardReturn ? "void " : "") + "(function(){" + source + "\n})()");
 		}
-		return context.eval(languageId, source); // Python (et autres) : re-eval brut
+		return context.eval(languageId, flatSource(source)); // Python (et autres) : re-eval brut
 	}
 
 	// RNG seede + gele (non reassignable) + horloge murale fixe. Sinon une IA pourrait reintroduire
@@ -942,8 +951,6 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "var N=Number,MF=Math.floor,MM=Math.min;"
 		+ "function len(n){if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),9007199254740991):0;}"
 		+ "function L(o){return len(o.length);}"
-		// Chaine traitee par une methode de String : celle que le natif verra (ToString), pas un length menteur
-		+ "function S(o){return (typeof o==='string'?o:String(o)).length;}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
 		+ "function wrapLen(P,name,size){var o=P[name];if(!o)return;"
 		+ "seal(P,name,function(){ch(size(this,arguments));return RA(o,this,arguments);});}"
@@ -955,38 +962,54 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "['sort','fill','reverse','join','copyWithin','splice','toSorted','toReversed','toSpliced','with'].forEach(function(n){wrapLen(AP,n,self);});"
 		+ "['slice','concat','flat'].forEach(function(n){wrapRes(AP,n);});"
 		+ "wrapRes(Array,'from');"
+		// Chaines : convertie UNE fois et passee telle quelle au natif (un toString du joueur ne repond
+		// pas une chaine courte a la facture et une longue au travail), facturee avant ; un
+		// remplacement facture aussi sa copie, apres. Symbol : le natif leve, comme sans l'enveloppe.
 		+ "var SP=String.prototype;"
+		+ "function str(o){return typeof o==='string'?o:String(o);}"
+		+ "function wrapStr(P,name,after){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
+		+ "if(this==null||typeof this==='symbol')return RA(o,this,arguments);var s=str(this);ch(s.length);"
+		+ "var r=RA(o,s,arguments);if(after)ch(r.length);return r;});}"
 		+ "['repeat','padStart','padEnd','concat'].forEach(function(n){wrapRes(SP,n);});"
-		+ "['split','replace','replaceAll','toUpperCase','toLowerCase','normalize','trim'].forEach(function(n){wrapLen(SP,n,S);});"
-		+ "wrapRes(JSON,'stringify');wrapLen(JSON,'parse',function(o,a){return S(a[0]);});"
+		+ "['split','toUpperCase','toLowerCase','toLocaleUpperCase','toLocaleLowerCase','normalize','trim','trimStart','trimEnd','toWellFormed'].forEach(function(n){wrapStr(SP,n,false);});"
+		+ "wrapStr(SP,'replace',true);wrapStr(SP,'replaceAll',true);"
+		// Les memes travaux par une RegExp : la chaine en argument
+		+ "var XP=RegExp.prototype;[[Symbol.replace,true],[Symbol.split,false]].forEach(function(e){var k=e[0],o=XP[k];if(!o)return;"
+		+ "seal(XP,k,function(x,y){if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);ch(s.length);"
+		+ "var r=RA(o,this,arguments.length>1?[s,y]:[s]);if(e[1])ch(r.length);return r;});});"
+		+ "wrapRes(JSON,'stringify');"
+		+ "(function(){var o=JSON.parse;seal(JSON,'parse',function(x,y){if(typeof x==='symbol')return RA(o,JSON,arguments);"
+		+ "var s=str(x);ch(s.length);return RA(o,JSON,arguments.length>1?[s,y]:[s]);});})();"
 		// Tableaux types : memes parcours natifs que Array, longueur du receveur facturee avant.
 		// Longueur interne ([[ArrayLength]]) par le getter d'origine : this.length se redefinit.
 		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get;"
 		+ "function tl(o){return RA(TL,o,[]);}"
-		+ "function wrapTyped(P,name){var o=P[name];if(!o)return;seal(P,name,function(){var r=RA(o,this,arguments);ch(tl(r));return r;});}"
-		+ "['sort','fill','reverse','join','copyWithin','toSorted','toReversed','with'].forEach(function(n){wrapLen(TA,n,tl);});"
-		+ "wrapLen(TA,'set',tl);wrapTyped(TA,'slice');"
-		+ "var TC=Object.getPrototypeOf(Int8Array);wrapTyped(TC,'from');wrapTyped(TC,'of');"
+		+ "['sort','fill','reverse','join','copyWithin','set','toSorted','toReversed','with'].forEach(function(n){wrapLen(TA,n,tl);});"
 		// Allocations de tampons : 1 unite par 8 octets (le quad LeekScript), facturee AVANT d'allouer
-		// pour qu'un budget epuise refuse l'allocation ; une copie d'un tableau source, apres.
-		// Taille ARRONDIE une seule fois ici (valueOf du joueur appele une fois) et passee telle quelle.
+		// pour qu'un budget epuise refuse l'allocation. Taille convertie UNE fois (valueOf du joueur) et
+		// passee telle quelle ; hors bornes (negative, infinie, BigInt), non facturee : le natif leve.
+		// Le constructeur d'une instance est l'enveloppe : slice, from et of creent leur resultat par
+		// elle (constructeur d'espece), donc factures une fois, par elle.
+		+ "var MAXS=9007199254740991;function size(n){return typeof n==='bigint'?n:N(n);}"
+		+ "function q(n,b){return typeof n==='number'&&n>0&&n<=MAXS?MF(n*b/8):0;}"
 		+ "function wrapCtor(name,construct){var K=globalThis[name];if(!K)return;"
 		+ "var P=new Proxy(K,{construct:construct});seal(K.prototype,'constructor',P);seal(globalThis,name,P);}"
-		// Taille invalide (negative, NaN) rendue telle quelle : le natif leve comme sans l'enveloppe.
-		+ "function bytes(n){n=N(n);return n>0?MM(MF(n),9007199254740991):n;}function q(n){return n>0?MF(n/8):0;}"
 		+ "['ArrayBuffer','SharedArrayBuffer'].forEach(function(name){wrapCtor(name,function(t,a,nt){"
-		+ "var n=bytes(a[0]);var o=a[1];var m=o!=null&&typeof o==='object'?o.maxByteLength:undefined;"
-		+ "if(m===undefined){ch(q(n));return RC(t,[n],nt);}"
-		+ "m=bytes(m);ch(q(m>n?m:n));return RC(t,[n,{maxByteLength:m}],nt);});});"
+		+ "var n=size(a[0]);var o=a[1];var m=o!=null&&typeof o==='object'?o.maxByteLength:undefined;"
+		+ "if(m===undefined){ch(q(n,1));return RC(t,[n],nt);}"
+		+ "m=size(m);ch(q(typeof m==='number'&&m>n?m:n,1));return RC(t,[n,{maxByteLength:m}],nt);});});"
 		// Tableau type : longueur primitive facturee avant ; vue sur un tampon existant, rien ; copie
 		// d'une source (tableau, iterable), ses elements apres.
 		+ "['Int8Array','Uint8Array','Uint8ClampedArray','Int16Array','Uint16Array','Int32Array','Uint32Array','Float32Array','Float64Array','BigInt64Array','BigUint64Array','Float16Array']"
 		+ ".forEach(function(name){var K=globalThis[name];if(!K)return;var B=K.BYTES_PER_ELEMENT;wrapCtor(name,function(t,a,nt){var x=a[0];"
-		+ "if(typeof x!=='object'&&typeof x!=='function'&&x!==undefined){var n=bytes(x);ch(q(n*B));return RC(t,[n],nt);}"
+		+ "if(typeof x!=='object'&&typeof x!=='function'&&x!==undefined){var n=size(x);ch(q(n,B));return RC(t,[n],nt);}"
 		+ "var r=RC(t,a,nt);if(r.buffer!==x)ch(tl(r));return r;});});"
+		// Agrandir ou transferer un tampon : sa nouvelle taille, convertie une fois
+		+ "function wrapGrow(P,name,current){var o=P&&P[name];if(!o)return;seal(P,name,function(x){"
+		+ "if(x===undefined){ch(q(RA(current,this,[]),1));return RA(o,this,[]);}var n=size(x);ch(q(n,1));return RA(o,this,[n]);});}"
 		+ "var ABP=ArrayBuffer.prototype,BL=Object.getOwnPropertyDescriptor(ABP,'byteLength').get;"
-		+ "['resize','transfer','transferToFixedLength'].forEach(function(n){wrapLen(ABP,n,function(o,a){return q(bytes(a[0]===undefined?RA(BL,o,[]):a[0]));});});"
-		+ "(function(){var o=ABP.slice;if(o)seal(ABP,'slice',function(){var r=RA(o,this,arguments);ch(MF(RA(BL,r,[])/8));return r;});})();"
+		+ "['resize','transfer','transferToFixedLength'].forEach(function(n){wrapGrow(ABP,n,BL);});"
+		+ "if(typeof SharedArrayBuffer!=='undefined'){var SBP=SharedArrayBuffer.prototype;wrapGrow(SBP,'grow',Object.getOwnPropertyDescriptor(SBP,'byteLength').get);}"
 		// Hooks consommes (puis retires du global) par JS_NATIVE_COSTS, l'override de System.operations
 		// (pending : charges accumulees pas encore flushees, pour un compteur exact a la lecture) et
 		// l'hote (flush en fin de tour, cf captureChargeFlush).
@@ -1539,7 +1562,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
-			refreshHooks(); // meme apres une erreur du tour (limite d'ops...) : afterFight reste connu
+			refreshHooks(execution); // meme apres une erreur du tour (limite d'ops...) : afterFight reste connu
 			flushPendingCharges(); // charges de builtins/natifs du tour -> compteur reel, avant le snapshot
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
 			settle(execution, turnOperations);
@@ -1547,31 +1570,19 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	/**
-	 * Hooks de combat ({@code beforeFight} / {@code afterFight}) pour une IA polyglot : la fonction est
-	 * cherchee dans le global du guest (ou les exports du module ES), la ou LeekScript cherche une methode
-	 * {@code f_<name>} sur la classe compilee.
-	 *
-	 * <p><b>Pourquoi un pre-filtre textuel.</b> Savoir si le guest definit {@code beforeFight} demande
-	 * d'avoir EVALUE le source, or il ne l'est qu'au 1er tour ({@code initialized}) — et le charger pour
-	 * tout le monde changerait le modele d'execution des IA "plates" (sans {@code turn()}), dont le source
-	 * EST la logique de tour : il tournerait pendant la phase de hook, ou les actions de combat sont
-	 * interdites. On ne charge donc en avance que si le nom du hook APPARAIT dans les sources du joueur —
-	 * ET le nom {@code turn}, car sans {@code turn()} le top-level est la logique de tour et n'a rien a
-	 * faire avant le combat. Les deux pre-filtres ont le meme faux negatif (impossible en pratique : pour
-	 * etre appelable, le nom doit etre ecrit quelque part) et le meme faux positif (nom cite en
-	 * commentaire), sans consequence : le chargement speculatif de {@link #invokeHook} est jete des qu'il
-	 * ne trouve pas de {@code turn()}.
-	 */
-	/**
 	 * Hooks resolus a la fin de la derniere execution gardee (tour, hook). Lire un membre guest peut
 	 * executer du code joueur (getter sur {@code afterFight}) : {@link #hasHook}, appele HORS chien de
 	 * garde (Fight.runHooks, EntityAI.runHook), ne lit plus que ce cache.
 	 */
 	private final Map<String, Value> hooks = new HashMap<>();
 
-	/** A appeler sous le chien de garde, apres l'execution de code joueur qui a pu (re)definir un hook. */
-	private void refreshHooks() {
+	/**
+	 * A appeler sous le chien de garde, apres l'execution de code joueur qui a pu (re)definir un hook.
+	 * Rien si le chien de garde a deja tire : plus rien n'interromprait un getter qui bloque.
+	 */
+	private void refreshHooks(Execution execution) {
 		hooks.clear();
+		if (execution.settled().get()) return;
 		try {
 			for (String name : HOOK_NAMES) {
 				Value fn = resolveGuestFunction(name);
@@ -1604,6 +1615,22 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 	}
 
+	/**
+	 * Hooks de combat ({@code beforeFight} / {@code afterFight}) pour une IA polyglot : la fonction est
+	 * cherchee dans le global du guest (ou les exports du module ES), la ou LeekScript cherche une methode
+	 * {@code f_<name>} sur la classe compilee.
+	 *
+	 * <p><b>Pourquoi un pre-filtre textuel.</b> Savoir si le guest definit {@code beforeFight} demande
+	 * d'avoir EVALUE le source, or il ne l'est qu'au 1er tour ({@code initialized}) — et le charger pour
+	 * tout le monde changerait le modele d'execution des IA "plates" (sans {@code turn()}), dont le source
+	 * EST la logique de tour : il tournerait pendant la phase de hook, ou les actions de combat sont
+	 * interdites. On ne charge donc en avance que si le nom du hook APPARAIT dans les sources du joueur —
+	 * ET le nom {@code turn}, car sans {@code turn()} le top-level est la logique de tour et n'a rien a
+	 * faire avant le combat. Les deux pre-filtres ont le meme faux negatif (impossible en pratique : pour
+	 * etre appelable, le nom doit etre ecrit quelque part) et le meme faux positif (nom cite en
+	 * commentaire), sans consequence : le chargement speculatif de {@link #invokeHook} est jete des qu'il
+	 * ne trouve pas de {@code turn()}.
+	 */
 	@Override
 	public boolean hasHook(String name) {
 		if (disabled || !HOOK_NAMES.contains(name)) {
@@ -1674,7 +1701,7 @@ public class PolyglotEntityAI extends EntityAI {
 				if (!preloadEntryForHook()) {
 					return; // chargement jete : l'IA sera chargee au tour 1, comme si le hook n'existait pas
 				}
-				refreshHooks();
+				refreshHooks(execution);
 			}
 			Value hook = hooks.get(name);
 			if (hook == null) {
@@ -1684,7 +1711,7 @@ public class PolyglotEntityAI extends EntityAI {
 			try {
 				hook.execute();
 			} finally {
-				refreshHooks(); // beforeFight peut definir ou retirer afterFight
+				refreshHooks(execution); // beforeFight peut definir ou retirer afterFight
 			}
 			throwIfOpsExhausted();
 		} catch (PolyglotException e) {

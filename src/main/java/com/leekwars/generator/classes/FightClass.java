@@ -551,13 +551,17 @@ public class FightClass {
 	 * Recherches de chemin d'un deplacement (A*, une par case candidate pour moveAwayFrom*) : au-dela de
 	 * son cout fixe de 500, facturees 20 par case parcourue, le tarif de getPath. Sinon un deplacement
 	 * vers une case injoignable, qui ne depense aucun PM, faisait parcourir toute la carte a prix fixe,
-	 * et autant de fois que voulu.
+	 * et autant de fois que voulu. Plafond : le prix de getCellToUse*, qui couvre deja une carte
+	 * entiere ; au-dela, c'est la recherche du moteur qui est couteuse, pas le joueur qui abuse.
 	 */
 	private static long chargeSearch(EntityAI ai, long searchedBefore, long result) throws LeekRunException {
 		long cells = ai.getState().getMap().getSearchedCells() - searchedBefore;
-		ai.ops(Math.max(0, cells * 20 - 500));
+		ai.ops(Math.clamp(cells * 20 - MOVE_COST, 0, FULL_SEARCH_COST - MOVE_COST));
 		return result;
 	}
+
+	private static final int MOVE_COST = 500;
+	private static final int FULL_SEARCH_COST = 38080;
 
 	public static long moveToward(EntityAI ai, long leek_id) throws LeekRunException {
 		return moveToward(ai, leek_id, -1);
