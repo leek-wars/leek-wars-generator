@@ -76,6 +76,21 @@ public class TestPolyglotMultiFile extends FightTestBase {
 	// ---- System.fileRead / System.getLoadout : fichiers de données du joueur ----
 
 	@Test
+	public void jsEntryNameWithAQuoteIsNotCode() throws Exception {
+		// Le nom de l'entree passait tel quel dans import('...') : une apostrophe l'ouvrait au code
+		initFightOnly();
+		Map<String, String> files = new HashMap<>();
+		files.put("l'ia.mjs", "globalThis.turn = function() { return 7; };\n");
+		String injected = "a'+(()=>{globalThis.hit=1;return''})()+'.mjs";
+		files.put(injected, "globalThis.turn = function() { return typeof hit === 'undefined' ? 8 : -1; };\n");
+		files.put("a.mjs", "globalThis.turn = function() { return typeof hit === 'undefined' ? 9 : -1; };\n");
+		try (PolyglotSandbox sb = new PolyglotSandbox("js", "python")) {
+			Assert.assertEquals(7, ((Number) multiFileAI(sb, "js", files, "l'ia.mjs").runIA()).longValue());
+			Assert.assertEquals(8, ((Number) multiFileAI(sb, "js", files, injected).runIA()).longValue());
+		}
+	}
+
+	@Test
 	public void jsFileReadRelativeToTheCallingModule() throws Exception {
 		initFightOnly();
 		Map<String, String> files = new HashMap<>();

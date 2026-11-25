@@ -664,7 +664,7 @@ public class PolyglotEntityAI extends EntityAI {
 		return new PolyglotFileSystem(mounted, tsRead, pass, PolyglotFileSystem.JS_PROBE_EXTENSIONS, entry.getPath());
 	}
 
-	/** Encode une chaine en litteral JS entre guillemets (pour injecter un message dans un module de fallback). */
+	/** Encode une chaine en litteral JS entre guillemets (message d'un module de fallback, chemin d'import). */
 	private static String jsStringLiteral(String s) {
 		StringBuilder b = new StringBuilder("\"");
 		for (int i = 0; i < s.length(); i++) {
@@ -674,7 +674,9 @@ public class PolyglotEntityAI extends EntityAI {
 				case '\\': b.append("\\\\"); break;
 				case '\n': b.append("\\n"); break;
 				case '\r': b.append("\\r"); break;
-				default: b.append(c);
+				default:
+					if (c < 0x20 || c == '\u2028' || c == '\u2029') b.append(String.format("\\u%04x", (int) c));
+					else b.append(c);
 			}
 		}
 		return b.append('"').toString();
@@ -832,7 +834,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// reexportee sans nom local (`export { jouer as turn }`, `export { turn } from './x.js'`).
 			evalPrelude("module-load",
 				"globalThis.__lw_loadError = null; globalThis.__lw_module = null;"
-				+ "import('" + PolyglotFileSystem.mountPath(entryPath) + "')"
+				+ "import(" + jsStringLiteral(PolyglotFileSystem.mountPath(entryPath)) + ")"
 				+ ".then(function(m){ globalThis.__lw_module = m; },"
 				+ " function(e){ globalThis.__lw_loadError = '' + (e && e.stack ? e.stack : e); });");
 			evalPrelude("module-drain", "void 0;"); // draine les microtasks (eval du module + le .then)
