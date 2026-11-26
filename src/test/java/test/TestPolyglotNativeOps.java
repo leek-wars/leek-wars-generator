@@ -155,6 +155,23 @@ public class TestPolyglotNativeOps extends FightTestBase {
 	}
 
 	@Test
+	public void playerSourcesNamedLikeAPreludeAreCounted() throws Exception {
+		// Seules les sources de l'hote (nom lw: ET URI lwprelude:) echappent au compteur : un joueur
+		// qui nomme la sienne lw:... est compte (image combined-14)
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			String loop = "for (var i = 0; i < 300000; i++) {}";
+			assertTrue("load", jsOps(sb, "", "load({name: 'lw:x', script: '" + loop + "'})") >= 300_000);
+			assertTrue("sourceURL", jsOps(sb, "", "eval('" + loop + "\\n//# sourceURL=lw:y')") >= 300_000);
+			assertTrue("new Function", jsOps(sb, "", "(new Function('" + loop + "\\n//# sourceURL=lw:z'))()") >= 300_000);
+		}
+		try (PolyglotSandbox sb = new PolyglotSandbox("python")) {
+			leek1.setCores(200);
+			assertTrue("compile", ops(sb, "SRC = 'for i in range(300000):\\n    pass\\n'", "    exec(compile(SRC, 'lw:x', 'exec'), {})") >= 300_000);
+		}
+	}
+
+	@Test
 	public void jsHugeBufferIsRefusedBeforeItIsAllocated() throws Exception {
 		initFightOnly();
 		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
