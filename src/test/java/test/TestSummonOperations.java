@@ -124,6 +124,7 @@ public class TestSummonOperations extends FightTestBase {
 			+ "setRegister('leek_before_' + getTurn(), '' + getOperations());"
 			+ summonNextToMe("CHIP_CHILLI_PEPPER", "getTurn() == 1", "function(e) {"
 				+ " awakenings = awakenings + 1;"
+				+ " setRegister('plant_turn_' + awakenings, '' + getTurn());"
 				+ BURN
 				+ " setRegister('plant_spent_' + awakenings, '' + getOperations());"
 				+ "}")
@@ -132,6 +133,7 @@ public class TestSummonOperations extends FightTestBase {
 		runFight();
 
 		Assert.assertEquals("la plantation a réussi", "1", leek1.getRegister("summon_result"));
+		Assert.assertEquals("le premier réveil a lieu à la plantation, au tour 1", "1", leek1.getRegister("plant_turn_1"));
 		int plantSpent = register("plant_spent_1");
 		Assert.assertTrue("la plante a brûlé des opérations : " + plantSpent, plantSpent > BURNED);
 		Assert.assertTrue("le réveil, dans le tour de l'invocateur, lui est facturé",
