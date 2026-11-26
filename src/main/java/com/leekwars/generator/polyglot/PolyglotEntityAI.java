@@ -974,14 +974,17 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "if(bad(this))return RA(o,this,arguments);var s=str(this);ch(s.length);return RA(o,s,arguments);});}"
 		+ "['repeat','padStart','padEnd','concat'].forEach(function(n){wrapRes(SP,n);});"
 		+ "['toUpperCase','toLowerCase','toLocaleUpperCase','toLocaleLowerCase','normalize','trim','trimStart','trimEnd','toWellFormed'].forEach(function(n){wrapStr(SP,n);});"
-		// Remplacement et decoupage : la chaine facturee avant, la copie produite apres ; un appel qui
-		// leve en route (longueur maximale atteinte, remplaceur qui leve) a pu copier jusqu'a la
-		// longueur maximale d'une chaine : facturee telle quelle. Un motif objet qui a sa methode
+		// Remplacement et decoupage : la chaine facturee avant, la copie produite apres ; un remplaceur
+		// fonction voit chacun de ses resultats facture au fil des appels (rien d'impaye s'il leve en
+		// route), et un appel interrompu par la longueur maximale d'une chaine (RangeError) a pu copier
+		// jusqu'a elle : facturee telle quelle. Un motif objet qui a sa methode
 		// Symbol.replace/split la voit appelee, lue UNE fois (un getter ne repond pas deux choses) ;
 		// la RegExp passe ainsi par sa methode facturee ci-dessous. Tout autre motif est converti une
 		// fois en chaine et passe tel quel.
 		+ "var XP=RegExp.prototype,SRC=Object.getOwnPropertyDescriptor(XP,'source').get,SM=Symbol.match,IO=SP.indexOf,MAXSTR=1073741824;"
-		+ "function copy(f,t,a){var v;try{v=RA(f,t,a);}catch(e){ch(MAXSTR);throw e;}ch(v.length);return v;}"
+		+ "var RE=RangeError;function copy(f,t,a){var y=a[1],fn=typeof y==='function';"
+		+ "if(fn)a=[a[0],function(){var r=str(RA(y,undefined,arguments));ch(r.length);return r;}];"
+		+ "var v;try{v=RA(f,t,a);}catch(e){if(e instanceof RE)ch(MAXSTR);throw e;}if(!fn)ch(v.length);return v;}"
 		+ "[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;seal(XP,k,function(x,y){"
 		+ "if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);ch(s.length);"
 		+ "return copy(o,this,arguments.length>1?[s,y]:[s]);});});"

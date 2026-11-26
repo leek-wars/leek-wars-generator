@@ -108,6 +108,10 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			Assert.assertEquals(1L, jsOps(sb, "", "return 'a-b'.replace(/-/g, '+') === 'a+b' && 'a,b'.split(/,/).length === 2 && 'abc'.replaceAll('b', '$&$&') === 'abbc' ? 1 : 0"));
 			// Methode propre au motif : appelee, comme en JS natif
 			Assert.assertEquals(1L, jsOps(sb, "", "class R extends RegExp { [Symbol.replace](s) { return 'custom'; } } return 'abc'.replace(new R('b'), 'x') === 'custom' && 'a-b'.split({[Symbol.split](s){ return ['X']; }})[0] === 'X' ? 1 : 0"));
+			// Remplaceur qui leve pour sortir tot : pas de forfait, ses resultats deja rendus factures
+			Assert.assertTrue("sortie anticipee", jsOps(sb, "var s = 'abc'.repeat(1000);", "try { s.replace(/b/g, function(m){ throw 1; }); } catch (e) {}") < 100_000);
+			assertTrue("remplaceur facture au fil de l'eau", jsOps(sb, "var big = 'x'.repeat(1000000); var s = 'a'.repeat(10);",
+				"try { var k = 0; s.replace(/a/g, function(m){ if (++k == 10) throw 1; return big; }); } catch (e) {}") >= 9_000_000);
 			// Copie interrompue par la longueur maximale : facturee quand meme
 			PolyglotEntityAI cut = ai(sb, "js", "var s = 'a'.repeat(46341);\nfunction turn(){ for (var i = 0; i < 3; i++) { try { s.replaceAll('a', '$`'); } catch (e) {} } return 1; }");
 			leek1.setCores(1);
