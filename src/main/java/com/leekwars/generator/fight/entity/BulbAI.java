@@ -40,14 +40,11 @@ public class BulbAI extends EntityAI {
 		// Éveil : l'entité entrante, portée par la plante (setAwakeningTrigger) et pas par cette
 		// IA, qui n'est pas celle qui exécute la fermeture. Hors d'un réveil, null.
 		var trigger = mEntity.getAwakeningTrigger();
-		// Le compteur d'opérations est celui de l'invocateur, partagé avec ses invocations :
-		// dans son tour, un bulbe poursuit le compteur de l'invocateur, et une IA qui a épuisé
-		// son budget fait planter ses bulbes. Seul un réveil de plante, qui tombe dans le tour
-		// de quelqu'un d'autre, part d'un compteur neuf : sinon il repartirait du compteur
-		// laissé par le dernier tour de l'invocateur et tuerait la plante d'un « trop
-		// d'opérations ». L'invocateur retrouve ensuite le sien, augmenté de ce que la plante
-		// a dépensé : dans son propre tour, il paye toujours ce que sa fermeture consomme.
 		boolean awakening = trigger != null;
+		// Le compteur d'opérations est celui de l'invocateur, partagé avec ses invocations : une IA
+		// qui a épuisé son budget fait planter ses bulbes. Seul un réveil de plante, qui tombe dans
+		// le tour de quelqu'un d'autre, part d'un compteur neuf, puis rend à l'invocateur ce qu'il
+		// a dépensé.
 		long previousOperations = mOwnerAI.getOperations();
 		mOwnerAI.mEntity = mEntity;
 		if (awakening) {
