@@ -75,6 +75,11 @@ public abstract class FightTestBase {
 		return new Leek(id, name, 0, 10, 500, 6, 7, 100, 100, 10, 50, 10, 0, 0, 8, 30, 0, false, 0, 0, "", 0, "", "", "", 0);
 	}
 
+	/** Poireau des tests d'invocation : assez de PT pour invoquer et jouer dans le même tour. */
+	protected static Leek summonerLeek(int id, String name) {
+		return new Leek(id, name, 0, 150, 1200, 20, 6, 300, 100, 100, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
+	}
+
 	protected void attachAI(Leek leek, String code) {
 		attachAI(leek, newAIFile(code, leek.getId()));
 	}
@@ -205,6 +210,11 @@ public abstract class FightTestBase {
 		return globals + summonNextToMe("CHIP_CHILLI_PEPPER", "true", "function(e) {" + awakening + "}");
 	}
 
+	/** Invoque un bulbe chétif sur une case libre voisine au tour `turn`, avec `body` pour IA. */
+	protected static String summonBulbAtTurn(int turn, String body) {
+		return summonNextToMe("CHIP_PUNY_BULB", "getTurn() == " + turn, "function() {" + body + "}");
+	}
+
 	/**
 	 * IA qui invoque `chip` (constante LeekScript) sur une case libre voisine, une fois pour
 	 * le combat, au premier tour où la condition LeekScript `when` est vraie. `function` est
@@ -214,7 +224,7 @@ public abstract class FightTestBase {
 	protected static String summonNextToMe(String chip, String when, String function) {
 		// Code au premier niveau, rejoué à chaque tour : c'est ainsi qu'une IA Leek Wars
 		// s'écrit, `global` est ce qui survit d'un tour à l'autre.
-		return "global summoned = false;" + summonNextToMeIf("!summoned && " + when, "summoned = true;", chip, function);
+		return "global summoned = false;" + summonNextToMeIf(chip, "!summoned && " + when, function, "summoned = true;");
 	}
 
 	/**
@@ -222,10 +232,10 @@ public abstract class FightTestBase {
 	 * invocations dans le combat (le résultat de la dernière va dans `summon_result`).
 	 */
 	protected static String summonNextToMeWhenever(String chip, String when, String function) {
-		return summonNextToMeIf(when, "", chip, function);
+		return summonNextToMeIf(chip, when, function, "");
 	}
 
-	private static String summonNextToMeIf(String condition, String onSummon, String chip, String function) {
+	private static String summonNextToMeIf(String chip, String condition, String function, String onSummon) {
 		return "if (" + condition + ") {"
 			+ "  var x = getCellX(getCell());"
 			+ "  var y = getCellY(getCell());"

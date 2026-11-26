@@ -24,8 +24,8 @@ public class TestPlantAwakeningFight extends FightTestBase {
 	protected void createLeeks() {
 		// PT large : la puce d'invocation en coûte plusieurs, et on veut voir la plante
 		// jouer dans la foulée.
-		leek1 = new Leek(1, "A", 0, 150, 1200, 20, 6, 300, 100, 100, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
-		leek2 = new Leek(2, "B", 0, 150, 1200, 20, 6, 300, 100, 100, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
+		leek1 = summonerLeek(1, "A");
+		leek2 = summonerLeek(2, "B");
 		leek1.addChip(Chips.getChip(CHIP_CHILLI_PEPPER));
 		fight.getState().addEntity(0, leek1);
 		fight.getState().addEntity(1, leek2);

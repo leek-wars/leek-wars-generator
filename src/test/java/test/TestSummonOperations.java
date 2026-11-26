@@ -30,8 +30,8 @@ public class TestSummonOperations extends FightTestBase {
 
 	@Override
 	protected void createLeeks() {
-		leek1 = new Leek(1, "A", 0, 150, 1200, 20, 6, 300, 100, 100, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
-		leek2 = new Leek(2, "B", 0, 150, 1200, 20, 6, 300, 100, 100, 100, 100, 0, 0, 8, 64, 0, false, 0, 0, "", 0, "", "", "", 0);
+		leek1 = summonerLeek(1, "A");
+		leek2 = summonerLeek(2, "B");
 		leek1.addChip(Chips.getChip(CHIP_PUNY_BULB));
 		leek1.addChip(Chips.getChip(CHIP_CHILLI_PEPPER));
 		fight.getState().addEntity(0, leek1);
@@ -48,8 +48,7 @@ public class TestSummonOperations extends FightTestBase {
 	/** Le bulbe démarre son tour au compteur que son invocateur vient de laisser. */
 	@Test
 	public void bulbStartsFromTheCounterItsSummonerLeft() throws Exception {
-		attachAI(leek1, summonNextToMe("CHIP_PUNY_BULB", "getTurn() == 1",
-			"function() { setRegister('bulb_start_' + getTurn(), '' + getOperations()); }")
+		attachAI(leek1, summonBulbAtTurn(1, "setRegister('bulb_start_' + getTurn(), '' + getOperations());")
 			+ BURN
 			+ "setRegister('leek_end_' + getTurn(), '' + getOperations());");
 		attachAI(leek2, "");
@@ -87,10 +86,7 @@ public class TestSummonOperations extends FightTestBase {
 	@Test
 	public void summonerStartsEachTurnWithAFreshCounter() throws Exception {
 		attachAI(leek1, "setRegister('leek_start_' + getTurn(), '' + getOperations());"
-			+ summonNextToMe("CHIP_PUNY_BULB", "getTurn() == 1", "function() {"
-				+ BURN
-				+ " setRegister('bulb_end_' + getTurn(), '' + getOperations());"
-				+ "}"));
+			+ summonBulbAtTurn(1, BURN + " setRegister('bulb_end_' + getTurn(), '' + getOperations());"));
 		attachAI(leek2, "");
 		runFight();
 
@@ -104,8 +100,8 @@ public class TestSummonOperations extends FightTestBase {
 	 */
 	@Test
 	public void summonerOutOfOperationsLeavesNothingToItsBulbs() throws Exception {
-		attachAI(leek1, summonNextToMe("CHIP_PUNY_BULB", "getTurn() == 1", "function() { setRegister('bulb_turn_' + getTurn(), 'played'); }")
-			+ "if (getTurn() >= 3) { var n = 0; while (true) { n++; } }");
+		attachAI(leek1, summonBulbAtTurn(1, "setRegister('bulb_turn_' + getTurn(), 'played');")
+			+ "if (getTurn() == 3) { var n = 0; while (true) { n++; } }");
 		attachAI(leek2, "");
 		runFight();
 
@@ -120,20 +116,20 @@ public class TestSummonOperations extends FightTestBase {
 	 */
 	@Test
 	public void plantAwakenedInItsSummonersTurnIsPaidByTheSummoner() throws Exception {
-		attachAI(leek1, "global awakenings = 0;"
-			+ "setRegister('leek_before_' + getTurn(), '' + getOperations());"
-			+ summonNextToMe("CHIP_CHILLI_PEPPER", "getTurn() == 1", "function(e) {"
-				+ " awakenings = awakenings + 1;"
-				+ " setRegister('plant_turn_' + awakenings, '' + getTurn());"
-				+ BURN
-				+ " setRegister('plant_spent_' + awakenings, '' + getOperations());"
-				+ "}")
+		attachAI(leek1, summonChilliNextToMe("global awakenings = 0;"
+			+ "setRegister('leek_before_' + getTurn(), '' + getOperations());", ""
+			+ "awakenings = awakenings + 1;"
+			+ "setRegister('plant_turn_' + awakenings, '' + getTurn());"
+			+ "setRegister('plant_start_' + awakenings, '' + getOperations());"
+			+ BURN
+			+ " setRegister('plant_spent_' + awakenings, '' + getOperations());")
 			+ "setRegister('leek_after_' + getTurn(), '' + getOperations());");
 		attachAI(leek2, "");
 		runFight();
 
 		Assert.assertEquals("la plantation a réussi", "1", leek1.getRegister("summon_result"));
 		Assert.assertEquals("le premier réveil a lieu à la plantation, au tour 1", "1", leek1.getRegister("plant_turn_1"));
+		Assert.assertTrue("le réveil part d'un compteur neuf", register("plant_start_1") < 1000);
 		int plantSpent = register("plant_spent_1");
 		Assert.assertTrue("la plante a brûlé des opérations : " + plantSpent, plantSpent > BURNED);
 		Assert.assertTrue("le réveil, dans le tour de l'invocateur, lui est facturé",
