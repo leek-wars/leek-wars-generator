@@ -37,34 +37,38 @@ public class BulbAI extends EntityAI {
 		// l'invocateur lui-même, qui vient d'entrer dans la zone de sa propre plante.
 		// Sans cette sauvegarde, il reprendrait la main en croyant être la plante.
 		Entity previous = mOwnerAI.mEntity;
-		// Le compteur d'opérations est lui aussi celui de l'invocateur. Un réveil de plante
-		// tombe dans le tour de quelqu'un d'autre : sans remise à zéro, la fermeture repart
-		// du compteur laissé par le dernier tour de l'invocateur — une IA qui a consommé son
-		// budget tuerait sa propre plante avec une erreur « trop d'opérations ». Le réveil a
-		// donc son propre compteur (ce que runPlantAwakening annonce), et l'invocateur
-		// retrouve ensuite le sien, augmenté de ce que la plante a dépensé : dans son propre
-		// tour, il paye toujours ce que sa fermeture consomme.
+		// Éveil : l'entité entrante, portée par la plante (setAwakeningTrigger) et pas par cette
+		// IA, qui n'est pas celle qui exécute la fermeture. Hors d'un réveil, null.
+		var trigger = mEntity.getAwakeningTrigger();
+		// Le compteur d'opérations est celui de l'invocateur, partagé avec ses invocations :
+		// dans son tour, un bulbe poursuit le compteur de l'invocateur, et une IA qui a épuisé
+		// son budget fait planter ses bulbes. Seul un réveil de plante, qui tombe dans le tour
+		// de quelqu'un d'autre, part d'un compteur neuf : sinon il repartirait du compteur
+		// laissé par le dernier tour de l'invocateur et tuerait la plante d'un « trop
+		// d'opérations ». L'invocateur retrouve ensuite le sien, augmenté de ce que la plante
+		// a dépensé : dans son propre tour, il paye toujours ce que sa fermeture consomme.
+		boolean awakening = trigger != null;
 		long previousOperations = mOwnerAI.getOperations();
 		mOwnerAI.mEntity = mEntity;
-		mOwnerAI.resetCounter();
+		if (awakening) {
+			mOwnerAI.resetCounter();
+		}
 		try {
 			var argCount = mAIFunction.getArgumentsCount() == -1 ? 0 : mAIFunction.getArgumentsCount();
 			var args = new Object[argCount];
 			// Une fonction sans paramètre reste valide : l'entité déclenchante est
 			// simplement ignorée. Comme partout dans l'API, une entité se passe par son
 			// id, en long.
-			// Éveil : l'entité entrante est le premier argument. Elle est portée par la
-			// plante (setAwakeningTrigger) et pas par cette IA, qui n'est pas celle qui
-			// exécute la fermeture.
-			var trigger = mEntity.getAwakeningTrigger();
-			if (argCount > 0 && trigger != null) {
+			if (argCount > 0 && awakening) {
 				args[0] = (long) trigger.getFId();
 			}
 			return mAIFunction.run(mOwnerAI, null, args);
 		} finally {
-			long spent = mOwnerAI.getOperations();
-			mOwnerAI.resetCounter();
-			mOwnerAI.opsNoCheck((int) Math.min(Integer.MAX_VALUE, previousOperations + spent));
+			if (awakening) {
+				long spent = mOwnerAI.getOperations();
+				mOwnerAI.resetCounter();
+				mOwnerAI.opsNoCheck((int) Math.min(Integer.MAX_VALUE, previousOperations + spent));
+			}
 			mOwnerAI.mEntity = previous;
 		}
 	}
