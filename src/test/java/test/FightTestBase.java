@@ -214,15 +214,26 @@ public abstract class FightTestBase {
 	protected static String summonNextToMe(String chip, String when, String function) {
 		// Code au premier niveau, rejoué à chaque tour : c'est ainsi qu'une IA Leek Wars
 		// s'écrit, `global` est ce qui survit d'un tour à l'autre.
-		return "global summoned = false;"
-			+ "if (!summoned && " + when + ") {"
+		return "global summoned = false;" + summonNextToMeIf("!summoned && " + when, "summoned = true;", chip, function);
+	}
+
+	/**
+	 * Comme {@link #summonNextToMe}, mais à chaque tour où `when` est vrai : plusieurs
+	 * invocations dans le combat (le résultat de la dernière va dans `summon_result`).
+	 */
+	protected static String summonNextToMeWhenever(String chip, String when, String function) {
+		return summonNextToMeIf(when, "", chip, function);
+	}
+
+	private static String summonNextToMeIf(String condition, String onSummon, String chip, String function) {
+		return "if (" + condition + ") {"
 			+ "  var x = getCellX(getCell());"
 			+ "  var y = getCellY(getCell());"
 			+ "  var candidates = [getCellFromXY(x + 1, y), getCellFromXY(x - 1, y), getCellFromXY(x, y + 1), getCellFromXY(x, y - 1)];"
 			+ "  for (var i = 0; i < count(candidates); i++) {"
 			+ "    var c = candidates[i];"
 			+ "    if (c != null && isEmptyCell(c)) {"
-			+ "      summoned = true;"
+			+ "      " + onSummon
 			+ "      setRegister('summon_result', '' + summon(" + chip + ", c, " + function + "));"
 			+ "      break;"
 			+ "    }"

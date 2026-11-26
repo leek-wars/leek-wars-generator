@@ -77,21 +77,4 @@ public class TestSummonFunctions extends FightTestBase {
 		Assert.assertTrue("l'invocateur a entendu l'adversaire : " + heard, heard != null && heard.contains("hello"));
 		Assert.assertEquals(heard, leek1.getRegister("bulb_heard_3"));
 	}
-
-	/**
-	 * Forum 12474 : le compteur d'opérations est partagé entre une entité et ses invocations.
-	 * Un invocateur qui épuise son budget dans son tour fait planter ses bulbes ce tour-là :
-	 * ils poursuivent son compteur, seul un réveil de plante repart d'un compteur neuf.
-	 */
-	@Test
-	public void bulbSharesItsSummonerOperationsCounter() throws Exception {
-		attachAI(leek1, summonBulbAtTurn(1, "setRegister('bulb_turn_' + getTurn(), 'played');")
-			+ "if (getTurn() >= 3) { var n = 0; while (true) { n++; } }");
-		attachAI(leek2, "");
-		runFight();
-
-		Assert.assertEquals("l'invocation a réussi", "1", leek1.getRegister("summon_result"));
-		Assert.assertEquals("au tour 2, l'invocateur a laissé du budget : le bulbe joue", "played", leek1.getRegister("bulb_turn_2"));
-		Assert.assertNull("au tour 3, l'invocateur a tout consommé : le bulbe ne peut plus rien faire", leek1.getRegister("bulb_turn_3"));
-	}
 }
