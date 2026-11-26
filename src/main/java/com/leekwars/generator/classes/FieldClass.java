@@ -36,6 +36,9 @@ public class FieldClass {
 		return Pathfinding.getCaseDistance(cell1, cell2);
 	}
 
+	/** Tarif d'une case parcourue par une recherche de chemin (getPath, déplacements). */
+	public static final int SEARCHED_CELL_COST = 20;
+
 	/**
 	 * Le coût d'avance (distance² × 20) suppose un A* qui ferme ~distance² cases. Une cible
 	 * injoignable (obstacle, case encerclée) lui fait parcourir toute la zone accessible :
@@ -45,7 +48,7 @@ public class FieldClass {
 		var map = ai.getState().getMap();
 		long before = map.getSearchedCells();
 		var path = map.getPathBetween(cell1, cell2, ignore);
-		ai.ops(Math.max(0, map.getSearchedCells() - before - (long) distance * distance) * 20);
+		ai.ops(Math.max(0, map.getSearchedCells() - before - (long) distance * distance) * SEARCHED_CELL_COST);
 		return path;
 	}
 
@@ -71,7 +74,7 @@ public class FieldClass {
 
 		// Opérations
 		var distance = Pathfinding.getCaseDistance(cell1, cell2);
-		ai.ops(distance * distance * 20);
+		ai.ops(distance * distance * SEARCHED_CELL_COST);
 
 		List<Cell> ignore = new ArrayList<Cell>();
 
@@ -108,7 +111,7 @@ public class FieldClass {
 
 		// Opérations
 		var distance = Pathfinding.getCaseDistance(cell1, cell2);
-		ai.ops(distance * distance * 20);
+		ai.ops(distance * distance * SEARCHED_CELL_COST);
 
 		List<Cell> ignore = new ArrayList<Cell>();
 
@@ -146,7 +149,7 @@ public class FieldClass {
 
 		// Opérations
 		var distance = Pathfinding.getCaseDistance(cell1, cell2);
-		ai.ops(distance * distance * 20);
+		ai.ops(distance * distance * SEARCHED_CELL_COST);
 
 		List<Cell> ignore = new ArrayList<Cell>();
 

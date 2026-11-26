@@ -189,10 +189,16 @@ public final class StatementCounter extends TruffleInstrument {
 
 	private final ContextLocal<CounterObject> counters = locals.createContextLocal(context -> new CounterObject());
 
+	/** Source de prelude de l'hote : ce prefixe de nom ET ce schema d'URI (cf PolyglotEntityAI.preludeSource). */
+	public static final String PRELUDE_NAME_PREFIX = "lw:";
+	public static final String PRELUDE_URI_SCHEME = "lwprelude";
+
 	static boolean isPrelude(com.oracle.truffle.api.source.Source source) {
+		// Le nom d'abord : l'URI d'une source sans URI explicite se calcule sur une empreinte du contenu
 		String name = source.getName();
+		if (name == null || !name.startsWith(PRELUDE_NAME_PREFIX)) return false;
 		java.net.URI uri = source.getURI();
-		return name != null && name.startsWith("lw:") && uri != null && "lwprelude".equals(uri.getScheme());
+		return uri != null && PRELUDE_URI_SCHEME.equals(uri.getScheme());
 	}
 
 	@Override

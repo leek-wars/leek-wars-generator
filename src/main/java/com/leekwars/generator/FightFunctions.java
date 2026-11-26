@@ -1,5 +1,7 @@
 package com.leekwars.generator;
 
+import com.leekwars.generator.classes.FightClass;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -479,7 +481,7 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT),
 		}).since(5);
-		method("getCellToUseWeapon", "Fight", 38080, true, new CallableVersion[] {
+		method("getCellToUseWeapon", "Fight", FightClass.FULL_SEARCH_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
@@ -487,7 +489,7 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
-		method("getCellToUseWeaponOnCell", "Fight", 38080, true, new CallableVersion[] {
+		method("getCellToUseWeaponOnCell", "Fight", FightClass.FULL_SEARCH_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }),
@@ -495,62 +497,62 @@ public class FightFunctions {
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT, Type.INT_OR_NULL }),
 			new CallableVersion(Type.INT_OR_NULL, new Type[] { Type.INT_OR_NULL }));
-		method("getCellToUseChip", "Fight", 38080, true, new CallableVersion[] {
+		method("getCellToUseChip", "Fight", FightClass.FULL_SEARCH_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 		}).since(5, Type.INT_OR_NULL);
-		method("getCellToUseChipOnCell", "Fight", 38080, true, new CallableVersion[] {
+		method("getCellToUseChipOnCell", "Fight", FightClass.FULL_SEARCH_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL, Type.ARRAY_INT_OR_NULL }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT_OR_NULL }),
 		}).since(5, Type.INT_OR_NULL);
 		method("getEnemiesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		method("getAlliesLife", "Fight", 50, true, Type.INT, new Type[0]);
 		// keepNull : la cible arrive brute à la surcharge Object de FightClass, null ne vaut pas 0
-		method("moveToward", "Fight", 500, true, new CallableVersion[] {
+		method("moveToward", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
-		method("moveTowardCell", "Fight", 500, true, new CallableVersion[] {
+		method("moveTowardCell", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
-		method("moveTowardLeeks", "Fight", 500, true, new CallableVersion[] {
+		method("moveTowardLeeks", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
-		method("moveTowardEntities", "Fight", 500, true, new CallableVersion[] {
+		method("moveTowardEntities", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
-		method("moveTowardCells", "Fight", 500, true, new CallableVersion[] {
+		method("moveTowardCells", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
-		method("moveAwayFrom", "Fight", 500, true, new CallableVersion[] {
+		method("moveAwayFrom", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
-		method("moveAwayFromCell", "Fight", 500, true, new CallableVersion[] {
+		method("moveAwayFromCell", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }).keepNull(0),
 			new CallableVersion(Type.INT, new Type[] { Type.INT }).keepNull(0),
 		});
-		method("moveAwayFromCells", "Fight", 500, true, new CallableVersion[] {
+		method("moveAwayFromCells", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
-		method("moveAwayFromLeeks", "Fight", 500, true, new CallableVersion[] {
+		method("moveAwayFromLeeks", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
-		method("moveAwayFromEntities", "Fight", 500, true, new CallableVersion[] {
+		method("moveAwayFromEntities", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.ARRAY_INT }),
 		});
-		method("moveAwayFromLine", "Fight", 500, true, new CallableVersion[] {
+		method("moveAwayFromLine", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
 		});
-		method("moveTowardLine", "Fight", 500, true, new CallableVersion[] {
+		method("moveTowardLine", "Fight", FightClass.MOVE_COST, true, new CallableVersion[] {
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT, Type.INT }),
 			new CallableVersion(Type.INT, new Type[] { Type.INT, Type.INT }),
 		});

@@ -811,10 +811,9 @@ public class PolyglotEntityAI extends EntityAI {
 	 * URI : l'instrument n'exempte que les deux ensemble (image combined-13).
 	 */
 	public static Source preludeSource(String languageId, String name, String code) {
-		return Source.newBuilder(languageId, code, "lw:" + name).uri(java.net.URI.create(PRELUDE_URI_SCHEME + ":" + name)).buildLiteral();
+		return Source.newBuilder(languageId, code, StatementCounter.PRELUDE_NAME_PREFIX + name)
+			.uri(java.net.URI.create(StatementCounter.PRELUDE_URI_SCHEME + ":" + name)).buildLiteral();
 	}
-
-	public static final String PRELUDE_URI_SCHEME = "lwprelude";
 
 	/**
 	 * Evalue du code de CONFIANCE du generator (preludes : API objet, gardes, enveloppes de
@@ -894,9 +893,14 @@ public class PolyglotEntityAI extends EntityAI {
 	 * remplacee par une valeur vide, pour ne pas etre copiee hors de l'isolate a chaque tour.
 	 */
 	private String flatSource(String code) {
-		if (!discardReturn && !isInHook()) return code;
-		return code + ("js".equals(languageId) ? "\n;void 0;" : "\nNone\n");
+		if (!discardsResult()) return code;
+		if (discardedSource == null) discardedSource = code + ("js".equals(languageId) ? "\n;void 0;" : "\nNone\n");
+		return discardedSource;
 	}
+
+	// Variantes du source qui jettent leur valeur, construites une fois (pas de copie par tour)
+	private String discardedSource;
+	private String discardedReplay;
 
 	/** Tours suivants d'une IA plate (sans turn()). */
 	private Value replayFlatTurn() {
@@ -905,7 +909,9 @@ public class PolyglotEntityAI extends EntityAI {
 		}
 		if ("js".equals(languageId)) {
 			// IIFE anonyme (scope frais) : evite la collision "already declared" d'une re-eval top-level.
-			return context.eval(languageId, (discardReturn ? "void " : "") + "(function(){" + source + "\n})()");
+			if (!discardsResult()) return context.eval(languageId, "(function(){" + source + "\n})()");
+			if (discardedReplay == null) discardedReplay = "void (function(){" + source + "\n})()";
+			return context.eval(languageId, discardedReplay);
 		}
 		return context.eval(languageId, flatSource(source)); // Python (et autres) : re-eval brut
 	}
@@ -950,17 +956,15 @@ public class PolyglotEntityAI extends EntityAI {
 		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
 		// ramenait {length: 2**32} a 0.
 		+ "var N=Number,MF=Math.floor,MM=Math.min,MAXS=9007199254740991;"
-		+ "function len(n){if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),MAXS):0;}"
-		+ "function L(o){return len(o.length);}"
+		+ "var E=[];function L(o){var n=o.length;if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),MAXS):0;}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
-		+ "function wrapLen(P,name,size){var o=P[name];if(!o)return;"
-		+ "seal(P,name,function(){ch(size(this,arguments));return RA(o,this,arguments);});}"
+		+ "function wrapLen(P,name,cost){var o=P[name];if(!o)return;"
+		+ "seal(P,name,function(){ch(cost(this));return RA(o,this,arguments);});}"
 		// copie -> cout = longueur du RESULTAT (facture APRES, exact)
 		+ "function wrapRes(P,name){var o=P[name];if(!o)return;"
 		+ "seal(P,name,function(){var r=RA(o,this,arguments);ch(r==null?0:L(r));return r;});}"
-		+ "function self(o){return L(o);}"
 		+ "var AP=Array.prototype;"
-		+ "['sort','fill','reverse','join','copyWithin','splice','toSorted','toReversed','toSpliced','with'].forEach(function(n){wrapLen(AP,n,self);});"
+		+ "['sort','fill','reverse','join','copyWithin','splice','toSorted','toReversed','toSpliced','with'].forEach(function(n){wrapLen(AP,n,L);});"
 		+ "['slice','concat','flat'].forEach(function(n){wrapRes(AP,n);});"
 		+ "wrapRes(Array,'from');"
 		// Chaines : convertie UNE fois et passee telle quelle au natif (un toString du joueur ne repond
@@ -988,7 +992,7 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;seal(XP,k,function(x,y){"
 		+ "if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);ch(s.length);"
 		+ "return copy(o,this,arguments.length>1?[s,y]:[s]);});});"
-		+ "function isRegExp(x){var m=x[SM];if(m!==undefined)return !!m;try{RA(SRC,x,[]);return x!==XP;}catch(e){return false;}}"
+		+ "function isRegExp(x){var m=x[SM];if(m!==undefined)return !!m;try{RA(SRC,x,E);return x!==XP;}catch(e){return false;}}"
 		+ "function wrapReplace(P,name,K,all){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
 		+ "if(bad(this))return RA(o,this,arguments);var s=str(this),n=arguments.length;"
 		+ "if(x!=null&&(typeof x==='object'||typeof x==='function')){"
@@ -1003,7 +1007,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Tableaux types : memes parcours natifs que Array, longueur du receveur facturee avant.
 		// Longueur interne ([[ArrayLength]]) par le getter d'origine : this.length se redefinit.
 		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get,TB=Object.getOwnPropertyDescriptor(TA,'buffer').get;"
-		+ "function tl(o){return RA(TL,o,[]);}"
+		+ "function tl(o){return RA(TL,o,E);}"
 		+ "['sort','fill','reverse','join','copyWithin','set','toSorted','toReversed','with'].forEach(function(n){wrapLen(TA,n,tl);});"
 		// Allocations de tampons : 1 unite par 8 octets (le quad LeekScript), facturee AVANT d'allouer
 		// pour qu'un budget epuise refuse l'allocation. Taille convertie UNE fois (valueOf du joueur) et
@@ -1016,9 +1020,9 @@ public class PolyglotEntityAI extends EntityAI {
 		// La plage [debut, fin[ est convertie ici (valueOf du joueur une fois) et passee telle quelle.
 		+ "var credit=0;function charge(c){if(credit>0){var d=MM(c,credit);credit-=d;c-=d;}ch(c);}"
 		+ "function rel(v,n,d){if(v===undefined)return d;v=N(v);v=v!==v?0:v<0?-MF(-v):MF(v);return v<0?(n+v>0?n+v:0):(v<n?v:n);}"
-		+ "function wrapCopy(P,name,len,units){var o=P&&P[name];if(!o)return;seal(P,name,function(a,b){"
+		+ "function wrapCopy(P,name,lengthOf,units){var o=P[name];if(!o)return;seal(P,name,function(a,b){"
 		+ "if(typeof a==='bigint'||typeof b==='bigint')return RA(o,this,arguments);"
-		+ "var n=len(this),i=rel(a,n,0),j=rel(b,n,n),c=units(j>i?j-i:0);ch(c);var prev=credit;credit=c;try{return RA(o,this,[i,j]);}finally{credit=prev;}});}"
+		+ "var n=lengthOf(this),i=rel(a,n,0),j=rel(b,n,n),c=units(j>i?j-i:0);ch(c);var prev=credit;credit=c;try{return RA(o,this,[i,j]);}finally{credit=prev;}});}"
 		+ "function wrapCtor(name,construct){var K=globalThis[name];if(!K)return;"
 		+ "var P=new Proxy(K,{construct:construct});seal(K.prototype,'constructor',P);seal(globalThis,name,P);}"
 		+ "['ArrayBuffer','SharedArrayBuffer'].forEach(function(name){wrapCtor(name,function(t,a,nt){"
@@ -1030,16 +1034,16 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "['Int8Array','Uint8Array','Uint8ClampedArray','Int16Array','Uint16Array','Int32Array','Uint32Array','Float32Array','Float64Array','BigInt64Array','BigUint64Array','Float16Array']"
 		+ ".forEach(function(name){var K=globalThis[name];if(!K)return;var B=K.BYTES_PER_ELEMENT;wrapCtor(name,function(t,a,nt){var x=a[0];"
 		+ "if(typeof x!=='object'&&typeof x!=='function'&&x!==undefined){var n=size(x);charge(q(n,B));return RC(t,[n],nt);}"
-		+ "var r=RC(t,a,nt);if(RA(TB,r,[])!==x)ch(tl(r));return r;});});"
+		+ "var r=RC(t,a,nt);if(RA(TB,r,E)!==x)ch(tl(r));return r;});});"
 		+ "wrapCopy(TA,'slice',tl,function(n){return n;});"
 		// Agrandir ou transferer un tampon : sa nouvelle taille, convertie une fois
-		+ "function wrapGrow(P,name,current){var o=P&&P[name];if(!o)return;seal(P,name,function(x){"
-		+ "if(x===undefined){ch(q(RA(current,this,[]),1));return RA(o,this,[]);}var n=size(x);ch(q(n,1));return RA(o,this,[n]);});}"
+		+ "function wrapGrow(P,name,current){var o=P[name];if(!o)return;seal(P,name,function(x){"
+		+ "if(x===undefined){ch(q(RA(current,this,E),1));return RA(o,this,[]);}var n=size(x);ch(q(n,1));return RA(o,this,[n]);});}"
 		+ "var ABP=ArrayBuffer.prototype,BL=Object.getOwnPropertyDescriptor(ABP,'byteLength').get;"
 		+ "['resize','transfer','transferToFixedLength'].forEach(function(n){wrapGrow(ABP,n,BL);});"
-		+ "function bytes8(n){return q(n,1);}wrapCopy(ABP,'slice',function(o){return RA(BL,o,[]);},bytes8);"
+		+ "function bytes8(n){return q(n,1);}wrapCopy(ABP,'slice',function(o){return RA(BL,o,E);},bytes8);"
 		+ "if(typeof SharedArrayBuffer!=='undefined'){var SBP=SharedArrayBuffer.prototype,SL=Object.getOwnPropertyDescriptor(SBP,'byteLength').get;"
-		+ "wrapGrow(SBP,'grow',SL);wrapCopy(SBP,'slice',function(o){return RA(SL,o,[]);},bytes8);}"
+		+ "wrapGrow(SBP,'grow',SL);wrapCopy(SBP,'slice',function(o){return RA(SL,o,E);},bytes8);}"
 		// Hooks consommes (puis retires du global) par JS_NATIVE_COSTS, l'override de System.operations
 		// (pending : charges accumulees pas encore flushees, pour un compteur exact a la lecture) et
 		// l'hote (flush en fin de tour, cf captureChargeFlush).
@@ -1592,7 +1596,7 @@ public class PolyglotEntityAI extends EntityAI {
 			// contexte (le tour suivant en reconstruit un neuf, donc l'interruption ne touche aucun tour
 			// suivant) et SUBSTITUE un depassement a l'issue du tour. Le throw depuis le finally n'est PAS
 			// re-capturable par les catch ci-dessus -> pas de double comptage.
-			refreshHooks(execution); // meme apres une erreur du tour (limite d'ops...) : afterFight reste connu
+			refreshHooks(execution, AFTER_TURN_HOOKS); // meme apres une erreur du tour (limite d'ops...) : afterFight reste connu
 			flushPendingCharges(); // charges de builtins/natifs du tour -> compteur reel, avant le snapshot
 			snapshotTurnOperations(); // avant la resolution de la course : elle peut lever
 			settle(execution, turnOperations);
@@ -1611,12 +1615,21 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Rien si le chien de garde a deja tire : plus rien n'interromprait un getter qui bloque.
 	 */
 	private void refreshHooks(Execution execution) {
-		hooks.clear();
-		if (execution.settled().get()) return;
+		refreshHooks(execution, HOOK_NAMES);
+	}
+
+	/** Apres un tour, seul afterFight peut encore etre appele : une resolution, pas deux. */
+	private static final Set<String> AFTER_TURN_HOOKS = Set.of("afterFight");
+
+	private void refreshHooks(Execution execution, Set<String> names) {
+		if (execution.settled().get()) {
+			hooks.clear();
+			return;
+		}
 		try {
-			for (String name : HOOK_NAMES) {
+			for (String name : names) {
 				Value fn = resolveGuestFunction(name);
-				if (fn != null) hooks.put(name, fn);
+				if (fn != null) hooks.put(name, fn); else hooks.remove(name);
 			}
 		} catch (Throwable unusable) {
 			// Appele dans des finally : ne doit pas masquer l'issue de l'execution (RAM, pile...)
@@ -1625,11 +1638,20 @@ public class PolyglotEntityAI extends EntityAI {
 	}
 
 	private Value executeTurn() {
-		return discardReturn && discardCall != null ? discardCall.execute(entry) : entry.execute();
+		return discardsResult() ? callDiscarding(entry) : entry.execute();
 	}
 
 	/** Tour de combat en cours : sa valeur de retour, ignoree, n'est pas copiee cote hote. */
 	private boolean discardReturn = false;
+
+	/** Valeur de l'execution ignoree (tour de combat, hook) : jetee cote guest, pas copiee hors de l'isolate. */
+	private boolean discardsResult() {
+		return discardReturn || isInHook();
+	}
+
+	private Value callDiscarding(Value fn) {
+		return discardCall != null ? discardCall.execute(fn) : fn.execute();
+	}
 
 	/**
 	 * En combat, le retour de turn() n'est pas lu : le convertir copiait une chaine du joueur (jusqu'a la
@@ -1740,7 +1762,7 @@ public class PolyglotEntityAI extends EntityAI {
 			markHookRun(name); // avant l'appel : un hook qui LEVE a bien tourne (l'erreur est rapportee)
 			try {
 				// Valeur de retour ignoree : jetee cote guest, comme celle de turn()
-				if (discardCall != null) discardCall.execute(hook); else hook.execute();
+				callDiscarding(hook);
 			} finally {
 				refreshHooks(execution); // beforeFight peut definir ou retirer afterFight
 			}
