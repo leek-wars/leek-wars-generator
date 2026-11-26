@@ -950,7 +950,7 @@ public class PolyglotEntityAI extends EntityAI {
 		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
 		// ramenait {length: 2**32} a 0.
 		+ "var N=Number,MF=Math.floor,MM=Math.min,MAXS=9007199254740991;"
-		+ "function len(n){if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),9007199254740991):0;}"
+		+ "function len(n){if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),MAXS):0;}"
 		+ "function L(o){return len(o.length);}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
 		+ "function wrapLen(P,name,size){var o=P[name];if(!o)return;"
@@ -974,21 +974,26 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "if(bad(this))return RA(o,this,arguments);var s=str(this);ch(s.length);return RA(o,s,arguments);});}"
 		+ "['repeat','padStart','padEnd','concat'].forEach(function(n){wrapRes(SP,n);});"
 		+ "['toUpperCase','toLowerCase','toLocaleUpperCase','toLocaleLowerCase','normalize','trim','trimStart','trimEnd','toWellFormed'].forEach(function(n){wrapStr(SP,n);});"
-		// Remplacement et decoupage : la chaine facturee avant, la copie produite apres. Une vraie RegExp
-		// (reconnue par son slot interne, qu'un getter ne trompe pas) passe par la methode facturee
-		// ci-dessous ; tout autre motif est converti une fois en chaine et passe tel quel.
-		+ "var XP=RegExp.prototype,SRC=Object.getOwnPropertyDescriptor(XP,'source').get,GL=Object.getOwnPropertyDescriptor(XP,'global').get;"
-		+ "function isRegExp(x){if(x===XP||x==null||typeof x!=='object')return false;try{RA(SRC,x,[]);return true;}catch(e){return false;}}"
-		+ "var XR={};[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;XR[k===SR?'r':'s']=function(x,y){"
+		// Remplacement et decoupage : la chaine facturee avant, la copie produite apres ; un appel qui
+		// leve en route (longueur maximale atteinte, remplaceur qui leve) a pu copier jusqu'a la
+		// longueur maximale d'une chaine : facturee telle quelle. Un motif objet qui a sa methode
+		// Symbol.replace/split la voit appelee, lue UNE fois (un getter ne repond pas deux choses) ;
+		// la RegExp passe ainsi par sa methode facturee ci-dessous. Tout autre motif est converti une
+		// fois en chaine et passe tel quel.
+		+ "var XP=RegExp.prototype,SRC=Object.getOwnPropertyDescriptor(XP,'source').get,SM=Symbol.match,IO=SP.indexOf,MAXSTR=1073741824;"
+		+ "function copy(f,t,a){var v;try{v=RA(f,t,a);}catch(e){ch(MAXSTR);throw e;}ch(v.length);return v;}"
+		+ "[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;seal(XP,k,function(x,y){"
 		+ "if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);ch(s.length);"
-		+ "var v=RA(o,this,arguments.length>1?[s,y]:[s]);ch(v.length);return v;};seal(XP,k,XR[k===SR?'r':'s']);});"
-		+ "function wrapReplace(P,name,split,all){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
-		+ "if(bad(this))return RA(o,this,arguments);var s=str(this);"
-		+ "var m=split?XR.s:XR.r;if(m&&isRegExp(x)){if(all&&!RA(GL,x,[]))throw new TypeError('replaceAll must be called with a global RegExp');"
-		+ "return RA(m,x,arguments.length>1?[s,y]:[s]);}"
-		+ "var p=split&&x===undefined?x:str(x);ch(s.length);"
-		+ "var v=RA(o,s,arguments.length>1?[p,split||typeof y==='function'?y:str(y)]:[p]);ch(v.length);return v;});}"
-		+ "wrapReplace(SP,'replace',false,false);wrapReplace(SP,'replaceAll',false,true);wrapReplace(SP,'split',true,false);"
+		+ "return copy(o,this,arguments.length>1?[s,y]:[s]);});});"
+		+ "function isRegExp(x){var m=x[SM];if(m!==undefined)return !!m;try{RA(SRC,x,[]);return x!==XP;}catch(e){return false;}}"
+		+ "function wrapReplace(P,name,K,all){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
+		+ "if(bad(this))return RA(o,this,arguments);var s=str(this),n=arguments.length;"
+		+ "if(x!=null&&(typeof x==='object'||typeof x==='function')){"
+		+ "if(all&&isRegExp(x)){var fl=x.flags;if(fl==null||RA(IO,str(fl),['g'])<0)throw new TypeError('replaceAll must be called with a global RegExp');}"
+		+ "var f=x[K];if(f!=null)return RA(f,x,n>1?[s,y]:[s]);}"
+		+ "var p=K===SS&&x===undefined?x:str(x);ch(s.length);"
+		+ "return copy(o,s,n>1?[p,K===SS||typeof y==='function'?y:str(y)]:[p]);});}"
+		+ "wrapReplace(SP,'replace',SR,false);wrapReplace(SP,'replaceAll',SR,true);wrapReplace(SP,'split',SS,false);"
 		+ "wrapRes(JSON,'stringify');"
 		+ "(function(){var o=JSON.parse;seal(JSON,'parse',function(x,y){if(typeof x==='symbol')return RA(o,JSON,arguments);"
 		+ "var s=str(x);ch(s.length);return RA(o,JSON,arguments.length>1?[s,y]:[s]);});})();"

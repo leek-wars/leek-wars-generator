@@ -106,6 +106,19 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			Assert.assertEquals(1L, jsOps(sb, "", "try { 'aa'.replaceAll(/a/, 'b'); return 0; } catch (e) { return e instanceof TypeError ? 1 : 0; }"));
 			Assert.assertEquals(1L, jsOps(sb, "", "return 'xundefinedy'.split().length"));
 			Assert.assertEquals(1L, jsOps(sb, "", "return 'a-b'.replace(/-/g, '+') === 'a+b' && 'a,b'.split(/,/).length === 2 && 'abc'.replaceAll('b', '$&$&') === 'abbc' ? 1 : 0"));
+			// Methode propre au motif : appelee, comme en JS natif
+			Assert.assertEquals(1L, jsOps(sb, "", "class R extends RegExp { [Symbol.replace](s) { return 'custom'; } } return 'abc'.replace(new R('b'), 'x') === 'custom' && 'a-b'.split({[Symbol.split](s){ return ['X']; }})[0] === 'X' ? 1 : 0"));
+			// Copie interrompue par la longueur maximale : facturee quand meme
+			PolyglotEntityAI cut = ai(sb, "js", "var s = 'a'.repeat(46341);\nfunction turn(){ for (var i = 0; i < 3; i++) { try { s.replaceAll('a', '$`'); } catch (e) {} } return 1; }");
+			leek1.setCores(1);
+			try {
+				cut.runIA();
+				Assert.fail("trois copies interrompues a la longueur maximale depassent un million d'operations");
+			} catch (LeekRunException e) {
+				// facturee (operations) ou bornee par le plafond RAM du contexte : jamais gratuite
+				assertTrue(e.getError() == Error.TOO_MUCH_OPERATIONS || e.getError() == Error.OUT_OF_MEMORY);
+			}
+			leek1.setCores(200);
 			// buffer redefini : la copie d'une source reste facturee
 			assertTrue("buffer redefini", jsOps(sb, "var src = new Array(1000000).fill(0); Object.defineProperty(Object.getPrototypeOf(Int8Array.prototype), 'buffer', {get: function(){ return src; }});", "new Float64Array(src)") >= 1_000_000);
 			// Le constructeur d'origine n'est pas rejoignable par une instance
