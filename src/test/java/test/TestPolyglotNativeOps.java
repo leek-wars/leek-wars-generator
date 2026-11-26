@@ -90,15 +90,26 @@ public class TestPolyglotNativeOps extends FightTestBase {
 				"return String.prototype.toUpperCase.call({toString: function(){ return (k++ & 1) ? big : ''; }}).length"));
 			assertTrue("transfer, taille lue une fois", jsOps(sb, "var b = new ArrayBuffer(8); var k = 0;",
 				"b.transfer({valueOf: function(){ return k++ ? 0 : 8000000; }})") >= 1_000_000);
-			// Copies par constructeur d'espece : facturees une fois, pas deux
+			// Copies par constructeur d'espece : facturees une fois, pas deux, et meme sans lui
 			long slice = jsOps(sb, "var f = new Float64Array(1000000);", "f.slice()");
 			assertTrue("slice facture une fois (" + slice + ")", slice >= 1_000_000 && slice < 1_500_000);
+			assertTrue("slice sans constructeur d'espece", jsOps(sb, "var f = new Float64Array(1000000); Object.defineProperty(f, 'constructor', {value: undefined});", "f.slice()") >= 1_000_000);
+			assertTrue("ArrayBuffer.slice sans constructeur d'espece", jsOps(sb, "var b = new ArrayBuffer(8000000); Object.defineProperty(b, 'constructor', {value: undefined});", "b.slice()") >= 1_000_000);
+			Assert.assertTrue("slice partiel au prorata", jsOps(sb, "var f = new Float64Array(1000000);", "f.slice(10, 20)") < 10_000);
+			// Remplacement : copie facturee avant, motif $ compris ; RegExp facturee une fois
+			assertTrue("remplacement $`", jsOps(sb, "var s = 'a'.repeat(3000);", "try { s.replaceAll('a', '$`'); } catch (e) {}") >= 1_000_000);
+			long regex = jsOps(sb, "var s = 'a'.repeat(1000000);", "s.replace(/a/g, 'b')");
+			assertTrue("RegExp facturee une fois (" + regex + ")", regex >= 1_000_000 && regex < 4_000_000);
+			// buffer redefini : la copie d'une source reste facturee
+			assertTrue("buffer redefini", jsOps(sb, "var src = new Array(1000000).fill(0); Object.defineProperty(Object.getPrototypeOf(Int8Array.prototype), 'buffer', {get: function(){ return src; }});", "new Float64Array(src)") >= 1_000_000);
 			// Le constructeur d'origine n'est pas rejoignable par une instance
 			assertTrue("constructor", jsOps(sb, "", "new (new ArrayBuffer(8).constructor)(8000000)") >= 1_000_000);
 			// Semantique inchangee : instanceof, erreurs du natif, vue sur un tampon (gratuite)
 			Assert.assertEquals(1L, jsOps(sb, "", "return (new ArrayBuffer(8) instanceof ArrayBuffer) && (new Uint8Array(4) instanceof Uint8Array) ? 1 : 0"));
 			// Tailles hors bornes : l'erreur du natif, rattrapable, pas une facture qui tue le tour
 			Assert.assertEquals(1L, jsOps(sb, "", "try { new ArrayBuffer(Infinity); return 0; } catch (e) { return e instanceof RangeError ? 1 : 0; }"));
+			Assert.assertEquals(1L, jsOps(sb, "", "try { new ArrayBuffer(1e15); return 0; } catch (e) { return e instanceof RangeError ? 1 : 0; }"));
+			Assert.assertEquals(1L, jsOps(sb, "", "try { String.prototype.trim.call(null); return 0; } catch (e) { return e instanceof TypeError ? 1 : 0; }"));
 			Assert.assertEquals(1L, jsOps(sb, "", "try { new Uint8Array(10n); return 0; } catch (e) { return e instanceof TypeError ? 1 : 0; }"));
 		}
 	}

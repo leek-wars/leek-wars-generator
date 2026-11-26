@@ -894,7 +894,7 @@ public class PolyglotEntityAI extends EntityAI {
 	 * remplacee par une valeur vide, pour ne pas etre copiee hors de l'isolate a chaque tour.
 	 */
 	private String flatSource(String code) {
-		if (!discardReturn) return code;
+		if (!discardReturn && !isInHook()) return code;
 		return code + ("js".equals(languageId) ? "\n;void 0;" : "\nNone\n");
 	}
 
@@ -940,7 +940,8 @@ public class PolyglotEntityAI extends EntityAI {
 	 * Wraps SCELLES (writable/configurable false, comme les gardes de determinisme).
 	 */
 	private static final String JS_CHARGE_GUARD =
-		"(function(){var C=globalThis.__lw_charge;if(!C)return;"
+		// Mode strict : un receveur null ou primitif arrive tel quel aux enveloppes, comme au natif.
+		"(function(){'use strict';var C=globalThis.__lw_charge;if(!C)return;"
 		+ "var acc=0;var FLUSH=4096;function ch(n){acc+=n;if(acc>=FLUSH){C(acc);acc=0;}}"
 		// Appels par Reflect.apply/construct CAPTURES ici : o.apply se resolvait sur Function.prototype au
 		// moment de l'appel, et un apply redefini par le joueur sautait la facturation des copies.
@@ -948,7 +949,7 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "function seal(o,n,v){DP(o,n,{value:v,writable:false,configurable:false});}"
 		// Longueur d'un receveur facture : ToLength (jusqu'a 2^53-1 pour un array-like), pas >>>0 qui
 		// ramenait {length: 2**32} a 0.
-		+ "var N=Number,MF=Math.floor,MM=Math.min;"
+		+ "var N=Number,MF=Math.floor,MM=Math.min,MAXS=9007199254740991;"
 		+ "function len(n){if((n>>>0)===n)return n;n=N(n);return n>0?MM(MF(n),9007199254740991):0;}"
 		+ "function L(o){return len(o.length);}"
 		// parcours complet -> cout = longueur du receveur (facture AVANT le travail)
@@ -963,53 +964,76 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "['slice','concat','flat'].forEach(function(n){wrapRes(AP,n);});"
 		+ "wrapRes(Array,'from');"
 		// Chaines : convertie UNE fois et passee telle quelle au natif (un toString du joueur ne repond
-		// pas une chaine courte a la facture et une longue au travail), facturee avant ; un
-		// remplacement facture aussi sa copie, apres. Symbol : le natif leve, comme sans l'enveloppe.
+		// pas une chaine courte a la facture et une longue au travail), facturee avant. Receveur null
+		// ou Symbol : le natif leve, comme sans l'enveloppe.
 		+ "var SP=String.prototype;"
-		+ "function str(o){return typeof o==='string'?o:String(o);}"
-		+ "function wrapStr(P,name,after){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
-		+ "if(this==null||typeof this==='symbol')return RA(o,this,arguments);var s=str(this);ch(s.length);"
-		+ "var r=RA(o,s,arguments);if(after)ch(r.length);return r;});}"
+		+ "var S0=String,IO=SP.indexOf,SR=Symbol.replace,SS=Symbol.split;"
+		+ "function str(o){return typeof o==='string'?o:S0(o);}"
+		+ "function bad(o){return o==null||typeof o==='symbol';}"
+		+ "function wrapStr(P,name){var o=P[name];if(!o)return;seal(P,name,function(){"
+		+ "if(bad(this))return RA(o,this,arguments);var s=str(this);ch(s.length);return RA(o,s,arguments);});}"
 		+ "['repeat','padStart','padEnd','concat'].forEach(function(n){wrapRes(SP,n);});"
-		+ "['split','toUpperCase','toLowerCase','toLocaleUpperCase','toLocaleLowerCase','normalize','trim','trimStart','trimEnd','toWellFormed'].forEach(function(n){wrapStr(SP,n,false);});"
-		+ "wrapStr(SP,'replace',true);wrapStr(SP,'replaceAll',true);"
-		// Les memes travaux par une RegExp : la chaine en argument
-		+ "var XP=RegExp.prototype;[[Symbol.replace,true],[Symbol.split,false]].forEach(function(e){var k=e[0],o=XP[k];if(!o)return;"
-		+ "seal(XP,k,function(x,y){if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);ch(s.length);"
-		+ "var r=RA(o,this,arguments.length>1?[s,y]:[s]);if(e[1])ch(r.length);return r;});});"
+		+ "['toUpperCase','toLowerCase','toLocaleUpperCase','toLocaleLowerCase','normalize','trim','trimStart','trimEnd','toWellFormed'].forEach(function(n){wrapStr(SP,n);});"
+		// Remplacement : sa copie est facturee AVANT, sur une borne (chaque occurrence remplacee par la
+		// chaine de remplacement, ou par toute la chaine pour un motif $ qui en recopie une partie) ;
+		// avec une fonction de remplacement, apres. Un motif qui a sa propre methode (RegExp) lui
+		// delegue le travail, et c'est elle qui facture.
+		+ "function bound(s,pat,rep,all){if(typeof rep!=='string')return s.length;"
+		+ "var n=all?(pat.length?MF(s.length/pat.length):s.length+1):1;var per=RA(IO,rep,['$'])<0?rep.length:rep.length*(s.length+1);"
+		+ "return MM(s.length+n*per,MAXS);}"
+		+ "function wrapReplace(P,name,K,all){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
+		+ "if(bad(this)||(x!=null&&(typeof x==='object'||typeof x==='function')&&x[K]!=null))return RA(o,this,arguments);"
+		+ "var s=str(this),p=str(x);if(K===SS){ch(s.length);return RA(o,s,arguments.length>1?[p,y]:[p]);}"
+		+ "var r=typeof y==='function'?y:str(y);ch(bound(s,p,r,all));var v=RA(o,s,[p,r]);if(typeof r==='function')ch(v.length);return v;});}"
+		+ "wrapReplace(SP,'replace',SR,false);wrapReplace(SP,'replaceAll',SR,true);wrapReplace(SP,'split',SS,false);"
+		// Les memes travaux par une RegExp : la chaine en argument, une occurrence par caractere au pire
+		+ "var XP=RegExp.prototype;[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;"
+		+ "seal(XP,k,function(x,y){if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);"
+		+ "if(k===SS){ch(s.length);return RA(o,this,arguments.length>1?[s,y]:[s]);}"
+		+ "var r=typeof y==='function'?y:str(y);ch(bound(s,'',r,true));var v=RA(o,this,[s,r]);if(typeof r==='function')ch(v.length);return v;});});"
 		+ "wrapRes(JSON,'stringify');"
 		+ "(function(){var o=JSON.parse;seal(JSON,'parse',function(x,y){if(typeof x==='symbol')return RA(o,JSON,arguments);"
 		+ "var s=str(x);ch(s.length);return RA(o,JSON,arguments.length>1?[s,y]:[s]);});})();"
 		// Tableaux types : memes parcours natifs que Array, longueur du receveur facturee avant.
 		// Longueur interne ([[ArrayLength]]) par le getter d'origine : this.length se redefinit.
-		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get;"
+		+ "var TA=Object.getPrototypeOf(Int8Array.prototype),TL=Object.getOwnPropertyDescriptor(TA,'length').get,TB=Object.getOwnPropertyDescriptor(TA,'buffer').get;"
 		+ "function tl(o){return RA(TL,o,[]);}"
 		+ "['sort','fill','reverse','join','copyWithin','set','toSorted','toReversed','with'].forEach(function(n){wrapLen(TA,n,tl);});"
 		// Allocations de tampons : 1 unite par 8 octets (le quad LeekScript), facturee AVANT d'allouer
 		// pour qu'un budget epuise refuse l'allocation. Taille convertie UNE fois (valueOf du joueur) et
-		// passee telle quelle ; hors bornes (negative, infinie, BigInt), non facturee : le natif leve.
-		// Le constructeur d'une instance est l'enveloppe : slice, from et of creent leur resultat par
-		// elle (constructeur d'espece), donc factures une fois, par elle.
-		+ "var MAXS=9007199254740991;function size(n){return typeof n==='bigint'?n:N(n);}"
-		+ "function q(n,b){return typeof n==='number'&&n>0&&n<=MAXS?MF(n*b/8):0;}"
+		// passee telle quelle ; au-dela de ce que le moteur alloue (2^31 octets), negative ou BigInt, non
+		// facturee : le natif leve une erreur rattrapable.
+		+ "var MAXB=2147483648;function size(n){return typeof n==='bigint'?n:N(n);}"
+		+ "function q(n,b){return typeof n==='number'&&n>0&&n*b<=MAXB?MF(n*b/8):0;}"
+		// Copie d'un tampon ou d'un tableau type (slice) : facturee AVANT, quel que soit le constructeur
+		// d'espece choisi par le joueur ; le credit evite que l'enveloppe du constructeur la refacture.
+		// La plage [debut, fin[ est convertie ici (valueOf du joueur une fois) et passee telle quelle.
+		+ "var credit=0;function charge(c){if(credit>0){var d=MM(c,credit);credit-=d;c-=d;}ch(c);}"
+		+ "function rel(v,n,d){if(v===undefined)return d;v=N(v);v=v!==v?0:v<0?-MF(-v):MF(v);return v<0?(n+v>0?n+v:0):(v<n?v:n);}"
+		+ "function wrapCopy(P,name,len,units){var o=P&&P[name];if(!o)return;seal(P,name,function(a,b){"
+		+ "if(typeof a==='bigint'||typeof b==='bigint')return RA(o,this,arguments);"
+		+ "var n=len(this),i=rel(a,n,0),j=rel(b,n,n),c=units(j>i?j-i:0);ch(c);credit=c;try{return RA(o,this,[i,j]);}finally{credit=0;}});}"
 		+ "function wrapCtor(name,construct){var K=globalThis[name];if(!K)return;"
 		+ "var P=new Proxy(K,{construct:construct});seal(K.prototype,'constructor',P);seal(globalThis,name,P);}"
 		+ "['ArrayBuffer','SharedArrayBuffer'].forEach(function(name){wrapCtor(name,function(t,a,nt){"
 		+ "var n=size(a[0]);var o=a[1];var m=o!=null&&typeof o==='object'?o.maxByteLength:undefined;"
-		+ "if(m===undefined){ch(q(n,1));return RC(t,[n],nt);}"
-		+ "m=size(m);ch(q(typeof m==='number'&&m>n?m:n,1));return RC(t,[n,{maxByteLength:m}],nt);});});"
+		+ "if(m===undefined){charge(q(n,1));return RC(t,[n],nt);}"
+		+ "m=size(m);charge(q(typeof m==='number'&&m>n?m:n,1));return RC(t,[n,{maxByteLength:m}],nt);});});"
 		// Tableau type : longueur primitive facturee avant ; vue sur un tampon existant, rien ; copie
 		// d'une source (tableau, iterable), ses elements apres.
 		+ "['Int8Array','Uint8Array','Uint8ClampedArray','Int16Array','Uint16Array','Int32Array','Uint32Array','Float32Array','Float64Array','BigInt64Array','BigUint64Array','Float16Array']"
 		+ ".forEach(function(name){var K=globalThis[name];if(!K)return;var B=K.BYTES_PER_ELEMENT;wrapCtor(name,function(t,a,nt){var x=a[0];"
-		+ "if(typeof x!=='object'&&typeof x!=='function'&&x!==undefined){var n=size(x);ch(q(n,B));return RC(t,[n],nt);}"
-		+ "var r=RC(t,a,nt);if(r.buffer!==x)ch(tl(r));return r;});});"
+		+ "if(typeof x!=='object'&&typeof x!=='function'&&x!==undefined){var n=size(x);charge(q(n,B));return RC(t,[n],nt);}"
+		+ "var r=RC(t,a,nt);if(RA(TB,r,[])!==x)ch(tl(r));return r;});});"
+		+ "wrapCopy(TA,'slice',tl,function(n){return n;});"
 		// Agrandir ou transferer un tampon : sa nouvelle taille, convertie une fois
 		+ "function wrapGrow(P,name,current){var o=P&&P[name];if(!o)return;seal(P,name,function(x){"
 		+ "if(x===undefined){ch(q(RA(current,this,[]),1));return RA(o,this,[]);}var n=size(x);ch(q(n,1));return RA(o,this,[n]);});}"
 		+ "var ABP=ArrayBuffer.prototype,BL=Object.getOwnPropertyDescriptor(ABP,'byteLength').get;"
 		+ "['resize','transfer','transferToFixedLength'].forEach(function(n){wrapGrow(ABP,n,BL);});"
-		+ "if(typeof SharedArrayBuffer!=='undefined'){var SBP=SharedArrayBuffer.prototype;wrapGrow(SBP,'grow',Object.getOwnPropertyDescriptor(SBP,'byteLength').get);}"
+		+ "function bytes8(n){return q(n,1);}wrapCopy(ABP,'slice',function(o){return RA(BL,o,[]);},bytes8);"
+		+ "if(typeof SharedArrayBuffer!=='undefined'){var SBP=SharedArrayBuffer.prototype,SL=Object.getOwnPropertyDescriptor(SBP,'byteLength').get;"
+		+ "wrapGrow(SBP,'grow',SL);wrapCopy(SBP,'slice',function(o){return RA(SL,o,[]);},bytes8);}"
 		// Hooks consommes (puis retires du global) par JS_NATIVE_COSTS, l'override de System.operations
 		// (pending : charges accumulees pas encore flushees, pour un compteur exact a la lecture) et
 		// l'hote (flush en fin de tour, cf captureChargeFlush).
@@ -1709,7 +1733,8 @@ public class PolyglotEntityAI extends EntityAI {
 			}
 			markHookRun(name); // avant l'appel : un hook qui LEVE a bien tourne (l'erreur est rapportee)
 			try {
-				hook.execute();
+				// Valeur de retour ignoree : jetee cote guest, comme celle de turn()
+				if (discardCall != null) discardCall.execute(hook); else hook.execute();
 			} finally {
 				refreshHooks(execution); // beforeFight peut definir ou retirer afterFight
 			}
