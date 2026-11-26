@@ -100,6 +100,12 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			assertTrue("remplacement $`", jsOps(sb, "var s = 'a'.repeat(3000);", "try { s.replaceAll('a', '$`'); } catch (e) {}") >= 1_000_000);
 			long regex = jsOps(sb, "var s = 'a'.repeat(1000000);", "s.replace(/a/g, 'b')");
 			assertTrue("RegExp facturee une fois (" + regex + ")", regex >= 1_000_000 && regex < 4_000_000);
+			// Usages courants : au prorata du travail, pas d'un pire cas
+			Assert.assertTrue("$1 sur 10 000 caracteres", jsOps(sb, "var s = 'a'.repeat(10000);", "s.replace(/(a)/g, '<$1>')") < 100_000);
+			Assert.assertTrue("RegExp sans g", jsOps(sb, "var s = 'a'.repeat(1000000);", "s.replace(/^x/, 'abcdefghij')") < 2_500_000);
+			Assert.assertEquals(1L, jsOps(sb, "", "try { 'aa'.replaceAll(/a/, 'b'); return 0; } catch (e) { return e instanceof TypeError ? 1 : 0; }"));
+			Assert.assertEquals(1L, jsOps(sb, "", "return 'xundefinedy'.split().length"));
+			Assert.assertEquals(1L, jsOps(sb, "", "return 'a-b'.replace(/-/g, '+') === 'a+b' && 'a,b'.split(/,/).length === 2 && 'abc'.replaceAll('b', '$&$&') === 'abbc' ? 1 : 0"));
 			// buffer redefini : la copie d'une source reste facturee
 			assertTrue("buffer redefini", jsOps(sb, "var src = new Array(1000000).fill(0); Object.defineProperty(Object.getPrototypeOf(Int8Array.prototype), 'buffer', {get: function(){ return src; }});", "new Float64Array(src)") >= 1_000_000);
 			// Le constructeur d'origine n'est pas rejoignable par une instance

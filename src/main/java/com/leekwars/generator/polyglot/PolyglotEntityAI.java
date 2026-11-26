@@ -967,30 +967,28 @@ public class PolyglotEntityAI extends EntityAI {
 		// pas une chaine courte a la facture et une longue au travail), facturee avant. Receveur null
 		// ou Symbol : le natif leve, comme sans l'enveloppe.
 		+ "var SP=String.prototype;"
-		+ "var S0=String,IO=SP.indexOf,SR=Symbol.replace,SS=Symbol.split;"
+		+ "var S0=String,SR=Symbol.replace,SS=Symbol.split;"
 		+ "function str(o){return typeof o==='string'?o:S0(o);}"
 		+ "function bad(o){return o==null||typeof o==='symbol';}"
 		+ "function wrapStr(P,name){var o=P[name];if(!o)return;seal(P,name,function(){"
 		+ "if(bad(this))return RA(o,this,arguments);var s=str(this);ch(s.length);return RA(o,s,arguments);});}"
 		+ "['repeat','padStart','padEnd','concat'].forEach(function(n){wrapRes(SP,n);});"
 		+ "['toUpperCase','toLowerCase','toLocaleUpperCase','toLocaleLowerCase','normalize','trim','trimStart','trimEnd','toWellFormed'].forEach(function(n){wrapStr(SP,n);});"
-		// Remplacement : sa copie est facturee AVANT, sur une borne (chaque occurrence remplacee par la
-		// chaine de remplacement, ou par toute la chaine pour un motif $ qui en recopie une partie) ;
-		// avec une fonction de remplacement, apres. Un motif qui a sa propre methode (RegExp) lui
-		// delegue le travail, et c'est elle qui facture.
-		+ "function bound(s,pat,rep,all){if(typeof rep!=='string')return s.length;"
-		+ "var n=all?(pat.length?MF(s.length/pat.length):s.length+1):1;var per=RA(IO,rep,['$'])<0?rep.length:rep.length*(s.length+1);"
-		+ "return MM(s.length+n*per,MAXS);}"
-		+ "function wrapReplace(P,name,K,all){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
-		+ "if(bad(this)||(x!=null&&(typeof x==='object'||typeof x==='function')&&x[K]!=null))return RA(o,this,arguments);"
-		+ "var s=str(this),p=str(x);if(K===SS){ch(s.length);return RA(o,s,arguments.length>1?[p,y]:[p]);}"
-		+ "var r=typeof y==='function'?y:str(y);ch(bound(s,p,r,all));var v=RA(o,s,[p,r]);if(typeof r==='function')ch(v.length);return v;});}"
-		+ "wrapReplace(SP,'replace',SR,false);wrapReplace(SP,'replaceAll',SR,true);wrapReplace(SP,'split',SS,false);"
-		// Les memes travaux par une RegExp : la chaine en argument, une occurrence par caractere au pire
-		+ "var XP=RegExp.prototype;[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;"
-		+ "seal(XP,k,function(x,y){if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);"
-		+ "if(k===SS){ch(s.length);return RA(o,this,arguments.length>1?[s,y]:[s]);}"
-		+ "var r=typeof y==='function'?y:str(y);ch(bound(s,'',r,true));var v=RA(o,this,[s,r]);if(typeof r==='function')ch(v.length);return v;});});"
+		// Remplacement et decoupage : la chaine facturee avant, la copie produite apres. Une vraie RegExp
+		// (reconnue par son slot interne, qu'un getter ne trompe pas) passe par la methode facturee
+		// ci-dessous ; tout autre motif est converti une fois en chaine et passe tel quel.
+		+ "var XP=RegExp.prototype,SRC=Object.getOwnPropertyDescriptor(XP,'source').get,GL=Object.getOwnPropertyDescriptor(XP,'global').get;"
+		+ "function isRegExp(x){if(x===XP||x==null||typeof x!=='object')return false;try{RA(SRC,x,[]);return true;}catch(e){return false;}}"
+		+ "var XR={};[SR,SS].forEach(function(k){var o=XP[k];if(!o)return;XR[k===SR?'r':'s']=function(x,y){"
+		+ "if(typeof x==='symbol')return RA(o,this,arguments);var s=str(x);ch(s.length);"
+		+ "var v=RA(o,this,arguments.length>1?[s,y]:[s]);ch(v.length);return v;};seal(XP,k,XR[k===SR?'r':'s']);});"
+		+ "function wrapReplace(P,name,split,all){var o=P[name];if(!o)return;seal(P,name,function(x,y){"
+		+ "if(bad(this))return RA(o,this,arguments);var s=str(this);"
+		+ "var m=split?XR.s:XR.r;if(m&&isRegExp(x)){if(all&&!RA(GL,x,[]))throw new TypeError('replaceAll must be called with a global RegExp');"
+		+ "return RA(m,x,arguments.length>1?[s,y]:[s]);}"
+		+ "var p=split&&x===undefined?x:str(x);ch(s.length);"
+		+ "var v=RA(o,s,arguments.length>1?[p,split||typeof y==='function'?y:str(y)]:[p]);ch(v.length);return v;});}"
+		+ "wrapReplace(SP,'replace',false,false);wrapReplace(SP,'replaceAll',false,true);wrapReplace(SP,'split',true,false);"
 		+ "wrapRes(JSON,'stringify');"
 		+ "(function(){var o=JSON.parse;seal(JSON,'parse',function(x,y){if(typeof x==='symbol')return RA(o,JSON,arguments);"
 		+ "var s=str(x);ch(s.length);return RA(o,JSON,arguments.length>1?[s,y]:[s]);});})();"
@@ -1012,13 +1010,13 @@ public class PolyglotEntityAI extends EntityAI {
 		+ "function rel(v,n,d){if(v===undefined)return d;v=N(v);v=v!==v?0:v<0?-MF(-v):MF(v);return v<0?(n+v>0?n+v:0):(v<n?v:n);}"
 		+ "function wrapCopy(P,name,len,units){var o=P&&P[name];if(!o)return;seal(P,name,function(a,b){"
 		+ "if(typeof a==='bigint'||typeof b==='bigint')return RA(o,this,arguments);"
-		+ "var n=len(this),i=rel(a,n,0),j=rel(b,n,n),c=units(j>i?j-i:0);ch(c);credit=c;try{return RA(o,this,[i,j]);}finally{credit=0;}});}"
+		+ "var n=len(this),i=rel(a,n,0),j=rel(b,n,n),c=units(j>i?j-i:0);ch(c);var prev=credit;credit=c;try{return RA(o,this,[i,j]);}finally{credit=prev;}});}"
 		+ "function wrapCtor(name,construct){var K=globalThis[name];if(!K)return;"
 		+ "var P=new Proxy(K,{construct:construct});seal(K.prototype,'constructor',P);seal(globalThis,name,P);}"
 		+ "['ArrayBuffer','SharedArrayBuffer'].forEach(function(name){wrapCtor(name,function(t,a,nt){"
 		+ "var n=size(a[0]);var o=a[1];var m=o!=null&&typeof o==='object'?o.maxByteLength:undefined;"
 		+ "if(m===undefined){charge(q(n,1));return RC(t,[n],nt);}"
-		+ "m=size(m);charge(q(typeof m==='number'&&m>n?m:n,1));return RC(t,[n,{maxByteLength:m}],nt);});});"
+		+ "m=size(m);var c=q(n,1),cm=q(m,1);charge(cm>c?cm:c);return RC(t,[n,{maxByteLength:m}],nt);});});"
 		// Tableau type : longueur primitive facturee avant ; vue sur un tampon existant, rien ; copie
 		// d'une source (tableau, iterable), ses elements apres.
 		+ "['Int8Array','Uint8Array','Uint8ClampedArray','Int16Array','Uint16Array','Int32Array','Uint32Array','Float32Array','Float64Array','BigInt64Array','BigUint64Array','Float16Array']"
