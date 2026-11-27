@@ -31,8 +31,8 @@ import tools.jackson.databind.node.ObjectNode;
  *     d'un échec ou d'un bord de carte, en millisecondes réelles avant le plafond d'opérations d'un
  *     poireau à 7 cœurs. Au-delà de 100 ms, la boucle est sous-facturée.</li>
  * </ul>
- * Diagnostic, sans seuil : les deux tableaux se lisent. Seule la boucle de fuite d'un poireau acculé
- * est gardée par un test ({@link #corneredFleeLoopReachesItsOperationLimitQuickly}). Les tests
+ * Diagnostic, sans seuil : les deux tableaux se lisent. Seules les boucles qui ont coûté des secondes
+ * sont gardées par un test (fuite d'un poireau acculé, argument du mauvais type). Les tests
  * tournent avec les options de la JVM du worker (build.gradle), sans quoi une exception implicite
  * rattrapée sur un chemin chaud ne se verrait pas.
  *
@@ -51,8 +51,8 @@ public class BenchFightCosts extends FightTestBase {
 	private static final int LOOP_OPERATIONS = 7_000_000;
 	/** Plafond des cas à nombre d'itérations fixé : jamais atteint. */
 	private static final int NO_LIMIT = 2_000_000_000;
-	/** Seuil du test de garde : la boucle de fuite d'un poireau acculé, à son plafond d'opérations. */
-	private static final long FLEE_LOOP_MAX_MS = 1000;
+	/** Seuil des tests de garde : une boucle sans fin, jusqu'à son plafond d'opérations. */
+	private static final long GUARDED_LOOP_MAX_MS = 1000;
 
 	/** Fonction appelée `iterations` fois : `setup` hors boucle, `expression` à chaque itération. */
 	private record Case(String name, String setup, String expression, int iterations) {
@@ -169,6 +169,9 @@ public class BenchFightCosts extends FightTestBase {
 		new Case("getWeaponPassiveEffects", "", "count(getWeaponPassiveEffects(WEAPON_PISTOL))", 100000),
 		new Case("getItemUses", "", "getItemUses(CHIP_SPARK)", 200000),
 		new Case("getCooldown", "", "getCooldown(CHIP_SPARK)", 200000),
+		new Case("getCell_wrong_type", "", "getCell('x')", 2000),
+		new Case("getLife_wrong_type", "", "getLife('x')", 2000),
+		new Case("getCellDistance_wrong_type", "", "getCellDistance('x', 'y')", 2000),
 		new Case("getOperations", "", "getOperations()", 500000),
 	};
 
@@ -212,6 +215,27 @@ public class BenchFightCosts extends FightTestBase {
 		new Loop("getWeaponEffectiveArea corner", "while (true) { getWeaponEffectiveArea(WEAPON_GRENADE_LAUNCHER, 0) }"),
 		new Loop("getCellsToUseChipOnCell corner", "while (true) { getCellsToUseChipOnCell(CHIP_SPARK, 0) }"),
 		new Loop("lineOfSight corner", "while (true) { lineOfSight(0, 17) }"),
+		new Loop("remove out", "var a = [1, 2, 3]; while (true) { remove(a, 1000) }"),
+		new Loop("insert out", "var a = [1, 2, 3]; while (true) { insert(a, 1, 1000) }"),
+		new Loop("count wrong type", "while (true) { count('x') }"),
+		new Loop("push wrong type", "while (true) { push('x', 1) }"),
+		new Loop("dynamic wrong type", "var f = arrayMap; var g = function(x) { return x }; while (true) { f('x', g) }"),
+		new Loop("dynamic count wrong type", "var f = count; while (true) { f('x') }"),
+		new Loop("dynamic sqrt wrong type", "var f = sqrt; while (true) { f([1]) }"),
+		new Loop("getCell wrong type", "while (true) { getCell('x') }"),
+		new Loop("dynamic getLife wrong type", "var f = getLife; while (true) { f([1]) }"),
+		new Loop("jsonDecode bad long", "var s = '[' + join(arrayMap([1..300], function(x) { return x }), ',') + ',x'; while (true) { jsonDecode(s) }"),
+		new Loop("set wrong type", "while (true) { setContains('x', 1) }"),
+		new Loop("setPut wrong type", "while (true) { setPut('x', 1) }"),
+		new Loop("ignored wrong type", "while (true) { lineOfSight(0, 17, 'x') }"),
+		new Loop("path ignored wrong type", "while (true) { getPathLength(0, 17, 'x') }"),
+		new Loop("interval wrong type", "while (true) { intervalMin('x') }"),
+		new Loop("mapGet wrong type", "while (true) { mapGet('x', 1) }"),
+		new Loop("sort bool wrong type", "var a = [1]; while (true) { sort(a, 'x') }"),
+		new Loop("string wrong type", "while (true) { length(12) }"),
+		new Loop("toUpper wrong type", "while (true) { toUpper([1]) }"),
+		new Loop("getWeaponName wrong type", "while (true) { getWeaponName('x') }"),
+		new Loop("useChip wrong type", "while (true) { canUseChip('x', 'y') }"),
 		new Loop("setRegister grow", "var i = 0; while (true) { setRegister('k' + i++, 'v') }"),
 	};
 
@@ -230,11 +254,23 @@ public class BenchFightCosts extends FightTestBase {
 	/** Un poireau acculé qui boucle sur moveAwayFrom atteint son plafond d'opérations en ~30 ms. */
 	@Test
 	public void corneredFleeLoopReachesItsOperationLimitQuickly() throws Exception {
-		setupMap();
+		assertReachesItsLimitQuickly("var e = getNearestEnemy(); while (getMP() > 0 && getLife(e) > 0) { moveAwayFrom(e) }");
+	}
+
+	/** Un argument du mauvais type rend la valeur par défaut de l'appel, sans exception à pile remplie. */
+	@Test
+	public void wrongTypeArgumentLoopsReachTheirOperationLimitQuickly() throws Exception {
+		assertReachesItsLimitQuickly("while (true) { getCell('x') }");
+		assertReachesItsLimitQuickly("while (true) { getPathLength(0, 17, 'x') }");
+		assertReachesItsLimitQuickly("while (true) { setContains('x', 1) }");
+	}
+
+	private void assertReachesItsLimitQuickly(String loop) throws Exception {
+		if (startCells[0] == null) setupMap();
 		// Le passage le plus rapide : une pause de la machine ne fait pas échouer le test
-		Pass pass = measure("var e = getNearestEnemy(); while (getMP() > 0 && getLife(e) > 0) { moveAwayFrom(e) }", LOOP_OPERATIONS, 3, false);
-		Assert.assertEquals("TOO_MUCH_OPERATIONS", pass.end);
-		Assert.assertTrue("boucle de fuite : " + pass.nanos / 1_000_000 + " ms pour " + pass.ops + " opérations", pass.nanos < FLEE_LOOP_MAX_MS * 1_000_000);
+		Pass pass = measure(loop, LOOP_OPERATIONS, 3, false);
+		Assert.assertEquals(loop, "TOO_MUCH_OPERATIONS", pass.end);
+		Assert.assertTrue(loop + " : " + pass.nanos / 1_000_000 + " ms pour " + pass.ops + " opérations", pass.nanos < GUARDED_LOOP_MAX_MS * 1_000_000);
 	}
 
 	@Test
