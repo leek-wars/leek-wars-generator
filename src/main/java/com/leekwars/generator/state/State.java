@@ -1555,7 +1555,7 @@ public class State {
 		this.map.setEntity(invoc, target);
 
 		// On l'ajoute dans les infos du combat
-		actions.addEntity(invoc, critical);
+		actions.addEntity(invoc, critical, null);
 
 		// Colosse : le multiplicateur de l'invocation est appliqué par summonEntity,
 		// APRÈS le log de l'ActionInvocation, pour que l'action d'effet suive

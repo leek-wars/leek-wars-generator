@@ -82,10 +82,6 @@ public class Actions {
 		}
 	}
 
-	public void addEntity(Entity entity, boolean critical) {
-		addEntity(entity, critical, null);
-	}
-
 	/**
 	 * `pseudonym` : en combat anonyme, le nom que getName() rend aux autres éleveurs pour ce
 	 * poireau (Pseudonyms) ; le rapport et le lecteur l'affichent pour qu'il corresponde aux logs.
