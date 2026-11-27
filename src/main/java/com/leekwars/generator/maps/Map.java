@@ -465,12 +465,7 @@ public class Map {
 	}
 
 	public Cell getNextCell(Cell cell, int dx, int dy) {
-		var x = cell.x + dx;
-		var y = cell.y + dy;
-		if (x < this.min_x || y < this.min_y || x > this.max_x || y > this.max_y) {
-			return null;
-		}
-		return this.coord[x - this.min_x][y - this.min_y];
+		return getCell(cell.x + dx, cell.y + dy);
 	}
 
 	public Cell[] getObstacles() {

@@ -18,6 +18,10 @@ test {
 		events "passed", "skipped", "failed"
 		showStandardStreams = true
 	}
+	// Comme la JVM du worker : chaque exception implicite (indice hors tableau, null) remplit sa pile.
+	// Une exception rattrapee sur un chemin chaud coute alors des microsecondes, que l'option par
+	// defaut de la JVM masquerait aux tests et aux bancs.
+	jvmArgs '-XX:-OmitStackTraceInFastThrow'
 	// Forward -Dleak.fights (et autres -D de diagnostic) au JVM de test forke.
 	systemProperties System.getProperties().findAll { k, v -> k.startsWith("leak.") }
 }

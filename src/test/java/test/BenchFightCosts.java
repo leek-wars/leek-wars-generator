@@ -2,15 +2,20 @@ package test;
 
 import static org.junit.Assume.assumeTrue;
 
+import java.util.HashMap;
+
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.leekwars.generator.fight.entity.EntityAI;
+import com.leekwars.generator.leek.FarmerLog;
 import com.leekwars.generator.leek.Leek;
 import com.leekwars.generator.leek.LeekLog;
+import com.leekwars.generator.maps.Cell;
 import com.leekwars.generator.util.Json;
 
 import leekscript.compiler.AIFile;
-import leekscript.compiler.LeekScript;
+import leekscript.runner.LeekRunException;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -27,12 +32,14 @@ import tools.jackson.databind.node.ObjectNode;
  * <li>{@link #benchInfiniteLoops} : des boucles sans fin, en millisecondes réelles avant le plafond
  *     d'opérations d'un poireau à 7 cœurs. Au-delà de 100 ms, la boucle est sous-facturée.</li>
  * </ul>
+ * Diagnostic, sans seuil : les deux tableaux se lisent. Seule la boucle de fuite d'un poireau acculé
+ * est gardée par un test ({@link #corneredFleeLoopReachesItsOperationLimitQuickly}).
  *
- * <p>À lancer aussi avec les options de la JVM du worker : sans {@code OmitStackTraceInFastThrow},
- * une exception implicite rattrapée (indice hors tableau, null) coûte des microsecondes au lieu de
- * nanosecondes, et le banc ne voit rien avec les options par défaut.
+ * <p>Les tests tournent sans {@code OmitStackTraceInFastThrow}, comme le worker (build.gradle) : une
+ * exception implicite rattrapée (indice hors tableau, null) y coûte des microsecondes, des
+ * nanosecondes avec l'option par défaut de la JVM, qui cacherait le problème.
  *
- * <pre>JAVA_TOOL_OPTIONS=-XX:-OmitStackTraceInFastThrow FIGHT_BENCH=1 gradle --offline :cleanTest :test --tests "test.BenchFightCosts"</pre>
+ * <pre>FIGHT_BENCH=1 gradle --offline :cleanTest :test --tests "test.BenchFightCosts"</pre>
  */
 public class BenchFightCosts extends FightTestBase {
 
@@ -164,7 +171,7 @@ public class BenchFightCosts extends FightTestBase {
 		{"getOperations", "", "getOperations()", "500000"},
 	};
 
-	/** Boucles sans fin : secondes réelles avant le plafond d'opérations d'un poireau à 7 cœurs. */
+	/** Boucles sans fin : [nom, programme], mesurées jusqu'au plafond d'opérations d'un poireau à 7 cœurs. */
 	private static final String[][] LOOPS = {
 		{"arith", "var s = 0; while (true) { s += 1 }"},
 		{"string +=", "var s = ''; while (true) { s += 'a' }"},
@@ -242,56 +249,85 @@ public class BenchFightCosts extends FightTestBase {
 		{"setRegister grow", "var i = 0; while (true) { setRegister('k' + i++, 'v') }"},
 	};
 
+	/** Seuil du test de garde : la boucle de fuite d'un poireau acculé, à son plafond d'opérations. */
+	private static final long FLEE_LOOP_MAX_MS = 1000;
+
+	/**
+	 * Garde du cas qui a motivé ce banc, sans option : un poireau acculé qui boucle sur moveAwayFrom
+	 * atteint son plafond d'opérations en ~30 ms. Avec une exception rattrapée par case hors carte,
+	 * c'étaient 2 s (les tests tournent sans OmitStackTraceInFastThrow, comme le worker).
+	 */
+	@Test
+	public void corneredFleeLoopReachesItsOperationLimitQuickly() throws Exception {
+		setupMap();
+		Pass pass = runToLimit(leeks[0], "var e = getNearestEnemy(); while (getMP() > 0 && getLife(e) > 0) { moveAwayFrom(e) }");
+		Assert.assertEquals("TOO_MUCH_OPERATIONS", pass.end);
+		Assert.assertTrue("boucle de fuite : " + pass.nanos / 1_000_000 + " ms pour " + pass.ops + " opérations", pass.nanos < FLEE_LOOP_MAX_MS * 1_000_000);
+	}
+
 	@Test
 	public void benchInfiniteLoops() throws Exception {
 		assumeTrue("FIGHT_BENCH=1 pour lancer le banc", "1".equals(System.getenv("FIGHT_BENCH")));
 		setupMap();
-		String only = System.getenv("FIGHT_BENCH_ONLY");
-		Leek leek = leeks[Integer.parseInt(System.getenv().getOrDefault("FIGHT_BENCH_LEEK", "0"))];
-		var start = leek.getCell();
-		System.out.printf("%-26s %10s %12s %10s %6s %10s  %s%n", "boucle", "ms", "ops", "ns/op", "GC/6", "RAM", "fin");
+		System.out.printf("%-30s %10s %12s %10s %10s  %s%n", "boucle", "ms", "ops", "ns/op", "RAM", "fin");
 		for (String[] c : LOOPS) {
-			if (only != null && !("," + only + ",").contains("," + c[0] + ",")) continue;
+			if (skipped(c[0])) continue;
 			try {
-				AIFile file = new AIFile("bench_loop_" + System.nanoTime(), c[1], System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
-				leek.setAIFile(file);
-				leek.setLogs(new LeekLog(new com.leekwars.generator.leek.FarmerLog(fight, 0), leek));
-				leek.setFight(fight);
-				EntityAI ai = EntityAI.build(generator, file, leek);
-				leek.setAI(ai);
-				long best = Long.MAX_VALUE;
-				String end = "";
-				long ops = 0, gcs = 0, ram = 0;
-				for (int k = 0; k < 6; k++) {
-					leek.useMP(leek.getMP() - leek.getTotalMP());
-					if (leek.getCell() != start) fight.getState().getMap().moveEntity(leek, start);
-					ai.resetCounter();
-					ai.setMaxOperations(7_000_000);
-					long gcBefore = gcCount();
-					long t = System.nanoTime();
-					try {
-						ai.runIA();
-						end = "fin normale";
-					} catch (leekscript.runner.LeekRunException e) {
-						end = String.valueOf(e.getError());
-					}
-					best = Math.min(best, System.nanoTime() - t);
-					ops = ai.getOperations();
-					gcs += gcCount() - gcBefore;
-					ram = ai.getUsedRAM();
-				}
-				System.out.printf("%-26s %10.1f %12d %10.1f %6d %10d  %s%n", c[0], best / 1e6, ops, best / (double) ops, gcs, ram, end);
+				Pass pass = runToLimit(benchLeek(), c[1]);
+				System.out.printf("%-30s %10.1f %12d %10.1f %10d  %s%n", c[0], pass.nanos / 1e6, pass.ops, pass.nanos / (double) pass.ops, pass.ram, pass.end);
 			} catch (Throwable e) {
-				System.out.printf("%-26s ERREUR %s%n", c[0], e);
+				System.out.printf("%-30s ERREUR %s%n", c[0], e);
 			}
 		}
 	}
 
-	private static long gcCount() {
-		long count = 0;
-		for (var gc : java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()) count += gc.getCollectionCount();
-		return count;
+	/** Un passage d'une IA : temps réel, opérations, RAM, et comment il s'est terminé. */
+	private record Pass(long nanos, long ops, long ram, String end, Object result) {}
+
+	/** Le passage le plus LENT de `code` jusqu'au plafond d'un poireau à 7 cœurs, après un passage qui compile. */
+	private Pass runToLimit(Leek leek, String code) throws Exception {
+		EntityAI ai = build(leek, code);
+		Pass slowest = null;
+		for (int k = 0; k < 5; k++) {
+			Pass pass = run(leek, ai, LOOP_OPERATIONS);
+			if (k > 0 && (slowest == null || pass.nanos > slowest.nanos)) slowest = pass;
+		}
+		return slowest;
 	}
+
+	private static final int LOOP_OPERATIONS = 7_000_000;
+
+	private EntityAI build(Leek leek, String code) throws Exception {
+		attachAI(leek, newAIFile(code, leek.getId()));
+		EntityAI ai = EntityAI.build(generator, (AIFile) leek.getAIFile(), leek);
+		leek.setAI(ai);
+		return ai;
+	}
+
+	/**
+	 * Un passage, comme au début d'un tour : PM et PT pleins, poireau à sa case, journal vide (un
+	 * journal plein ferait mesurer le refus d'écrire). Messages, marques et registres, eux,
+	 * s'accumulent d'un cas à l'autre.
+	 */
+	private Pass run(Leek leek, EntityAI ai, int maxOperations) throws Exception {
+		leek.endTurn();
+		if (leek.getCell() != startCells.get(leek)) fight.getState().getMap().moveEntity(leek, startCells.get(leek));
+		leek.setLogs(new LeekLog(new FarmerLog(fight, 0), leek));
+		ai.resetCounter();
+		if (maxOperations > 0) ai.setMaxOperations(maxOperations);
+		String end = "fin normale";
+		Object result = null;
+		long t = System.nanoTime();
+		try {
+			result = ai.runIA();
+		} catch (LeekRunException e) {
+			end = String.valueOf(e.getError());
+		}
+		long nanos = System.nanoTime() - t;
+		return new Pass(nanos, ai.getOperations(), ai.getUsedRAM(), end, result);
+	}
+
+	private final java.util.Map<Leek, Cell> startCells = new HashMap<>();
 
 	private void setupMap() throws Exception {
 		ObjectNode map = Json.createObject();
@@ -302,6 +338,18 @@ public class BenchFightCosts extends FightTestBase {
 		map.set("team2", cells(TEAM2));
 		fight.getState().setCustomMap(map);
 		initFightOnly();
+		for (Leek leek : leeks) startCells.put(leek, leek.getCell());
+	}
+
+	/** Cas écarté par FIGHT_BENCH_ONLY (noms séparés par des virgules). */
+	private static boolean skipped(String name) {
+		String only = System.getenv("FIGHT_BENCH_ONLY");
+		return only != null && !("," + only + ",").contains("," + name + ",");
+	}
+
+	/** Le poireau mesuré : le premier du coin, ou celui de FIGHT_BENCH_LEEK (0 à 7). */
+	private Leek benchLeek() {
+		return leeks[Math.clamp(Integer.parseInt(System.getenv().getOrDefault("FIGHT_BENCH_LEEK", "0")), 0, leeks.length - 1)];
 	}
 
 	private static String program(String[] c) {
@@ -312,43 +360,25 @@ public class BenchFightCosts extends FightTestBase {
 	@Test
 	public void benchFightCosts() throws Exception {
 		assumeTrue("FIGHT_BENCH=1 pour lancer le banc", "1".equals(System.getenv("FIGHT_BENCH")));
-
 		setupMap();
-		String only = System.getenv("FIGHT_BENCH_ONLY");
-		int who = Integer.parseInt(System.getenv().getOrDefault("FIGHT_BENCH_LEEK", "0"));
-		Leek leek = leeks[who];
-		var start = leek.getCell();
-		double reference = 0;
+		Leek leek = benchLeek();
+		double reference = Double.NaN;
 		System.out.printf("%-30s %12s %10s %12s %10s %10s%n", "fonction", "ns/appel", "ops/appel", "ns/op", "x ref", "retour");
 		for (String[] c : CASES) {
 			boolean isReference = c[0].equals("reference");
-			if (only != null && !isReference && !("," + only + ",").contains("," + c[0] + ",")) continue;
+			if (!isReference && skipped(c[0])) continue;
 			try {
-				AIFile file = new AIFile("bench_fight_" + System.nanoTime(), program(c), System.currentTimeMillis(), LeekScript.LATEST_VERSION, leek.getId(), false);
-				leek.setAIFile(file);
-				leek.setLogs(new LeekLog(farmerLog, leek));
-				leek.setFight(fight);
-				EntityAI ai = EntityAI.build(generator, file, leek);
-				leek.setAI(ai);
-				long best = Long.MAX_VALUE;
-				Object result = null;
-				long ops = 0;
+				EntityAI ai = build(leek, program(c));
+				// Le passage le plus rapide après celui qui compile : le coût de la fonction, sans le bruit
+				Pass best = null;
 				for (int k = 0; k < 4; k++) {
-					// Chaque passage repart du début d'un tour : PM pleins, poireau à sa case
-					leek.useMP(leek.getMP() - leek.getTotalMP());
-					if (leek.getCell() != start) fight.getState().getMap().moveEntity(leek, start);
-					ai.resetCounter();
-					long t = System.nanoTime();
-					result = ai.runIA();
-					long elapsed = System.nanoTime() - t;
-					// Le premier passage compile
-					if (k > 0) best = Math.min(best, elapsed);
-					ops = ai.getOperations();
+					Pass pass = run(leek, ai, 0);
+					if (k > 0 && (best == null || pass.nanos < best.nanos)) best = pass;
 				}
 				long n = Long.parseLong(c[3]);
-				double nsPerOp = best / (double) ops;
+				double nsPerOp = best.nanos / (double) best.ops;
 				if (isReference) reference = nsPerOp;
-				System.out.printf("%-30s %12.0f %10.0f %12.2f %10.1f %10s%n", c[0], best / (double) n, ops / (double) n, nsPerOp, nsPerOp / reference, result);
+				System.out.printf("%-30s %12.0f %10.0f %12.2f %10.1f %10s%n", c[0], best.nanos / (double) n, best.ops / (double) n, nsPerOp, nsPerOp / reference, best.result);
 			} catch (Throwable e) {
 				System.out.printf("%-30s ERREUR %s%n", c[0], e);
 			}
