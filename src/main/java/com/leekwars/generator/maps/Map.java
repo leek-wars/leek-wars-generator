@@ -411,11 +411,12 @@ public class Map {
 	}
 
 	public Cell getCell(int x, int y) {
-		try {
-			return coord[x - min_x][y - min_y];
-		} catch (ArrayIndexOutOfBoundsException e) {
+		// Test de bornes, pas d'exception rattrapée : une case hors carte est le cas courant des
+		// zones et des fuites en bord de carte, et une exception par case s'y paie en microsecondes
+		if (x < min_x || x > max_x || y < min_y || y > max_y) {
 			return null;
 		}
+		return coord[x - min_x][y - min_y];
 	}
 
 	/**

@@ -35,6 +35,31 @@ public class TestFightMap {
 	}
 
 	@Test
+	public void cellFromCoordinatesIsNullOutsideTheMap() throws Exception {
+		Map map = new Map(18, 18);
+		int found = 0;
+		for (int x = -40; x <= 40; x++) {
+			for (int y = -40; y <= 40; y++) {
+				Cell cell = map.getCell(x, y);
+				if (cell == null) continue;
+				found++;
+				Assert.assertEquals(x, cell.getX());
+				Assert.assertEquals(y, cell.getY());
+			}
+		}
+		// Chaque case se retrouve par ses coordonnées, et rien d'autre
+		Assert.assertEquals(map.getCells().size(), found);
+		for (Cell cell : map.getCells()) {
+			Assert.assertSame(cell, map.getCell(cell.getX(), cell.getY()));
+		}
+		for (int far : new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE + 1, -1000, 1000, Integer.MAX_VALUE - 1, Integer.MAX_VALUE }) {
+			Assert.assertNull(map.getCell(far, 0));
+			Assert.assertNull(map.getCell(0, far));
+			Assert.assertNull(map.getCell(far, far));
+		}
+	}
+
+	@Test
 	public void getDistanceTest() throws Exception {
 		// On génère une map sans obstacles
 		Map map = new Map(18, 18);
