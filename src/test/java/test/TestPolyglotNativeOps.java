@@ -67,6 +67,33 @@ public class TestPolyglotNativeOps extends FightTestBase {
 		}
 	}
 
+	/**
+	 * Copie interrompue par la longueur maximale d'une chaine (environ un milliard de caracteres) :
+	 * facturee quand meme. Seule dans son test : elle peut saturer le heap de l'isolate, partage par tous
+	 * les contextes de la JVM (GraalPy y retient de la memoire d'un test a l'autre) avant le plafond du
+	 * contexte, selon la machine et les tests deja passes. Cette forme brute est voulue (le worker se
+	 * recycle, cf PolyglotSandbox.isMemoryExhaustion) et la copie n'est pas gratuite pour autant.
+	 */
+	@Test
+	public void jsCopyCutAtMaxStringLengthIsCharged() throws Exception {
+		initFightOnly();
+		try (PolyglotSandbox sb = new PolyglotSandbox("js")) {
+			PolyglotEntityAI cut = ai(sb, "js", "var s = 'a'.repeat(46341);\nfunction turn(){ for (var i = 0; i < 3; i++) { try { s.replaceAll('a', '$`'); } catch (e) {} } return 1; }");
+			leek1.setCores(1);
+			try {
+				cut.runIA();
+				Assert.fail("trois copies interrompues a la longueur maximale depassent un million d'operations");
+			} catch (LeekRunException e) {
+				// facturee (operations) ou bornee par le plafond RAM du contexte : jamais gratuite
+				assertTrue(e.getError().name(), e.getError() == Error.TOO_MUCH_OPERATIONS || e.getError() == Error.OUT_OF_MEMORY);
+			} catch (Throwable t) {
+				if (!PolyglotSandbox.isIsolateHeapExhausted(t)) {
+					throw new AssertionError("issue inattendue : " + t, t);
+				}
+			}
+		}
+	}
+
 	@Test
 	public void jsNativesThatCopyOrAllocateAreCharged() throws Exception {
 		initFightOnly();
@@ -112,17 +139,6 @@ public class TestPolyglotNativeOps extends FightTestBase {
 			Assert.assertTrue("sortie anticipee", jsOps(sb, "var s = 'abc'.repeat(1000);", "try { s.replace(/b/g, function(m){ throw 1; }); } catch (e) {}") < 100_000);
 			assertTrue("remplaceur facture au fil de l'eau", jsOps(sb, "var big = 'x'.repeat(1000000); var s = 'a'.repeat(10);",
 				"try { var k = 0; s.replace(/a/g, function(m){ if (++k == 10) throw 1; return big; }); } catch (e) {}") >= 9_000_000);
-			// Copie interrompue par la longueur maximale : facturee quand meme
-			PolyglotEntityAI cut = ai(sb, "js", "var s = 'a'.repeat(46341);\nfunction turn(){ for (var i = 0; i < 3; i++) { try { s.replaceAll('a', '$`'); } catch (e) {} } return 1; }");
-			leek1.setCores(1);
-			try {
-				cut.runIA();
-				Assert.fail("trois copies interrompues a la longueur maximale depassent un million d'operations");
-			} catch (LeekRunException e) {
-				// facturee (operations) ou bornee par le plafond RAM du contexte : jamais gratuite
-				assertTrue(e.getError() == Error.TOO_MUCH_OPERATIONS || e.getError() == Error.OUT_OF_MEMORY);
-			}
-			leek1.setCores(200);
 			// buffer redefini : la copie d'une source reste facturee
 			assertTrue("buffer redefini", jsOps(sb, "var src = new Array(1000000).fill(0); Object.defineProperty(Object.getPrototypeOf(Int8Array.prototype), 'buffer', {get: function(){ return src; }});", "new Float64Array(src)") >= 1_000_000);
 			// Le constructeur d'origine n'est pas rejoignable par une instance
