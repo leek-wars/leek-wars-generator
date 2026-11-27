@@ -20,6 +20,7 @@ import com.leekwars.generator.test.LocalTrophyManager;
 import com.leekwars.generator.util.Json;
 
 import leekscript.compiler.LeekScript;
+import tools.jackson.databind.JsonNode;
 import leekscript.compiler.resolver.FileSystem;
 
 /**
@@ -43,6 +44,8 @@ public class TestScenarioAnonymous {
 		+ "for (var e in getEnemies()) if (getType(e) == ENTITY_TURRET) setRegister('turret', getName(e))\n";
 
 	private final Map<Integer, String> registers = new HashMap<>();
+	/** Poireaux du dernier combat, tels que le rapport et le lecteur les reçoivent. */
+	private JsonNode fightLeeks;
 	private FileSystem previousFileSystem;
 
 	@After
@@ -105,6 +108,7 @@ public class TestScenarioAnonymous {
 		};
 		Outcome outcome = new Generator().runScenario(scenario, null, manager, new LocalTrophyManager());
 		Assert.assertNull("le combat ne doit pas lever d'exception", outcome.exception);
+		fightLeeks = outcome.fight.toJSON().get("leeks");
 		Assert.assertNotNull("le poireau 1 a joué", registers.get(1));
 		var out = new HashMap<String, String>();
 		Json.parseObject(registers.get(1)).properties().forEach(e -> out.put(e.getKey(), e.getValue().asString()));
@@ -158,10 +162,24 @@ public class TestScenarioAnonymous {
 		Assert.assertTrue("le pseudonyme dépend de la graine", change);
 	}
 
+	/** Le rapport et le lecteur reçoivent, pour chaque poireau, le pseudonyme que lisent les IA. */
+	@Test
+	public void fightDataCarriesThePseudonyms() {
+		var enemy = who(run(true).get("enemy"));
+		String adversaire = null;
+		for (var l : fightLeeks) {
+			if (l.get("type").asInt() == Entity.TYPE_TURRET) Assert.assertFalse("une tourelle garde son nom", l.has("pseudonym"));
+			else Assert.assertTrue("chaque poireau a son pseudonyme : " + l, l.has("pseudonym"));
+			if (l.get("name").asString().equals("adversaire")) adversaire = l.get("pseudonym").asString();
+		}
+		Assert.assertEquals("celui que rend getName()", enemy.get(0), adversaire);
+	}
+
 	@Test
 	public void everyoneIsVisibleOtherwise() {
 		var r = run(false);
 		Assert.assertTrue(r.get("enemy"), r.get("enemy").startsWith("[\"adversaire\",\"F" + OPPONENT + "\",\"fr\"," + OPPONENT + ","));
 		Assert.assertTrue(r.get("allies"), r.get("allies").contains("allie") && r.get("allies").contains("second"));
+		for (var l : fightLeeks) Assert.assertFalse("pas de pseudonyme hors combat anonyme : " + l, l.has("pseudonym"));
 	}
 }

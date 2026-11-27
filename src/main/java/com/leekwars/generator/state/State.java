@@ -15,6 +15,7 @@ import tools.jackson.databind.node.ObjectNode;
 import com.leekwars.generator.util.Json;
 import com.leekwars.generator.Generator;
 import com.leekwars.generator.FightConstants;
+import com.leekwars.generator.classes.Pseudonyms;
 import com.leekwars.generator.action.Action;
 import com.leekwars.generator.action.ActionChestOpened;
 import com.leekwars.generator.action.ActionEndTurn;
@@ -756,7 +757,10 @@ public class State {
 	 */
 	public void recordInitialState() {
 		for (Entity e : initialOrder) {
-			actions.addEntity(e, false);
+			// Combat anonyme : chaque poireau sous le pseudonyme que rend getName(), le même pour
+			// tous (graine + numéro), et que les invocations à venir ne changent pas
+			var pseudonym = anonymous && e.getType() == Entity.TYPE_LEEK ? Pseudonyms.leekName(this, e) : null;
+			actions.addEntity(e, false, pseudonym);
 		}
 		actions.addMap(map);
 		actions.log(new ActionStartFight(teams.get(0).size(), teams.get(1).size()));

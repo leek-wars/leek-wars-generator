@@ -83,6 +83,14 @@ public class Actions {
 	}
 
 	public void addEntity(Entity entity, boolean critical) {
+		addEntity(entity, critical, null);
+	}
+
+	/**
+	 * `pseudonym` : en combat anonyme, le nom que getName() rend aux autres éleveurs pour ce
+	 * poireau (Pseudonyms) ; le rapport et le lecteur l'affichent pour qu'il corresponde aux logs.
+	 */
+	public void addEntity(Entity entity, boolean critical, String pseudonym) {
 
 		entities.add(entity);
 
@@ -110,6 +118,7 @@ public class Actions {
 
 		object.put("team", entity.getTeam() + 1);
 		object.put("name", entity.getName());
+		if (pseudonym != null) object.put("pseudonym", pseudonym);
 		object.put("cellPos", entity.getCell() != null ? entity.getCell().getId() : null);
 		object.put("farmer", entity.getFarmer());
 		object.put("type", entity.getType());
