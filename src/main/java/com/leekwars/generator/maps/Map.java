@@ -411,8 +411,8 @@ public class Map {
 	}
 
 	public Cell getCell(int x, int y) {
-		// Test de bornes, pas d'exception rattrapée : une case hors carte est le cas courant des
-		// zones et des fuites en bord de carte, et une exception par case s'y paie en microsecondes
+		// Hors carte : cas courant des zones et des fuites en bord de carte, une exception rattrapée
+		// par case s'y paierait en microsecondes
 		if (x < min_x || x > max_x || y < min_y || y > max_y) {
 			return null;
 		}
