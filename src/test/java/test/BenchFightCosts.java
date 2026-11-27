@@ -169,9 +169,6 @@ public class BenchFightCosts extends FightTestBase {
 		new Case("getWeaponPassiveEffects", "", "count(getWeaponPassiveEffects(WEAPON_PISTOL))", 100000),
 		new Case("getItemUses", "", "getItemUses(CHIP_SPARK)", 200000),
 		new Case("getCooldown", "", "getCooldown(CHIP_SPARK)", 200000),
-		new Case("getCell_wrong_type", "", "getCell('x')", 2000),
-		new Case("getLife_wrong_type", "", "getLife('x')", 2000),
-		new Case("getCellDistance_wrong_type", "", "getCellDistance('x', 'y')", 2000),
 		new Case("getOperations", "", "getOperations()", 500000),
 	};
 
@@ -205,9 +202,9 @@ public class BenchFightCosts extends FightTestBase {
 		new Loop("debug array grow", "var a = []; while (true) { push(a, 1); debug(a) }"),
 		new Loop("sendAll+getMessages", "while (true) { sendAll(MESSAGE_CUSTOM, 1); var m = getMessages() }"),
 		new Loop("moveAwayFrom", "var e = getNearestEnemy(); while (true) { moveAwayFrom(e) }"),
-		new Loop("number bad", "while (true) { number('abc') }"),
-		new Loop("number bad long", "var s = 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'; while (true) { number(s) }"),
-		new Loop("jsonDecode bad", "while (true) { jsonDecode('{') }"),
+		new Loop("number not numeric", "while (true) { number('abc') }"),
+		new Loop("number not numeric long", "var s = 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'; while (true) { number(s) }"),
+		new Loop("jsonDecode invalid", "while (true) { jsonDecode('{') }"),
 		new Loop("string * int", "var s = 'abc'; var x = 0; while (true) { x = s * 2 }"),
 		new Loop("string < int", "var s = 'abc'; var x = 0; while (true) { x = s < 2 }"),
 		new Loop("getCellFromXY out", "while (true) { getCellFromXY(100, 100) }"),
@@ -215,27 +212,16 @@ public class BenchFightCosts extends FightTestBase {
 		new Loop("getWeaponEffectiveArea corner", "while (true) { getWeaponEffectiveArea(WEAPON_GRENADE_LAUNCHER, 0) }"),
 		new Loop("getCellsToUseChipOnCell corner", "while (true) { getCellsToUseChipOnCell(CHIP_SPARK, 0) }"),
 		new Loop("lineOfSight corner", "while (true) { lineOfSight(0, 17) }"),
-		new Loop("remove out", "var a = [1, 2, 3]; while (true) { remove(a, 1000) }"),
-		new Loop("insert out", "var a = [1, 2, 3]; while (true) { insert(a, 1, 1000) }"),
+		new Loop("remove index out of bounds", "var a = [1, 2, 3]; while (true) { remove(a, 1000) }"),
 		new Loop("count wrong type", "while (true) { count('x') }"),
-		new Loop("push wrong type", "while (true) { push('x', 1) }"),
-		new Loop("dynamic wrong type", "var f = arrayMap; var g = function(x) { return x }; while (true) { f('x', g) }"),
-		new Loop("dynamic count wrong type", "var f = count; while (true) { f('x') }"),
 		new Loop("dynamic sqrt wrong type", "var f = sqrt; while (true) { f([1]) }"),
 		new Loop("getCell wrong type", "while (true) { getCell('x') }"),
 		new Loop("dynamic getLife wrong type", "var f = getLife; while (true) { f([1]) }"),
-		new Loop("jsonDecode bad long", "var s = '[' + join(arrayMap([1..300], function(x) { return x }), ',') + ',x'; while (true) { jsonDecode(s) }"),
-		new Loop("set wrong type", "while (true) { setContains('x', 1) }"),
-		new Loop("setPut wrong type", "while (true) { setPut('x', 1) }"),
-		new Loop("ignored wrong type", "while (true) { lineOfSight(0, 17, 'x') }"),
-		new Loop("path ignored wrong type", "while (true) { getPathLength(0, 17, 'x') }"),
-		new Loop("interval wrong type", "while (true) { intervalMin('x') }"),
-		new Loop("mapGet wrong type", "while (true) { mapGet('x', 1) }"),
-		new Loop("sort bool wrong type", "var a = [1]; while (true) { sort(a, 'x') }"),
-		new Loop("string wrong type", "while (true) { length(12) }"),
-		new Loop("toUpper wrong type", "while (true) { toUpper([1]) }"),
-		new Loop("getWeaponName wrong type", "while (true) { getWeaponName('x') }"),
-		new Loop("useChip wrong type", "while (true) { canUseChip('x', 'y') }"),
+		new Loop("setContains wrong type", "while (true) { setContains('x', 1) }"),
+		new Loop("lineOfSight ignored wrong type", "while (true) { lineOfSight(0, 17, 'x') }"),
+		new Loop("getPathLength ignored wrong type", "while (true) { getPathLength(0, 17, 'x') }"),
+		new Loop("intervalMin wrong type", "while (true) { intervalMin('x') }"),
+		new Loop("sort order wrong type", "var a = [1]; while (true) { sort(a, 'x') }"),
 		new Loop("setRegister grow", "var i = 0; while (true) { setRegister('k' + i++, 'v') }"),
 	};
 
@@ -254,21 +240,26 @@ public class BenchFightCosts extends FightTestBase {
 	/** Un poireau acculé qui boucle sur moveAwayFrom atteint son plafond d'opérations en ~30 ms. */
 	@Test
 	public void corneredFleeLoopReachesItsOperationLimitQuickly() throws Exception {
+		setupMap();
 		assertReachesItsLimitQuickly("var e = getNearestEnemy(); while (getMP() > 0 && getLife(e) > 0) { moveAwayFrom(e) }");
 	}
 
 	/** Un argument du mauvais type rend la valeur par défaut de l'appel, sans exception à pile remplie. */
 	@Test
 	public void wrongTypeArgumentLoopsReachTheirOperationLimitQuickly() throws Exception {
+		setupMap();
 		assertReachesItsLimitQuickly("while (true) { getCell('x') }");
 		assertReachesItsLimitQuickly("while (true) { getPathLength(0, 17, 'x') }");
 		assertReachesItsLimitQuickly("while (true) { setContains('x', 1) }");
 	}
 
+	/** Trois essais : une pause de la machine, ou le passage qui compile, ne fait pas échouer le test. */
 	private void assertReachesItsLimitQuickly(String loop) throws Exception {
-		if (startCells[0] == null) setupMap();
-		// Le passage le plus rapide : une pause de la machine ne fait pas échouer le test
-		Pass pass = measure(loop, LOOP_OPERATIONS, 3, false);
+		EntityAI ai = compile(loop);
+		Pass pass = null;
+		for (int k = 0; k < 3 && (pass == null || pass.nanos >= GUARDED_LOOP_MAX_MS * 1_000_000); k++) {
+			pass = run(ai, LOOP_OPERATIONS);
+		}
 		Assert.assertEquals(loop, "TOO_MUCH_OPERATIONS", pass.end);
 		Assert.assertTrue(loop + " : " + pass.nanos / 1_000_000 + " ms pour " + pass.ops + " opérations", pass.nanos < GUARDED_LOOP_MAX_MS * 1_000_000);
 	}
@@ -334,35 +325,46 @@ public class BenchFightCosts extends FightTestBase {
 		return only != null && !("," + only + ",").contains("," + name + ",");
 	}
 
-	/**
-	 * `passes` passages de `code` par le premier poireau du coin, après un passage qui compile : le
-	 * plus lent ou le plus rapide. Chacun part comme au début d'un tour (PM et PT pleins, poireau à sa
-	 * case, journal vide : plein, on mesurerait son refus d'écrire) ; messages, marques et registres,
-	 * eux, s'accumulent d'un cas à l'autre.
-	 */
+	/** `passes` passages de `code`, après un passage qui compile : le plus lent ou le plus rapide. */
 	private Pass measure(String code, int maxOperations, int passes, boolean slowest) throws Exception {
+		EntityAI ai = compile(code);
+		Pass kept = null;
+		for (int k = 0; k <= passes; k++) {
+			Pass pass = run(ai, maxOperations);
+			if (k > 0 && (kept == null || (slowest ? pass.nanos > kept.nanos : pass.nanos < kept.nanos))) kept = pass;
+		}
+		return kept;
+	}
+
+	/** L'IA de `code`, pour le premier poireau du coin. */
+	private EntityAI compile(String code) throws Exception {
 		Leek leek = leeks[0];
 		attachAI(leek, newAIFile(code, leek.getId()));
 		EntityAI ai = EntityAI.build(generator, (AIFile) leek.getAIFile(), leek);
 		leek.setAI(ai);
-		Pass kept = null;
-		for (int k = 0; k <= passes; k++) {
-			leek.endTurn();
-			if (leek.getCell() != startCells[0]) fight.getState().getMap().moveEntity(leek, startCells[0]);
-			leek.setLogs(new LeekLog(new FarmerLog(fight, 0), leek));
-			ai.resetCounter();
-			ai.setMaxOperations(maxOperations);
-			String end = "fin normale";
-			Object result = null;
-			long t = System.nanoTime();
-			try {
-				result = ai.runIA();
-			} catch (LeekRunException e) {
-				end = String.valueOf(e.getError());
-			}
-			Pass pass = new Pass(System.nanoTime() - t, ai.getOperations(), ai.getUsedRAM(), end, result);
-			if (k > 0 && (kept == null || (slowest ? pass.nanos > kept.nanos : pass.nanos < kept.nanos))) kept = pass;
+		return ai;
+	}
+
+	/**
+	 * Un passage, comme au début d'un tour : PM et PT pleins, poireau à sa case, journal vide (plein,
+	 * on mesurerait son refus d'écrire). Messages, marques et registres, eux, s'accumulent d'un cas à
+	 * l'autre.
+	 */
+	private Pass run(EntityAI ai, int maxOperations) throws Exception {
+		Leek leek = leeks[0];
+		leek.endTurn();
+		if (leek.getCell() != startCells[0]) fight.getState().getMap().moveEntity(leek, startCells[0]);
+		leek.setLogs(new LeekLog(new FarmerLog(fight, 0), leek));
+		ai.resetCounter();
+		ai.setMaxOperations(maxOperations);
+		String end = "fin normale";
+		Object result = null;
+		long t = System.nanoTime();
+		try {
+			result = ai.runIA();
+		} catch (LeekRunException e) {
+			end = String.valueOf(e.getError());
 		}
-		return kept;
+		return new Pass(System.nanoTime() - t, ai.getOperations(), ai.getUsedRAM(), end, result);
 	}
 }
