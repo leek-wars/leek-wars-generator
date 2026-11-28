@@ -456,6 +456,20 @@ public class Generator {
 		errorManager = manager;
 	}
 
+	// Backend bytecode de leekscript en mode `compare` (-Dleekscript.bytecode=compare) : un écart avec
+	// les classes de javac, ou une erreur interne du backend, est une erreur serveur ; l'IA se joue
+	// alors avec les classes de javac. La compilation n'a lieu qu'à un défaut de cache : un signalement
+	// par compilation.
+	static {
+		leekscript.compiler.bytecode.BytecodeBackend.reporter = (file, problem) -> {
+			if (errorManager == null) {
+				Log.e(TAG, "Backend bytecode : " + problem);
+				return;
+			}
+			errorManager.exception(new IllegalStateException("Backend bytecode : " + problem), -1, file != null ? file.getOwner() : 0, file);
+		};
+	}
+
 	// Report depuis un contexte statique (ex. generation de map) : route vers
 	// l'ErrorManager du worker (table error) au lieu du stub stdout de leekscript.
 	// Ne lève jamais : les appelants signalent depuis un catch ou une sonde qui doit
